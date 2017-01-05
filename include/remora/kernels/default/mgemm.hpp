@@ -28,19 +28,19 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_MGEMM_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_MGEMM_HPP
+#ifndef REMORA_KERNELS_DEFAULT_MGEMM_HPP
+#define REMORA_KERNELS_DEFAULT_MGEMM_HPP
 
 #include <boost/align/assume_aligned.hpp>
 #include <cstddef>//std::size_t
 #include <algorithm>//std::fill
 
 #ifdef __AVX__
-	#define SHARK_BLAS_VECTOR_LENGTH 32
+	#define REMORA_VECTOR_LENGTH 32
 #else
-	#define SHARK_BLAS_VECTOR_LENGTH 16
+	#define REMORA_VECTOR_LENGTH 16
 #endif
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 	
 //  Block-GEMM implementation based on boost.ublas
 //  written by:
@@ -60,12 +60,12 @@ void ugemm(
 	BOOST_ALIGN_ASSUME_ALIGNED(A, block_size::align);
 	BOOST_ALIGN_ASSUME_ALIGNED(B, block_size::align);
 	
-#ifdef SHARK_USE_SIMD
+#ifdef REMORA_USE_SIMD
 	static const std::size_t vecNR = block_size::nr/block_size::vector_length;
 #ifdef BOOST_COMP_CLANG_DETECTION
 	typedef T vx __attribute__((ext_vector_type (block_size::vector_length)));
 #else
-        typedef T vx __attribute__((vector_size (SHARK_BLAS_VECTOR_LENGTH)));
+        typedef T vx __attribute__((vector_size (REMORA_VECTOR_LENGTH)));
 #endif
 	vx P[block_size::mr * vecNR] = {};
 #else
@@ -195,6 +195,6 @@ void pack_B_dense(matrix_expression<E, cpu_tag> const& B, T* p, block_size)
         }
 }
 
-}}}
+}}
 
 #endif

@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_MATRIX_HPP
-#define SHARK_LINALG_BLAS_MATRIX_HPP
+#ifndef REMORA_MATRIX_HPP
+#define REMORA_MATRIX_HPP
 
 #include "detail/matrix_proxy_classes.hpp"
 #include <array>
@@ -36,8 +36,7 @@
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/vector.hpp>
 
-namespace shark {
-namespace blas {
+namespace remora {
 
 /** \brief A dense matrix of values of type \c T.
  *
@@ -300,7 +299,7 @@ public:
 		return column_iterator(m_data.data() + j * stride2()+ stride1() * size1(), size1(), stride1());
 	}
 	
-	typedef typename blas::major_iterator<self_type>::type major_iterator;
+	typedef typename major_iterator<self_type>::type major_iterator;
 	
 	//sparse interface
 	major_iterator set_element(major_iterator pos, size_type index, value_type value) {
@@ -366,7 +365,6 @@ struct matrix_temporary_type<T,unknown_orientation,dense_tag, cpu_tag>{
 	typedef matrix<T,row_major> type;
 };
 
-}
 }
 
 #endif

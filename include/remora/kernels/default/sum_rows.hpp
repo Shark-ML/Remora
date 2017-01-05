@@ -28,14 +28,14 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_SUM_ROWS_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_SUM_ROWS_HPP
+#ifndef REMORA_KERNELS_DEFAULT_SUM_ROWS_HPP
+#define REMORA_KERNELS_DEFAULT_SUM_ROWS_HPP
 
 #include "../../expression_types.hpp"//for vector/matrix_expression
 #include "../../detail/traits.hpp"//for orientations
 
 
-namespace shark { namespace blas {namespace bindings{
+namespace remora{namespace bindings{
 	
 template<class M,class V, class Tag1, class Tag2>
 void sum_rows(
@@ -81,6 +81,6 @@ void sum_rows(
 	sum_rows(A,v,alpha,Orientation(), Tag1(), Tag2());
 }
 
-}}}
+}}
 
 #endif

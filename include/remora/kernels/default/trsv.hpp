@@ -27,8 +27,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_TRSV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_TRSV_HPP
+#ifndef REMORA_KERNELS_DEFAULT_TRSV_HPP
+#define REMORA_KERNELS_DEFAULT_TRSV_HPP
 
 #include "../../expression_types.hpp" //vector/matrix_expression
 #include "../../assignment.hpp" //plus_assign
@@ -39,7 +39,7 @@
 #include <stdexcept> //exception when matrix is singular
 #include <boost/mpl/bool.hpp> //boost::mpl::false_ marker for unoptimized
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora {namespace bindings {
 
 //Lower triangular(row-major) - vector
 template<bool Unit, class MatA, class V>
@@ -191,5 +191,5 @@ void trsv(
 		typename MatA::orientation(), Side());
 }
 
-}}}
+}}
 #endif

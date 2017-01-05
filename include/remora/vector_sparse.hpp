@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_VECTOR_SPARSE_HPP
-#define SHARK_LINALG_BLAS_VECTOR_SPARSE_HPP
+#ifndef REMORA_VECTOR_SPARSE_HPP
+#define REMORA_VECTOR_SPARSE_HPP
 
 #include "assignment.hpp"
 #include "detail/vector_proxy_classes.hpp"
@@ -35,8 +35,7 @@
 #include <boost/serialization/collection_size_type.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/vector.hpp>
-namespace shark {
-namespace blas {
+namespace remora{
 
 /** \brief Compressed array based sparse vector
  *
@@ -362,6 +361,6 @@ struct vector_temporary_type<T,sparse_tag, cpu_tag>{
 	typedef compressed_vector<T> type;
 };
 
-}}
+}
 
 #endif

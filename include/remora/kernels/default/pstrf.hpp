@@ -26,15 +26,15 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_PSTRF_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_PSTRF_HPP
+#ifndef REMORA_KERNELS_DEFAULT_PSTRF_HPP
+#define REMORA_KERNELS_DEFAULT_PSTRF_HPP
 
 #include "../gemm.hpp" //gemm kernel
 #include "../gemv.hpp" //gemv kernel
 #include "simple_proxies.hpp"
 #include "../../vector.hpp"//matrix_transpose, matrix_range
 #include <algorithm>
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 
 template<class MatA, class VecP>
 std::size_t pstrf(
@@ -160,5 +160,5 @@ std::size_t pstrf(
 	return pstrf(transA,P,lower());
 }
 
-}}}
+}}
 #endif

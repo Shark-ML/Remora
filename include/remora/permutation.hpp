@@ -25,12 +25,12 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_PERMUTATION_HPP
-#define SHARK_LINALG_BLAS_PERMUTATION_HPP
+#ifndef REMORA_PERMUTATION_HPP
+#define REMORA_PERMUTATION_HPP
 
 #include "vector.hpp"
 
-namespace shark { namespace blas{
+namespace remora {
 struct permutation_matrix:public vector<int> {
 	// Construction and destruction
 	explicit permutation_matrix(size_type size):vector<int> (size){
@@ -129,5 +129,5 @@ void swap_full_inverted(vector_expression<VecP, cpu_tag> const& P, matrix_expres
 	}
 }
 
-}}
+}
 #endif

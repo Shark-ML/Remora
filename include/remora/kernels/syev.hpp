@@ -27,17 +27,17 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_SYEV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_SYEV_HPP
+#ifndef REMORA_KERNELS_SYEV_HPP
+#define REMORA_KERNELS_SYEV_HPP
 
 
-#ifdef SHARK_USE_LAPACK
+#ifdef REMORA_USE_LAPACK
 #include "lapack/syev.hpp"
 #else
 #include "default/syev.hpp"
 #endif
 	
-namespace shark { namespace blas {namespace kernels{
+namespace remora{ namespace kernels{
 	
 ///\brief Well known SYmmetric EigenValue function (SYEV).
 ///
@@ -57,5 +57,5 @@ void syev(
 }
 
 
-}}}
+}}
 #endif

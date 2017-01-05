@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_CLBLAS_VECTOR_FOLD_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CLBLAS_VECTOR_FOLD_HPP
+#ifndef REMORA_KERNELS_CLBLAS_VECTOR_FOLD_HPP
+#define REMORA_KERNELS_CLBLAS_VECTOR_FOLD_HPP
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
@@ -34,7 +34,7 @@
 #include <boost/compute/algorithm/reduce.hpp>
 #include <boost/compute/algorithm/copy_n.hpp>
 
-namespace shark{namespace blas {namespace bindings{
+namespace remora{namespace bindings{
 
 template<class F, class V>
 void vector_fold(vector_expression<V, gpu_tag> const& v, typename F::result_type& value, dense_tag) { 
@@ -45,5 +45,5 @@ void vector_fold(vector_expression<V, gpu_tag> const& v, typename F::result_type
 }
 
 
-}}}
+}}
 #endif

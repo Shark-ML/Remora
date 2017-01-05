@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_CLBLAS_VECTOR_ASSIGN_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CLBLAS_VECTOR_ASSIGN_HPP
+#ifndef REMORA_KERNELS_CLBLAS_VECTOR_ASSIGN_HPP
+#define REMORA_KERNELS_CLBLAS_VECTOR_ASSIGN_HPP
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
@@ -35,9 +35,7 @@
 #include <boost/compute/algorithm/transform.hpp>
 #include <boost/compute/functional/bind.hpp>
 
-namespace shark{
-namespace blas {
-namespace bindings{
+namespace remora{namespace bindings{
 
 template<class F, class V>
 void assign(vector_expression<V, gpu_tag>& v, typename V::value_type t) {
@@ -76,5 +74,5 @@ void vector_assign_functor(
 	boost::compute::transform( zip_begin,zip_end, v().begin(), boost::compute::detail::unpack(f), v().queue());
 }
 
-}}}
+}}
 #endif

@@ -27,13 +27,13 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_CLBLAS_VECTOR_MAX_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CLBLAS_VECTOR_MAX_HPP
+#ifndef REMORA_KERNELS_CLBLAS_VECTOR_MAX_HPP
+#define REMORA_KERNELS_CLBLAS_VECTOR_MAX_HPP
 
 #include "../../detail/traits.hpp"
 #include "../../expression_types.hpp"
 #include <boost/compute/algorithm/max_element.hpp>
-namespace shark { namespace blas {namespace bindings{
+namespace remora {namespace bindings{
 
 template<class E>
 std::size_t vector_max(vector_expression<E, gpu_tag> const& v,dense_tag) {
@@ -41,5 +41,5 @@ std::size_t vector_max(vector_expression<E, gpu_tag> const& v,dense_tag) {
 }
 
 
-}}}
+}}
 #endif

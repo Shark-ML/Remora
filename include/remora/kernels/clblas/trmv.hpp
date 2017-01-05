@@ -29,8 +29,8 @@
  *
  */
 //===========================================================================
-#ifndef SHARK_LINALG_BLAS_KERNELS_CLBLAS_TRMV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CLBLAS_TRMV_HPP
+#ifndef REMORA_KERNELS_CLBLAS_TRMV_HPP
+#define REMORA_KERNELS_CLBLAS_TRMV_HPP
 
 
 #include "../../expression_types.hpp"
@@ -40,7 +40,7 @@
 #include <boost/compute/functional/operator.hpp> //for multiplies
 #include "../gemv.hpp"
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora {namespace bindings {
 
 struct trmv_kernel{
 	boost::compute::kernel kernel;
@@ -186,5 +186,5 @@ void trmv(
 
 }
 
-}}}
+}}
 #endif

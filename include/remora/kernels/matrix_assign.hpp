@@ -25,17 +25,15 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_MATRIX_ASSIGN_HPP
-#define SHARK_LINALG_BLAS_KERNELS_MATRIX_ASSIGN_HPP
+#ifndef REMORA_KERNELS_MATRIX_ASSIGN_HPP
+#define REMORA_KERNELS_MATRIX_ASSIGN_HPP
 
 #include "default/matrix_assign.hpp"
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include "clblas/matrix_assign.hpp"
 #endif
 
-namespace shark {
-namespace blas {
-namespace kernels{
+namespace remora {namespace kernels{
 //////////////////////////////////////////////////////
 ////Scalar Assignment to Matrix
 /////////////////////////////////////////////////////
@@ -159,6 +157,6 @@ void assign(matrix_expression<M, Device> &m, const matrix_expression<E, Device> 
 	detail::matrix_assign_functor(m, e, f, MOrientation(),EOrientation(), MCategory(), ECategory());
 }
 
-}}}
+}}
 
 #endif

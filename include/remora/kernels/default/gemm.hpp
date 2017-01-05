@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_GEMM_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_GEMM_HPP
+#ifndef REMORA_KERNELS_DEFAULT_GEMM_HPP
+#define REMORA_KERNELS_DEFAULT_GEMM_HPP
 
 #include "../gemv.hpp"//for dispatching to gemv
 #include "../../assignment.hpp"//plus_assign
@@ -42,7 +42,7 @@
 #include <type_traits> //std::common_type
 
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 	
 //  Dense Block-GEMM implementation based on boost.ublas
 //  written by:
@@ -55,7 +55,7 @@ namespace shark {namespace blas {namespace bindings {
 	
 template <typename T>
 struct gemm_block_size {
-	static const unsigned vector_length = SHARK_BLAS_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
+	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
 	static const unsigned mr = 4; // stripe width for lhs
 	static const unsigned nr = 3 * vector_length; // stripe width for rhs
 	static const unsigned mc = 128;
@@ -66,7 +66,7 @@ struct gemm_block_size {
 
 template <>
 struct gemm_block_size<float> {
-	static const unsigned vector_length = SHARK_BLAS_VECTOR_LENGTH/sizeof(float); 
+	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(float); 
 	static const unsigned mc = 256;
 	static const unsigned kc = 512; // stripe length
 	static const unsigned nc = 4096;
@@ -77,7 +77,7 @@ struct gemm_block_size<float> {
 
 template <>
 struct gemm_block_size<long double> {
-	static const unsigned vector_length = SHARK_BLAS_VECTOR_LENGTH/sizeof(long double); 
+	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(long double); 
 	static const unsigned mc = 256;
 	static const unsigned kc = 512; // stripe length
 	static const unsigned nc = 4096;
@@ -377,6 +377,6 @@ void gemm(
 	);
 }
 
-}}}
+}}
 
 #endif

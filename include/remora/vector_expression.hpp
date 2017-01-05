@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_VECTOR_EXPRESSION_HPP
-#define SHARK_LINALG_BLAS_VECTOR_EXPRESSION_HPP
+#ifndef REMORA_VECTOR_EXPRESSION_HPP
+#define REMORA_VECTOR_EXPRESSION_HPP
 
 #include "detail/expression_optimizers.hpp"
 #include "kernels/dot.hpp"
@@ -34,8 +34,7 @@
 #include "kernels/vector_max.hpp"
 #include <boost/utility/enable_if.hpp>
 
-namespace shark {
-namespace blas {
+namespace remora{
 
 template<class T, class VecV, class Device>
 typename boost::enable_if<
@@ -73,23 +72,23 @@ repeat(T scalar, std::size_t elements){
 }
 
 
-#define SHARK_UNARY_VECTOR_TRANSFORMATION(name, F)\
+#define REMORA_UNARY_VECTOR_TRANSFORMATION(name, F)\
 template<class VecV, class Device>\
 vector_unary<VecV,typename device_traits<Device>:: template F<typename VecV::value_type> >\
 name(vector_expression<VecV, Device> const& v){\
 	typedef typename device_traits<Device>:: template F<typename VecV::value_type> functor_type;\
 	return vector_unary<VecV, functor_type >(v(), functor_type());\
 }
-SHARK_UNARY_VECTOR_TRANSFORMATION(abs, abs)
-SHARK_UNARY_VECTOR_TRANSFORMATION(log, log)
-SHARK_UNARY_VECTOR_TRANSFORMATION(exp, exp)
-SHARK_UNARY_VECTOR_TRANSFORMATION(tanh,tanh)
-SHARK_UNARY_VECTOR_TRANSFORMATION(sqr, sqr)
-SHARK_UNARY_VECTOR_TRANSFORMATION(sqrt, sqrt)
-SHARK_UNARY_VECTOR_TRANSFORMATION(sigmoid, sigmoid)
-SHARK_UNARY_VECTOR_TRANSFORMATION(softPlus, soft_plus)
-SHARK_UNARY_VECTOR_TRANSFORMATION(elem_inv, inv)
-#undef SHARK_UNARY_VECTOR_TRANSFORMATION
+REMORA_UNARY_VECTOR_TRANSFORMATION(abs, abs)
+REMORA_UNARY_VECTOR_TRANSFORMATION(log, log)
+REMORA_UNARY_VECTOR_TRANSFORMATION(exp, exp)
+REMORA_UNARY_VECTOR_TRANSFORMATION(tanh,tanh)
+REMORA_UNARY_VECTOR_TRANSFORMATION(sqr, sqr)
+REMORA_UNARY_VECTOR_TRANSFORMATION(sqrt, sqrt)
+REMORA_UNARY_VECTOR_TRANSFORMATION(sigmoid, sigmoid)
+REMORA_UNARY_VECTOR_TRANSFORMATION(softPlus, soft_plus)
+REMORA_UNARY_VECTOR_TRANSFORMATION(elem_inv, inv)
+#undef REMORA_UNARY_VECTOR_TRANSFORMATION
 
 ///\brief Adds two vectors
 template<class VecV1, class VecV2, class Device>
@@ -158,7 +157,7 @@ typename boost::enable_if<
 	return scalar_vector<T, Device>(v().size(),t) - v;
 }
 
-#define SHARK_BINARY_VECTOR_EXPRESSION(name, F)\
+#define REMORA_BINARY_VECTOR_EXPRESSION(name, F)\
 template<class VecV1, class VecV2, class Device>\
 vector_binary<VecV1, VecV2, typename device_traits<Device>:: template F<typename common_value_type<VecV1,VecV2>::type> >\
 name(vector_expression<VecV1, Device> const& v1, vector_expression<VecV2, Device> const& v2){\
@@ -167,18 +166,18 @@ name(vector_expression<VecV1, Device> const& v1, vector_expression<VecV2, Device
 	typedef typename device_traits<Device>:: template F<type> functor_type;\
 	return vector_binary<VecV1, VecV2, functor_type >(v1(),v2(), functor_type());\
 }
-SHARK_BINARY_VECTOR_EXPRESSION(operator*, multiply)
-SHARK_BINARY_VECTOR_EXPRESSION(element_prod, multiply)
-SHARK_BINARY_VECTOR_EXPRESSION(operator/, divide)
-SHARK_BINARY_VECTOR_EXPRESSION(element_div, divide)
-SHARK_BINARY_VECTOR_EXPRESSION(pow, pow)
-SHARK_BINARY_VECTOR_EXPRESSION(min, min)
-SHARK_BINARY_VECTOR_EXPRESSION(max, max)
-#undef SHARK_BINARY_VECTOR_EXPRESSION
+REMORA_BINARY_VECTOR_EXPRESSION(operator*, multiply)
+REMORA_BINARY_VECTOR_EXPRESSION(element_prod, multiply)
+REMORA_BINARY_VECTOR_EXPRESSION(operator/, divide)
+REMORA_BINARY_VECTOR_EXPRESSION(element_div, divide)
+REMORA_BINARY_VECTOR_EXPRESSION(pow, pow)
+REMORA_BINARY_VECTOR_EXPRESSION(min, min)
+REMORA_BINARY_VECTOR_EXPRESSION(max, max)
+#undef REMORA_BINARY_VECTOR_EXPRESSION
 
 
 //operations of the form op(v,t)[i] = op(v[i],t)
-#define SHARK_VECTOR_SCALAR_TRANSFORMATION(name, F)\
+#define REMORA_VECTOR_SCALAR_TRANSFORMATION(name, F)\
 template<class T, class VecV, class Device> \
 typename boost::enable_if< \
 	std::is_convertible<T, typename VecV::value_type >,\
@@ -190,20 +189,20 @@ name (vector_expression<VecV, Device> const& v, T t){ \
 	typedef typename device_traits<Device>:: template F<type> functor_type;\
 	return  vector_binary<VecV, scalar_vector<type, Device>, functor_type >(v(), scalar_vector<type, Device>(v().size(),(type)t), functor_type()); \
 }
-SHARK_VECTOR_SCALAR_TRANSFORMATION(operator/, divide)
-SHARK_VECTOR_SCALAR_TRANSFORMATION(operator<, less_than)
-SHARK_VECTOR_SCALAR_TRANSFORMATION(operator<=, less_equal_than)
-SHARK_VECTOR_SCALAR_TRANSFORMATION(operator>, bigger_than)
-SHARK_VECTOR_SCALAR_TRANSFORMATION(operator>=, bigger_equal_than)
-SHARK_VECTOR_SCALAR_TRANSFORMATION(operator==, equal)
-SHARK_VECTOR_SCALAR_TRANSFORMATION(operator!=, not_equal)
-SHARK_VECTOR_SCALAR_TRANSFORMATION(min, min)
-SHARK_VECTOR_SCALAR_TRANSFORMATION(max, max)
-SHARK_VECTOR_SCALAR_TRANSFORMATION(pow, pow)
-#undef SHARK_VECTOR_SCALAR_TRANSFORMATION
+REMORA_VECTOR_SCALAR_TRANSFORMATION(operator/, divide)
+REMORA_VECTOR_SCALAR_TRANSFORMATION(operator<, less_than)
+REMORA_VECTOR_SCALAR_TRANSFORMATION(operator<=, less_equal_than)
+REMORA_VECTOR_SCALAR_TRANSFORMATION(operator>, bigger_than)
+REMORA_VECTOR_SCALAR_TRANSFORMATION(operator>=, bigger_equal_than)
+REMORA_VECTOR_SCALAR_TRANSFORMATION(operator==, equal)
+REMORA_VECTOR_SCALAR_TRANSFORMATION(operator!=, not_equal)
+REMORA_VECTOR_SCALAR_TRANSFORMATION(min, min)
+REMORA_VECTOR_SCALAR_TRANSFORMATION(max, max)
+REMORA_VECTOR_SCALAR_TRANSFORMATION(pow, pow)
+#undef REMORA_VECTOR_SCALAR_TRANSFORMATION
 
 // operations of the form op(t,v)[i] = op(t,v[i])
-#define SHARK_VECTOR_SCALAR_TRANSFORMATION_2(name, F)\
+#define REMORA_VECTOR_SCALAR_TRANSFORMATION_2(name, F)\
 template<class T, class VecV, class Device> \
 typename boost::enable_if< \
 	std::is_convertible<T, typename VecV::value_type >,\
@@ -214,9 +213,9 @@ name (T t, vector_expression<VecV, Device> const& v){ \
 	typedef typename device_traits<Device>:: template F<type> functor_type;\
 	return  vector_binary<scalar_vector<T, Device>, VecV, functor_type >(scalar_vector<T, Device>(v().size(),t), v() ,functor_type()); \
 }
-SHARK_VECTOR_SCALAR_TRANSFORMATION_2(min, min)
-SHARK_VECTOR_SCALAR_TRANSFORMATION_2(max, max)
-#undef SHARK_VECTOR_SCALAR_TRANSFORMATION_2
+REMORA_VECTOR_SCALAR_TRANSFORMATION_2(min, min)
+REMORA_VECTOR_SCALAR_TRANSFORMATION_2(max, max)
+#undef REMORA_VECTOR_SCALAR_TRANSFORMATION_2
 
 template<class VecV1, class VecV2, class Device>
 vector_binary<VecV1, VecV2, 
@@ -356,8 +355,6 @@ inner_prod(
 	value_type result = value_type();
 	kernels::dot(eval_block(v1),eval_block(v2),result);
 	return result;
-}
-
 }
 
 }

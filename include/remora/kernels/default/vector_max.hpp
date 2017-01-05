@@ -27,12 +27,12 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_VECTOR_MAX_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_VECTOR_MAX_HPP
+#ifndef REMORA_KERNELS_DEFAULT_VECTOR_MAX_HPP
+#define REMORA_KERNELS_DEFAULT_VECTOR_MAX_HPP
 
 #include "../../detail/traits.hpp"
 #include <algorithm>
-namespace shark { namespace blas {namespace bindings{
+namespace remora{namespace bindings{
 
 template<class E, class Tag>
 std::size_t vector_max(vector_expression<E, cpu_tag> const& v,Tag) {
@@ -40,5 +40,5 @@ std::size_t vector_max(vector_expression<E, cpu_tag> const& v,Tag) {
 }
 
 
-}}}
+}}
 #endif

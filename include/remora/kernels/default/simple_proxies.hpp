@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_PROXIES_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_PROXIES_HPP
+#ifndef REMORA_KERNELS_DEFAULT_PROXIES_HPP
+#define REMORA_KERNELS_DEFAULT_PROXIES_HPP
 
 #include "../../detail/matrix_proxy_classes.hpp"
 #include "../../detail/vector_proxy_classes.hpp"
@@ -38,7 +38,7 @@
 // kernels, as this would generate cyclic include dependencies.
 // instead we generate "simple" versions of the proxies here
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 
 //vector subrange
 template<class V>
@@ -108,5 +108,5 @@ simple_trans(matrix_expression<M, cpu_tag>& m){
 	return matrix_transpose<M>(m());
 }
 
-}}}
+}}
 #endif

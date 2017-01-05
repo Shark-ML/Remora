@@ -30,13 +30,12 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_MATRIX_PROXY_HPP
-#define SHARK_LINALG_BLAS_MATRIX_PROXY_HPP
+#ifndef REMORA_MATRIX_PROXY_HPP
+#define REMORA_MATRIX_PROXY_HPP
 
 #include "detail/expression_optimizers.hpp"
 
-namespace shark {
-namespace blas {
+namespace remora{
 	
 	
 ////////////////////////////////////
@@ -322,5 +321,5 @@ to_matrix(
 	return to_matrix(static_cast<E&>(v),size1,size2);
 }
 
-}}
+}
 #endif

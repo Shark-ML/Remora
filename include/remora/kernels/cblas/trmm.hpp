@@ -29,13 +29,13 @@
  *
  */
 //===========================================================================
-#ifndef SHARK_LINALG_BLAS_KERNELS_CBLAS_TRMM_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CBLAS_TRMM_HPP
+#ifndef REMORA_KERNELS_CBLAS_TRMM_HPP
+#define REMORA_KERNELS_CBLAS_TRMM_HPP
 
 #include "cblas_inc.hpp"
 #include <boost/mpl/bool.hpp>
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 
 inline void trmm(
 	CBLAS_ORDER const order,
@@ -189,5 +189,5 @@ struct  has_optimized_trmm
 	typename M2::value_type
 >{};
 
-}}}
+}}
 #endif

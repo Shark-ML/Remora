@@ -27,15 +27,15 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_DOT_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DOT_HPP
+#ifndef REMORA_KERNELS_DOT_HPP
+#define REMORA_KERNELS_DOT_HPP
 
 #include "default/dot.hpp"
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include "clblas/dot.hpp"
 #endif
 	
-namespace shark { namespace blas {namespace kernels{
+namespace remora{namespace kernels{
 	
 ///\brief Well known dot-product r=<e1,e2>=sum_i e1_i*e2_i.
 ///
@@ -43,7 +43,7 @@ namespace shark { namespace blas {namespace kernels{
 /// to be applied, the binding is called automatically from {binding}/dot.h
 /// otherwise default/dot.h is used which is fully implemented for all dense/sparse combinations.
 /// if a combination is optimized, bindings::has_optimized_dot<E1,E2,R>::type evaluates to boost::mpl::true_
-/// The kernels themselves are implemented in blas::bindings::dot.
+/// The kernels themselves are implemented in bindings::dot.
 template<class E1, class E2, class result_type, class Device>
 void dot(
 	vector_expression<E1, Device> const& e1,
@@ -52,10 +52,10 @@ void dot(
 ) {
 	SIZE_CHECK(e1().size() == e2().size());
 	
-	blas::bindings::dot(
+	bindings::dot(
 		e1, e2,result,typename E1::evaluation_category::tag(), typename E2::evaluation_category::tag()
 	);
 }
 
-}}}
+}}
 #endif

@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_CLBLAS_SUM_ROWS_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CLBLAS_SUM_ROWS_HPP
+#ifndef REMORA_KERNELS_CLBLAS_SUM_ROWS_HPP
+#define REMORA_KERNELS_CLBLAS_SUM_ROWS_HPP
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
@@ -37,7 +37,7 @@
 #include <boost/compute/detail/meta_kernel.hpp>
 #include <boost/compute/functional/operator.hpp> //for multiplies
 
-namespace shark { namespace blas {namespace bindings{
+namespace remora{namespace bindings{
 
 template<class M,class V, class Orientation>
 void sum_rows(
@@ -87,6 +87,6 @@ void sum_rows(
 }
 
 
-}}}
+}}
 
 #endif

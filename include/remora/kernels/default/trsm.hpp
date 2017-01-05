@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_TRSM_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_TRSM_HPP
+#ifndef REMORA_KERNELS_DEFAULT_TRSM_HPP
+#define REMORA_KERNELS_DEFAULT_TRSM_HPP
 
 #include "../../expression_types.hpp" //matrix_expression
 #include "../../detail/structure.hpp" //structure tags
@@ -38,7 +38,7 @@
 #include "simple_proxies.hpp"
 #include <boost/mpl/bool.hpp> //boost::mpl::false_ marker for unoptimized
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 
 //Lower triangular - matrix(row-major)
 template<std::size_t maxBlockSize1,std::size_t maxBlockSize2, bool Unit, class MatA, class MatB>
@@ -281,5 +281,5 @@ void trsm(
 	
 	bindings::trsm_recursive(A,B,0,A().size1(), Triangular(), Side());
 }
-}}}
+}}
 #endif

@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_TRIANGULAR_MATRIX_HPP
-#define SHARK_LINALG_BLAS_TRIANGULAR_MATRIX_HPP
+#ifndef REMORA_TRIANGULAR_MATRIX_HPP
+#define REMORA_TRIANGULAR_MATRIX_HPP
 
 
 #include "assignment.hpp"
@@ -37,8 +37,7 @@
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/vector.hpp>
 
-namespace shark {
-namespace blas {
+namespace remora{
 
 template<class T, class Orientation, class TriangularType>
 class triangular_matrix:public matrix_container<triangular_matrix<T,Orientation,TriangularType>, cpu_tag > {
@@ -503,7 +502,6 @@ struct const_expression<triangular_matrix<T,Orientation, TriangularType> const>{
 	typedef triangular_matrix<T,Orientation, TriangularType> const type;
 };
 
-}
 }
 
 #endif

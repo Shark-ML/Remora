@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_CLBLAS_TRSV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CLBLAS_TRSV_HPP
+#ifndef REMORA_KERNELS_CLBLAS_TRSV_HPP
+#define REMORA_KERNELS_CLBLAS_TRSV_HPP
 
 
 #include "../../detail/traits.hpp"
@@ -42,7 +42,7 @@
 
 ///solves systems of triangular matrices with one left hand side
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 struct trsv_kernel{
 	boost::compute::kernel kernel;
 	std::size_t start_index;
@@ -182,5 +182,5 @@ void trsv(
 	
 	bindings::trsv_recursive(A,b,kernel,0,A().size1(), TileSize, numWorkers, Triangular());
 }
-}}}
+}}
 #endif

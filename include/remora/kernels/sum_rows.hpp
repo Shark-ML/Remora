@@ -28,16 +28,15 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_SUM_ROWS_HPP
-#define SHARK_LINALG_BLAS_KERNELS_SUM_ROWS_HPP
+#ifndef REMORA_KERNELS_SUM_ROWS_HPP
+#define REMORA_KERNELS_SUM_ROWS_HPP
 
 #include "default/sum_rows.hpp"
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include "clblas/sum_rows.hpp"
 #endif
 
-namespace shark { namespace blas {
-namespace bindings{
+namespace remora {namespace bindings{
 template<class M,class V, class Device, class Tag1, class Tag2>
 void sum_rows(
 	matrix_expression<M, Device> const & A, 
@@ -66,6 +65,6 @@ void sum_rows(
 	typename M::evaluation_category::tag(), typename V::evaluation_category::tag());
 }
 
-}}}
+}}
 
 #endif

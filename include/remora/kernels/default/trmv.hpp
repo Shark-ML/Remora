@@ -28,8 +28,8 @@
  *
  */
 //===========================================================================
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_TRMV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_TRMV_HPP
+#ifndef REMORA_KERNELS_DEFAULT_TRMV_HPP
+#define REMORA_KERNELS_DEFAULT_TRMV_HPP
 
 #include "../../expression_types.hpp" //vector/matrix_expression
 #include "../../detail/matrix_proxy_classes.hpp" //matrix_range, matrix_row
@@ -38,7 +38,7 @@
 #include "../dot.hpp" //dot kernel
 #include <boost/mpl/bool.hpp>
 
-namespace shark{ namespace blas{ namespace bindings{
+namespace remora{ namespace bindings{
 	
 //Lower triangular(row-major) - vector
 template<bool Unit, class MatA, class V>
@@ -189,5 +189,5 @@ void trmv(
 	trmv_impl<Unit>(A, b, boost::mpl::bool_<Upper>(), typename MatA::orientation());
 }
 
-}}}
+}}
 #endif

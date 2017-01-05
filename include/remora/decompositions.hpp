@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_DECOMPOSITIONS_HPP
-#define SHARK_LINALG_BLAS_DECOMPOSITIONS_HPP
+#ifndef REMORA_DECOMPOSITIONS_HPP
+#define REMORA_DECOMPOSITIONS_HPP
 
 #include "kernels/trsm.hpp"
 #include "kernels/trsv.hpp"
@@ -40,7 +40,7 @@
 #include "vector_expression.hpp"
 #include "io.hpp"
 
-namespace shark{namespace blas{
+namespace remora{
 template<class D, class Device>
 struct solver_expression{
 	typedef Device device_type;
@@ -572,5 +572,5 @@ struct solver:public detail::solver_traits<MatA,SolverType>::type{
 };
 
 
-}}
+}
 #endif

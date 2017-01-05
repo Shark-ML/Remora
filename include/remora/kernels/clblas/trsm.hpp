@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_CLBLAS_TRSM_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CLBLAS_TRSM_HPP
+#ifndef REMORA_KERNELS_CLBLAS_TRSM_HPP
+#define REMORA_KERNELS_CLBLAS_TRSM_HPP
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
@@ -38,7 +38,7 @@
 #include <boost/compute/functional/operator.hpp> //for multiplies
 ///solves systems of triangular matrices
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora {namespace bindings {
 struct trsm_kernel{
 	boost::compute::kernel kernel;
 	std::size_t K_index;
@@ -196,5 +196,5 @@ void trsm(
 	
 	bindings::trsm_recursive(A,B,kernel,0,A().size1(), TileSizeA, TileSizeB, numWorkers,Triangular());
 }
-}}}
+}}
 #endif

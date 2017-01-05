@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_TRMM_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_TRMM_HPP
+#ifndef REMORA_KERNELS_DEFAULT_TRMM_HPP
+#define REMORA_KERNELS_DEFAULT_TRMM_HPP
 
 #include "../../expression_types.hpp"//for matrix_expression
 #include "../../detail/traits.hpp"//triangular_tag
@@ -39,11 +39,11 @@
 #include <boost/align/assume_aligned.hpp> //pack_A_triangular can make use of it
 #include <boost/mpl/bool.hpp> //boost::mpl::false_ marker for unoptimized
 #include <type_traits> //std::common_type
-namespace shark { namespace blas { namespace bindings {
+namespace remora{ namespace bindings {
 
 template <typename T>
 struct trmm_block_size {
-	static const unsigned vector_length = SHARK_BLAS_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
+	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
 	static const unsigned mr = 4; // stripe width for lhs
 	static const unsigned nr = 3 * vector_length; // stripe width for rhs
 	static const unsigned lhs_block_size = 32 * mr;
@@ -180,6 +180,6 @@ void trmm(
 	trmm_impl(A,B, triangular_tag<Upper,Unit>());
 }
 
-}}}
+}}
 
 #endif

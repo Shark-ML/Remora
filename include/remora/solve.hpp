@@ -25,12 +25,12 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_SOLVE_HPP
-#define SHARK_LINALG_BLAS_SOLVE_HPP
+#ifndef REMORA_SOLVE_HPP
+#define REMORA_SOLVE_HPP
 
 #include "decompositions.hpp"
 
-namespace shark{namespace blas{
+namespace remora{
 
 
 //////////////////////////////////////////////////////
@@ -62,7 +62,7 @@ public:
 	size_type size() const {
 		return m_rhs.size();
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_rhs.queue();
 	}
@@ -142,7 +142,7 @@ public:
 	size_type size2() const {
 		return m_rhs.size2();
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_rhs.queue();
 	}
@@ -214,7 +214,7 @@ public:
 	size_type size2() const {
 		return m_matrix.size1();
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_rhs.queue();
 	}
@@ -473,5 +473,5 @@ inv(
 }
 
 
-}}
+}
 #endif

@@ -30,14 +30,13 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_VECTOR_PROXY_HPP
-#define SHARK_LINALG_BLAS_VECTOR_PROXY_HPP
+#ifndef REMORA_VECTOR_PROXY_HPP
+#define REMORA_VECTOR_PROXY_HPP
 
 #include "detail/expression_optimizers.hpp"
 
 
-namespace shark{
-namespace blas{
+namespace remora{
 
 // ------------------
 // Vector subrange
@@ -81,7 +80,6 @@ temporary_proxy<dense_vector_adaptor<T> > adapt_vector(T (&array)[N]){
 }
 
 
-}
 }
 
 #endif

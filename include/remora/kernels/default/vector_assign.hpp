@@ -25,12 +25,12 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_VECTOR_ASSIGN_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_VECTOR_ASSIGN_HPP
+#ifndef REMORA_KERNELS_DEFAULT_VECTOR_ASSIGN_HPP
+#define REMORA_KERNELS_DEFAULT_VECTOR_ASSIGN_HPP
 
 #include "../../expression_types.hpp"
 
-namespace shark {namespace blas {namespace bindings{
+namespace remora{namespace bindings{
 
 template<class F, class V>
 void assign(vector_expression<V, cpu_tag>& v, typename V::value_type t) {
@@ -390,5 +390,5 @@ void vector_assign_functor(
 	bindings::vector_assign(v, temporary, tag, tag);
 }
 
-}}}
+}}
 #endif

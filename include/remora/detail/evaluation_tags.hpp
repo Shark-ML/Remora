@@ -30,11 +30,10 @@
  */
 //===========================================================================
 
-#ifndef SHARK_LINALG_BLAS_DETAIL_EVALUATION_TAGS_HPP
-#define SHARK_LINALG_BLAS_DETAIL_EVALUATION_TAGS_HPP
+#ifndef REMORA_DETAIL_EVALUATION_TAGS_HPP
+#define REMORA_DETAIL_EVALUATION_TAGS_HPP
 
-namespace shark {
-namespace blas {
+namespace remora{
 	
 // Evaluation type tags:
 // dense_tag -> dense storage scheme an dense interface supported
@@ -93,6 +92,6 @@ struct evaluation_restrict_traits: public detail::evaluation_restrict_traits<
 	typename E2::evaluation_category
 >{};
 
-}}
+}
 
 #endif

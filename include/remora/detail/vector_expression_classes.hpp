@@ -25,18 +25,17 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_VECTOR_EXPRESSION_CLASSES_HPP
-#define SHARK_LINALG_BLAS_VECTOR_EXPRESSION_CLASSES_HPP
+#ifndef REMORA_VECTOR_EXPRESSION_CLASSES_HPP
+#define REMORA_VECTOR_EXPRESSION_CLASSES_HPP
 
 #include "../assignment.hpp"
 #include "iterator.hpp"
 #include "traits.hpp"
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include <boost/compute/command_queue.hpp>
 #endif
 
-namespace shark {
-namespace blas {
+namespace remora{
 
 ///\brief Implements multiplications of a vector by a scalar
 template<class E>
@@ -78,7 +77,7 @@ public:
 	functor_type functor()const{
 		return functor_type(m_scalar);
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression.queue();
 	}
@@ -149,7 +148,7 @@ public:
 	const_reference operator()(IndexExpr const& /*i*/) const {
 		return m_value;
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return boost::compute::system::default_queue();
 	}
@@ -204,7 +203,7 @@ public:
 		SIZE_CHECK(i < m_size);
 		return (i == m_index)? value_type(1) : value_type(0);
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return boost::compute::system::default_queue();
 	}
@@ -263,7 +262,7 @@ public:
 	functor_type const& functor()const{
 		return m_functor;
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression.queue();
 	}
@@ -355,7 +354,7 @@ public:
 	rhs_closure_type const& rhs() const {
 		return m_rhs;
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_lhs.queue();
 	}
@@ -448,7 +447,7 @@ public:
 	functor_type const& functor()const{
 		return m_functor;
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_lhs.queue();
 	}
@@ -513,5 +512,5 @@ private:
 	}
 };
 
-}}
+}
 #endif

@@ -29,12 +29,12 @@
  *
  */
 //===========================================================================
-#ifndef SHARK_LINALG_BLAS_KERNELS_CBLAS_SYRK_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CBLAS_SYRK_HPP
+#ifndef REMORA_KERNELS_CBLAS_SYRK_HPP
+#define REMORA_KERNELS_CBLAS_SYRK_HPP
 
 #include "cblas_inc.hpp"
 
-namespace shark { namespace blas { namespace bindings {
+namespace remora{ namespace bindings {
 
 inline void syrk(
 	CBLAS_ORDER const order, CBLAS_UPLO uplo, CBLAS_TRANSPOSE trans,
@@ -124,6 +124,6 @@ struct  has_optimized_syrk
 	typename M2::value_type
 >{};
 
-}}}
+}}
 
 #endif

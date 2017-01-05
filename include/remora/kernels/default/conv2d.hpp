@@ -28,17 +28,17 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_Conv2D_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_Conv2D_HPP
+#ifndef REMORA_KERNELS_DEFAULT_Conv2D_HPP
+#define REMORA_KERNELS_DEFAULT_Conv2D_HPP
 
 #include "../../detail/matrix_proxy_classes.hpp"
 #include <boost/align/aligned_allocator.hpp> //mgemm requires aligned allocations
 #include <type_traits> //for std::common_type and aligned storage
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 
 template <typename T>
 struct conv2d_block_size {
-	static const unsigned vector_length = SHARK_BLAS_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
+	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
 	static const unsigned col_block_size = 3; //number of neighbouring columbs to be computed in a mini block
 	static const unsigned num_filter_outputs = 2*vector_length; //number of filters to be computed in a block. must be multiple of vector_length
 	static const unsigned output_block_size = (200/col_block_size) * col_block_size; // maximum size of the tile of an output. Bigger is not always better.
@@ -70,7 +70,7 @@ void uConv2d(T const* image, T const* filter, T* output,
 	static std::size_t const col_block_size = block_size::col_block_size;
 	static std::size_t const num_filter_outputs = block_size::num_filter_outputs;
 	
-#ifdef SHARK_USE_SIMD
+#ifdef REMORA_USE_SIMD
 	static const std::size_t num_filter_vec = num_filter_outputs/block_size::vector_length;
 #ifdef BOOST_COMP_CLANG_DETECTION
 	typedef T vx __attribute__((ext_vector_type (block_size::vector_length)));
@@ -88,7 +88,7 @@ void uConv2d(T const* image, T const* filter, T* output,
 	for(std::size_t i = 0; i != output_size1; ++i){
 		for(std::size_t j = 0; j != output_size2; j += col_block_size){//we hand unroll this loop, thus output_size2 must be divisable by col_block_size
 			//create local accumulator register
-#ifdef SHARK_USE_SIMD
+#ifdef REMORA_USE_SIMD
 			vx acc[num_filter_vec * col_block_size] = {};
 #else
 			typename std::aligned_storage<sizeof(T[num_filter_outputs * col_block_size]),block_size::align>::type Pa;
@@ -125,7 +125,7 @@ void uConv2d(T const* image, T const* filter, T* output,
 //takes a filter and transforms it into block-interleaved format as described above
 template<class T, class E, class block_size>
 void pack_filter(
-	T* p, blas::matrix_expression<E, blas::cpu_tag> const& filter_im, std::size_t num_channels, std::size_t num_filters, 
+	T* p, matrix_expression<E, cpu_tag> const& filter_im, std::size_t num_channels, std::size_t num_filters, 
 	block_size
 ){
 	static std::size_t const num_filter_outputs = block_size::num_filter_outputs;
@@ -141,13 +141,13 @@ void pack_filter(
 			for(std::size_t f = 0; f != num_filter_outputs; ++f){
 				std::size_t filter = filter_block * num_filter_outputs + f;
 				//obtain proxy to the target memory which is used to store this channel
-				blas::dense_matrix_adaptor<T> filter_packed_channel(p + f,size1,size2, filter_packed_stride1, filter_packed_stride2);
+				dense_matrix_adaptor<T> filter_packed_channel(p + f,size1,size2, filter_packed_stride1, filter_packed_stride2);
 				if(filter >= num_filters){//check if the filter is padding and pad with 0
 					filter_packed_channel.clear();
 				}else{
 					//obtain proxy to current image channel and assign it(handles case of E being column major)
 					std::size_t filter_channel_start = (filter * num_channels + channel) * size1;
-					blas::matrix_range<typename blas::const_expression<E>::type > filter_channel(filter_im(),filter_channel_start,filter_channel_start+size1, 0,size2);
+					matrix_range<typename const_expression<E>::type > filter_channel(filter_im(),filter_channel_start,filter_channel_start+size1, 0,size2);
 					noalias(filter_packed_channel) = filter_channel;
 				}
 			}
@@ -159,7 +159,7 @@ void pack_filter(
 //takes a tile of the image and copies it into a temporary array. if the tile exceeds the image boundaries, those values are undefined.
 template<class T, class E, class block_size>
 void pack_image(
-	T* p, blas::matrix_expression<E, blas::cpu_tag> const& image, std::size_t num_channels,
+	T* p, matrix_expression<E, cpu_tag> const& image, std::size_t num_channels,
 	std::size_t start1, std::size_t start2,
 	std::size_t size1, std::size_t size2,
 	block_size
@@ -171,10 +171,10 @@ void pack_image(
 		std::size_t image_channel_start1 = channel * image().size1()/num_channels +start1;
 
 		//obtain proxy to the unpadded target memory which is used to store this channel
-		blas::dense_matrix_adaptor<T> image_packed_channel(p, size1, unpadded_size2, size2, 1);
+		dense_matrix_adaptor<T> image_packed_channel(p, size1, unpadded_size2, size2, 1);
 
 		//obtain proxy to current image channel and assign it(handles case of E being column major)
-		blas::matrix_range<typename blas::const_expression<E>::type > image_channel(image(),image_channel_start1,image_channel_start1 + size1, start2, start2 + unpadded_size2);
+		matrix_range<typename const_expression<E>::type > image_channel(image(),image_channel_start1,image_channel_start1 + size1, start2, start2 + unpadded_size2);
 		noalias(image_packed_channel) = image_channel;
 		
 		//move pointer to next channel
@@ -184,9 +184,9 @@ void pack_image(
 
 template<class E1, class E2, class M>
 void conv2d(
-	blas::matrix_expression<E1, blas::cpu_tag> const& image,
-	blas::matrix_expression<E2, blas::cpu_tag> const& filter,
-	blas::matrix_expression<M, blas::cpu_tag>& output,
+	matrix_expression<E1, cpu_tag> const& image,
+	matrix_expression<E2, cpu_tag> const& filter,
+	matrix_expression<M, cpu_tag>& output,
 	std::size_t num_channels,
 	std::size_t num_filters
 ){	
@@ -254,10 +254,10 @@ void conv2d(
 					if(filter_index >= num_filters) break; // do not copy padding
 					std::size_t output_start1 = filter_index * output_size1 + block_start1;
 					//obtain proxy to the unpadded target memory which is used to store this channel
-					blas::dense_matrix_adaptor<value_type const> output_packed_channel(output_temporary + f, cur_out_size1, unpadded_size2, cur_out_size2 * num_filter_outputs, num_filter_outputs);
+					dense_matrix_adaptor<value_type const> output_packed_channel(output_temporary + f, cur_out_size1, unpadded_size2, cur_out_size2 * num_filter_outputs, num_filter_outputs);
 
 					//obtain proxy to current image channel and assign it(handles case of E being column major)
-					blas::matrix_range<M> output_channel(output(),output_start1,output_start1 + cur_out_size1, block_start2, block_start2 + unpadded_size2);
+					matrix_range<M> output_channel(output(),output_start1,output_start1 + cur_out_size1, block_start2, block_start2 + unpadded_size2);
 					noalias(output_channel) = output_packed_channel;
 				}
 			}
@@ -268,6 +268,6 @@ void conv2d(
 	allocator.deallocate(output_temporary, num_filter_outputs * output_size1 * output_size2);
 }
 
-}}}
+}}
 
 #endif

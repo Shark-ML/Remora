@@ -30,16 +30,15 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_ASSIGNMENT_HPP
-#define SHARK_LINALG_BLAS_ASSIGNMENT_HPP
+#ifndef REMORA_ASSIGNMENT_HPP
+#define REMORA_ASSIGNMENT_HPP
 
 #include "kernels/matrix_assign.hpp"
 #include "kernels/vector_assign.hpp"
 #include "detail/traits.hpp"
 #include "detail/functional.hpp"
 
-namespace shark {
-namespace blas {
+namespace remora{
 	
 //////////////////////////////////////////////////////////////////////
 /////Evaluate blockwise expressions
@@ -59,7 +58,7 @@ typename boost::mpl::eval_if<
 	vector_temporary<E>,
 	boost::mpl::identity<E const&>
 >::type
-eval_block(blas::vector_expression<E, Device> const& e){
+eval_block(vector_expression<E, Device> const& e){
 	return e();//either casts to E const& or returns the copied expression
 }
 ///\brief conditionally evaluates a matrix expression if it is a block expression
@@ -76,7 +75,7 @@ typename boost::mpl::eval_if<
 	matrix_temporary<E>,
 	boost::mpl::identity<E const&>
 >::type
-eval_block(blas::matrix_expression<E, Device> const& e){
+eval_block(matrix_expression<E, Device> const& e){
 	return e();//either casts to E const& or returns the copied expression
 }
 	
@@ -615,5 +614,5 @@ noalias_proxy<C> noalias(temporary_proxy<C> lvalue) {
 	return noalias_proxy<C> (static_cast<C&>(lvalue));
 }
 
-}}
+}
 #endif

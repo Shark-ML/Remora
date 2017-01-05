@@ -28,15 +28,15 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_CBLAS_TRSV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CBLAS_TRSV_HPP
+#ifndef REMORA_KERNELS_CBLAS_TRSV_HPP
+#define REMORA_KERNELS_CBLAS_TRSV_HPP
 
 #include "cblas_inc.hpp"
 #include <boost/mpl/bool.hpp>
 
 ///solves systems of triangular matrices
 
-namespace shark {namespace blas{ namespace bindings {
+namespace remora {namespace bindings {
 inline void trsv(
 	CBLAS_ORDER order, CBLAS_UPLO uplo,
 	CBLAS_TRANSPOSE transA, CBLAS_DIAG unit,
@@ -167,5 +167,5 @@ struct  has_optimized_trsv
 	typename V::value_type
 >{};
 
-}}}
+}}
 #endif

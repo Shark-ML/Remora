@@ -30,8 +30,8 @@
  */
 //===========================================================================
 
-#ifndef SHARK_LINALG_BLAS_GPU_DETAIL_TRAITS_HPP
-#define SHARK_LINALG_BLAS_GPU_DETAIL_TRAITS_HPP
+#ifndef REMORA_GPU_DETAIL_TRAITS_HPP
+#define REMORA_GPU_DETAIL_TRAITS_HPP
 
 #include "../detail/traits.hpp"
 #include <boost/compute/core.hpp>
@@ -44,7 +44,7 @@
 #include <boost/compute/functional.hpp>
 #include <tuple>
 
-namespace shark{namespace blas{namespace gpu{
+namespace remora{namespace gpu{
 	
 template<class T>
 struct dense_vector_storage{
@@ -354,19 +354,19 @@ struct device_traits<gpu_tag>{
 	using transform_iterator = boost::compute::transform_iterator<Iterator, Functor>;
 
 	template <class Iterator>
-	using subrange_iterator = shark::blas::gpu::detail::subrange_iterator<Iterator>;
+	using subrange_iterator = gpu::detail::subrange_iterator<Iterator>;
 	
 	template<class Iterator1, class Iterator2, class Functor>
-	using binary_transform_iterator = shark::blas::gpu::detail::binary_transform_iterator<Iterator1, Iterator2, Functor>;
+	using binary_transform_iterator = gpu::detail::binary_transform_iterator<Iterator1, Iterator2, Functor>;
 	
 	template<class T>
 	using constant_iterator = boost::compute::constant_iterator<T>;
 	
 	//~ template<class T>
-	//~ using one_hot_iterator = shark::blas::iterators::one_hot_iterator<T>;
+	//~ using one_hot_iterator = iterators::one_hot_iterator<T>;
 	
 	template<class Closure>
-	using indexed_iterator = shark::blas::gpu::detail::indexed_iterator<Closure>;
+	using indexed_iterator = gpu::detail::indexed_iterator<Closure>;
 	
 	//functors
 	
@@ -506,11 +506,11 @@ struct device_traits<gpu_tag>{
 
 namespace boost{namespace compute{
 template<class I1, class I2, class F>
-struct is_device_iterator<shark::blas::gpu::detail::binary_transform_iterator<I1,I2, F> > : boost::true_type {};
+struct is_device_iterator<gpu::detail::binary_transform_iterator<I1,I2, F> > : boost::true_type {};
 template<class Closure>
-struct is_device_iterator<shark::blas::gpu::detail::indexed_iterator<Closure> > : boost::true_type {};
+struct is_device_iterator<gpu::detail::indexed_iterator<Closure> > : boost::true_type {};
 template<class Iterator>
-struct is_device_iterator<shark::blas::gpu::detail::subrange_iterator<Iterator> > : boost::true_type {};
-}}
+struct is_device_iterator<gpu::detail::subrange_iterator<Iterator> > : boost::true_type {};
+}
 
 #endif

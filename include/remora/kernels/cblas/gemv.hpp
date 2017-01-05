@@ -29,12 +29,12 @@
  *
  */
 //===========================================================================
-#ifndef SHARK_LINALG_BLAS_KERNELS_CBLAS_GEMV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CBLAS_GEMV_HPP
+#ifndef REMORA_KERNELS_CBLAS_GEMV_HPP
+#define REMORA_KERNELS_CBLAS_GEMV_HPP
 
 #include "cblas_inc.hpp"
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 
 inline void gemv(CBLAS_ORDER const Order,
         CBLAS_TRANSPOSE const TransA, int const M, int const N,
@@ -172,5 +172,5 @@ struct  has_optimized_gemv
 	typename M3::value_type
 >{};
 
-}}}
+}}
 #endif

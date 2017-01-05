@@ -29,13 +29,13 @@
  *
  */
 //===========================================================================
-#ifndef SHARK_LINALG_BLAS_KERNELS_CBLAS_TPMV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CBLAS_TPMV_HPP
+#ifndef REMORA_KERNELS_CBLAS_TPMV_HPP
+#define REMORA_KERNELS_CBLAS_TPMV_HPP
 
 #include "cblas_inc.hpp"
 #include <boost/mpl/bool.hpp>
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 
 inline void tpmv(
 	CBLAS_ORDER const Order,
@@ -165,5 +165,5 @@ struct  has_optimized_tpmv
 	typename V::value_type
 >{};
 
-}}}
+}}
 #endif

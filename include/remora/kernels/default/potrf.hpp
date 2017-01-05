@@ -27,15 +27,15 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_POTRF_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_POTRF_HPP
+#ifndef REMORA_KERNELS_DEFAULT_POTRF_HPP
+#define REMORA_KERNELS_DEFAULT_POTRF_HPP
 
 #include "simple_proxies.hpp"
 #include "../trsm.hpp" //trsm kernel
 #include "../syrk.hpp" //syrk kernel
 #include <boost/mpl/bool.hpp> //boost::mpl::false_ marker for unoptimized
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 
 //diagonal block kernels
 //upper potrf(row-major)
@@ -157,5 +157,5 @@ std::size_t potrf(
 	return potrf_recursive(A,0,A().size1(), Triangular());
 }
 
-}}}
+}}
 #endif

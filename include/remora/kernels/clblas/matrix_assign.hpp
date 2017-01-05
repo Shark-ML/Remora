@@ -25,15 +25,15 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_CLBLAS_MATRIX_ASSIGN_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CLBLAS_MATRIX_ASSIGN_HPP
+#ifndef REMORA_KERNELS_CLBLAS_MATRIX_ASSIGN_HPP
+#define REMORA_KERNELS_CLBLAS_MATRIX_ASSIGN_HPP
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
 #include <boost/compute/kernel.hpp>
 #include <boost/compute/detail/meta_kernel.hpp>
 
-namespace shark {namespace blas {namespace bindings{
+namespace remora{namespace bindings{
 	
 //////////////////////////////////////////////////////
 ////Scalar Assignment to Matrix
@@ -180,6 +180,6 @@ void matrix_assign(
 }
 
 
-}}}
+}}
 
 #endif

@@ -28,25 +28,25 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_TRSM_HPP
-#define SHARK_LINALG_BLAS_KERNELS_TRSM_HPP
+#ifndef REMORA_KERNELS_TRSM_HPP
+#define REMORA_KERNELS_TRSM_HPP
 
 #include <boost/mpl/bool.hpp>
-#ifdef SHARK_USE_CBLAS
+#ifdef REMORA_USE_CBLAS
 #include "cblas/trsm.hpp"
 #else
 // if no bindings are included, we have to provide the default has_optimized_gemv 
 // otherwise the binding will take care of this
-namespace shark { namespace blas { namespace bindings{
+namespace remora{ namespace bindings{
 template<class M1, class M2>
 struct  has_optimized_trsm
 : public boost::mpl::false_{};
-}}}
+}}
 #endif
 
 #include "default/trsm.hpp"
 
-namespace shark { namespace blas {namespace kernels{
+namespace remora{namespace kernels{
 	
 ///\brief Implements the TRiangular Solver for Vectors.
 ///
@@ -64,9 +64,9 @@ void trsm(
 	bindings::trsm<Triangular, Side>(A,B,typename bindings::has_optimized_trsm<MatA, MatB>::type());
 }
 
-}}}
+}}
 
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include "clblas/trsm.hpp"
 #endif
 

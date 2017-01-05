@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
- #ifndef SHARK_LINALG_BLAS_MATRIX_EXPRESSION_CLASSES_HPP
-#define SHARK_LINALG_BLAS_MATRIX_EXPRESSION_CLASSES_HPP
+ #ifndef REMORA_MATRIX_EXPRESSION_CLASSES_HPP
+#define REMORA_MATRIX_EXPRESSION_CLASSES_HPP
 
 #include "../kernels/gemv.hpp"
 #include "../kernels/tpmv.hpp"
@@ -37,11 +37,10 @@
 #include "../assignment.hpp"
 #include <type_traits>
 
-namespace shark {
-namespace blas {
+namespace remora {
 
 template<class E>
-class matrix_scalar_multiply:public blas::matrix_expression<matrix_scalar_multiply<E>, typename E::device_type > {
+class matrix_scalar_multiply:public matrix_expression<matrix_scalar_multiply<E>, typename E::device_type > {
 private:
 	typedef typename device_traits<typename E::device_type>:: template multiply_scalar<typename E::value_type> functor_type;
 public:
@@ -81,7 +80,7 @@ public:
 	expression_closure_type const& expression() const{
 		return m_expression;
 	};
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression.queue();
 	}
@@ -133,7 +132,7 @@ private:
 };	
 	
 template<class E1, class E2>
-class matrix_addition: public blas::matrix_expression<matrix_addition<E1, E2>, typename E1::device_type > {
+class matrix_addition: public matrix_expression<matrix_addition<E1, E2>, typename E1::device_type > {
 private:
 	typedef typename device_traits<typename E1::device_type>:: template add<typename E1::value_type> functor_type;
 	typedef typename E1::const_closure_type lhs_closure_type;
@@ -184,7 +183,7 @@ public:
 	rhs_closure_type const& rhs()const{
 		return m_rhs;
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_lhs.queue();
 	}
@@ -255,7 +254,7 @@ private:
 };
 
 template<class V>
-class vector_repeater:public blas::matrix_expression<vector_repeater<V>, typename V::device_type > {
+class vector_repeater:public matrix_expression<vector_repeater<V>, typename V::device_type > {
 public:
 	typedef typename V::const_closure_type expression_closure_type;
 	typedef typename V::size_type size_type;
@@ -267,7 +266,7 @@ public:
 	typedef const_closure_type closure_type;
 	typedef unknown_storage storage_type;
 	typedef unknown_storage const_storage_type;
-	typedef blas::row_major orientation;
+	typedef row_major orientation;
 	typedef typename V::evaluation_category evaluation_category;
 
 	// Construction and destruction
@@ -292,7 +291,7 @@ public:
 	auto operator()(IndexExpr1 const& /*i*/, IndexExpr2 const& j) const -> decltype(this->expression()(j)){
 		return m_vector(j);
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_vector.queue();
 	}
@@ -361,7 +360,7 @@ public:
 	size_type size2() const {
 		return m_size2;
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return boost::compute::system::default_queue();
 	}
@@ -406,7 +405,7 @@ private:
 ///F must provide a boolean flag F::zero_identity which indicates that f(0) = 0. This is needed for correct usage with sparse
 ///arguments - if f(0) != 0 this expression will be dense!
 template<class E, class F>
-class matrix_unary:public blas::matrix_expression<matrix_unary<E, F>, typename E::device_type > {
+class matrix_unary:public matrix_expression<matrix_unary<E, F>, typename E::device_type > {
 public:
 	typedef typename E::const_closure_type expression_closure_type;
 
@@ -443,7 +442,7 @@ public:
 	functor_type const& functor() const {
 		return m_functor;
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression.queue();
 	}
@@ -502,7 +501,7 @@ private:
 };
 
 template<class E1, class E2, class F>
-class matrix_binary:public blas::matrix_expression<matrix_binary<E1, E2, F>, typename E1::device_type > {
+class matrix_binary:public matrix_expression<matrix_binary<E1, E2, F>, typename E1::device_type > {
 public:
 	typedef E1 lhs_type;
 	typedef E2 rhs_type;
@@ -551,7 +550,7 @@ public:
 	functor_type const& functor() const {
 		return m_functor;
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_lhs.queue();
 	}
@@ -668,7 +667,7 @@ public:
 	rhs_closure_type const& rhs() const {
 		return m_rhs;
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_lhs.queue();
 	}
@@ -753,7 +752,7 @@ public:
 	typedef typename MatA::const_row_iterator const_iterator;
 	typedef const_iterator iterator;
 
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_matrix.queue();
 	}
@@ -839,7 +838,7 @@ public:
 	matrix_closure_type const& matrix() const {
 		return m_matrix;
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_matrix.queue();
 	}
@@ -902,7 +901,7 @@ public:
 		return expression().size2 ();
         }
 	
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression.queue();
 	}
@@ -966,7 +965,7 @@ public:
 	matrix_closure_typeB const& rhs() const {
 		return m_rhs;
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_lhs.queue();
 	}
@@ -1048,7 +1047,7 @@ public:
 	size_type size2() const {
 		return m_diagonal.size();
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_diagonal.queue();
 	}
@@ -1086,5 +1085,5 @@ private:
 	vector_closure_type m_diagonal; 
 };
 
-}}
+}
 #endif

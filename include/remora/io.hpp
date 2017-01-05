@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_IO_HPP
-#define SHARK_LINALG_BLAS_IO_HPP
+#ifndef REMORA_IO_HPP
+#define REMORA_IO_HPP
 
 // Only forward definition required to define stream operations
 #include <iosfwd>
@@ -34,7 +34,7 @@
 #include "expression_types.hpp"
 
 
-namespace shark{ namespace blas{
+namespace remora{
 
     /** \brief output stream operator for vector expressions
      *
@@ -133,6 +133,6 @@ namespace shark{ namespace blas{
         s << ')';
         return os << s.str().c_str ();
     }
-}}
+}
 
 #endif

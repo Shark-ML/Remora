@@ -28,28 +28,24 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_POTRF_HPP
-#define SHARK_LINALG_BLAS_KERNELS_POTRF_HPP
+#ifndef REMORA_KERNELS_POTRF_HPP
+#define REMORA_KERNELS_POTRF_HPP
 
-#ifdef SHARK_USE_ATLAS_LAPACK
+#ifdef REMORA_USE_ATLAS_LAPACK
 #include "atlas/potrf.hpp"
 #else
 // if no bindings are included, we have to provide the default has_optimized_gemv
 // otherwise the binding will take care of this
-namespace shark {
-namespace blas {
-namespace bindings {
+namespace remora {namespace bindings {
 template<class M>
 struct  has_optimized_potrf
 	: public boost::mpl::false_ {};
-}}}
+}}
 #endif
 
 #include "default/potrf.hpp"
 
-namespace shark {
-namespace blas {
-namespace kernels {
+namespace remora {namespace kernels {
 
 ///\brief Implements the POsitive TRiangular matrix Factorisation POTRF.
 ///
@@ -63,8 +59,5 @@ std::size_t potrf(
 	return bindings::potrf<Triangular>(A, typename bindings::has_optimized_potrf<MatA>::type());
 }
 
-}
-}
-}
-
+}}
 #endif

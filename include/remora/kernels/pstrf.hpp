@@ -28,13 +28,12 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_PSTRF_HPP
-#define SHARK_LINALG_BLAS_KERNELS_PSTRF_HPP
+#ifndef REMORA_KERNELS_PSTRF_HPP
+#define REMORA_KERNELS_PSTRF_HPP
 
 #include "default/pstrf.hpp"
 
-namespace shark {
-namespace blas {
+namespace remora {
 namespace kernels {
 
 /*!
@@ -68,8 +67,7 @@ std::size_t pstrf(
 	return bindings::pstrf(A,P, Triangular());
 }
 
-}
-}
-}
+
+}}
 
 #endif

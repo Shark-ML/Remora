@@ -25,17 +25,16 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
- #ifndef SHARK_LINALG_BLAS_MATRIX_PROXY_CLASSES_HPP
-#define SHARK_LINALG_BLAS_MATRIX_PROXY_CLASSES_HPP
+ #ifndef REMORA_MATRIX_PROXY_CLASSES_HPP
+#define REMORA_MATRIX_PROXY_CLASSES_HPP
 
 #include "../expression_types.hpp"
 #include "../assignment.hpp"
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include <boost/compute/command_queue.hpp>
 #endif
 
-namespace shark {
-namespace blas {
+namespace remora{
 	
 	
 ///\brief Wraps another expression as a reference.
@@ -81,7 +80,7 @@ public:
 	storage_type raw_storage()const{
 		return m_expression->raw_storage();
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression->queue();
 	}
@@ -241,7 +240,7 @@ public:
 	storage_type raw_storage()const{
 		return m_expression.raw_storage();
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression.queue();
 	}
@@ -394,7 +393,7 @@ public:
 	storage_type raw_storage()const{
 		return m_expression.raw_storage().row(m_i, typename M::orientation());
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression.queue();
 	}
@@ -554,7 +553,7 @@ public:
 	storage_type raw_storage()const{
 		return m_expression.raw_storage().diag();
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression.queue();
 	}
@@ -687,7 +686,7 @@ public:
 	storage_type raw_storage()const{
 		return m_expression.raw_storage().sub_region(m_start1, m_start2, typename M::orientation());
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression.queue();
 	}
@@ -1030,7 +1029,5 @@ private:
 	size_type m_stride2;
 };
 
-
-
-}}
+}
 #endif

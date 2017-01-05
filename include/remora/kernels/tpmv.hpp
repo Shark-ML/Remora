@@ -28,24 +28,24 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_TPMV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_TPMV_HPP
+#ifndef REMORA_KERNELS_TPMV_HPP
+#define REMORA_KERNELS_TPMV_HPP
 
-#ifdef SHARK_USE_CBLAS
+#ifdef REMORA_USE_CBLAS
 #include "cblas/tpmv.hpp"
 #else
 // if no bindings are included, we have to provide the default has_optimized_gemv 
 // otherwise the binding will take care of this
-namespace shark { namespace blas { namespace bindings{
+namespace remora{ namespace bindings{
 template<class M1, class M2>
 struct  has_optimized_tpmv
 : public boost::mpl::false_{};
-}}}
+}}
 #endif
 
 #include "default/tpmv.hpp"
 
-namespace shark { namespace blas {namespace kernels{
+namespace remora{namespace kernels{
 	
 ///\brief Implements the Tringular Packed Matrix-Vector multiplication(TPMV)
 ///
@@ -61,6 +61,6 @@ void tpmv(
 	bindings::tpmv(A,b,typename bindings::has_optimized_tpmv<MatA, VecB>::type());
 }
 
-}}}
+}}
 
 #endif

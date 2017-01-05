@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_SYRK_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_SYRK_HPP
+#ifndef REMORA_KERNELS_DEFAULT_SYRK_HPP
+#define REMORA_KERNELS_DEFAULT_SYRK_HPP
 
 #include "../../expression_types.hpp"//for matrix_expression
 #include "../../detail/matrix_proxy_classes.hpp"//for matrix_range/matrix_transpose
@@ -38,12 +38,12 @@
 #include <boost/mpl/bool.hpp> //boost::mpl::false_ marker for unoptimized
 #include <type_traits> //std::common_type
 
-namespace shark { namespace blas { namespace bindings {
+namespace remora { namespace bindings {
 
 	
 template <typename T>
 struct syrk_block_size {
-	static const unsigned vector_length = SHARK_BLAS_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
+	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
 	static const unsigned mr = 4; // stripe width for E_left
 	static const unsigned nr = mr * vector_length; // stripe width for E_right
 	static const unsigned lhs_block_size = 3 * mr * nr;//square block size of M to compute
@@ -148,6 +148,6 @@ void syrk(
 	syrk_impl(e,m, alpha, triangular_tag<Upper,false>());
 }
 
-}}}
+}}
 
 #endif

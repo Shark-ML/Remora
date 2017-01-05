@@ -28,13 +28,13 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_GETRF_HPP
-#define SHARK_LINALG_BLAS_KERNELS_GETRF_HPP
+#ifndef REMORA_KERNELS_GETRF_HPP
+#define REMORA_KERNELS_GETRF_HPP
 
 
 #include "default/getrf.hpp"
 
-namespace shark {namespace blas {namespace kernels {
+namespace remora{namespace kernels {
 
 ///\brief Implements the GEneral TRiangular matrix Factorisation GETRF.
 ///
@@ -58,5 +58,5 @@ void getrf(
 	return bindings::getrf(A,P);
 }
 
-}}}
+}}
 #endif

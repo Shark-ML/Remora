@@ -27,15 +27,15 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_VECTOR_MAX_HPP
-#define SHARK_LINALG_BLAS_KERNELS_VECTOR_MAX_HPP
+#ifndef REMORA_KERNELS_VECTOR_MAX_HPP
+#define REMORA_KERNELS_VECTOR_MAX_HPP
 
 #include "default/vector_max.hpp"
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include "clblas/vector_max.hpp"
 #endif
 	
-namespace shark { namespace blas {namespace kernels{
+namespace remora { namespace kernels{
 	
 ///\brief Computes the index of the maximum element of a vector
 template<class E, class Device>
@@ -46,5 +46,5 @@ std::size_t vector_max(
 	return bindings::vector_max(e,typename E::evaluation_category::tag());
 }
 
-}}}
+}}
 #endif

@@ -30,8 +30,8 @@
  */
 //===========================================================================
 
-#ifndef SHARK_LINALG_BLAS_DETAIL_TRAITS_HPP
-#define SHARK_LINALG_BLAS_DETAIL_TRAITS_HPP
+#ifndef REMORA_DETAIL_TRAITS_HPP
+#define REMORA_DETAIL_TRAITS_HPP
 
 #include "iterator.hpp"
 #include "evaluation_tags.hpp"
@@ -45,8 +45,7 @@
 #include <complex>
 #include <type_traits>
 
-namespace shark {
-namespace blas {
+namespace remora {
 	
 template<class T>
 struct real_traits{
@@ -67,8 +66,8 @@ struct closure: public boost::mpl::if_<
 	
 template<class E>
 struct const_expression : public boost::mpl::if_c<
-	std::is_base_of<blas::vector_container<typename std::remove_const<E>::type,typename E::device_type>, E >::value
-	||std::is_base_of<blas::matrix_container<typename std::remove_const<E>::type,typename E::device_type>, E >::value,
+	std::is_base_of<vector_container<typename std::remove_const<E>::type,typename E::device_type>, E >::value
+	||std::is_base_of<matrix_container<typename std::remove_const<E>::type,typename E::device_type>, E >::value,
 	E const,
 	typename E::const_closure_type
 >{};
@@ -238,82 +237,82 @@ struct device_traits<cpu_tag>{
 	}
 	
 	template <class Iterator, class Functor>
-	using transform_iterator = shark::blas::iterators::transform_iterator<Iterator, Functor>;
+	using transform_iterator = iterators::transform_iterator<Iterator, Functor>;
 
 	template <class Iterator>
-	using subrange_iterator = shark::blas::iterators::subrange_iterator<Iterator>;
+	using subrange_iterator = iterators::subrange_iterator<Iterator>;
 	
 	template<class Iterator1, class Iterator2, class Functor>
-	using binary_transform_iterator = shark::blas::iterators::binary_transform_iterator<Iterator1,Iterator2, Functor>;
+	using binary_transform_iterator = iterators::binary_transform_iterator<Iterator1,Iterator2, Functor>;
 	
 	template<class T>
-	using constant_iterator = shark::blas::iterators::constant_iterator<T>;
+	using constant_iterator = iterators::constant_iterator<T>;
 	
 	template<class T>
-	using one_hot_iterator = shark::blas::iterators::one_hot_iterator<T>;
+	using one_hot_iterator = iterators::one_hot_iterator<T>;
 	
 	template<class Closure>
-	using indexed_iterator = shark::blas::iterators::indexed_iterator<Closure>;
+	using indexed_iterator = iterators::indexed_iterator<Closure>;
 	
 	//functors
 	template<class T>
-	using add = shark::blas::functors::scalar_binary_plus<T>;
+	using add = functors::scalar_binary_plus<T>;
 	template<class T>
-	using subtract = shark::blas::functors::scalar_binary_minus<T>;
+	using subtract = functors::scalar_binary_minus<T>;
 	template<class T>
-	using multiply = shark::blas::functors::scalar_binary_multiply<T>;
+	using multiply = functors::scalar_binary_multiply<T>;
 	template<class T>
-	using divide = shark::blas::functors::scalar_binary_divide<T>;
+	using divide = functors::scalar_binary_divide<T>;
 	template<class T>
-	using multiply_and_add = shark::blas::functors::scalar_binary_multiply_and_add<T>;
+	using multiply_and_add = functors::scalar_binary_multiply_and_add<T>;
 	template<class T>
-	using multiply_assign = shark::blas::functors::scalar_binary_multiply_assign<T>;
+	using multiply_assign = functors::scalar_binary_multiply_assign<T>;
 	template<class T>
-	using pow = shark::blas::functors::scalar_binary_pow<T>;
+	using pow = functors::scalar_binary_pow<T>;
 	template<class T>
-	using multiply_scalar = shark::blas::functors::scalar_multiply1<T>;
+	using multiply_scalar = functors::scalar_multiply1<T>;
 	template<class T>
-	using safe_divide = shark::blas::functors::scalar_binary_safe_divide<T>;
+	using safe_divide = functors::scalar_binary_safe_divide<T>;
 	
 	//math unary functions
 	template<class T>
-	using log = shark::blas::functors::scalar_log<T>;
+	using log = functors::scalar_log<T>;
 	template<class T>
-	using exp = shark::blas::functors::scalar_exp<T>;
+	using exp = functors::scalar_exp<T>;
 	template<class T>
-	using tanh = shark::blas::functors::scalar_tanh<T>;
+	using tanh = functors::scalar_tanh<T>;
 	template<class T>
-	using sqrt = shark::blas::functors::scalar_sqrt<T>;
+	using sqrt = functors::scalar_sqrt<T>;
 	template<class T>
-	using abs = shark::blas::functors::scalar_abs<T>;
+	using abs = functors::scalar_abs<T>;
 	template<class T>
-	using sqr = shark::blas::functors::scalar_sqr<T>;
+	using sqr = functors::scalar_sqr<T>;
 	template<class T>
-	using soft_plus = shark::blas::functors::scalar_soft_plus<T>;
+	using soft_plus = functors::scalar_soft_plus<T>;
 	template<class T>
-	using sigmoid = shark::blas::functors::scalar_sigmoid<T>;
+	using sigmoid = functors::scalar_sigmoid<T>;
 	template<class T>
-	using inv = shark::blas::functors::scalar_inverse<T>;
+	using inv = functors::scalar_inverse<T>;
 	
 	//min/max
 	template<class T>
-	using min = shark::blas::functors::scalar_binary_min<T>;
+	using min = functors::scalar_binary_min<T>;
 	template<class T>
-	using max = shark::blas::functors::scalar_binary_max<T>;
+	using max = functors::scalar_binary_max<T>;
 	
 	//comparison
 	template<class T>
-	using less = shark::blas::functors::scalar_less_than<T>;
+	using less = functors::scalar_less_than<T>;
 	template<class T>
-	using less_equal = shark::blas::functors::scalar_less_equal_than<T>;
+	using less_equal = functors::scalar_less_equal_than<T>;
 	template<class T>
-	using bigger = shark::blas::functors::scalar_bigger_than<T>;
+	using bigger = functors::scalar_bigger_than<T>;
 	template<class T>
-	using bigger_equal = shark::blas::functors::scalar_bigger_equal_than<T>;
+	using bigger_equal = functors::scalar_bigger_equal_than<T>;
 	template<class T>
-	using equal = shark::blas::functors::scalar_equal<T>;
+	using equal = functors::scalar_equal<T>;
 	template<class T>
-	using not_equal = shark::blas::functors::scalar_not_equal<T>;
+	using not_equal = functors::scalar_not_equal<T>;
 };
 
 template<class E1, class E2>
@@ -322,6 +321,6 @@ struct common_value_type
 	typename E1::value_type,
 	typename E2::value_type
 >{};
-}}
+}
 
 #endif

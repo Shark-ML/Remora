@@ -28,23 +28,23 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_GEMM_HPP
-#define SHARK_LINALG_BLAS_KERNELS_GEMM_HPP
+#ifndef REMORA_KERNELS_GEMM_HPP
+#define REMORA_KERNELS_GEMM_HPP
 
 #include "default/gemm.hpp"
 
-#ifdef SHARK_USE_CBLAS
+#ifdef REMORA_USE_CBLAS
 #include "cblas/gemm.hpp"
 #else
 //if no bindings are included, we have to provide the default has_optimized_gemm otherwise the binding will take care of this
-namespace shark { namespace blas { namespace bindings{
+namespace remora{ namespace bindings{
 template<class M1, class M2, class M3>
 struct  has_optimized_gemm
 : public boost::mpl::false_{};
 }}}
 #endif
 
-namespace shark { namespace blas {namespace kernels{
+namespace remora{namespace kernels{
 	
 ///\brief Well known GEneral Matrix-Matrix product kernel M+=alpha*E1*E2.
 ///
@@ -52,7 +52,7 @@ namespace shark { namespace blas {namespace kernels{
 /// to be applied, the binding is called automatically from {binding}/gemm.h
 /// otherwise default/gemm.h is used which is fully implemented for all dense/sparse combinations.
 /// if a combination is optimized, bindings::has_optimized_gemm<M,E1,E2>::type evaluates to boost::mpl::true_
-/// The kernels themselves are implemented in blas::bindings::gemm.
+/// The kernels themselves are implemented in bindings::gemm.
 template<class M, class E1, class E2>
 void gemm(
 	matrix_expression<E1, cpu_tag> const& e1,
@@ -70,9 +70,9 @@ void gemm(
 	);
 }
 
-}}}
+}}
 
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include "clblas/gemm.hpp"
 #endif
 

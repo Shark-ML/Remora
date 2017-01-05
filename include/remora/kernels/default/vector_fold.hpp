@@ -25,12 +25,12 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_VECTOR_FOLD_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_VECTOR_FOLD_HPP
+#ifndef REMORA_KERNELS_DEFAULT_VECTOR_FOLD_HPP
+#define REMORA_KERNELS_DEFAULT_VECTOR_FOLD_HPP
 
 #include "../../expression_types.hpp"
 
-namespace shark {namespace blas {namespace bindings{
+namespace remora{namespace bindings{
 template<class F, class V>
 void vector_fold(vector_expression<V, cpu_tag> const& v, typename F::result_type& value, dense_tag) {
 	F f;
@@ -54,5 +54,5 @@ void vector_fold(vector_expression<V, cpu_tag> const& v, typename F::result_type
 		value = f(value, 0);
 }
 
-}}}
+}}
 #endif

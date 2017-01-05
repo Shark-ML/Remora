@@ -25,17 +25,16 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
- #ifndef SHARK_LINALG_BLAS_VECTOR_PROXY_CLASSES_HPP
-#define SHARK_LINALG_BLAS_VECTOR_PROXY_CLASSES_HPP
+ #ifndef REMORA_VECTOR_PROXY_CLASSES_HPP
+#define REMORA_VECTOR_PROXY_CLASSES_HPP
 
 #include "iterator.hpp"
 #include "traits.hpp"
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include <boost/compute/command_queue.hpp>
 #endif
 
-namespace shark {
-namespace blas {
+namespace remora{
 
 template<class V>
 class vector_reference:public vector_expression<vector_reference<V>, typename V::device_type >{
@@ -75,7 +74,7 @@ public:
 	storage_type raw_storage()const{
 		return expression().raw_storage();
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression->queue();
 	}
@@ -212,7 +211,7 @@ public:
 	storage_type raw_storage()const{
 		return expression().raw_storage().sub_region(start());
 	}
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 	boost::compute::command_queue& queue()const{
 		return m_expression.queue();
 	}
@@ -572,5 +571,5 @@ private:
 	std::size_t m_size;
 };
 
-}}
+}
 #endif

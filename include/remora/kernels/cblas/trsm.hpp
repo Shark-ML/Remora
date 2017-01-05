@@ -28,14 +28,14 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_CBLAS_TRSM_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CBLAS_TRSM_HPP
+#ifndef REMORA_KERNELS_CBLAS_TRSM_HPP
+#define REMORA_KERNELS_CBLAS_TRSM_HPP
 
 #include "cblas_inc.hpp"
 #include "../../detail/matrix_proxy_classes.hpp"
 ///solves systems of triangular matrices
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 inline void trsm(
 	CBLAS_ORDER order, CBLAS_UPLO uplo,CBLAS_TRANSPOSE transA, 
 	CBLAS_SIDE side, CBLAS_DIAG unit,
@@ -174,5 +174,5 @@ struct  has_optimized_trsm
 	typename M2::value_type
 >{};
 
-}}}
+}}
 #endif

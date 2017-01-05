@@ -25,14 +25,13 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_MATRIX_SPARSE_HPP
-#define SHARK_LINALG_BLAS_MATRIX_SPARSE_HPP
+#ifndef REMORA_MATRIX_SPARSE_HPP
+#define REMORA_MATRIX_SPARSE_HPP
 
 #include "assignment.hpp"
 #include "detail/matrix_proxy_classes.hpp"
 
-namespace shark {
-namespace blas {
+namespace remora{
 
 template<class T, class I=std::size_t>
 class compressed_matrix:public matrix_container<compressed_matrix<T, I>, cpu_tag > {
@@ -445,7 +444,6 @@ struct matrix_temporary_type<T,unknown_orientation,sparse_tag, cpu_tag> {
 	typedef compressed_matrix<T> type;
 };
 
-}
 }
 
 #endif

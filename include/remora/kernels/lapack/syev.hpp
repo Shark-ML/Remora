@@ -29,16 +29,16 @@
  *
  */
 //===========================================================================
-#ifndef SHARK_LINALG_BLAS_KERNELS_LAPACK_SYEV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_LAPACK_SYEV_HPP
+#ifndef REMORA_KERNELS_LAPACK_SYEV_HPP
+#define REMORA_KERNELS_LAPACK_SYEV_HPP
 
 #include "fortran.hpp"
 #include "../../detail/traits.hpp"
 
-#define SHARK_LAPACK_DSYEV FORTRAN_ID(dsyev)
+#define REMORA_LAPACK_DSYEV FORTRAN_ID(dsyev)
 
 extern "C"{
-void SHARK_LAPACK_DSYEV( 
+void REMORA_LAPACK_DSYEV( 
 	const char* jobz, const char* uplo, const int *n,
 	double* a, const int * lda, double* w,
 	double* work, const int * lwork, int* info
@@ -47,7 +47,7 @@ void SHARK_LAPACK_DSYEV(
 
 
 
-namespace shark { namespace blas { namespace bindings {
+namespace remora {namespace bindings {
 
 inline void syev(
 	int n, bool upper,
@@ -60,7 +60,7 @@ inline void syev(
 	int info;
 	char job = 'V';
 	char uplo = upper?'U':'L';
-	SHARK_LAPACK_DSYEV(&job, &uplo, &n, A, &lda,eigenvalues,work,&lwork,&info);
+	REMORA_LAPACK_DSYEV(&job, &uplo, &n, A, &lda,eigenvalues,work,&lwork,&info);
 	delete[] work;
 	
 }
@@ -77,7 +77,7 @@ void syev(
 	std::size_t n = A().size1();
 	bool upper = false;
 	//lapack is column major storage.
-	if(boost::is_same<typename MatA::orientation, blas::row_major>::value){
+	if(boost::is_same<typename MatA::orientation, row_major>::value){
 		upper = !upper;
 	}
 	auto storageA = A().raw_storage();
@@ -106,8 +106,8 @@ void syev(
 	}
 }
 
-}}}
+}}
 
-#undef SHARK_LAPACK_DSYEV
+#undef REMORA_LAPACK_DSYEV
 
 #endif

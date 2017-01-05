@@ -27,8 +27,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_GETRF_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_GETRF_HPP
+#ifndef REMORA_KERNELS_DEFAULT_GETRF_HPP
+#define REMORA_KERNELS_DEFAULT_GETRF_HPP
 
 #include "simple_proxies.hpp" //proxies for recursive blocking
 #include "../trsm.hpp" //trsm kernel
@@ -36,7 +36,7 @@
 #include "../../permutation.hpp" //pivoting
 #include <vector>
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 
 //diagonal block kernels
 template<class MatA, class VecP>
@@ -189,5 +189,5 @@ void getrf(
 	}
 	getrf_recursive(A, P, 0, A().size1());
 }
-}}}
+}}
 #endif

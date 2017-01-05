@@ -28,13 +28,13 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_CONV2D_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CONV2D_HPP
+#ifndef REMORA_KERNELS_CONV2D_HPP
+#define REMORA_KERNELS_CONV2D_HPP
 
 #include "default/conv2d.hpp"
 
 
-namespace shark { namespace blas {namespace kernels{
+namespace remora{namespace kernels{
 	
 
 ///\brief Computes the convolution of a multi-channel image with a set of filters. 
@@ -54,9 +54,9 @@ namespace shark { namespace blas {namespace kernels{
 /// The caller must ensure that enough memory is stored.	
 template<class E1, class E2, class M>
 void conv2d(
-	blas::matrix_expression<E1, cpu_tag> const& image,
-	blas::matrix_expression<E2, cpu_tag> const& filter,
-	blas::matrix_expression<M, cpu_tag>& output,
+	matrix_expression<E1, cpu_tag> const& image,
+	matrix_expression<E2, cpu_tag> const& filter,
+	matrix_expression<M, cpu_tag>& output,
 	std::size_t num_channels,
 	std::size_t num_filters
 ){
@@ -71,5 +71,5 @@ void conv2d(
 	);
 }
 
-}}}
+}}
 #endif

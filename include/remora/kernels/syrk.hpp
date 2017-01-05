@@ -28,23 +28,23 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_SYRK_HPP
-#define SHARK_LINALG_BLAS_KERNELS_SYRK_HPP
+#ifndef REMORA_KERNELS_SYRK_HPP
+#define REMORA_KERNELS_SYRK_HPP
 
 #include "default/syrk.hpp"
 
-#ifdef SHARK_USE_CBLAS
+#ifdef REMORA_USE_CBLAS
 #include "cblas/syrk.hpp"
 #else
 //if no bindings are included, we have to provide the default has_optimized_syrk otherwise the binding will take care of this
-namespace shark { namespace blas { namespace bindings{
+namespace remora{ namespace bindings{
 template<class M1, class M2>
 struct  has_optimized_syrk
 : public boost::mpl::false_{};
-}}}
+}}
 #endif
 
-namespace shark { namespace blas {namespace kernels{
+namespace remora{namespace kernels{
 	
 ///\brief Well known SYmmetric Rank-K update kernel M+=alpha*A*A^T.
 ///
@@ -66,9 +66,9 @@ void syrk(
 	);
 }
 
-}}}
+}}
 
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include "clblas/syrk.hpp"
 #endif
 

@@ -28,24 +28,24 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_TRSV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_TRSV_HPP
+#ifndef REMORA_KERNELS_TRSV_HPP
+#define REMORA_KERNELS_TRSV_HPP
 
-#ifdef SHARK_USE_CBLAS
+#ifdef REMORA_USE_CBLAS
 #include "cblas/trsv.hpp"
 #else
 // if no bindings are included, we have to provide the default has_optimized_gemv 
 // otherwise the binding will take care of this
-namespace shark { namespace blas { namespace bindings{
+namespace remora {namespace bindings{
 template<class M1, class M2>
 struct  has_optimized_trsv
 : public boost::mpl::false_{};
-}}}
+}}
 #endif
 
 #include "default/trsv.hpp"
 
-namespace shark { namespace blas {namespace kernels{
+namespace remora{namespace kernels{
 	
 ///\brief Implements the TRiangular Solver for Vectors.
 ///
@@ -62,9 +62,9 @@ void trsv(
 	bindings::trsv<Triangular, Side>(A,b,typename bindings::has_optimized_trsv<MatA, V>::type());
 }
 
-}}}
+}}
 
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include "clblas/trsv.hpp"
 #endif
 

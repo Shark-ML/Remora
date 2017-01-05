@@ -25,11 +25,10 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_EXPRESSION_TYPE_HPP
-#define SHARK_LINALG_BLAS_EXPRESSION_TYPE_HPP
+#ifndef REMORA_EXPRESSION_TYPE_HPP
+#define REMORA_EXPRESSION_TYPE_HPP
 
-namespace shark {
-namespace blas {
+namespace remora{
 
 struct cpu_tag{};
 struct gpu_tag{};
@@ -151,7 +150,6 @@ struct temporary_proxy:public P{
 	}
 };
 
-}
 }
 
 #endif

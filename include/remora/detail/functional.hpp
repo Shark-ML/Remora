@@ -25,15 +25,14 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_DETAIL_FUNCTIONAL_HPP
-#define SHARK_LINALG_BLAS_DETAIL_FUNCTIONAL_HPP
+#ifndef REMORA_DETAIL_FUNCTIONAL_HPP
+#define REMORA_DETAIL_FUNCTIONAL_HPP
 
 #include <boost/math/constants/constants.hpp>
-#include <shark/Core/Exception.h>
-#include <shark/Core/Math.h>
+#include <remora/Core/Exception.h>
+#include <remora/Core/Math.h>
 
-namespace shark {
-namespace blas {
+namespace remora {
 namespace functors{
 	
 	
@@ -112,7 +111,7 @@ struct scalar_soft_plus {
 	static const bool zero_identity = false;
 	typedef T result_type;
 	T operator()(T x)const {
-		return shark::softPlus(x);
+		return softPlus(x);
 	}
 };
 
@@ -325,6 +324,6 @@ struct scalar_binary_max{
 
 }
 
-}}
+}
 
 #endif

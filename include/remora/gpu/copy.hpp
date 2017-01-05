@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_GPU_COPY_HPP
-#define SHARK_LINALG_BLAS_GPU_COPY_HPP
+#ifndef REMORA_GPU_COPY_HPP
+#define REMORA_GPU_COPY_HPP
 
 #include "traits.hpp"
 //includes required for storage->vector/matrix and for scalar multiplication
@@ -35,7 +35,7 @@
 #include "../detail/matrix_proxy_classes.hpp"
 #include "../detail/matrix_expression_classes.hpp"
 
-namespace shark {namespace blas { namespace gpu{
+namespace remora{ namespace gpu{
 
 ///////////////////////////////////////
 //////// Vector Transport
@@ -512,17 +512,17 @@ private:
 ////////Proxy expressions
 ///////////////////////////////////////////////
 template<class E>
-vector_transport_to_cpu<E> copy_to_cpu(blas::vector_expression<E, gpu_tag> const& e){
+vector_transport_to_cpu<E> copy_to_cpu(vector_expression<E, gpu_tag> const& e){
 	return vector_transport_to_cpu<E>(e());
 }
 
 template<class E>
-matrix_transport_to_cpu<E> copy_to_cpu(blas::matrix_expression<E, gpu_tag> const& e){
+matrix_transport_to_cpu<E> copy_to_cpu(matrix_expression<E, gpu_tag> const& e){
 	return matrix_transport_to_cpu<E>(e());
 }
 template<class E>
 vector_transport_to_gpu<E> copy_to_gpu(
-	blas::vector_expression<E, cpu_tag> const& e,
+	vector_expression<E, cpu_tag> const& e,
 	boost::compute::command_queue& queue = boost::compute::system::default_queue()
 ){
 	return vector_transport_to_gpu<E>(e(), queue);
@@ -530,12 +530,12 @@ vector_transport_to_gpu<E> copy_to_gpu(
 
 template<class E>
 matrix_transport_to_gpu<E> copy_to_gpu(
-	blas::matrix_expression<E, cpu_tag> const& e,
+	matrix_expression<E, cpu_tag> const& e,
 	boost::compute::command_queue& queue = boost::compute::system::default_queue()
 ){
 	return matrix_transport_to_gpu<E>(e(),queue);
 }
 	
-}}}
+}}
 
 #endif

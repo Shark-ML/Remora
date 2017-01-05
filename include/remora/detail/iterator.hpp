@@ -25,17 +25,17 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_DETAIL_ITERATOR_HPP
-#define SHARK_LINALG_BLAS_DETAIL_ITERATOR_HPP
+#ifndef REMORA_DETAIL_ITERATOR_HPP
+#define REMORA_DETAIL_ITERATOR_HPP
 
 #include <boost/mpl/if.hpp> 
-#include <shark/Core/Exception.h>
+#include <remora/Core/Exception.h>
 #include <iterator>
 #include <type_traits>
 #include <limits>
 
 
-namespace shark {namespace blas { namespace iterators{
+namespace remora{ namespace iterators{
 
 // Iterator tags -- hierarchical definition of storage characteristics
 struct sparse_bidirectional_iterator_tag: public std::bidirectional_iterator_tag{};
@@ -1205,6 +1205,6 @@ private:
 	F m_functor;
 };
 
-}}}
+}}
 
 #endif

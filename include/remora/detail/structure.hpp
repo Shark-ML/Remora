@@ -30,8 +30,8 @@
  */
 //===========================================================================
 
-#ifndef SHARK_LINALG_BLAS_DETAIL_STRUCTURE_HPP
-#define SHARK_LINALG_BLAS_DETAIL_STRUCTURE_HPP
+#ifndef REMORA_DETAIL_STRUCTURE_HPP
+#define REMORA_DETAIL_STRUCTURE_HPP
 
 #include  "evaluation_tags.hpp"
 
@@ -39,8 +39,7 @@
 #include <cassert>
 
 
-namespace shark {
-namespace blas {
+namespace remora{
 	
 template<bool Upper, bool Unit>
 struct triangular_tag{
@@ -235,6 +234,6 @@ private:
 	}
 };
 
-}}
+}
 
 #endif

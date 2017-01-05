@@ -27,14 +27,14 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_DOT_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_DOT_HPP
+#ifndef REMORA_KERNELS_DEFAULT_DOT_HPP
+#define REMORA_KERNELS_DEFAULT_DOT_HPP
 
 #include "../../expression_types.hpp"//vector_expression
 #include "../../detail/traits.hpp"//storage tags
 #include <boost/mpl/bool.hpp>
 
-namespace shark { namespace blas {namespace bindings{
+namespace remora{namespace bindings{
 
 // Dense case
 template<class E1, class E2, class result_type>
@@ -113,5 +113,5 @@ void dot(
 	dot(v2,v1,result,t2,t1);
 }
 
-}}}
+}}
 #endif

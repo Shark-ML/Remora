@@ -28,15 +28,15 @@
  *
  */
 //===========================================================================
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_tpmv_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_tpmv_HPP
+#ifndef REMORA_KERNELS_DEFAULT_tpmv_HPP
+#define REMORA_KERNELS_DEFAULT_tpmv_HPP
 
 #include "../../expression_types.hpp" //matrix/vector_expression
 #include "../../detail/traits.hpp" //orientations and triangular types
 #include <boost/mpl/bool.hpp> //boost::mpl::false_ marker for unoptimized
 
 
-namespace shark{ namespace blas{ namespace bindings{
+namespace remora{ namespace bindings{
 	
 //Lower triangular(row-major) - vector product
 // computes the row-wise inner product of the matrix
@@ -160,5 +160,5 @@ void tpmv(
 	);
 }
 
-}}}
+}}
 #endif

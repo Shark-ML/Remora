@@ -25,16 +25,16 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_VECTOR_FOLD_HPP
-#define SHARK_LINALG_BLAS_KERNELS_VECTOR_FOLD_HPP
+#ifndef REMORA_KERNELS_VECTOR_FOLD_HPP
+#define REMORA_KERNELS_VECTOR_FOLD_HPP
 
 #include "../detail/traits.hpp"
 #include "default/vector_fold.hpp"
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include "clblas/vector_fold.hpp"
 #endif
 
-namespace shark {namespace blas {namespace kernels {
+namespace remora{namespace kernels {
 
 
 ///\brief Appliuees F in any order to the elements of v and a given initial value.
@@ -47,5 +47,5 @@ void vector_fold(vector_expression<V, Device> const& v, typename F::result_type&
 	bindings::vector_fold<F>(v(), value, TagV());
 }
 
-}}}
+}}
 #endif

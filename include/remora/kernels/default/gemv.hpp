@@ -27,8 +27,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_GEMatAV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_GEMatAV_HPP
+#ifndef REMORA_KERNELS_DEFAULT_GEMatAV_HPP
+#define REMORA_KERNELS_DEFAULT_GEMatAV_HPP
 
 #include "../../expression_types.hpp" //matrix/vector_expression
 #include "../../detail/matrix_proxy_classes.hpp" //matrix_row, matrix_transpose
@@ -37,7 +37,7 @@
 #include "../../assignment.hpp" //plus_assign
 #include <boost/mpl/bool.hpp> //boost::mpl::false_ marker for unoptimized
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 	
 //row major can be further reduced to inner_prod()
 template<class ResultV, class MatA, class V>
@@ -107,5 +107,5 @@ void gemv(
 	gemv_impl(A, x, result, alpha, orientation());
 }
 
-}}}
+}}
 #endif

@@ -29,8 +29,8 @@
  *
  */
 //===========================================================================
-#ifndef SHARK_LINALG_BLAS_KERNELS_CLBLAS_GEMM_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CLBLAS_GEMM_HPP
+#ifndef REMORA_KERNELS_CLBLAS_GEMM_HPP
+#define REMORA_KERNELS_CLBLAS_GEMM_HPP
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
@@ -38,7 +38,7 @@
 #include <boost/compute/detail/meta_kernel.hpp>
 #include <boost/compute/functional/operator.hpp> //for multiplies
 
-namespace shark { namespace blas { namespace kernels{
+namespace remora{ namespace kernels{
 
 // C <- alpha * A * B + beta * C
 template <typename MatA, typename MatB, typename MatC>
@@ -163,6 +163,6 @@ void gemm(
 	C().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, local_work_size);
 }
 
-}}}
+}}
 
 #endif

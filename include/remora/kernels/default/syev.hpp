@@ -29,12 +29,12 @@
  *
  */
 //===========================================================================
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_SYEV_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_SYEV_HPP
+#ifndef REMORA_KERNELS_DEFAULT_SYEV_HPP
+#define REMORA_KERNELS_DEFAULT_SYEV_HPP
 
 #include "../../detail/traits.hpp"
 
-namespace shark { namespace blas { namespace bindings {
+namespace remora{ namespace bindings {
 	
 template <typename MatA, typename V>
 void eigensort
@@ -72,7 +72,7 @@ void syev(
 	const std::size_t maxIterC = 50;
 	std::size_t n = vmatA().size1();
 	
-	blas::vector<double> odvecA(n,0.0);
+	vector<double> odvecA(n,0.0);
 
 	std::size_t j, k, l, m;
 	double   b, c, f, g, h, hh, p, r, s, scale;
@@ -201,7 +201,7 @@ void syev(
 
 			if (m != l) {
 				if (j++ == maxIterC)
-					throw SHARKEXCEPTION("too many iterations in eigendecomposition");
+					throw REMORAEXCEPTION("too many iterations in eigendecomposition");
 
 				// form shift
 				g = (dvecA()(l+1) - p) / (2.0 * odvecA(l));
@@ -274,6 +274,6 @@ void syev(
 
 /** @}*/
 
-}}}
+}}
 
 #endif

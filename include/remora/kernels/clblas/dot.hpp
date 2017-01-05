@@ -29,14 +29,14 @@
  *
  */
 //===========================================================================
-#ifndef SHARK_LINALG_BLAS_KERNELS_CLBLAS_DOT_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CLBLAS_DOT_HPP
+#ifndef REMORA_KERNELS_CLBLAS_DOT_HPP
+#define REMORA_KERNELS_CLBLAS_DOT_HPP
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
 #include <boost/compute/algorithm/inner_product.hpp>
 
-namespace shark {namespace blas {namespace bindings {
+namespace remora{namespace bindings {
 
 template <typename VectorX, typename VectorY, class result_type>
 void dot(
@@ -49,5 +49,5 @@ void dot(
 	result = boost::compute::inner_product(x().begin(),x().end(),y().begin(), typename VectorX::value_type(0), x().queue());
 }
 
-}}}
+}}
 #endif

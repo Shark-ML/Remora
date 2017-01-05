@@ -25,16 +25,16 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_VECTOR_ASSIGN_HPP
-#define SHARK_LINALG_BLAS_KERNELS_VECTOR_ASSIGN_HPP
+#ifndef REMORA_KERNELS_VECTOR_ASSIGN_HPP
+#define REMORA_KERNELS_VECTOR_ASSIGN_HPP
 
 #include "../detail/traits.hpp"
 #include "default/vector_assign.hpp"
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include "clblas/vector_assign.hpp"
 #endif
 
-namespace shark {namespace blas {namespace kernels {
+namespace remora{namespace kernels {
 
 template<class F, class V, class Device>
 void assign(vector_expression<V, Device>& v, typename V::value_type t) {
@@ -68,5 +68,5 @@ void assign(vector_expression<V, Device>& v, const vector_expression<E, Device> 
 	bindings::vector_assign_functor(v(), e(), f, TagV(),TagE());
 }
 
-}}}
+}}
 #endif

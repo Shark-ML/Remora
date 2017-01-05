@@ -25,14 +25,14 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_DEFAULT_MATRIX_FOLD_HPP
-#define SHARK_LINALG_BLAS_KERNELS_DEFAULT_MATRIX_FOLD_HPP
+#ifndef REMORA_KERNELS_DEFAULT_MATRIX_FOLD_HPP
+#define REMORA_KERNELS_DEFAULT_MATRIX_FOLD_HPP
 
 #include "../../detail/traits.hpp" //orientations, major_begin/end
 #include "../../expression_types.hpp"
 #include <boost/mpl/if.hpp>
 #include <type_traits>
-namespace shark {namespace blas {namespace bindings{
+namespace remora{namespace bindings{
 	
 template<class F, class M, class Orientation, class Tag>
 void matrix_fold(matrix_expression<M, cpu_tag> const& m, typename F::result_type& value, Orientation, Tag) {
@@ -51,5 +51,5 @@ void matrix_fold(matrix_expression<M, cpu_tag> const& m, typename F::result_type
 	}
 }
 
-}}}
+}}
 #endif

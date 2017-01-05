@@ -25,15 +25,14 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_MATRIX_EXPRESSION_HPP
-#define SHARK_LINALG_BLAS_MATRIX_EXPRESSION_HPP
+#ifndef REMORA_MATRIX_EXPRESSION_HPP
+#define REMORA_MATRIX_EXPRESSION_HPP
 
 #include "detail/expression_optimizers.hpp"
 #include <boost/utility/enable_if.hpp>
 #include "kernels/matrix_fold.hpp"
 
-namespace shark {
-namespace blas {
+namespace remora{
 
 
 ///\brief Computes the outer product of two vectors.
@@ -110,23 +109,23 @@ matrix_scalar_multiply<MatA> operator-(matrix_expression<MatA, Device> const& A)
 	return matrix_scalar_multiply<MatA>(A(), typename MatA::value_type(-1));
 }
 
-#define SHARK_UNARY_MATRIX_TRANSFORMATION(name, F)\
+#define REMORA_UNARY_MATRIX_TRANSFORMATION(name, F)\
 template<class MatA, class Device>\
 matrix_unary<MatA,typename device_traits<Device>:: template F<typename MatA::value_type> >\
 name(matrix_expression<MatA, Device> const& v){\
 	typedef typename device_traits<Device>:: template F<typename MatA::value_type> functor_type;\
 	return matrix_unary<MatA, functor_type >(v(), functor_type());\
 }
-SHARK_UNARY_MATRIX_TRANSFORMATION(abs, abs)
-SHARK_UNARY_MATRIX_TRANSFORMATION(log, log)
-SHARK_UNARY_MATRIX_TRANSFORMATION(exp, exp)
-SHARK_UNARY_MATRIX_TRANSFORMATION(tanh,tanh)
-SHARK_UNARY_MATRIX_TRANSFORMATION(sqr, sqr)
-SHARK_UNARY_MATRIX_TRANSFORMATION(sqrt, sqrt)
-SHARK_UNARY_MATRIX_TRANSFORMATION(sigmoid, sigmoid)
-SHARK_UNARY_MATRIX_TRANSFORMATION(softPlus, soft_plus)
-SHARK_UNARY_MATRIX_TRANSFORMATION(elem_inv, inv)
-#undef SHARK_UNARY_MATRIX_TRANSFORMATION
+REMORA_UNARY_MATRIX_TRANSFORMATION(abs, abs)
+REMORA_UNARY_MATRIX_TRANSFORMATION(log, log)
+REMORA_UNARY_MATRIX_TRANSFORMATION(exp, exp)
+REMORA_UNARY_MATRIX_TRANSFORMATION(tanh,tanh)
+REMORA_UNARY_MATRIX_TRANSFORMATION(sqr, sqr)
+REMORA_UNARY_MATRIX_TRANSFORMATION(sqrt, sqrt)
+REMORA_UNARY_MATRIX_TRANSFORMATION(sigmoid, sigmoid)
+REMORA_UNARY_MATRIX_TRANSFORMATION(softPlus, soft_plus)
+REMORA_UNARY_MATRIX_TRANSFORMATION(elem_inv, inv)
+#undef REMORA_UNARY_MATRIX_TRANSFORMATION
 
 ///\brief Adds two Matrices
 template<class MatA, class MatB, class Device>
@@ -198,7 +197,7 @@ typename boost::enable_if<
 	return scalar_matrix<T,Device>(A().size1(),A().size2(),t) - A;
 }
 
-#define SHARK_BINARY_MATRIX_EXPRESSION(name, F)\
+#define REMORA_BINARY_MATRIX_EXPRESSION(name, F)\
 template<class MatA, class MatB, class Device>\
 matrix_binary<MatA, MatB, typename device_traits<Device>:: template F<typename common_value_type<MatA,MatB>::type> >\
 name(matrix_expression<MatA, Device> const& m1, matrix_expression<MatB, Device> const& m2){\
@@ -208,16 +207,16 @@ name(matrix_expression<MatA, Device> const& m1, matrix_expression<MatB, Device> 
 	typedef typename device_traits<Device>:: template F<type> functor_type;\
 	return matrix_binary<MatA, MatB, functor_type >(m1(),m2(), functor_type());\
 }
-SHARK_BINARY_MATRIX_EXPRESSION(operator*, multiply)
-SHARK_BINARY_MATRIX_EXPRESSION(element_prod, multiply)
-SHARK_BINARY_MATRIX_EXPRESSION(operator/, divide)
-SHARK_BINARY_MATRIX_EXPRESSION(element_div, divide)
-SHARK_BINARY_MATRIX_EXPRESSION(pow,pow)
-SHARK_BINARY_MATRIX_EXPRESSION(min,min)
-SHARK_BINARY_MATRIX_EXPRESSION(max,max)
-#undef SHARK_BINARY_MATRIX_EXPRESSION
+REMORA_BINARY_MATRIX_EXPRESSION(operator*, multiply)
+REMORA_BINARY_MATRIX_EXPRESSION(element_prod, multiply)
+REMORA_BINARY_MATRIX_EXPRESSION(operator/, divide)
+REMORA_BINARY_MATRIX_EXPRESSION(element_div, divide)
+REMORA_BINARY_MATRIX_EXPRESSION(pow,pow)
+REMORA_BINARY_MATRIX_EXPRESSION(min,min)
+REMORA_BINARY_MATRIX_EXPRESSION(max,max)
+#undef REMORA_BINARY_MATRIX_EXPRESSION
 
-#define SHARK_MATRIX_SCALAR_TRANSFORMATION(name, F)\
+#define REMORA_MATRIX_SCALAR_TRANSFORMATION(name, F)\
 template<class T, class MatA, class Device> \
 typename boost::enable_if< \
 	std::is_convertible<T, typename MatA::value_type >,\
@@ -228,20 +227,20 @@ name (matrix_expression<MatA, Device> const& m, T t){ \
 	typedef typename device_traits<Device>:: template F<type> functor_type;\
 	return matrix_binary<MatA, scalar_matrix<type,Device>, functor_type >(m(), scalar_matrix<type,Device>(m().size1(), m().size2(), t) ,functor_type()); \
 }
-SHARK_MATRIX_SCALAR_TRANSFORMATION(operator/, divide)
-SHARK_MATRIX_SCALAR_TRANSFORMATION(operator<, less_than)
-SHARK_MATRIX_SCALAR_TRANSFORMATION(operator<=, less_equal_than)
-SHARK_MATRIX_SCALAR_TRANSFORMATION(operator>, bigger_than)
-SHARK_MATRIX_SCALAR_TRANSFORMATION(operator>=, bigger_equal_than)
-SHARK_MATRIX_SCALAR_TRANSFORMATION(operator==, equal)
-SHARK_MATRIX_SCALAR_TRANSFORMATION(operator!=, not_equal)
-SHARK_MATRIX_SCALAR_TRANSFORMATION(min, min)
-SHARK_MATRIX_SCALAR_TRANSFORMATION(max, max)
-SHARK_MATRIX_SCALAR_TRANSFORMATION(pow, pow)
-#undef SHARK_MATRIX_SCALAR_TRANSFORMATION
+REMORA_MATRIX_SCALAR_TRANSFORMATION(operator/, divide)
+REMORA_MATRIX_SCALAR_TRANSFORMATION(operator<, less_than)
+REMORA_MATRIX_SCALAR_TRANSFORMATION(operator<=, less_equal_than)
+REMORA_MATRIX_SCALAR_TRANSFORMATION(operator>, bigger_than)
+REMORA_MATRIX_SCALAR_TRANSFORMATION(operator>=, bigger_equal_than)
+REMORA_MATRIX_SCALAR_TRANSFORMATION(operator==, equal)
+REMORA_MATRIX_SCALAR_TRANSFORMATION(operator!=, not_equal)
+REMORA_MATRIX_SCALAR_TRANSFORMATION(min, min)
+REMORA_MATRIX_SCALAR_TRANSFORMATION(max, max)
+REMORA_MATRIX_SCALAR_TRANSFORMATION(pow, pow)
+#undef REMORA_MATRIX_SCALAR_TRANSFORMATION
 
 // operations of the form op(t,v)[i,j] = op(t,v[i,j])
-#define SHARK_MATRIX_SCALAR_TRANSFORMATION_2(name, F)\
+#define REMORA_MATRIX_SCALAR_TRANSFORMATION_2(name, F)\
 template<class T, class MatA, class Device> \
 typename boost::enable_if< \
 	std::is_convertible<T, typename MatA::value_type >,\
@@ -252,9 +251,9 @@ name (T t, matrix_expression<MatA, Device> const& m){ \
 	typedef typename device_traits<Device>:: template F<type> functor_type;\
 	return  matrix_binary<scalar_matrix<type,Device>, MatA, functor_type >(scalar_matrix<type,Device>(m().size1(), m().size2(), t), m(), functor_type()); \
 }
-SHARK_MATRIX_SCALAR_TRANSFORMATION_2(min, min)
-SHARK_MATRIX_SCALAR_TRANSFORMATION_2(max, max)
-#undef SHARK_MATRIX_SCALAR_TRANSFORMATION_2
+REMORA_MATRIX_SCALAR_TRANSFORMATION_2(min, min)
+REMORA_MATRIX_SCALAR_TRANSFORMATION_2(max, max)
+#undef REMORA_MATRIX_SCALAR_TRANSFORMATION_2
 
 template<class MatA, class MatB, class Device>
 matrix_binary<MatA, MatB, 
@@ -492,11 +491,10 @@ public:
 
 
 template<class MatA, class Device>
-diagonal_matrix<MatA> to_diagonal(blas::vector_expression<MatA, Device> const& A){
+diagonal_matrix<MatA> to_diagonal(vector_expression<MatA, Device> const& A){
 	return diagonal_matrix<MatA>(A());
 }
 
-}
 }
 
 #endif

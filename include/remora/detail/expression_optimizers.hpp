@@ -25,15 +25,15 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
- #ifndef SHARK_LINALG_BLAS_EXPRESSION_OPTIMIZERS_HPP
-#define SHARK_LINALG_BLAS_EXPRESSION_OPTIMIZERS_HPP
+ #ifndef REMORA_EXPRESSION_OPTIMIZERS_HPP
+#define REMORA_EXPRESSION_OPTIMIZERS_HPP
 
 #include "vector_proxy_classes.hpp"
 #include "vector_expression_classes.hpp"
 #include "matrix_proxy_classes.hpp"
 #include "matrix_expression_classes.hpp"
 
-namespace shark {namespace blas {namespace detail{
+namespace remora{namespace detail{
 	
 //forward declarations
 template<class V>
@@ -539,5 +539,5 @@ struct matrix_matrix_prod_optimizer<matrix_scalar_multiply<M1>,matrix_scalar_mul
 	}
 };
 
-}}}
+}}
 #endif

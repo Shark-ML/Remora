@@ -30,13 +30,12 @@
  */
 //===========================================================================
 
-#ifndef SHARK_LINALG_BLAS_DETAIL_STORAGE_HPP
-#define SHARK_LINALG_BLAS_DETAIL_STORAGE_HPP
+#ifndef REMORA_DETAIL_STORAGE_HPP
+#define REMORA_DETAIL_STORAGE_HPP
 
 #include "structure.hpp"
 
-namespace shark {
-namespace blas {
+namespace remora{
 	
 struct unknown_storage{
 	typedef unknown_tag storage_tag;
@@ -109,6 +108,6 @@ struct sparse_matrix_storage{
 		return {values + outer_indices_begin[i], indices + outer_indices_begin[i],outer_indices_end[i] - outer_indices_begin[i]};
 	}
 };
-}}
+}
 
 #endif

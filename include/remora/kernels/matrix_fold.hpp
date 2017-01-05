@@ -25,16 +25,16 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_MATRIX_FOLD_HPP
-#define SHARK_LINALG_BLAS_KERNELS_MATRIX_FOLD_HPP
+#ifndef REMORA_KERNELS_MATRIX_FOLD_HPP
+#define REMORA_KERNELS_MATRIX_FOLD_HPP
 
 #include "../detail/traits.hpp"
 #include "default/matrix_fold.hpp"
-#ifdef SHARK_USE_CLBLAS
+#ifdef REMORA_USE_CLBLAS
 #include "clblas/matrix_fold.hpp"
 #endif
 
-namespace shark {namespace blas {namespace kernels {
+namespace remora{namespace kernels {
 
 
 ///\brief Applies F in any order to the elements of v and seed.
@@ -48,5 +48,5 @@ void matrix_fold(matrix_expression<M, Device> const& m, typename F::result_type&
 	bindings::matrix_fold<F>(m, value, Orientation(), Tag());
 }
 
-}}}
+}}
 #endif

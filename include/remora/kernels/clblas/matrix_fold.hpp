@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_KERNELS_CLBLAS_MATRIX_FOLD_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CLBLAS_MATRIX_FOLD_HPP
+#ifndef REMORA_KERNELS_CLBLAS_MATRIX_FOLD_HPP
+#define REMORA_KERNELS_CLBLAS_MATRIX_FOLD_HPP
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
@@ -34,7 +34,7 @@
 #include <boost/compute/detail/meta_kernel.hpp>
 #include <boost/compute/container/array.hpp>
 #include <boost/compute/algorithm/copy_n.hpp>
-namespace shark{namespace blas {namespace bindings{
+namespace remora{namespace bindings{
 
 template<class F, class MatA, class Orientation>
 void matrix_fold(matrix_expression<MatA, gpu_tag> const& A, typename F::result_type& value, Orientation, dense_tag) {
@@ -86,5 +86,5 @@ void matrix_fold(matrix_expression<MatA, gpu_tag> const& A, typename F::result_t
 	queue.enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, local_work_size);
 	boost::compute::copy_n(device_result.begin(), 1, &value, queue);
 }
-}}}
+}}
 #endif

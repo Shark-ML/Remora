@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef SHARK_LINALG_BLAS_GPU_VECTOR_HPP
-#define SHARK_LINALG_BLAS_GPU_VECTOR_HPP
+#ifndef REMORA_GPU_VECTOR_HPP
+#define REMORA_GPU_VECTOR_HPP
 
 #include "traits.hpp"
 #include "../detail/vector_proxy_classes.hpp"
@@ -34,7 +34,7 @@
 #include <boost/compute/container/vector.hpp>
 #include <boost/compute/algorithm/fill.hpp>
 
-namespace shark {namespace blas { namespace gpu{
+namespace remora{ namespace gpu{
 	
 namespace detail{
 template<class Arg, class T>
@@ -279,6 +279,6 @@ struct vector_temporary_type<T,dense_tag, gpu_tag>{
 	typedef gpu::vector<T> type;
 };
 
-}}
+}
 
 #endif

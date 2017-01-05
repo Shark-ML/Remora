@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_KERNELS_CBLAS_CBLAS_INC_HPP
-#define SHARK_LINALG_BLAS_KERNELS_CBLAS_CBLAS_INC_HPP
+#ifndef REMORA_KERNELS_CBLAS_CBLAS_INC_HPP
+#define REMORA_KERNELS_CBLAS_CBLAS_INC_HPP
 
 #ifdef __APPLE__
 
@@ -76,14 +76,12 @@ extern "C" {
 //all atlas using functions need this anyway...
 //so we prevent multiple includes in all atlas using functions
 //which should decrease compile time a small bit
-#include <shark/Core/Exception.h>
+#include <remora/Core/Exception.h>
 #include <complex>
 #include <boost/mpl/bool.hpp>
 #include "../../detail/traits.hpp"
 
-namespace shark {
-namespace blas {
-namespace bindings {
+namespace remora {namespace bindings {
 
 template <typename Ord> struct storage_order {};
 template<> struct storage_order<row_major> {
@@ -93,7 +91,7 @@ template<> struct storage_order<column_major> {
 	enum ename { value = CblasColMajor };
 };
 
-}}}
+}}
 
 #ifndef OPENBLAS_CONST
 typedef void cblas_float_complex_type;
