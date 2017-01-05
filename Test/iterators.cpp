@@ -1,16 +1,14 @@
-#define BOOST_TEST_MODULE BLAS_Vector_vector_iterators
+#define BOOST_TEST_MODULE Remora_Vector_vector_iterators
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
+#include <remora/detail/iterator.hpp>
 
-using namespace shark;
-using namespace blas;
+using namespace remora;
 
-BOOST_AUTO_TEST_SUITE (LinAlg_BLAS_iterators)
+BOOST_AUTO_TEST_SUITE (Remora_iterators)
 
-BOOST_AUTO_TEST_CASE( BLAS_Dense_Storage_Iterator)
+BOOST_AUTO_TEST_CASE( Remora_Dense_Storage_Iterator)
 {
 	double values[]={0.1,0.2,0.3,0.4,0.5,0.6};
 	
@@ -58,7 +56,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Dense_Storage_Iterator)
 	}
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Compressed_Storage_Iterator)
+BOOST_AUTO_TEST_CASE( Remora_Compressed_Storage_Iterator)
 {
 	double values[]={0.1,0.2,0.3,0.4,0.5,0.6};
 	std::size_t indizes[]={3,8,11,12,15,16};
@@ -148,7 +146,7 @@ struct ConstIndexedMocup{
 
 
 
-BOOST_AUTO_TEST_CASE( BLAS_Indexed_Iterator)
+BOOST_AUTO_TEST_CASE( Remora_Indexed_Iterator)
 {
 	double values[]={0.1,0.2,0.3,0.4,0.5,0.6};
 	
@@ -198,7 +196,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Indexed_Iterator)
 	
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Constant_Iterator)
+BOOST_AUTO_TEST_CASE( Remora_Constant_Iterator)
 {
 	iterators::constant_iterator<double> iter(4.0,3);
 	iterators::constant_iterator<double> start =iter;
@@ -220,7 +218,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Constant_Iterator)
 	BOOST_REQUIRE_EQUAL(k, 10);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Subrange_Iterator_Dense)
+BOOST_AUTO_TEST_CASE( Remora_Subrange_Iterator_Dense)
 {
 	double values[]={0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0};
 	//reading
@@ -289,7 +287,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Subrange_Iterator_Dense)
 	}
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Subrange_Iterator_Compressed)
+BOOST_AUTO_TEST_CASE( Remora_Subrange_Iterator_Compressed)
 {
 	double values[]={0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0};
 	std::size_t indizes[]={3,8,11,12,15,16,18,20,23,30};
@@ -361,7 +359,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Subrange_Iterator_Compressed)
 	
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Transform_Iterator_Dense)
+BOOST_AUTO_TEST_CASE( Remora_Transform_Iterator_Dense)
 {
 	double values[]={0.1,0.2,0.3,0.4,0.5,0.6};
 
@@ -393,7 +391,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Transform_Iterator_Dense)
 	BOOST_REQUIRE_EQUAL(iter-start, 6);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Transform_Iterator_Compressed)
+BOOST_AUTO_TEST_CASE( Remora_Transform_Iterator_Compressed)
 {
 	double values[]={0.1,0.2,0.3,0.4,0.5,0.6};
 	std::size_t indizes[]={3,8,11,12,15,16};
@@ -421,7 +419,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Transform_Iterator_Compressed)
 	BOOST_REQUIRE_EQUAL(iter-start, 6);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Binary_Transform_Iterator_Dense)
+BOOST_AUTO_TEST_CASE( Remora_Binary_Transform_Iterator_Dense)
 {
 	double values1[]={0.1,0.2,0.3,0.4,0.5,0.6};
 	double values2[]={0.3,0.5,0.7,0.9,1.1,1.3};
@@ -461,7 +459,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Binary_Transform_Iterator_Dense)
 	BOOST_REQUIRE_EQUAL(iter-start, 6);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Binary_Transform_Iterator_Compressed)
+BOOST_AUTO_TEST_CASE( Remora_Binary_Transform_Iterator_Compressed)
 {
 	double values1[]={0.1,0.2,0.3,0.4,0.5,0.6};
 	double values2[]={0.3,0.5,0.7,0.9};

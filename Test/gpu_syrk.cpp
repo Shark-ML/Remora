@@ -1,19 +1,16 @@
-#define BOOST_TEST_MODULE BLAS_GPU_Syrk
+#define BOOST_TEST_MODULE Remora_GPU_Syrk
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/mpl/list.hpp>
 
 
 #define BOOST_COMPUTE_DEBUG_KERNEL_COMPILATION
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
-#include <shark/LinAlg/BLAS/io.hpp>
-#include <shark/LinAlg/BLAS/gpu/matrix.hpp>
-#include <shark/LinAlg/BLAS/gpu/copy.hpp>
-#include <shark/LinAlg/BLAS/kernels/syrk.hpp>
+#include <remora/kernels/syrk.hpp>
+#include <remora/gpu/matrix.hpp>
+#include <remora/gpu/copy.hpp>
 
-using namespace shark;
-using namespace blas;
+#include <iostream>
+using namespace remora;
 
 template<class M, class Result>
 void checkSyrk(M const& arg_gpu, Result const& result_gpu,double init, double alpha, bool upper){
@@ -48,7 +45,7 @@ void checkSyrk(M const& arg_gpu, Result const& result_gpu,double init, double al
 	}
 }
 
-BOOST_AUTO_TEST_SUITE (BLAS_Gpu_Syrk)
+BOOST_AUTO_TEST_SUITE (Remora_Gpu_Syrk)
 
 typedef boost::mpl::list<row_major,column_major> result_orientations;
 BOOST_AUTO_TEST_CASE_TEMPLATE(syrk_test, Orientation,result_orientations) {

@@ -1,14 +1,13 @@
-#define BOOST_TEST_MODULE BLAS_GPU_vector_expression
+#define BOOST_TEST_MODULE Remora_GPU_vector_expression
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
-#include <shark/LinAlg/BLAS/gpu/vector.hpp>
-#include <shark/LinAlg/BLAS/gpu/copy.hpp>
+#include <remora/vector_expression.hpp>
+#include <remora/vector.hpp>
+#include <remora/gpu/vector.hpp>
+#include <remora/gpu/copy.hpp>
 
-using namespace shark;
-using namespace blas;
+using namespace remora;
 
 template<class Operation, class Result>
 void checkDenseExpressionEquality(
@@ -17,16 +16,16 @@ void checkDenseExpressionEquality(
 	BOOST_REQUIRE_EQUAL(op_gpu.size(), result.size());
 	
 	//test copy to cpu, this tests the buffer
-	blas::vector<float> op = copy_to_cpu(op_gpu);
+	vector<float> op = copy_to_cpu(op_gpu);
 	for(std::size_t i = 0; i != op.size(); ++i){
 		BOOST_CHECK_CLOSE(result(i), op(i),1.e-3);
 	}
 	
 	//test iterators
 	BOOST_REQUIRE_EQUAL(op_gpu.end() - op_gpu.begin(), op.size());
-	blas::gpu::vector<float> opcopy_gpu(op.size());
+	gpu::vector<float> opcopy_gpu(op.size());
 	boost::compute::copy(op_gpu.begin(),op_gpu.end(),opcopy_gpu.begin());
-	blas::vector<float> opcopy = copy_to_cpu(opcopy_gpu);
+	vector<float> opcopy = copy_to_cpu(opcopy_gpu);
 	for(std::size_t i = 0; i != result.size(); ++i){
 		BOOST_CHECK_CLOSE(result(i), opcopy(i),1.e-3);
 	}
@@ -37,9 +36,9 @@ const std::size_t Dimensions = 1000;
 /////////////////////////////////////////////////////////////
 //////UNARY TRANSFORMATIONS///////
 ////////////////////////////////////////////////////////////
-BOOST_AUTO_TEST_SUITE (LinAlg_BLAS_vector_expression)
+BOOST_AUTO_TEST_SUITE (Remora_vector_expression)
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Unary_Minus )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Unary_Minus )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -52,7 +51,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Unary_Minus )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(-x,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Scalar_Add )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Scalar_Add )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -66,7 +65,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Scalar_Add )
 	checkDenseExpressionEquality(5.0 + x,result);
 	checkDenseExpressionEquality(x + 5.0,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Scalar_Multiply )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Scalar_Multiply )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -80,7 +79,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Scalar_Multiply )
 	checkDenseExpressionEquality(5.0*x,result);
 	checkDenseExpressionEquality(x*5.0,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Scalar_Div )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Scalar_Div )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -93,7 +92,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Scalar_Div )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(x/5.0f,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Abs )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Abs )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -106,7 +105,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Abs )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(abs(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Sqr )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Sqr )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -119,7 +118,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Sqr )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(sqr(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Sqrt )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Sqrt )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -132,7 +131,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Sqrt )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(sqrt(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Exp )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Exp )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -145,7 +144,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Exp )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(exp(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Log )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Log )
 {
 
 	vector<float> x_cpu(Dimensions); 
@@ -159,7 +158,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Log )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(log(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Tanh )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Tanh )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -171,7 +170,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Tanh )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(tanh(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Sigmoid )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Sigmoid )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -183,7 +182,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Sigmoid )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(sigmoid(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_SoftPlus )
+BOOST_AUTO_TEST_CASE( Remora_Vector_SoftPlus )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -191,12 +190,12 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_SoftPlus )
 	for (size_t i = 0; i < Dimensions; i++)
 	{
 		x_cpu(i) = 0.02*i;
-		result(i) = shark::softPlus(x_cpu(i));
+		result(i) =std::log(1+std::exp(x_cpu(i)));
 	}
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(softPlus(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Pow )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Pow )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> result(Dimensions);
@@ -214,7 +213,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Pow )
 ///////BINARY OPERATIONS//////////
 /////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Plus)
+BOOST_AUTO_TEST_CASE( Remora_Vector_Binary_Plus)
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> y_cpu(Dimensions); 
@@ -230,7 +229,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Plus)
 	gpu::vector<float> y = gpu::copy_to_gpu(y_cpu);
 	checkDenseExpressionEquality(x+y,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Minus)
+BOOST_AUTO_TEST_CASE( Remora_Vector_Binary_Minus)
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> y_cpu(Dimensions); 
@@ -247,7 +246,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Minus)
 	checkDenseExpressionEquality(x-y,result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Multiply)
+BOOST_AUTO_TEST_CASE( Remora_Vector_Binary_Multiply)
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> y_cpu(Dimensions); 
@@ -265,7 +264,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Multiply)
 	checkDenseExpressionEquality(element_prod(x,y),result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Div)
+BOOST_AUTO_TEST_CASE( Remora_Vector_Binary_Div)
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> y_cpu(Dimensions); 
@@ -283,7 +282,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Div)
 	checkDenseExpressionEquality(element_div(x,y),result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Safe_Div )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Safe_Div )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> y_cpu(Dimensions); 
@@ -304,7 +303,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Safe_Div )
 ///////////Vector Reductions///////////
 /////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Max )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Max )
 {
 	vector<float> x_cpu(Dimensions); 
 	float result = 1;
@@ -316,7 +315,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Max )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	BOOST_CHECK_CLOSE(max(x),result,1.e-10);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Min )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Min )
 {
 	vector<float> x_cpu(Dimensions); 
 	float result = -1;
@@ -329,7 +328,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Min )
 	BOOST_CHECK_CLOSE(min(x),result,1.e-10);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Arg_Max )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Arg_Max )
 {
 	vector<float> x_cpu(Dimensions); 
 	unsigned int result = 5;
@@ -341,7 +340,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Arg_Max )
 	BOOST_CHECK_EQUAL(arg_max(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Arg_Min )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Arg_Min )
 {
 	vector<float> x_cpu(Dimensions); 
 	unsigned int result = 5;
@@ -353,7 +352,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Arg_Min )
 	BOOST_CHECK_EQUAL(arg_min(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Sum )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Sum )
 {
 	vector<float> x_cpu(Dimensions); 
 	float result = 0;
@@ -366,7 +365,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Sum )
 	BOOST_CHECK_CLOSE(sum(x),result,1.e-10);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_1 )
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_1 )
 {
 	vector<float> x_cpu(Dimensions); 
 	float result = 0;
@@ -379,7 +378,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_1 )
 	BOOST_CHECK_CLOSE(norm_1(x),result,1.e-10);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_sqr )
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_sqr )
 {
 	vector<float> x_cpu(Dimensions); 
 	float result = 0;
@@ -391,7 +390,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_sqr )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	BOOST_CHECK_CLOSE(norm_sqr(x),result,1.e-10);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_2 )
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_2 )
 {
 	vector<float> x_cpu(Dimensions); 
 	float result = 0;
@@ -403,7 +402,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_2 )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	BOOST_CHECK_CLOSE(norm_2(x),result,1.e-10);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_inf )
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_inf )
 {
 	vector<float> x_cpu(Dimensions); 
 	for (size_t i = 0; i < Dimensions; i++){
@@ -413,7 +412,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_inf )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	BOOST_CHECK_EQUAL(norm_inf(x),2.0);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_index_norm_inf )
+BOOST_AUTO_TEST_CASE( Remora_Vector_index_norm_inf )
 {
 	vector<float> x_cpu(Dimensions); 
 	
@@ -425,7 +424,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_index_norm_inf )
 	BOOST_CHECK_EQUAL(index_norm_inf(x),8);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_inner_prod )
+BOOST_AUTO_TEST_CASE( Remora_Vector_inner_prod )
 {
 	vector<float> x_cpu(Dimensions); 
 	vector<float> y_cpu(Dimensions); 

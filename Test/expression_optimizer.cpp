@@ -1,25 +1,21 @@
-#define BOOST_TEST_MODULE BLAS_expression_optimizer
+#define BOOST_TEST_MODULE Remora_expression_optimizer
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
-#include <random>
+#include <remora/matrix_expression.hpp>
+#include <remora/matrix.hpp>
+#include <remora/vector.hpp>
 
-std::default_random_engine e1(42);
-
-using namespace shark::blas;
+using namespace remora;
 
 struct ExpressionOptimizerFixture{
 	ExpressionOptimizerFixture():e1(42){}
-	std::default_random_engine e1;
-	std::normal_distribution<> dist;
 		
 	matrix<double> create_matrix(std::size_t rows, std::size_t columns){
 		matrix<double> mat(rows,columns);
 		for(std::size_t i = 0; i != rows; ++i){
 			for(std::size_t j = 0; j != columns; ++j){
-				mat(i,j) = dist(e1);
+				mat(i,j) = i*columns + rows;
 			}
 		}
 		return mat;
@@ -28,15 +24,15 @@ struct ExpressionOptimizerFixture{
 	vector<double> create_vector(std::size_t rows){
 		vector<double> vec(rows);
 		for(std::size_t i = 0; i != rows; ++i){
-			vec(i) = dist(e1);
+			vec(i) = i;
 		}
 		return vec;
 	}
 };
 
-BOOST_FIXTURE_TEST_SUITE(BLAS_Expression_Optimizer,ExpressionOptimizerFixture)
+BOOST_FIXTURE_TEST_SUITE(Remora_Expression_Optimizer,ExpressionOptimizerFixture)
 
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_vector_expression_optimize ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_vector_expression_optimize ){
 	typedef matrix<double,row_major> M1;
 	typedef matrix<double,column_major> M2;
 	typedef vector<double> V;
@@ -144,7 +140,7 @@ BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_vector_expression_optimize ){
 }
 
 
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_matrix_expression_optimize ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_matrix_expression_optimize ){
 	typedef matrix<double,row_major> M1;
 	typedef matrix<double,column_major> M2;
 	
@@ -178,7 +174,7 @@ BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_matrix_expression_optimize ){
 	}
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_row_optimize ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_row_optimize ){
 	typedef matrix<double,row_major> M1;
 	typedef matrix<double,column_major> M2;
 	
@@ -247,7 +243,7 @@ BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_row_optimize ){
 }
 
 
-BOOST_AUTO_TEST_CASE( BLAS_prod_vector_range_optimize ){
+BOOST_AUTO_TEST_CASE( Remora_prod_vector_range_optimize ){
 	typedef matrix<double,row_major> M;
 	typedef vector<double> V1;
 	typedef vector<float> V2;
@@ -300,7 +296,7 @@ BOOST_AUTO_TEST_CASE( BLAS_prod_vector_range_optimize ){
 	}
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_range_optimize ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_range_optimize ){
 	typedef matrix<double,row_major> M1;
 	typedef matrix<double,column_major> M2;
 	

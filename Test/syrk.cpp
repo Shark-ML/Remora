@@ -1,15 +1,12 @@
-#define BOOST_TEST_MODULE BLAS_Syrk
+#define BOOST_TEST_MODULE Remora_Syrk
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/mpl/list.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
-#include <shark/LinAlg/BLAS/kernels/syrk.hpp>
-
-using namespace shark;
-using namespace blas;
-
+#include <remora/kernels/syrk.hpp>
+#include <remora/matrix.hpp>
+#include <iostream>
+using namespace remora;
 
 template<class M1, class Result>
 void checkSyrk(M1 const& arg, Result const& result,double init, double alpha, bool upper){
@@ -41,7 +38,7 @@ void checkSyrk(M1 const& arg, Result const& result,double init, double alpha, bo
 	}
 }
 
-BOOST_AUTO_TEST_SUITE(BLAS_SYRK)
+BOOST_AUTO_TEST_SUITE(Remora_SYRK)
 
 
 

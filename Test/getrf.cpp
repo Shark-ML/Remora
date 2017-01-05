@@ -1,20 +1,19 @@
-#define BOOST_TEST_MODULE BLAS_Getrf
+#define BOOST_TEST_MODULE Remora_Getrf
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/kernels/getrf.hpp>
-#include <shark/LinAlg/BLAS/matrix.hpp>
-#include <shark/LinAlg/BLAS/matrix_expression.hpp>
-#include <shark/LinAlg/BLAS/matrix_proxy.hpp>
-#include <shark/LinAlg/BLAS/io.hpp>
+#include <remora/kernels/getrf.hpp>
+#include <remora/matrix.hpp>
+#include <remora/matrix_expression.hpp>
+#include <remora/matrix_proxy.hpp>
+#include <iostream>
 
-using namespace shark;
+using namespace remora;
 
 //the matrix is designed such that permutation will always give the next row
-blas::matrix<double> createMatrix(std::size_t dimensions){
-	blas::matrix<double> L(dimensions,dimensions,0.0);
-	blas::matrix<double> U(dimensions,dimensions,0.0);
+matrix<double> createMatrix(std::size_t dimensions){
+	matrix<double> L(dimensions,dimensions,0.0);
+	matrix<double> U(dimensions,dimensions,0.0);
 	
 	for(std::size_t i = 0; i != dimensions; ++i){
 		for(std::size_t j = 0; j <i; ++j){
@@ -24,25 +23,25 @@ blas::matrix<double> createMatrix(std::size_t dimensions){
 		U(i,i) = 0.5/dimensions*i+1;
 		L(i,i) = 1;
 	}
-	blas::matrix<double> A = prod(L,U);
+	matrix<double> A = prod(L,U);
 	return A;
 }
-typedef boost::mpl::list<blas::row_major,blas::column_major> result_orientations;
+typedef boost::mpl::list<row_major,column_major> result_orientations;
 
 
-BOOST_AUTO_TEST_SUITE (BLAS_Cholesky)
+BOOST_AUTO_TEST_SUITE (Remora_Cholesky)
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(BLAS_Potrf, Orientation,result_orientations) {
+BOOST_AUTO_TEST_CASE_TEMPLATE(Remora_Potrf, Orientation,result_orientations) {
 	std::size_t Dimensions = 123;
 	//first generate a suitable eigenvalue problem matrix A
-	blas::matrix<double,Orientation> A = createMatrix(Dimensions);
+	matrix<double,Orientation> A = createMatrix(Dimensions);
 	//calculate lu decomposition
-	blas::permutation_matrix P(Dimensions);
-	blas::matrix<double,Orientation> dec = A;
-	blas::kernels::getrf(dec,P);
+	permutation_matrix P(Dimensions);
+	matrix<double,Orientation> dec = A;
+	kernels::getrf(dec,P);
 
 	//copy upper matrix to temporary
-	blas::matrix<double> upper(Dimensions,Dimensions,0.0);
+	matrix<double> upper(Dimensions,Dimensions,0.0);
 	for (size_t row = 0; row < Dimensions; row++){
 		for (size_t col = row; col < Dimensions ; col++){
 			upper(row, col) = dec(row, col);
@@ -50,7 +49,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(BLAS_Potrf, Orientation,result_orientations) {
 	}
 	
 	//create reconstruction of A
-	blas::matrix<double> testA = blas::triangular_prod<blas::unit_lower>(dec,upper);
+	matrix<double> testA = triangular_prod<unit_lower>(dec,upper);
 	swap_rows_inverted(P,testA);
 	
 	//test reconstruction error

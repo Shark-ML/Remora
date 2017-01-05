@@ -1,15 +1,15 @@
-#define BOOST_TEST_MODULE BLAS_gpu_prod
+#define BOOST_TEST_MODULE Remora_gpu_prod
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
-#include <shark/LinAlg/BLAS/gpu/vector.hpp>
-#include <shark/LinAlg/BLAS/gpu/matrix.hpp>
-#include <shark/LinAlg/BLAS/gpu/copy.hpp>
+#include <remora/matrix_expression.hpp>
+#include <remora/gpu/vector.hpp>
+#include <remora/gpu/matrix.hpp>
+#include <remora/gpu/copy.hpp>
+#include <remora/vector.hpp>
+#include <remora/matrix.hpp>
 
-using namespace shark;
-using namespace blas;
+using namespace remora;
 
 template<class M, class V, class Result>
 void checkMatrixVectorMultiply(M const& arg1_gpu, V const& arg2_gpu, Result const& result_gpu, float factor, float init = 0){
@@ -29,9 +29,9 @@ void checkMatrixVectorMultiply(M const& arg1_gpu, V const& arg2_gpu, Result cons
 	}
 }
 
-BOOST_AUTO_TEST_SUITE (BLAS_gpu_prod)
+BOOST_AUTO_TEST_SUITE (Remora_gpu_prod)
 
-BOOST_AUTO_TEST_CASE( BLAS_gpu_prod_vector_dense ){
+BOOST_AUTO_TEST_CASE( Remora_gpu_prod_vector_dense ){
 	std::size_t rows = 50;
 	std::size_t columns = 40;
 	//initialize the arguments in both row and column major as well as transposed
@@ -130,7 +130,7 @@ void checkMatrixMatrixMultiply(Arg1 const& arg1_gpu, Arg2 const& arg2_gpu, Resul
 	}
 }
 typedef boost::mpl::list<row_major,column_major> result_orientations;
-BOOST_AUTO_TEST_CASE_TEMPLATE(BLAS_prod_gpu_matrix_dense_dense, Orientation,result_orientations) {
+BOOST_AUTO_TEST_CASE_TEMPLATE(Remora_prod_gpu_matrix_dense_dense, Orientation,result_orientations) {
 	std::size_t rows = 50;
 	std::size_t columns = 80;
 	std::size_t middle = 33;

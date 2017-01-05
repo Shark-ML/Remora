@@ -1,18 +1,16 @@
-#define BOOST_TEST_MODULE LinAlg_MatrixTriangular
+#define BOOST_TEST_MODULE Remora_MatrixTriangular
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/triangular_matrix.hpp>
-#include <shark/LinAlg/BLAS/matrix_proxy.hpp>
-#include <shark/LinAlg/BLAS/matrix.hpp>
+#include <remora/triangular_matrix.hpp>
+#include <remora/matrix_proxy.hpp>
+#include <remora/matrix.hpp>
 #include <iostream>
 
-using namespace shark;
-using namespace blas;
+using namespace remora;
 
 template<class TriangularMatrix>
-void testTriangularEqualLower(TriangularMatrix& matrix,blas::matrix<int> const& result,std::size_t rows){
+void testTriangularEqualLower(TriangularMatrix& matrix,matrix<int> const& result,std::size_t rows){
 	BOOST_REQUIRE_EQUAL(matrix.size1(),rows);
 	BOOST_REQUIRE_EQUAL(matrix.size1(),rows);
 	
@@ -98,7 +96,7 @@ void testTriangularEqualLower(TriangularMatrix& matrix,blas::matrix<int> const& 
 }
 
 template<class TriangularMatrix>
-void testTriangularEqualUpper(TriangularMatrix& matrix,blas::matrix<int> const& result,std::size_t rows){
+void testTriangularEqualUpper(TriangularMatrix& matrix,matrix<int> const& result,std::size_t rows){
 	BOOST_REQUIRE_EQUAL(matrix.size1(),rows);
 	BOOST_REQUIRE_EQUAL(matrix.size1(),rows);
 	
@@ -229,11 +227,11 @@ struct TriangularMatrixFixture
 	}
 };
 
-BOOST_FIXTURE_TEST_SUITE (LinAlg_BLAS_triangular_matrix,TriangularMatrixFixture)
+BOOST_FIXTURE_TEST_SUITE (Remora_triangular_matrix,TriangularMatrixFixture)
 
 
 //Check that reading entries of the matrix works and it is the same structure
-//as demanded by the BLAS Standard
+//as demanded by the Remora Standard
 BOOST_AUTO_TEST_CASE( triangular_matrix_structure){
 	BOOST_REQUIRE_EQUAL(matrix1.raw_storage().nnz,elements);
 	BOOST_REQUIRE_EQUAL(matrix2.raw_storage().nnz,elements);

@@ -1,20 +1,19 @@
-#define BOOST_TEST_MODULE LinAlg_BLAS_GPU_COPY
+#define BOOST_TEST_MODULE Remora_GPU_COPY
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
-#include <shark/LinAlg/BLAS/gpu/vector.hpp>
-#include <shark/LinAlg/BLAS/gpu/matrix.hpp>
-#include <shark/LinAlg/BLAS/gpu/copy.hpp>
+#include <remora/gpu/copy.hpp>
+#include <remora/gpu/vector.hpp>
+#include <remora/gpu/matrix.hpp>
+#include <remora/vector.hpp>
+#include <remora/matrix.hpp>
 
-using namespace shark;
-using namespace blas;
+using namespace remora;
 
 
-BOOST_AUTO_TEST_SUITE (LinAlg_BLAS_gpu_copy)
+BOOST_AUTO_TEST_SUITE (Remora_gpu_copy)
 
-BOOST_AUTO_TEST_CASE( LinAlg_BLAS_Vector_Copy ){
+BOOST_AUTO_TEST_CASE( Remora_Vector_Copy ){
 	std::cout<<"testing vector copy to gpu and back"<<std::endl;
 	vector<float> source(100);
 	for(std::size_t i = 0; i != 100; ++i){
@@ -25,7 +24,7 @@ BOOST_AUTO_TEST_CASE( LinAlg_BLAS_Vector_Copy ){
 	
 	BOOST_CHECK_SMALL(norm_inf(source - target_cpu), 1.e-10f);	
 }
-BOOST_AUTO_TEST_CASE( LinAlg_BLAS_Vector_Copy_Plus_Assign ){
+BOOST_AUTO_TEST_CASE( Remora_Vector_Copy_Plus_Assign ){
 	std::cout<<"testing vector assignment to gpu and back"<<std::endl;
 	vector<float> source(100);
 	for(std::size_t i = 0; i != 100; ++i){
@@ -39,7 +38,7 @@ BOOST_AUTO_TEST_CASE( LinAlg_BLAS_Vector_Copy_Plus_Assign ){
 	BOOST_CHECK_SMALL(norm_inf(source - target_cpu-1), 1.e-10f);	
 }
 
-BOOST_AUTO_TEST_CASE( LinAlg_BLAS_Matrix_Copy ){
+BOOST_AUTO_TEST_CASE( Remora_Matrix_Copy ){
 	std::cout<<"testing matrix copy to gpu and back"<<std::endl;
 	matrix<float,row_major> source(32,16);
 	for(std::size_t i = 0; i != 32; ++i){
@@ -74,7 +73,7 @@ BOOST_AUTO_TEST_CASE( LinAlg_BLAS_Matrix_Copy ){
 	}
 }
 
-BOOST_AUTO_TEST_CASE( LinAlg_BLAS_Matrix_Copy_Plus_Assign ){
+BOOST_AUTO_TEST_CASE( Remora_Matrix_Copy_Plus_Assign ){
 	std::cout<<"testing matrix assignment to gpu and back"<<std::endl;
 	matrix<float,row_major> source(32,16);
 	for(std::size_t i = 0; i != 32; ++i){

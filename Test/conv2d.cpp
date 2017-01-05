@@ -1,20 +1,18 @@
-#define BOOST_TEST_MODULE BLAS_Conv2d
+#define BOOST_TEST_MODULE Remora_Conv2d
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/mpl/list.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
-#include <shark/LinAlg/BLAS/kernels/conv2d.hpp>
+#include <remora/kernels/conv2d.hpp>
+#include <remora/matrix.hpp>
 
-using namespace shark;
-using namespace blas;
+using namespace remora;
 
 template<class E1, class E2, class M>
 void conv2dTest(
-	blas::matrix_expression<E1, blas::cpu_tag> const& image,
-	blas::matrix_expression<E2, blas::cpu_tag> const& filter,
-	blas::matrix_expression<M, blas::cpu_tag>& output,
+	matrix_expression<E1, cpu_tag> const& image,
+	matrix_expression<E2, cpu_tag> const& filter,
+	matrix_expression<M, cpu_tag>& output,
 	std::size_t num_channels,
 	std::size_t num_filters
 ){
@@ -53,8 +51,8 @@ void test(
 	std::size_t num_filters
 ){
 	
-	blas::matrix<T> image(num_channels * image_size1 , image_size2);
-	blas::matrix<T> filter(num_channels * num_filters *  filter_size1, filter_size2);
+	matrix<T> image(num_channels * image_size1 , image_size2);
+	matrix<T> filter(num_channels * num_filters *  filter_size1, filter_size2);
 	
 	for(std::size_t i = 0; i != num_channels * image_size1; ++i){
 		for(std::size_t j = 0; j != image_size2; ++j){
@@ -69,8 +67,8 @@ void test(
 	std::size_t output_size1 = image_size1 - filter_size1 +1;
 	std::size_t output_size2 = image_size2 - filter_size2 +1;
 	
-	blas::matrix<T> out(output_size1 * num_filters, output_size2 ,0.0);
-	blas::matrix<T> outTest(output_size1 * num_filters, output_size2 ,0.0);
+	matrix<T> out(output_size1 * num_filters, output_size2 ,0.0);
+	matrix<T> outTest(output_size1 * num_filters, output_size2 ,0.0);
 	
 	kernels::conv2d(image,filter,out,num_channels, num_filters);
 	conv2dTest(image,filter,outTest,num_channels, num_filters);
@@ -86,7 +84,7 @@ void test(
 	}
 }
 
-BOOST_AUTO_TEST_SUITE(BLAS_Conv2d)
+BOOST_AUTO_TEST_SUITE(Remora_Conv2d)
 
 
 

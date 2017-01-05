@@ -1,11 +1,12 @@
-#define BOOST_TEST_MODULE LinAlg_MatrixProxy
+#define BOOST_TEST_MODULE Remora_MatrixProxy
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
+#include <remora/matrix_proxy.hpp>
+#include <remora/matrix.hpp>
+#include <remora/vector.hpp>
 
-using namespace shark;
+using namespace remora;
 
 template<class M1, class M2>
 void checkDenseMatrixEqual(M1 const& m1, M2 const& m2){
@@ -150,8 +151,8 @@ std::size_t Dimensions1 = 4;
 std::size_t Dimensions2 = 5;
 struct MatrixProxyFixture
 {
-	blas::matrix<double,blas::row_major> denseData;
-	blas::matrix<double,blas::column_major> denseDataColMajor;
+	matrix<double,row_major> denseData;
+	matrix<double,column_major> denseDataColMajor;
 	
 	MatrixProxyFixture():denseData(Dimensions1,Dimensions2),denseDataColMajor(Dimensions1,Dimensions2){
 		for(std::size_t row=0;row!= Dimensions1;++row){
@@ -163,9 +164,9 @@ struct MatrixProxyFixture
 	}
 };
 
-BOOST_FIXTURE_TEST_SUITE (LinAlg_BLAS_matrix_proxy, MatrixProxyFixture);
+BOOST_FIXTURE_TEST_SUITE (Remora_matrix_proxy, MatrixProxyFixture);
 
-BOOST_AUTO_TEST_CASE( LinAlg_Dense_Subrange ){
+BOOST_AUTO_TEST_CASE( Remora_Dense_Subrange ){
 	//all possible combinations of ranges on the data matrix
 	for(std::size_t rowEnd=0;rowEnd!= Dimensions1;++rowEnd){
 		for(std::size_t rowBegin =0;rowBegin <= rowEnd;++rowBegin){//<= for 0 range
@@ -173,7 +174,7 @@ BOOST_AUTO_TEST_CASE( LinAlg_Dense_Subrange ){
 				for(std::size_t colBegin=0;colBegin != colEnd;++colBegin){
 					std::size_t size1= rowEnd-rowBegin;
 					std::size_t size2= colEnd-colBegin;
-					blas::matrix<double> mTest(size1,size2);
+					matrix<double> mTest(size1,size2);
 					for(std::size_t i = 0; i != size1; ++i){
 						for(std::size_t j = 0; j != size2; ++j){
 							mTest(i,j) = denseData(i+rowBegin,j+colBegin);
@@ -183,11 +184,11 @@ BOOST_AUTO_TEST_CASE( LinAlg_Dense_Subrange ){
 						subrange(denseData,rowBegin,rowEnd,colBegin,colEnd),
 						mTest
 					);
-					blas::matrix<double> newData(Dimensions1,Dimensions2,0);
-					blas::matrix<double,blas::column_major> newDataColMaj(Dimensions1,Dimensions2,0);
-					blas::matrix_range<blas::matrix<double> > rangeTest
+					matrix<double> newData(Dimensions1,Dimensions2,0);
+					matrix<double,column_major> newDataColMaj(Dimensions1,Dimensions2,0);
+					matrix_range<matrix<double> > rangeTest
 					= subrange(newData,rowBegin,rowEnd,colBegin,colEnd);
-					blas::matrix_range<blas::matrix<double,blas::column_major> > rangeTestColMaj
+					matrix_range<matrix<double,column_major> > rangeTestColMaj
 					= subrange(newDataColMaj,rowBegin,rowEnd,colBegin,colEnd);
 					checkDenseMatrixAssignment(rangeTest,mTest);
 					checkDenseMatrixAssignment(rangeTestColMaj,mTest);
@@ -195,8 +196,8 @@ BOOST_AUTO_TEST_CASE( LinAlg_Dense_Subrange ){
 					//check assignment
 					{
 						rangeTest=mTest;
-						blas::matrix<double> newData2(Dimensions1,Dimensions2,0);
-						blas::matrix_range<blas::matrix<double> > rangeTest2
+						matrix<double> newData2(Dimensions1,Dimensions2,0);
+						matrix_range<matrix<double> > rangeTest2
 						= subrange(newData2,rowBegin,rowEnd,colBegin,colEnd);
 						rangeTest2=rangeTest;
 						for(std::size_t i = 0; i != size1; ++i){
@@ -228,25 +229,25 @@ BOOST_AUTO_TEST_CASE( LinAlg_Dense_Subrange ){
 	}
 }
 
-BOOST_AUTO_TEST_CASE( LinAlg_Dense_row){
+BOOST_AUTO_TEST_CASE( Remora_Dense_row){
 	for(std::size_t r = 0;r != Dimensions1;++r){
-		blas::vector<double> vecTest(Dimensions2);
+		vector<double> vecTest(Dimensions2);
 		for(std::size_t i = 0; i != Dimensions2; ++i)
 			vecTest(i) = denseData(r,i);
 		checkDenseVectorEqual(row(denseData,r),vecTest);
 		checkDenseVectorEqual(row(denseDataColMajor,r),vecTest);
-		blas::matrix<double> newData(Dimensions1,Dimensions2,0);
-		blas::matrix<double,blas::column_major> newDataColMajor(Dimensions1,Dimensions2,0);
-		blas::matrix_row<blas::matrix<double> > rowTest = row(newData,r);
-		blas::matrix_row<blas::matrix<double,blas::column_major> > rowTestColMajor = row(newDataColMajor,r);
+		matrix<double> newData(Dimensions1,Dimensions2,0);
+		matrix<double,column_major> newDataColMajor(Dimensions1,Dimensions2,0);
+		matrix_row<matrix<double> > rowTest = row(newData,r);
+		matrix_row<matrix<double,column_major> > rowTestColMajor = row(newDataColMajor,r);
 		checkDenseVectorAssignment(rowTest,vecTest);
 		checkDenseVectorAssignment(rowTestColMajor,vecTest);
 		
 		//check assignment
 		{
 			rowTest=vecTest;
-			blas::matrix<double> newData2(Dimensions1,Dimensions2,0);
-			blas::matrix_row<blas::matrix<double> > rowTest2 = row(newData2,r);
+			matrix<double> newData2(Dimensions1,Dimensions2,0);
+			matrix_row<matrix<double> > rowTest2 = row(newData2,r);
 			rowTest2=rowTest;
 			for(std::size_t i = 0; i != Dimensions2; ++i){
 				BOOST_CHECK_EQUAL(newData(r,i),vecTest(i));
@@ -267,14 +268,14 @@ BOOST_AUTO_TEST_CASE( LinAlg_Dense_row){
 		
 	}
 }
-BOOST_AUTO_TEST_CASE( LinAlg_Dense_column){
+BOOST_AUTO_TEST_CASE( Remora_Dense_column){
 	for(std::size_t c = 0;c != Dimensions2;++c){
-		blas::vector<double> vecTest(Dimensions1);
+		vector<double> vecTest(Dimensions1);
 		for(std::size_t i = 0; i != Dimensions1; ++i)
 			vecTest(i) = denseData(i,c);
 		checkDenseVectorEqual(column(denseData,c),vecTest);
-		blas::matrix<double> newData(Dimensions1,Dimensions2,0);
-		blas::matrix<double,blas::column_major> newDataColMajor(Dimensions1,Dimensions2,0);
+		matrix<double> newData(Dimensions1,Dimensions2,0);
+		matrix<double,column_major> newDataColMajor(Dimensions1,Dimensions2,0);
 		auto columnTest = column(newData,c);
 		auto columnTestColMajor = column(newDataColMajor,c);
 		checkDenseVectorAssignment(columnTest,vecTest);
@@ -282,7 +283,7 @@ BOOST_AUTO_TEST_CASE( LinAlg_Dense_column){
 		
 		{
 			columnTest=vecTest;
-			blas::matrix<double> newData2(Dimensions1,Dimensions2,0);
+			matrix<double> newData2(Dimensions1,Dimensions2,0);
 			auto columnTest2 = column(newData2,c);
 			columnTest2=columnTest;
 			for(std::size_t i = 0; i != Dimensions1; ++i){

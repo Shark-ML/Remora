@@ -1,11 +1,9 @@
-#define BOOST_TEST_MODULE LinAlg_Vector_Proxy
+#define BOOST_TEST_MODULE Remora_Vector_Proxy
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
-
-using namespace shark;
+#include <remora/vector_proxy.hpp>
+#include <remora/vector.hpp>
 
 template<class V1, class V2>
 void checkDenseVectorEqual(V1 const& v1, V2 const& v2){
@@ -58,8 +56,8 @@ void checkDenseVectorAssignment(V1& v1, V2 const& v2){
 std::size_t Dimensions = 8;
 struct VectorProxyFixture
 {
-	blas::vector<double> denseData;
-	blas::compressed_vector<double> compressedData;
+	vector<double> denseData;
+	compressed_vector<double> compressedData;
 	
 	VectorProxyFixture():denseData(Dimensions){
 		for(std::size_t i = 0; i!= Dimensions;++i){
@@ -68,14 +66,14 @@ struct VectorProxyFixture
 	}
 };
 
-BOOST_FIXTURE_TEST_SUITE (LinAlg_BLAS_vector_proxy, VectorProxyFixture);
+BOOST_FIXTURE_TEST_SUITE (Remora_vector_proxy, VectorProxyFixture);
 
-BOOST_AUTO_TEST_CASE( LinAlg_Dense_Subrange ){
+BOOST_AUTO_TEST_CASE( Remora_Dense_Subrange ){
 	//all possible combinations of ranges on the data vector
 	for(std::size_t rangeEnd=0;rangeEnd!= Dimensions;++rangeEnd){
 		for(std::size_t rangeBegin =0;rangeBegin <=rangeEnd;++rangeBegin){//<= for 0 range
 			std::size_t size=rangeEnd-rangeBegin;
-			blas::vector<double> vTest(size);
+			vector<double> vTest(size);
 			for(std::size_t i = 0; i != size; ++i){
 				vTest(i) = denseData(i+rangeBegin);
 			}
@@ -83,8 +81,8 @@ BOOST_AUTO_TEST_CASE( LinAlg_Dense_Subrange ){
 			
 			//assignment using op() and iterators
 			{
-				blas::vector<double> newData(Dimensions,1.0);
-				blas::vector_range<blas::vector<double> > rangeTest = subrange(newData,rangeBegin,rangeEnd);
+				vector<double> newData(Dimensions,1.0);
+				vector_range<vector<double> > rangeTest = subrange(newData,rangeBegin,rangeEnd);
 				checkDenseVectorAssignment(rangeTest,vTest);//cehcks op() and iterators for assignment
 				
 				//check that after assignment all elements outside the range are still intact
@@ -99,8 +97,8 @@ BOOST_AUTO_TEST_CASE( LinAlg_Dense_Subrange ){
 			//check clear
 			{
 			
-				blas::vector<double> newData(Dimensions,1.0);
-				blas::vector_range<blas::vector<double> > rangeTest = subrange(newData,rangeBegin,rangeEnd);
+				vector<double> newData(Dimensions,1.0);
+				vector_range<vector<double> > rangeTest = subrange(newData,rangeBegin,rangeEnd);
 				
 				rangeTest.clear();
 				for(std::size_t i = 0; i != size; ++i){

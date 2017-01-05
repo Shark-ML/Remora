@@ -1,14 +1,15 @@
-#define BOOST_TEST_MODULE LinAlg_triangular_prod
+#define BOOST_TEST_MODULE Remora_triangular_prod
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/mpl/list.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
-#include <shark/LinAlg/BLAS/triangular_matrix.hpp>
+#include <remora/matrix_expression.h>
+#include <remora/triangular_matrix.hpp>
+#include <remora/matrix.hpp>
+#include <remora/vector.hpp>
 
-using namespace shark;
-using namespace blas;
+#include <iostream>
+using namespace remora;
 
 template<class M, class V, class Result>
 void checkMatrixVectorMultiply(M const& arg1, V const& arg2, Result const& result,double init, double alpha){
@@ -66,9 +67,9 @@ void checkSyrk(M1 const& arg, Result const& result,double init, double alpha, bo
 	}
 }
 
-BOOST_AUTO_TEST_SUITE(LinAlg_BLAS_triangular_prod)
+BOOST_AUTO_TEST_SUITE(Remora_triangular_prod)
 
-BOOST_AUTO_TEST_CASE(LinAlg_triangular_prod_matrix_vector) {
+BOOST_AUTO_TEST_CASE(Remora_triangular_prod_matrix_vector) {
 	std::size_t dims = 231;//chosen as not to be a multiple of the block size
 	//initialize the arguments in both row and column major, lower and upper, unit and non-unit diagonal
 	//we add one on the remaining elements to ensure, that triangular_prod does not tuch these elements
@@ -195,8 +196,8 @@ BOOST_AUTO_TEST_CASE(LinAlg_triangular_prod_matrix_vector) {
 	}
 	
 	
-	diag(arg1lowertest) = blas::repeat(1.0,dims);
-	diag(arg1uppertest) = blas::repeat(1.0,dims);
+	diag(arg1lowertest) = repeat(1.0,dims);
+	diag(arg1uppertest) = repeat(1.0,dims);
 	std::cout<<"\nchecking matrix-vector prod v=Ax unit"<<std::endl;
 	{
 		std::cout<<"row major lower Ax"<<std::endl;
@@ -302,7 +303,7 @@ BOOST_AUTO_TEST_CASE(LinAlg_triangular_prod_matrix_vector) {
 
 
 typedef boost::mpl::list<row_major,column_major> result_orientations;
-BOOST_AUTO_TEST_CASE_TEMPLATE(LinAlg_triangular_prod_matrix_matrix, Orientation,result_orientations) {
+BOOST_AUTO_TEST_CASE_TEMPLATE(Remora_triangular_prod_matrix_matrix, Orientation,result_orientations) {
 	std::size_t dims = 231;//chosen as not to be a multiple of the block size
 	std::size_t N = 1024/12*12+1;
 	//initialize the arguments in both row and column major, lower and upper, unit and non-unit diagonal
@@ -432,8 +433,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(LinAlg_triangular_prod_matrix_matrix, Orientation,
 	}
 	
 
-	diag(arg1lowertest) = blas::repeat(1.0, dims);
-	diag(arg1uppertest) = blas::repeat(1.0, dims);
+	diag(arg1lowertest) = repeat(1.0, dims);
+	diag(arg1uppertest) = repeat(1.0, dims);
 	std::cout << "\nchecking matrix-matrix prod V=AX unit" << std::endl;
 	{
 		std::cout<<"row major lower AX"<<std::endl;

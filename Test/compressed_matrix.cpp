@@ -1,12 +1,10 @@
-#define BOOST_TEST_MODULE LinAlg_MatrixSparse
+#define BOOST_TEST_MODULE Remora_MatrixSparse
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
+#include <remora/compressed_matrix.h>
 
-using namespace shark;
-using namespace blas;
+using namespace remora
 
 struct Element{
 	std::size_t row;
@@ -79,9 +77,9 @@ void checkRowSizes(std::vector<std::size_t> const& rowSizes, compressed_matrix<i
 
 
 
-BOOST_AUTO_TEST_SUITE (LinAlg_BLAS_compressed_matrix)
+BOOST_AUTO_TEST_SUITE (Remora_compressed_matrix)
 //tests whether reserve calls are correct
-BOOST_AUTO_TEST_CASE( LinAlg_sparse_matrix_reserve_row){
+BOOST_AUTO_TEST_CASE( Remora_sparse_matrix_reserve_row){
 	std::size_t rows = 11;//Should be prime :)
 	std::size_t columns = 30;
 	std::size_t base = 8;
@@ -98,7 +96,7 @@ BOOST_AUTO_TEST_CASE( LinAlg_sparse_matrix_reserve_row){
 }
 
 //this test tests push_back behavior of set_element and operator()
-BOOST_AUTO_TEST_CASE( LinAlg_sparse_matrix_insert_element_end){
+BOOST_AUTO_TEST_CASE( Remora_sparse_matrix_insert_element_end){
 	std::size_t rows = 10;
 	std::size_t columns = 20;
 	
@@ -120,7 +118,7 @@ BOOST_AUTO_TEST_CASE( LinAlg_sparse_matrix_insert_element_end){
 }
 
 //we still insert row by row, but now with different gaps between indices.
-BOOST_AUTO_TEST_CASE( LinAlg_sparse_matrix_insert_element_some_elements ){
+BOOST_AUTO_TEST_CASE( Remora_sparse_matrix_insert_element_some_elements ){
 	std::size_t rows = 10;
 	std::size_t columns = 23;//must be prime
 	std::size_t colElements = 3;

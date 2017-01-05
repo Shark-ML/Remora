@@ -1,13 +1,18 @@
-#define BOOST_TEST_MODULE BLAS_prod
+#define BOOST_TEST_MODULE Remora_prod
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
-#include <shark/LinAlg/BLAS/triangular_matrix.hpp>
+#include <remora/matrix_expression.hpp>
+#include <remora/vector_expression.hpp>
+#include <remora/triangular_matrix.hpp>
+#include <remora/matrix.hpp>
+#include <remora/vector.hpp>
+#include <remora/vector_sparse.hpp>
+#include <remora/matrix_sparse.hpp>
 
-using namespace shark;
-using namespace blas;
+#include <iostream>
+
+using namespace remora;
 
 template<class M, class V, class Result>
 void checkMatrixVectorMultiply(M const& arg1, V const& arg2, Result const& result, double factor, double init = 0){
@@ -23,9 +28,9 @@ void checkMatrixVectorMultiply(M const& arg1, V const& arg2, Result const& resul
 	}
 }
 
-BOOST_AUTO_TEST_SUITE (BLAS_prod)
+BOOST_AUTO_TEST_SUITE (Remora_prod)
 
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_vector_dense ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_vector_dense ){
 	std::size_t rows = 50;
 	std::size_t columns = 80;
 	//initialize the arguments in both row and column major as well as transposed
@@ -98,7 +103,7 @@ BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_vector_dense ){
 	}
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_vector_dense_sparse ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_vector_dense_sparse ){
 	std::size_t rows = 50;
 	std::size_t columns = 80;
 	//initialize the arguments in both row and column major as well as transposed
@@ -171,7 +176,7 @@ BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_vector_dense_sparse ){
 	}
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_vector_sparse_dense ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_vector_sparse_dense ){
 	std::size_t rows = 50;
 	std::size_t columns = 80;
 	//initialize the arguments in both row and column major as well as transposed
@@ -247,7 +252,7 @@ BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_vector_sparse_dense ){
 	}
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_vector_sparse_sparse ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_vector_sparse_sparse ){
 	std::size_t rows = 50;
 	std::size_t columns = 80;
 	//initialize the arguments in both row and column major as well as transposed
@@ -339,7 +344,7 @@ void checkMatrixMatrixMultiply(Arg1 const& arg1, Arg2 const& arg2, Result const&
 		}
 	}
 }
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_matrix_dense_dense ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_matrix_dense_dense ){
 	std::size_t rows = 80;
 	std::size_t columns = 50;
 	std::size_t middle = 33;
@@ -464,7 +469,7 @@ BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_matrix_dense_dense ){
 }
 
 //second argument sparse
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_matrix_dense_sparse ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_matrix_dense_sparse ){
 	std::size_t rows = 50;
 	std::size_t columns = 80;
 	std::size_t middle = 33;
@@ -591,7 +596,7 @@ BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_matrix_dense_sparse ){
 }
 
 //~ //first argument sparse
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_matrix_sparse_dense ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_matrix_sparse_dense ){
 	std::size_t rows = 50;
 	std::size_t columns = 80;
 	std::size_t middle = 33;
@@ -717,7 +722,7 @@ BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_matrix_sparse_dense ){
 	}
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_matrix_sparse_sparse ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_matrix_sparse_sparse ){
 	std::size_t rows = 50;
 	std::size_t columns = 80;
 	std::size_t middle = 33;
@@ -845,7 +850,7 @@ BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_matrix_sparse_sparse ){
 	}
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_prod_matrix_vector_triangular ){
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_vector_triangular ){
 	std::size_t rows = 50;
 	//initialize the arguments in both row and column major as well as transposed
 	triangular_matrix<double,row_major,lower> arg1rm(rows);

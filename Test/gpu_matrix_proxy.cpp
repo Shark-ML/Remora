@@ -1,13 +1,16 @@
-#define BOOST_TEST_MODULE BLAS_GPU_MatrixProxy
+#define BOOST_TEST_MODULE Remora_GPU_MatrixProxy
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
-#include <shark/LinAlg/BLAS/gpu/vector.hpp>
-#include <shark/LinAlg/BLAS/gpu/matrix.hpp>
-#include <shark/LinAlg/BLAS/gpu/copy.hpp>
-using namespace shark;
+
+#include <remora/matrix_proxy.hpp>
+#include <remora/vector.hpp>
+#include <remora/matrix.hpp>
+#include <remora/gpu/vector.hpp>
+#include <remora/gpu/matrix.hpp>
+#include <remora/gpu/copy.hpp>
+
+using namespace remora;
 
 template<class Operation, class Result>
 void checkDenseMatrixEquality(Operation op_gpu, Result const& result){
@@ -15,7 +18,7 @@ void checkDenseMatrixEquality(Operation op_gpu, Result const& result){
 	BOOST_REQUIRE_EQUAL(op_gpu.size2(), result.size2());
 	
 	//test copy to cpu, this tests the buffer
-	blas::matrix<float> op = copy_to_cpu(op_gpu);
+	matrix<float> op = copy_to_cpu(op_gpu);
 	for(std::size_t i = 0; i != op.size1(); ++i){
 		for(std::size_t j = 0; j != op.size2(); ++j){
 			BOOST_CHECK_CLOSE(result(i,j), op(i,j),1.e-8);
@@ -24,10 +27,10 @@ void checkDenseMatrixEquality(Operation op_gpu, Result const& result){
 	
 	//test row iterators
 	{
-		blas::gpu::vector<float> opcopy_gpu(op.size2());
+		gpu::vector<float> opcopy_gpu(op.size2());
 		for(std::size_t i = 0; i != op.size1(); ++i){
 			boost::compute::copy(op_gpu.row_begin(i),op_gpu.row_end(i),opcopy_gpu.begin());
-			blas::vector<float> opcopy = copy_to_cpu(opcopy_gpu);
+			vector<float> opcopy = copy_to_cpu(opcopy_gpu);
 			for(std::size_t j = 0; j != op.size2(); ++j){
 				BOOST_CHECK_CLOSE(result(i,j), opcopy(j),1.e-8);
 			}
@@ -36,10 +39,10 @@ void checkDenseMatrixEquality(Operation op_gpu, Result const& result){
 	
 	//test column iterators
 	{
-		blas::gpu::vector<float> opcopy_gpu(op.size1());
+		gpu::vector<float> opcopy_gpu(op.size1());
 		for(std::size_t j = 0; j != op.size2(); ++j){
 			boost::compute::copy(op_gpu.column_begin(j),op_gpu.column_end(j),opcopy_gpu.begin());
-			blas::vector<float> opcopy = copy_to_cpu(opcopy_gpu);
+			vector<float> opcopy = copy_to_cpu(opcopy_gpu);
 			for(std::size_t i = 0; i != op.size1(); ++i){
 				BOOST_CHECK_CLOSE(result(i,j), opcopy(i),1.e-8);
 			}
@@ -51,7 +54,7 @@ void checkDenseVectorEquality(Operation op_gpu, Result const& result){
 	BOOST_REQUIRE_EQUAL(op_gpu.size(), result.size());
 	
 	//test copy to cpu, this tests the buffer
-	blas::vector<float> op = copy_to_cpu(op_gpu);
+	vector<float> op = copy_to_cpu(op_gpu);
 	BOOST_REQUIRE_EQUAL(op.size(), result.size());
 	for(std::size_t i = 0; i != op.size(); ++i){
 		BOOST_CHECK_CLOSE(result(i), op(i),1.e-8);
@@ -59,9 +62,9 @@ void checkDenseVectorEquality(Operation op_gpu, Result const& result){
 	
 	//test iterators
 	BOOST_REQUIRE_EQUAL(op_gpu.end() - op_gpu.begin(), op.size());
-	blas::gpu::vector<float> opcopy_gpu(op.size());
+	gpu::vector<float> opcopy_gpu(op.size());
 	boost::compute::copy(op_gpu.begin(),op_gpu.end(),opcopy_gpu.begin());
-	blas::vector<float> opcopy = copy_to_cpu(opcopy_gpu);
+	vector<float> opcopy = copy_to_cpu(opcopy_gpu);
 	for(std::size_t i = 0; i != result.size(); ++i){
 		BOOST_CHECK_CLOSE(result(i), opcopy(i),1.e-8);
 	}
@@ -72,9 +75,9 @@ std::size_t Dimensions1 = 20;
 std::size_t Dimensions2 = 10;
 struct MatrixProxyFixture
 {
-	blas::matrix<float> denseData_cpu;
-	blas::gpu::matrix<float,blas::row_major> denseData;
-	blas::gpu::matrix<float,blas::column_major> denseDataColMajor;
+	matrix<float> denseData_cpu;
+	gpu::matrix<float,row_major> denseData;
+	gpu::matrix<float,column_major> denseDataColMajor;
 	
 	MatrixProxyFixture():denseData_cpu(Dimensions1,Dimensions2){
 		for(std::size_t row=0;row!= Dimensions1;++row){
@@ -82,14 +85,14 @@ struct MatrixProxyFixture
 				denseData_cpu(row,col) = row*Dimensions2+col+5.0;
 			}
 		}
-		denseData = blas::gpu::copy_to_gpu(denseData_cpu);
-		denseDataColMajor = blas::gpu::copy_to_gpu(denseData_cpu);
+		denseData = gpu::copy_to_gpu(denseData_cpu);
+		denseDataColMajor = gpu::copy_to_gpu(denseData_cpu);
 	}
 };
 
-BOOST_FIXTURE_TEST_SUITE (LinAlg_BLAS_matrix_proxy, MatrixProxyFixture);
+BOOST_FIXTURE_TEST_SUITE (Remora_matrix_proxy, MatrixProxyFixture);
 
-//~ BOOST_AUTO_TEST_CASE( LinAlg_Dense_Subrange ){
+//~ BOOST_AUTO_TEST_CASE( Remora_Dense_Subrange ){
 	//~ //all possible combinations of ranges on the data matrix
 	//~ for(std::size_t rowEnd=0;rowEnd!= Dimensions1;++rowEnd){
 		//~ for(std::size_t rowBegin =0;rowBegin <= rowEnd;++rowBegin){//<= for 0 range
@@ -98,7 +101,7 @@ BOOST_FIXTURE_TEST_SUITE (LinAlg_BLAS_matrix_proxy, MatrixProxyFixture);
 					//~ //obtain ground truth
 					//~ std::size_t size1= rowEnd-rowBegin;
 					//~ std::size_t size2= colEnd-colBegin;
-					//~ blas::matrix<float> mTest(size1,size2);
+					//~ matrix<float> mTest(size1,size2);
 					//~ for(std::size_t i = 0; i != size1; ++i){
 						//~ for(std::size_t j = 0; j != size2; ++j){
 							//~ mTest(i,j) = denseData_cpu(i+rowBegin,j+colBegin);
@@ -109,8 +112,8 @@ BOOST_FIXTURE_TEST_SUITE (LinAlg_BLAS_matrix_proxy, MatrixProxyFixture);
 					//~ checkDenseMatrixEquality(subrange(denseDataColMajor,rowBegin,rowEnd,colBegin,colEnd),mTest);
 
 					//~ //now test whether we can assign to a range like this.
-					//~ blas::gpu::matrix<float> newData(Dimensions1,Dimensions2,1.0);
-					//~ blas::gpu::matrix<float,blas::column_major> newDataColMajor(Dimensions1,Dimensions2,1.0);
+					//~ gpu::matrix<float> newData(Dimensions1,Dimensions2,1.0);
+					//~ gpu::matrix<float,column_major> newDataColMajor(Dimensions1,Dimensions2,1.0);
 					//~ auto rangeTest = subrange(newData,rowBegin,rowEnd,colBegin,colEnd);
 					//~ auto rangeTestColMajor = subrange(newDataColMajor,rowBegin,rowEnd,colBegin,colEnd);
 					//~ noalias(rangeTest) = subrange(denseData,rowBegin,rowEnd,colBegin,colEnd);
@@ -121,14 +124,14 @@ BOOST_FIXTURE_TEST_SUITE (LinAlg_BLAS_matrix_proxy, MatrixProxyFixture);
 
 					//~ //check that after assignment all elements outside the range are still intact
 					//~ //generate ground truth
-					//~ blas::matrix<float> truth(Dimensions1,Dimensions2,1.0);
+					//~ matrix<float> truth(Dimensions1,Dimensions2,1.0);
 					//~ for(std::size_t i = 0; i != size1; ++i){
 						//~ for(std::size_t j = 0; j != size2; ++j){
 							//~ truth(i+rowBegin,j+colBegin) = denseData_cpu(i+rowBegin,j+colBegin);
 						//~ }
 					//~ }	
-					//~ blas::matrix<float> data = copy_to_cpu(newData);
-					//~ blas::matrix<float> dataColMajor = copy_to_cpu(newDataColMajor);
+					//~ matrix<float> data = copy_to_cpu(newData);
+					//~ matrix<float> dataColMajor = copy_to_cpu(newDataColMajor);
 					//~ for(std::size_t i = 0; i != Dimensions1; ++i){
 						//~ for(std::size_t j = 0; j != Dimensions2; ++j){
 							//~ BOOST_CHECK_EQUAL(data(i,j),truth(i,j));
@@ -141,27 +144,27 @@ BOOST_FIXTURE_TEST_SUITE (LinAlg_BLAS_matrix_proxy, MatrixProxyFixture);
 	//~ }
 //~ }
 
-BOOST_AUTO_TEST_CASE( LinAlg_Dense_row){
+BOOST_AUTO_TEST_CASE( Remora_Dense_row){
 	for(std::size_t r = 0;r != Dimensions1;++r){
-		blas::vector<float> vTest(Dimensions2);
+		vector<float> vTest(Dimensions2);
 		for(std::size_t j = 0; j != Dimensions2; ++j)
 			vTest(j) = denseData_cpu(r,j);
 		checkDenseVectorEquality(row(denseData,r),vTest);
 		
 		//now test whether we can assign to a range like this.
-		blas::gpu::matrix<float> newData(Dimensions1, Dimensions2,1.0);
-		blas::gpu::vector<float> vTest_gpu = blas::gpu::copy_to_gpu(vTest);
+		gpu::matrix<float> newData(Dimensions1, Dimensions2,1.0);
+		gpu::vector<float> vTest_gpu = gpu::copy_to_gpu(vTest);
 		auto rowTest = row(newData,r);
 		noalias(rowTest) = vTest_gpu;
 		//check that the assignment has been carried out correctly
 		checkDenseVectorEquality(rowTest,vTest);
 
 		//check that after assignment all elements outside the range are still intact
-		blas::matrix<float> truth(Dimensions1,Dimensions2,1.0);
+		matrix<float> truth(Dimensions1,Dimensions2,1.0);
 		for(std::size_t j = 0; j != Dimensions2; ++j){
 			truth(r,j) = denseData_cpu(r,j);
 		}
-		blas::matrix<float> data = copy_to_cpu(newData);
+		matrix<float> data = copy_to_cpu(newData);
 		for(std::size_t i = 0; i != Dimensions1; ++i){
 			for(std::size_t j = 0; j != Dimensions2; ++j){
 				BOOST_CHECK_EQUAL(data(i,j),truth(i,j));
@@ -169,27 +172,27 @@ BOOST_AUTO_TEST_CASE( LinAlg_Dense_row){
 		}
 	}
 }
-BOOST_AUTO_TEST_CASE( LinAlg_Dense_column){
+BOOST_AUTO_TEST_CASE( Remora_Dense_column){
 	for(std::size_t c = 0;c != Dimensions2;++c){
-		blas::vector<float> vTest(Dimensions1);
+		vector<float> vTest(Dimensions1);
 		for(std::size_t i = 0; i != Dimensions1; ++i)
 			vTest(i) = denseData_cpu(i,c);
 		checkDenseVectorEquality(column(denseData,c),vTest);
 		
 		//now test whether we can assign to a range like this.
-		blas::gpu::matrix<float> newData(Dimensions1, Dimensions2,1.0);
-		blas::gpu::vector<float> vTest_gpu = blas::gpu::copy_to_gpu(vTest);
+		gpu::matrix<float> newData(Dimensions1, Dimensions2,1.0);
+		gpu::vector<float> vTest_gpu = gpu::copy_to_gpu(vTest);
 		auto columnTest = column(newData,c);
 		noalias(columnTest) = vTest_gpu;
 		//check that the assignment has been carried out correctly
 		checkDenseVectorEquality(columnTest,vTest);
 
 		//check that after assignment all elements outside the range are still intact
-		blas::matrix<float> truth(Dimensions1,Dimensions2,1.0);
+		matrix<float> truth(Dimensions1,Dimensions2,1.0);
 		for(std::size_t i = 0; i != Dimensions1; ++i){
 			truth(i,c) = denseData_cpu(i,c);
 		}
-		blas::matrix<float> data = copy_to_cpu(newData);
+		matrix<float> data = copy_to_cpu(newData);
 		for(std::size_t i = 0; i != Dimensions1; ++i){
 			for(std::size_t j = 0; j != Dimensions2; ++j){
 				BOOST_CHECK_EQUAL(data(i,j),truth(i,j));
@@ -198,27 +201,27 @@ BOOST_AUTO_TEST_CASE( LinAlg_Dense_column){
 	}
 }
 
-BOOST_AUTO_TEST_CASE( LinAlg_Dense_diagonal){
-	blas::gpu::matrix<float> square = subrange(denseData,0,Dimensions2,0,Dimensions2);
-	blas::vector<float> vTest(Dimensions2);
+BOOST_AUTO_TEST_CASE( Remora_Dense_diagonal){
+	gpu::matrix<float> square = subrange(denseData,0,Dimensions2,0,Dimensions2);
+	vector<float> vTest(Dimensions2);
 	for(std::size_t i = 0; i != Dimensions2; ++i)
 		vTest(i) = denseData_cpu(i,i);
 	checkDenseVectorEquality(diag(square),vTest);
 	
 	//now test whether we can assign to a range like this.
-	blas::gpu::matrix<float> newData(Dimensions2, Dimensions2,1.0);
-	blas::gpu::vector<float> vTest_gpu = blas::gpu::copy_to_gpu(vTest);
+	gpu::matrix<float> newData(Dimensions2, Dimensions2,1.0);
+	gpu::vector<float> vTest_gpu = gpu::copy_to_gpu(vTest);
 	auto diagTest = diag(newData);
 	noalias(diagTest) = vTest_gpu;
 	//check that the assignment has been carried out correctly
 	checkDenseVectorEquality(diagTest,vTest);
 
 	//check that after assignment all elements outside the range are still intact
-	blas::matrix<float> truth(Dimensions1,Dimensions2,1.0);
+	matrix<float> truth(Dimensions1,Dimensions2,1.0);
 	for(std::size_t i = 0; i != Dimensions2; ++i){
 		truth(i,i) = denseData_cpu(i,i);
 	}
-	blas::matrix<float> data = copy_to_cpu(newData);
+	matrix<float> data = copy_to_cpu(newData);
 	for(std::size_t i = 0; i != Dimensions2; ++i){
 		for(std::size_t j = 0; j != Dimensions2; ++j){
 			BOOST_CHECK_EQUAL(data(i,j),truth(i,j));

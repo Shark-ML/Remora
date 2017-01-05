@@ -1,15 +1,12 @@
-#define BOOST_TEST_MODULE BLAS_Vector_vector_expression
+#define BOOST_TEST_MODULE Remora_Vector_vector_expression
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
+#include <remora/vector_expression.hpp>
+#include <remora/vector.hpp>
+#include <remora/compressed_vector.hpp>
 
-using namespace shark;
-using namespace blas;
-
-
-
+using namespace remora;
 
 //////////////////DENSE//////////////////////////////
 
@@ -34,9 +31,9 @@ const std::size_t Dimensions = 10;
 /////////////////////////////////////////////////////////////
 //////UNARY TRANSFORMATIONS///////
 ////////////////////////////////////////////////////////////
-BOOST_AUTO_TEST_SUITE (LinAlg_BLAS_vector_expression)
+BOOST_AUTO_TEST_SUITE (Remora_vector_expression)
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Unary_Minus )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Unary_Minus )
 {
 	vector<double> x(Dimensions); 
 	vector<double> result(Dimensions);
@@ -48,7 +45,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Unary_Minus )
 	}
 	checkDenseExpressionEquality(-x,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Scalar_Multiply )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Scalar_Multiply )
 {
 	vector<double> x(Dimensions); 
 	vector<double> result(Dimensions);
@@ -61,7 +58,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Scalar_Multiply )
 	checkDenseExpressionEquality(5.0*x,result);
 	checkDenseExpressionEquality(x*5.0,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Scalar_Div )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Scalar_Div )
 {
 	vector<double> x(Dimensions); 
 	vector<double> result(Dimensions);
@@ -73,7 +70,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Scalar_Div )
 	}
 	checkDenseExpressionEquality(x/5.0,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Abs )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Abs )
 {
 	vector<double> x(Dimensions); 
 	vector<double> result(Dimensions);
@@ -85,7 +82,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Abs )
 	}
 	checkDenseExpressionEquality(abs(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Sqr )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Sqr )
 {
 	vector<double> x(Dimensions); 
 	vector<double> result(Dimensions);
@@ -97,7 +94,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Sqr )
 	}
 	checkDenseExpressionEquality(sqr(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Sqrt )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Sqrt )
 {
 	vector<double> x(Dimensions); 
 	vector<double> result(Dimensions);
@@ -109,7 +106,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Sqrt )
 	}
 	checkDenseExpressionEquality(sqrt(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Exp )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Exp )
 {
 	vector<double> x(Dimensions); 
 	vector<double> result(Dimensions);
@@ -121,7 +118,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Exp )
 	}
 	checkDenseExpressionEquality(exp(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Log )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Log )
 {
 
 	vector<double> x(Dimensions); 
@@ -134,7 +131,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Log )
 	}
 	checkDenseExpressionEquality(log(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Tanh )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Tanh )
 {
 	vector<double> x(Dimensions); 
 	vector<double> result(Dimensions);
@@ -145,7 +142,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Tanh )
 	}
 	checkDenseExpressionEquality(tanh(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Sigmoid )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Sigmoid )
 {
 	vector<double> x(Dimensions); 
 	vector<double> result(Dimensions);
@@ -156,7 +153,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Sigmoid )
 	}
 	checkDenseExpressionEquality(sigmoid(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_SoftPlus )
+BOOST_AUTO_TEST_CASE( Remora_Vector_SoftPlus )
 {
 	vector<double> x(Dimensions); 
 	vector<double> result(Dimensions);
@@ -164,11 +161,11 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_SoftPlus )
 	for (size_t i = 0; i < Dimensions; i++)
 	{
 		x(i) = i;
-		result(i) = shark::softPlus(x(i));
+		result(i) = std::log(1+std::exp(x(i)));
 	}
 	checkDenseExpressionEquality(softPlus(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Pow )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Pow )
 {
 	vector<double> x(Dimensions); 
 	vector<double> result(Dimensions);
@@ -185,7 +182,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Pow )
 ///////BINARY OPERATIONS//////////
 /////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Plus)
+BOOST_AUTO_TEST_CASE( Remora_Vector_Binary_Plus)
 {
 	vector<double> x(Dimensions); 
 	vector<double> y(Dimensions); 
@@ -199,7 +196,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Plus)
 	}
 	checkDenseExpressionEquality(x+y,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Minus)
+BOOST_AUTO_TEST_CASE( Remora_Vector_Binary_Minus)
 {
 	vector<double> x(Dimensions); 
 	vector<double> y(Dimensions); 
@@ -214,7 +211,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Minus)
 	checkDenseExpressionEquality(x-y,result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Multiply)
+BOOST_AUTO_TEST_CASE( Remora_Vector_Binary_Multiply)
 {
 	vector<double> x(Dimensions); 
 	vector<double> y(Dimensions); 
@@ -230,7 +227,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Multiply)
 	checkDenseExpressionEquality(element_prod(x,y),result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Div)
+BOOST_AUTO_TEST_CASE( Remora_Vector_Binary_Div)
 {
 	vector<double> x(Dimensions); 
 	vector<double> y(Dimensions); 
@@ -246,7 +243,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Binary_Div)
 	checkDenseExpressionEquality(element_div(x,y),result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Safe_Div )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Safe_Div )
 {
 	vector<double> x(Dimensions); 
 	vector<double> y(Dimensions); 
@@ -265,7 +262,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Safe_Div )
 ///////////Vector Reductions///////////
 /////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Max )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Max )
 {
 	vector<double> x(Dimensions); 
 	double result = 1;
@@ -276,7 +273,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Max )
 	}
 	BOOST_CHECK_CLOSE(max(x),result,1.e-10);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Min )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Min )
 {
 	vector<double> x(Dimensions); 
 	double result = -1;
@@ -288,7 +285,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Min )
 	BOOST_CHECK_CLOSE(min(x),result,1.e-10);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Arg_Max )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Arg_Max )
 {
 	vector<double> x(Dimensions); 
 	unsigned int result = 5;
@@ -300,7 +297,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Arg_Max )
 	BOOST_CHECK_EQUAL(arg_max(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Arg_Min )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Arg_Min )
 {
 	vector<double> x(Dimensions); 
 	unsigned int result = 5;
@@ -311,7 +308,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Arg_Min )
 	BOOST_CHECK_EQUAL(arg_min(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_Sum )
+BOOST_AUTO_TEST_CASE( Remora_Vector_Sum )
 {
 	vector<double> x(Dimensions); 
 	double result = 0;
@@ -323,7 +320,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_Sum )
 	BOOST_CHECK_CLOSE(sum(x),result,1.e-10);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_1 )
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_1 )
 {
 	vector<double> x(Dimensions); 
 	double result = 0;
@@ -335,7 +332,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_1 )
 	BOOST_CHECK_CLOSE(norm_1(x),result,1.e-10);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_sqr )
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_sqr )
 {
 	vector<double> x(Dimensions); 
 	double result = 0;
@@ -346,7 +343,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_sqr )
 	}
 	BOOST_CHECK_CLOSE(norm_sqr(x),result,1.e-10);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_2 )
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_2 )
 {
 	vector<double> x(Dimensions); 
 	double result = 0;
@@ -358,7 +355,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_2 )
 	result = std::sqrt(result);
 	BOOST_CHECK_CLOSE(norm_2(x),result,1.e-10);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_inf )
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_inf )
 {
 	vector<double> x(Dimensions); 
 	for (size_t i = 0; i < Dimensions; i++){
@@ -367,7 +364,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_norm_inf )
 	x(8)=-2;
 	BOOST_CHECK_EQUAL(norm_inf(x),2.0);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Vector_index_norm_inf )
+BOOST_AUTO_TEST_CASE( Remora_Vector_index_norm_inf )
 {
 	vector<double> x(Dimensions); 
 	
@@ -378,7 +375,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Vector_index_norm_inf )
 	BOOST_CHECK_EQUAL(index_norm_inf(x),8);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Vector_inner_prod )
+BOOST_AUTO_TEST_CASE( Remora_Vector_inner_prod )
 {
 	vector<double> x(Dimensions); 
 	vector<double> y(Dimensions); 
@@ -421,7 +418,7 @@ void checkSparseExpressionEquality(
 std::size_t SparseDimensions = 100;
 std::size_t VectorNNZ = 10;
 
-BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Unary_Minus )
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Unary_Minus )
 {
 	compressed_vector<double> x(SparseDimensions); 
 	compressed_vector<double> result(SparseDimensions);
@@ -433,7 +430,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Unary_Minus )
 	}
 	checkSparseExpressionEquality(-x,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Scalar_Multiply )
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Scalar_Multiply )
 {
 	compressed_vector<double> x(SparseDimensions); 
 	compressed_vector<double> result(SparseDimensions);
@@ -446,7 +443,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Scalar_Multiply )
 	checkSparseExpressionEquality(5.0*x,result);
 	checkSparseExpressionEquality(x*5.0,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Scalar_Div )
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Scalar_Div )
 {
 	compressed_vector<double> x(SparseDimensions); 
 	compressed_vector<double> result(SparseDimensions);
@@ -458,7 +455,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Scalar_Div )
 	}
 	checkSparseExpressionEquality(x/5.0,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Abs )
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Abs )
 {
 	compressed_vector<double> x(SparseDimensions); 
 	compressed_vector<double> result(SparseDimensions);
@@ -470,7 +467,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Abs )
 	}
 	checkSparseExpressionEquality(abs(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Sqr )
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Sqr )
 {
 	compressed_vector<double> x(SparseDimensions); 
 	compressed_vector<double> result(SparseDimensions);
@@ -482,7 +479,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Sqr )
 	}
 	checkSparseExpressionEquality(sqr(x),result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Sqrt )
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Sqrt )
 {
 	compressed_vector<double> x(SparseDimensions); 
 	compressed_vector<double> result(SparseDimensions);
@@ -499,7 +496,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Sqrt )
 //////BINARY TRANSFORMATIONS///////
 /////////////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Binary_Plus)
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Binary_Plus)
 {
 	compressed_vector<double> x(SparseDimensions); 
 	compressed_vector<double> y(SparseDimensions); 
@@ -518,7 +515,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Binary_Plus)
 	}
 	checkSparseExpressionEquality(x+y,result);
 }
-BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Binary_Minus)
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Binary_Minus)
 {
 	compressed_vector<double> x(SparseDimensions); 
 	compressed_vector<double> y(SparseDimensions); 
@@ -538,7 +535,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Binary_Minus)
 	checkSparseExpressionEquality(x-y,result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Binary_Multiply)
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Binary_Multiply)
 {
 	compressed_vector<double> x(SparseDimensions); 
 	compressed_vector<double> y(SparseDimensions); 
@@ -562,7 +559,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Sparse_Vector_Binary_Multiply)
 //////BINARY TRANSFORMATIONS///////
 /////////////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_CASE( BLAS_Dense_Sparse_Vector_Binary_Plus)
+BOOST_AUTO_TEST_CASE( Remora_Dense_Sparse_Vector_Binary_Plus)
 {
 	vector<double> x(SparseDimensions); 
 	compressed_vector<double> y(SparseDimensions); 
@@ -584,7 +581,7 @@ BOOST_AUTO_TEST_CASE( BLAS_Dense_Sparse_Vector_Binary_Plus)
 	checkDenseExpressionEquality(y+x,result);
 }
 
-BOOST_AUTO_TEST_CASE( BLAS_Dense_Sparse_Vector_Binary_Multiply)
+BOOST_AUTO_TEST_CASE( Remora_Dense_Sparse_Vector_Binary_Multiply)
 {
 	vector<double> x(SparseDimensions); 
 	compressed_vector<double> y(SparseDimensions); 

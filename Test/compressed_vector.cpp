@@ -1,19 +1,15 @@
-#define BOOST_TEST_MODULE LinAlg_VectorSparse
+#define BOOST_TEST_MODULE Remora_VectorSparse
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <shark/Core/Shark.h>
-#include <shark/LinAlg/BLAS/blas.h>
+#include <remora/compressed_vector.h>
 
-using namespace shark;
-using namespace blas;
-
-
+using namespace remora;
 
 //this test tests push_back behavior of set_element and operator()
-BOOST_AUTO_TEST_SUITE (LinAlg_BLAS_compressed_vector)
+BOOST_AUTO_TEST_SUITE (Remora_compressed_vector)
 
-BOOST_AUTO_TEST_CASE( LinAlg_sparse_vector_insert_element_end){
+BOOST_AUTO_TEST_CASE( Remora_sparse_vector_insert_element_end){
 	std::size_t dimensions = 20;
 	
 	compressed_vector<std::size_t> vector_set(dimensions);
