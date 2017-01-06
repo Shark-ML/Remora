@@ -4,6 +4,7 @@
 #include <boost/mpl/list.hpp>
 
 #include <remora/kernels/conv2d.hpp>
+#include <remora/matrix_proxy.hpp>//fixme: required by assign :(
 #include <remora/matrix.hpp>
 
 using namespace remora;

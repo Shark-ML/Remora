@@ -3,6 +3,7 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/detail/iterator.hpp>
+#include <remora/detail/functional.hpp>
 
 using namespace remora;
 

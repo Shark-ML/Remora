@@ -29,11 +29,11 @@
 #define REMORA_DETAIL_ITERATOR_HPP
 
 #include <boost/mpl/if.hpp> 
-#include <remora/Core/Exception.h>
 #include <iterator>
 #include <type_traits>
 #include <limits>
 
+#include "check.hpp"
 
 namespace remora{ namespace iterators{
 

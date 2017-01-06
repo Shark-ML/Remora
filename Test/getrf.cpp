@@ -7,6 +7,8 @@
 #include <remora/matrix_expression.hpp>
 #include <remora/matrix_proxy.hpp>
 #include <iostream>
+#include <boost/mpl/list.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 
 using namespace remora;
 

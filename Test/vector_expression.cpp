@@ -4,8 +4,10 @@
 
 #include <remora/vector_expression.hpp>
 #include <remora/vector.hpp>
-#include <remora/compressed_vector.hpp>
+#include <remora/vector_sparse.hpp>
+#include <remora/io.hpp>
 
+#include <iostream>
 using namespace remora;
 
 //////////////////DENSE//////////////////////////////

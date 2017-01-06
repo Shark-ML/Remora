@@ -2,11 +2,13 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <remora/kernels/assign.hpp>
+#include <remora/kernels/matrix_assign.hpp>
 #include <remora/triangular_matrix.hpp>
 #include <remora/matrix.hpp>
 #include <remora/matrix_sparse.hpp>
-
+#include <remora/vector_sparse.hpp>
+#include <remora/matrix_proxy.hpp>
+#include <iostream>
 using namespace remora;
 
 template<class M1, class M2>

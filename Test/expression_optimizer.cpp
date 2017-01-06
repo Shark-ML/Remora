@@ -9,7 +9,7 @@
 using namespace remora;
 
 struct ExpressionOptimizerFixture{
-	ExpressionOptimizerFixture():e1(42){}
+	ExpressionOptimizerFixture(){}
 		
 	matrix<double> create_matrix(std::size_t rows, std::size_t columns){
 		matrix<double> mat(rows,columns);

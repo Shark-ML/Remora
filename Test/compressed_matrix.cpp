@@ -2,9 +2,9 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <remora/compressed_matrix.h>
+#include <remora/matrix_sparse.hpp>
 
-using namespace remora
+using namespace remora;
 
 struct Element{
 	std::size_t row;

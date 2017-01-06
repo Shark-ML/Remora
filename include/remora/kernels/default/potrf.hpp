@@ -59,9 +59,6 @@ std::size_t potrf_block(
 				A()(i, j) = s / A()(j , j);
 			}
 		}
-		for(size_t k = j+1; k < m; k++) {
-			A()(j,k) = 0.0;
-		}
 	}
 	return 0;
 }

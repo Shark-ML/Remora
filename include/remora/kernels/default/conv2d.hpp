@@ -31,8 +31,8 @@
 #ifndef REMORA_KERNELS_DEFAULT_Conv2D_HPP
 #define REMORA_KERNELS_DEFAULT_Conv2D_HPP
 
+#include "simd.hpp"
 #include "../../detail/matrix_proxy_classes.hpp"
-#include <boost/align/aligned_allocator.hpp> //mgemm requires aligned allocations
 #include <type_traits> //for std::common_type and aligned storage
 namespace remora{namespace bindings {
 

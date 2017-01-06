@@ -31,15 +31,12 @@
 #ifndef REMORA_KERNELS_DEFAULT_MGEMM_HPP
 #define REMORA_KERNELS_DEFAULT_MGEMM_HPP
 
-#include <boost/align/assume_aligned.hpp>
+#include "simd.hpp"
+
 #include <cstddef>//std::size_t
 #include <algorithm>//std::fill
 
-#ifdef __AVX__
-	#define REMORA_VECTOR_LENGTH 32
-#else
-	#define REMORA_VECTOR_LENGTH 16
-#endif
+
 namespace remora{namespace bindings {
 	
 //  Block-GEMM implementation based on boost.ublas

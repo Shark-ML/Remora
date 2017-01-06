@@ -3,7 +3,7 @@
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/mpl/list.hpp>
 
-#include <remora/matrix_expression.h>
+#include <remora/matrix_expression.hpp>
 #include <remora/triangular_matrix.hpp>
 #include <remora/matrix.hpp>
 #include <remora/vector.hpp>

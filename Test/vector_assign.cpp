@@ -4,7 +4,7 @@
 
 #include <remora/assignment.hpp>
 #include <remora/vector.hpp>
-#include <remora/compressed_vector.hpp>
+#include <remora/vector_sparse.hpp>
 #include <iostream>
 
 using namespace remora;

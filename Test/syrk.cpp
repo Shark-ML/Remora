@@ -5,6 +5,8 @@
 
 #include <remora/kernels/syrk.hpp>
 #include <remora/matrix.hpp>
+#include <remora/matrix_proxy.hpp>
+#include <remora/vector_expression.hpp>
 #include <iostream>
 using namespace remora;
 

@@ -10,21 +10,21 @@
 using namespace remora;
 
 template<class TriangularMatrix>
-void testTriangularEqualLower(TriangularMatrix& matrix,matrix<int> const& result,std::size_t rows){
-	BOOST_REQUIRE_EQUAL(matrix.size1(),rows);
-	BOOST_REQUIRE_EQUAL(matrix.size1(),rows);
+void testTriangularEqualLower(TriangularMatrix& m,matrix<int> const& result,std::size_t rows){
+	BOOST_REQUIRE_EQUAL(m.size1(),rows);
+	BOOST_REQUIRE_EQUAL(m.size1(),rows);
 	
 	for(std::size_t i = 0; i != rows; ++i){
 		for(std::size_t j = 0; j !=rows; ++j){
-			BOOST_CHECK_EQUAL(matrix(i,j),result(i,j));
+			BOOST_CHECK_EQUAL(m(i,j),result(i,j));
 		}
 	}
 	
 	for(std::size_t i = 0; i != rows;++i){
-		typename TriangularMatrix::row_iterator pos=matrix.row_begin(i);
-		BOOST_REQUIRE(pos < matrix.row_end(i));
+		typename TriangularMatrix::row_iterator pos=m.row_begin(i);
+		BOOST_REQUIRE(pos < m.row_end(i));
 		std::size_t posIndex = 0;
-		while(pos != matrix.row_end(i)){
+		while(pos != m.row_end(i)){
 			BOOST_REQUIRE(posIndex < rows);
 			BOOST_CHECK_EQUAL(pos.index(),posIndex);
 			BOOST_CHECK_EQUAL(*pos,result(i,posIndex));
@@ -39,10 +39,10 @@ void testTriangularEqualLower(TriangularMatrix& matrix,matrix<int> const& result
 	}
 	
 	for(std::size_t i = 0; i!=rows;++i){
-		typename TriangularMatrix::column_iterator pos=matrix.column_begin(i);
-		BOOST_REQUIRE(pos < matrix.column_end(i));
+		typename TriangularMatrix::column_iterator pos=m.column_begin(i);
+		BOOST_REQUIRE(pos < m.column_end(i));
 		std::size_t posIndex = i;
-		while(pos != matrix.column_end(i)){
+		while(pos != m.column_end(i)){
 			BOOST_REQUIRE(posIndex < rows);
 			BOOST_CHECK_EQUAL(pos.index(),posIndex);
 			BOOST_CHECK_EQUAL(*pos,result(posIndex,i));
@@ -56,7 +56,7 @@ void testTriangularEqualLower(TriangularMatrix& matrix,matrix<int> const& result
 		BOOST_CHECK(posIndex == rows);
 	}
 	
-	TriangularMatrix const& cmatrix = matrix;
+	TriangularMatrix const& cmatrix = m;
 	
 	for(std::size_t i = 0; i != rows;++i){
 		typename TriangularMatrix::const_row_iterator pos=cmatrix.row_begin(i);
@@ -96,21 +96,21 @@ void testTriangularEqualLower(TriangularMatrix& matrix,matrix<int> const& result
 }
 
 template<class TriangularMatrix>
-void testTriangularEqualUpper(TriangularMatrix& matrix,matrix<int> const& result,std::size_t rows){
-	BOOST_REQUIRE_EQUAL(matrix.size1(),rows);
-	BOOST_REQUIRE_EQUAL(matrix.size1(),rows);
+void testTriangularEqualUpper(TriangularMatrix& m,matrix<int> const& result,std::size_t rows){
+	BOOST_REQUIRE_EQUAL(m.size1(),rows);
+	BOOST_REQUIRE_EQUAL(m.size1(),rows);
 	
 	for(std::size_t i = 0; i != rows; ++i){
 		for(std::size_t j = 0; j !=rows; ++j){
-			BOOST_CHECK_EQUAL(matrix(i,j),result(i,j));
+			BOOST_CHECK_EQUAL(m(i,j),result(i,j));
 		}
 	}
 	
 	for(std::size_t i = 0; i != rows;++i){
-		typename TriangularMatrix::row_iterator pos=matrix.row_begin(i);
-		BOOST_REQUIRE(pos < matrix.row_end(i));
+		typename TriangularMatrix::row_iterator pos=m.row_begin(i);
+		BOOST_REQUIRE(pos < m.row_end(i));
 		std::size_t posIndex = i;
-		while(pos != matrix.row_end(i)){
+		while(pos != m.row_end(i)){
 			BOOST_REQUIRE(posIndex < rows);
 			BOOST_CHECK_EQUAL(pos.index(),posIndex);
 			BOOST_CHECK_EQUAL(*pos,result(i,posIndex));
@@ -125,10 +125,10 @@ void testTriangularEqualUpper(TriangularMatrix& matrix,matrix<int> const& result
 	}
 	
 	for(std::size_t i = 0; i!=rows;++i){
-		typename TriangularMatrix::column_iterator pos=matrix.column_begin(i);
-		BOOST_REQUIRE(pos < matrix.column_end(i));
+		typename TriangularMatrix::column_iterator pos=m.column_begin(i);
+		BOOST_REQUIRE(pos < m.column_end(i));
 		std::size_t posIndex = 0;
-		while(pos != matrix.column_end(i)){
+		while(pos != m.column_end(i)){
 			BOOST_REQUIRE(posIndex < rows);
 			BOOST_CHECK_EQUAL(pos.index(),posIndex);
 			BOOST_CHECK_EQUAL(*pos,result(posIndex,i));
@@ -142,7 +142,7 @@ void testTriangularEqualUpper(TriangularMatrix& matrix,matrix<int> const& result
 		BOOST_CHECK(posIndex == i+1);
 	}
 	
-	TriangularMatrix const& cmatrix = matrix;
+	TriangularMatrix const& cmatrix = m;
 	
 	for(std::size_t i = 0; i != rows;++i){
 		typename TriangularMatrix::const_row_iterator pos=cmatrix.row_begin(i);

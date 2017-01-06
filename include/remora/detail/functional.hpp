@@ -28,9 +28,7 @@
 #ifndef REMORA_DETAIL_FUNCTIONAL_HPP
 #define REMORA_DETAIL_FUNCTIONAL_HPP
 
-#include <boost/math/constants/constants.hpp>
-#include <remora/Core/Exception.h>
-#include <remora/Core/Math.h>
+#include <cmath>
 
 namespace remora {
 namespace functors{
@@ -111,7 +109,13 @@ struct scalar_soft_plus {
 	static const bool zero_identity = false;
 	typedef T result_type;
 	T operator()(T x)const {
-		return softPlus(x);
+		if(x > 100){
+			return x;
+		}
+		if(x < -100){
+			return 0;
+		}
+		return std::log(1+std::exp(x));
 	}
 };
 

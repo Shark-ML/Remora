@@ -201,7 +201,7 @@ void syev(
 
 			if (m != l) {
 				if (j++ == maxIterC)
-					throw REMORAEXCEPTION("too many iterations in eigendecomposition");
+					throw std::invalid_argument("too many iterations in eigendecomposition");
 
 				// form shift
 				g = (dvecA()(l+1) - p) / (2.0 * odvecA(l));

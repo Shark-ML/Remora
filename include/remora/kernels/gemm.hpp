@@ -41,7 +41,7 @@ namespace remora{ namespace bindings{
 template<class M1, class M2, class M3>
 struct  has_optimized_gemm
 : public boost::mpl::false_{};
-}}}
+}}
 #endif
 
 namespace remora{namespace kernels{

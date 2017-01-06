@@ -4,6 +4,9 @@
 
 #include <remora/vector_proxy.hpp>
 #include <remora/vector.hpp>
+#include <remora/vector_sparse.hpp>
+
+using namespace remora;
 
 template<class V1, class V2>
 void checkDenseVectorEqual(V1 const& v1, V2 const& v2){

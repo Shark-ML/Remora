@@ -7,7 +7,8 @@
 #include <remora/matrix_expression.hpp>
 #include <remora/matrix_proxy.hpp>
 
-
+#include <boost/mpl/list.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 using namespace remora;
 
 //the matrix is designed such that a lot of permutations will be performed

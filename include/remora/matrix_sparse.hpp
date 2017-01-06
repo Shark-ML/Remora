@@ -31,6 +31,9 @@
 #include "assignment.hpp"
 #include "detail/matrix_proxy_classes.hpp"
 
+#include <vector>
+#include <boost/serialization/vector.hpp>
+
 namespace remora{
 
 template<class T, class I=std::size_t>

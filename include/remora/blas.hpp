@@ -35,20 +35,20 @@
 #include <shark/Core/Shark.h>
 
 //proxies
-#include <shark/LinAlg/BLAS/vector_proxy.hpp>
-#include <shark/LinAlg/BLAS/matrix_proxy.hpp>
+#include <remora/vector_proxy.hpp>
+#include <remora/matrix_proxy.hpp>
 //expressions
-#include <shark/LinAlg/BLAS/vector_expression.hpp>
-#include <shark/LinAlg/BLAS/matrix_expression.hpp>
-#include <shark/LinAlg/BLAS/solve.hpp>
+#include <remora/vector_expression.hpp>
+#include <remora/matrix_expression.hpp>
+#include <remora/solve.hpp>
 //containers
-#include <shark/LinAlg/BLAS/vector.hpp>
-#include <shark/LinAlg/BLAS/vector_sparse.hpp>
-#include <shark/LinAlg/BLAS/matrix.hpp>
-#include <shark/LinAlg/BLAS/matrix_sparse.hpp>
+#include <remora/vector.hpp>
+#include <remora/vector_sparse.hpp>
+#include <remora/matrix.hpp>
+#include <remora/matrix_sparse.hpp>
 
 //misc
-#include <shark/LinAlg/BLAS/permutation.hpp>
-#include <shark/LinAlg/BLAS/io.hpp>
+#include <remora/permutation.hpp>
+#include <remora/io.hpp>
 
 #endif
