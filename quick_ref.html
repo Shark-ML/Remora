@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Quick Reference &#8212; Remora 0.1.REMORA_VERSION_PATCH@ documentation</title>
+    <title>Quick Reference &#8212; Remora 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.1.REMORA_VERSION_PATCH@',
+        VERSION:     '0.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&delayStartupUntilConfig"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Summary" href="index.html" /> 
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="index.html" title="Summary"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Remora 0.1.REMORA_VERSION_PATCH@ documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Remora 0.1.0 documentation</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
@@ -137,7 +137,7 @@ the elements stored inside the matrix</td>
 <div class="section" id="matrices-and-matrix-proxies-and-basic-operations">
 <h3>Matrices and Matrix-Proxies and basic operations<a class="headerlink" href="#matrices-and-matrix-proxies-and-basic-operations" title="Permalink to this headline">¶</a></h3>
 <p>We first want to describe the fundamental operations that are needed to use the library.
-All operations are in the namespace <code class="docutils literal"><span class="pre">blas::</span></code>.</p>
+All operations are in the namespace <code class="docutils literal"><span class="pre">remora::</span></code>.</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="37%" />
@@ -156,7 +156,7 @@ All operations are in the namespace <code class="docutils literal"><span class="
 <td>Dense Matrix storing values of type T.
 Values are either stored in row-major or
 column-major format depicted by the tags
-blas::row_major and blas::column_major.
+row_major and column_major.
 row-major is the default format.</td>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">compressed_vector&lt;T&gt;</span></code></td>
@@ -500,12 +500,12 @@ the library offers the following functions:</p>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">solve(A,</span> <span class="pre">b,Type,</span> <span class="pre">Side)</span></code></td>
 <td>Solves a system of equations Ax=b or xA=b for a shape of A given
 by Type and the side of A given by the Side parameter
-(<code class="docutils literal"><span class="pre">blas::left</span></code> or <code class="docutils literal"><span class="pre">blas::right</span></code>)</td>
+(<code class="docutils literal"><span class="pre">left</span></code> or <code class="docutils literal"><span class="pre">right</span></code>)</td>
 </tr>
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">solve(A,B,Type,</span> <span class="pre">Side)</span></code></td>
 <td>Solves a system of equations AX=b or XA=b for a shape of A given
 by Type and the side of A given by the Side parameter
-(<code class="docutils literal"><span class="pre">blas::left</span></code> or <code class="docutils literal"><span class="pre">blas::right</span></code>)</td>
+(<code class="docutils literal"><span class="pre">left</span></code> or <code class="docutils literal"><span class="pre">right</span></code>)</td>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">inv(A,</span> <span class="pre">type)</span></code></td>
 <td>Computes the explicit inverse of A with the shape given by Type.</td>
@@ -540,34 +540,34 @@ expression optimizations and it is thus up to preference which version is used.<
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">blas::lower()</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">lower()</span></code></td>
 <td>A is a full rank lower triangular matrix.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">blas::upper()</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">upper()</span></code></td>
 <td>A is a full rank upper triangular matrix.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">blas::unit_lower()</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">unit_lower()</span></code></td>
 <td>A is a lower triangular matrix with unit diagonal.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">blas::unit_upper()</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">unit_upper()</span></code></td>
 <td>A is a upper triangular matrix with unit diagonal.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">blas::symm_pos_def()</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">symm_pos_def()</span></code></td>
 <td>A is symmetric positive definite.
 Uses the cholesky decomposition to solve the system</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">blas::conjugate_gradient(epsilon,max_iter)</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">conjugate_gradient(epsilon,max_iter)</span></code></td>
 <td>Uses the iterative conjugate gradient method to solve a
 symmetric positive definite system.
 Stopping criteria are math:<code class="docutils literal"><span class="pre">||Ax-b||_{\infty}</span> <span class="pre">&lt;</span> <span class="pre">\epsilon</span></code>
 or the maximum number of iterations is reached. Default
 is math:<code class="docutils literal"><span class="pre">\epsilon=10^{-10}</span></code> and unlimited max iterations.</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">blas::indefinite_full_rank()</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">indefinite_full_rank()</span></code></td>
 <td>A is an arbitrary full rank matrix.
 Uses the LU-decomposition to solve the system.</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">blas::symm_semi_pos_def()</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">symm_semi_pos_def()</span></code></td>
 <td>A is symmetric positive definite but rank deficient, meaning
 that there might be no solution for Ax=b. Instead
 the solution that minimizes math:<code class="docutils literal"><span class="pre">||Ax-b||_2</span></code> is computed.</td>
@@ -575,13 +575,13 @@ the solution that minimizes math:<code class="docutils literal"><span class="pre
 </tbody>
 </table>
 <p>A small example for the usage is:</p>
-<div class="highlight-c++"><div class="highlight"><pre><span></span><span class="n">blas</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">C</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">50</span><span class="p">);</span>
+<div class="highlight-c++"><div class="highlight"><pre><span></span><span class="n">matrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">C</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">50</span><span class="p">);</span>
 <span class="c1">//skip: fill C</span>
 <span class="c1">//compute a symmetric pos semi-definite matrix A</span>
-<span class="n">blas</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">A</span> <span class="o">=</span> <span class="n">C</span> <span class="o">%</span> <span class="n">trans</span><span class="p">(</span><span class="n">C</span><span class="p">);</span>
-<span class="n">blas</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">b</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mf">1.0</span><span class="p">);</span><span class="c1">//all ones vector</span>
+<span class="n">matrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">A</span> <span class="o">=</span> <span class="n">C</span> <span class="o">%</span> <span class="n">trans</span><span class="p">(</span><span class="n">C</span><span class="p">);</span>
+<span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">b</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mf">1.0</span><span class="p">);</span><span class="c1">//all ones vector</span>
 
-<span class="n">blas</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">solution</span> <span class="o">=</span> <span class="n">inv</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">blas</span><span class="o">::</span><span class="n">symm_semi_pos_def</span><span class="p">())</span> <span class="o">%</span> <span class="n">b</span><span class="p">;</span><span class="c1">//solves Ax=b</span>
+<span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">solution</span> <span class="o">=</span> <span class="n">inv</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">symm_semi_pos_def</span><span class="p">())</span> <span class="o">%</span> <span class="n">b</span><span class="p">;</span><span class="c1">//solves Ax=b</span>
 </pre></div>
 </div>
 </div>
@@ -603,7 +603,7 @@ the solution that minimizes math:<code class="docutils literal"><span class="pre
         <li class="right" >
           <a href="index.html" title="Summary"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Remora 0.1.REMORA_VERSION_PATCH@ documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="index.html">Remora 0.1.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
