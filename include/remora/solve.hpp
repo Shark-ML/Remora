@@ -368,6 +368,33 @@ struct matrix_vector_prod_optimizer<matrix_inverse<M,Tag>, V>{
 	}
 };
 
+//prod(solve(A,B,left),c) = solve(A, prod(B,c),right) 
+template<class M1, class M2,class V, class Tag>
+struct matrix_vector_prod_optimizer<matrix_matrix_solve<M1,M2, Tag, left >, V >{
+	typedef matrix_vector_prod_optimizer<M2,V> prod_opt;
+	typedef matrix_vector_solve_optimizer<M1, typename prod_opt::type, Tag, left> opt;
+	typedef typename opt::type type;
+	
+	static type create(matrix_matrix_solve<M1,M2, Tag, left> const& m,  typename V::const_closure_type const& v){
+		return opt::create(
+			m.lhs(), prod_opt::create(m.rhs(),v), m.system_type()
+		);
+	}
+};
+
+//prod(solve(A,B,right),c) = prod(B,solve(A,c, left)) 
+template<class M1, class M2, class V, class Tag>
+struct matrix_vector_prod_optimizer<matrix_matrix_solve<M1,M2, Tag, right >, V >{
+	typedef matrix_vector_solve_optimizer<M1, V, Tag, left> solve_opt;
+	typedef matrix_vector_prod_optimizer<M2,typename solve_opt::type> opt;
+	typedef typename opt::type type;
+	static type create(matrix_matrix_solve<M1,M2, Tag, right> const& m,  typename V::const_closure_type const& v){
+		return opt::create(
+			m.rhs(), solve_opt::create(m.lhs(),v,m.system_type()) 
+		);
+	}
+};
+
 //row(solve(A,B,left),i) = prod(solve(A,e_i,right),B) = prod(trans(B),solve(A,e_i,right)) 
 template<class M1, class M2,class Tag>
 struct matrix_row_optimizer<matrix_matrix_solve<M1,M2, Tag, left > >{

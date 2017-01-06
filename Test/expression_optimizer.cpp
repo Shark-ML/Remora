@@ -3,6 +3,7 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/matrix_expression.hpp>
+#include <remora/solve.hpp>
 #include <remora/matrix.hpp>
 #include <remora/vector.hpp>
 
@@ -137,6 +138,29 @@ BOOST_AUTO_TEST_CASE( Remora_prod_matrix_vector_expression_optimize ){
 		> e = prod(v,prod(m1,m2));
 		BOOST_CHECK_SMALL(norm_inf(e - prod(v,matrix<double>(prod(m1,m2)))), 1.e-10);
 	}
+	//solve 
+	{
+		M1 m1 = create_matrix(10,10);
+		M2 m2 = create_matrix(10,8);
+		V v = create_vector(8);
+		
+		matrix_vector_solve<M1,matrix_vector_prod<M2,V>, symm_pos_def,left > e = prod(prod(inv(m1,symm_pos_def()), m2),v);
+		BOOST_CHECK_SMALL(norm_inf(e.lhs() - m1), 1.e-10);
+		BOOST_CHECK_SMALL(norm_inf(e.rhs().matrix() - m2), 1.e-10);
+		BOOST_CHECK_SMALL(norm_inf(e.rhs().vector() - v), 1.e-10);
+	}
+	
+	{
+		M1 m1 = create_matrix(10,10);
+		M2 m2 = create_matrix(8,10);
+		V v = create_vector(10);
+		
+		matrix_vector_prod<M2,matrix_vector_solve<M1,V, symm_pos_def,left > > e = prod(prod(m2,inv(m1,symm_pos_def())),v);
+		BOOST_CHECK_SMALL(norm_inf(e.matrix() - m2), 1.e-10);
+		BOOST_CHECK_SMALL(norm_inf(e.vector().rhs() - v), 1.e-10);
+		BOOST_CHECK_SMALL(norm_inf(e.vector().lhs() - m1), 1.e-10);
+	}
+	
 }
 
 
