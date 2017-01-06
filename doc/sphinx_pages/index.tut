@@ -68,7 +68,13 @@ Installation and Compile Flags
 -------------------------------------------------------------
   
 Remora is header-only. just download and copy the contents of the include/ folder into its 
-target location. Remora depends only on header-only boost c++ libraries.
+target location. Currently the project can only be downloaded from github:
+
+.. code-block:: none
+
+      git clone https://github.com/Shark-ML/Remora
+
+Remora depends only on header-only boost c++ libraries.
 When using Remora, the following defines can be supplied at compile time
   
 * REMORA_USE_SIMD if defined, Remora uses the compilers' auto vectorizing capabilities 
