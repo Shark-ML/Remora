@@ -40,7 +40,7 @@ Matrices and Matrix-Proxies and basic operations
 *****************************************************************
 
 We first want to describe the fundamental operations that are needed to use the library.
-All operations are in the namespace ``blas::``.
+All operations are in the namespace ``remora::``.
 
 =============================================== ==============================================
 Operation/Class           			Effect
@@ -49,7 +49,7 @@ Operation/Class           			Effect
 ``matrix<T,Orientation>``			Dense Matrix storing values of type T.
 						Values are either stored in row-major or
 						column-major format depicted by the tags
-						blas::row_major and blas::column_major. 
+						row_major and column_major. 
 						row-major is the default format.
 ``compressed_vector<T>``			Sparse Vector storing values of type T in compressed format.
 ``compressed_matrix<T>``			Sparse Matrix storing values of type T in compressed format.
@@ -231,10 +231,10 @@ Operation           		Effect
 =============================== ==================================================================
 ``solve(A, b,Type, Side)``	Solves a system of equations Ax=b or xA=b for a shape of A given
 				by Type and the side of A given by the Side parameter 
-				(``blas::left`` or ``blas::right``)
+				(``left`` or ``right``)
 ``solve(A,B,Type, Side)``	Solves a system of equations AX=b or XA=b for a shape of A given
 				by Type and the side of A given by the Side parameter 
-				(``blas::left`` or ``blas::right``)
+				(``left`` or ``right``)
 ``inv(A, type)``		Computes the explicit inverse of A with the shape given by Type.
 ``inv(A,type) % b``		Computes :math:`A^{-1}b`.
 				Equivalent to ``solve(A, b, Type, left)``
@@ -253,31 +253,31 @@ Shark supports the following choices for Type:
 =============================================== ==================================================================
 Type	        				Effect
 =============================================== ==================================================================
-``blas::lower()``				A is a full rank lower triangular matrix.
-``blas::upper()``				A is a full rank upper triangular matrix.
-``blas::unit_lower()``				A is a lower triangular matrix with unit diagonal.
-``blas::unit_upper()``				A is a upper triangular matrix with unit diagonal.
-``blas::symm_pos_def()``			A is symmetric positive definite.
+``lower()``					A is a full rank lower triangular matrix.
+``upper()``					A is a full rank upper triangular matrix.
+``unit_lower()``				A is a lower triangular matrix with unit diagonal.
+``unit_upper()``				A is a upper triangular matrix with unit diagonal.
+``symm_pos_def()``				A is symmetric positive definite.
 						Uses the cholesky decomposition to solve the system
-``blas::conjugate_gradient(epsilon,max_iter)``	Uses the iterative conjugate gradient method to solve a
+``conjugate_gradient(epsilon,max_iter)``	Uses the iterative conjugate gradient method to solve a
 						symmetric positive definite system.
 						Stopping criteria are math:``||Ax-b||_{\infty} < \epsilon``
 						or the maximum number of iterations is reached. Default
 						is math:``\epsilon=10^{-10}`` and unlimited max iterations.
-``blas::indefinite_full_rank()``		A is an arbitrary full rank matrix.
+``indefinite_full_rank()``			A is an arbitrary full rank matrix.
 						Uses the LU-decomposition to solve the system.
-``blas::symm_semi_pos_def()``			A is symmetric positive definite but rank deficient, meaning
+``symm_semi_pos_def()``				A is symmetric positive definite but rank deficient, meaning
 						that there might be no solution for Ax=b. Instead
 						the solution that minimizes math:``||Ax-b||_2`` is computed.
 =============================================== ==================================================================
 
 A small example for the usage is::
 
-  blas::matrix<double> C(100,50);
+  matrix<double> C(100,50);
   //skip: fill C
   //compute a symmetric pos semi-definite matrix A
-  blas::matrix<double> A = C % trans(C);
-  blas::vector<double> b(100,1.0);//all ones vector
+  matrix<double> A = C % trans(C);
+  vector<double> b(100,1.0);//all ones vector
   
-  blas::vector<double> solution = inv(A,blas::symm_semi_pos_def()) % b;//solves Ax=b
+  vector<double> solution = inv(A,symm_semi_pos_def()) % b;//solves Ax=b
 
