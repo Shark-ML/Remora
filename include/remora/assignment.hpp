@@ -38,6 +38,9 @@
 #include "detail/traits.hpp"
 #include "detail/functional.hpp"
 
+#include <boost/mpl/eval_if.hpp>
+#include <boost/mpl/or.hpp>
+#include <boost/mpl/identity.hpp>
 namespace remora{
 	
 //////////////////////////////////////////////////////////////////////

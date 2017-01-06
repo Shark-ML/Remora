@@ -34,7 +34,8 @@
 #define REMORA_MATRIX_PROXY_HPP
 
 #include "detail/expression_optimizers.hpp"
-
+#include <boost/utility/enable_if.hpp>
+#include <type_traits>
 namespace remora{
 	
 	
@@ -281,23 +282,23 @@ temporary_proxy<dense_matrix_adaptor<T> > adapt_matrix(T (&array)[M][N]){
 /// \brief Converts a dense vector to a matrix of a given size
 template <class V>
 typename boost::enable_if<
-	boost::is_same<typename V::storage_type::storage_tag,dense_tag>,
+	std::is_same<typename V::storage_type::storage_tag,dense_tag>,
 	temporary_proxy< dense_matrix_adaptor<
-		typename boost::remove_reference<typename V::reference>::type
+		typename std::remove_reference<typename V::reference>::type
 	> >
 >::type
 to_matrix(
 	vector_expression<V, cpu_tag>& v,
 	std::size_t size1, std::size_t size2
 ){
-	typedef typename boost::remove_reference<typename V::reference>::type ElementType;
+	typedef typename std::remove_reference<typename V::reference>::type ElementType;
 	return dense_matrix_adaptor<ElementType>(v().raw_storage().values, size1, size2);
 }
 
 /// \brief Converts a dense vector to a matrix of a given size
 template <class V>
 typename boost::enable_if<
-	boost::is_same<typename V::storage_type::storage_tag,dense_tag>,
+	std::is_same<typename V::storage_type::storage_tag,dense_tag>,
 	temporary_proxy< dense_matrix_adaptor<typename V::value_type const> >
 >::type 
 to_matrix(
@@ -309,9 +310,9 @@ to_matrix(
 
 template <class E>
 typename boost::enable_if<
-	boost::is_same<typename E::storage_type::storage_tag,dense_tag>,
+	std::is_same<typename E::storage_type::storage_tag,dense_tag>,
 	temporary_proxy< dense_matrix_adaptor<
-		typename boost::remove_reference<typename E::reference>::type
+		typename std::remove_reference<typename E::reference>::type
 	> >
 >::type 
 to_matrix(

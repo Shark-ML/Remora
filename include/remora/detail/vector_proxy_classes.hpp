@@ -34,6 +34,8 @@
 #include <boost/compute/command_queue.hpp>
 #endif
 
+#include <boost/utility/enable_if.hpp>
+#include <type_traits>
 namespace remora{
 
 template<class V>
@@ -183,7 +185,7 @@ public:
 	vector_range(
 		vector_range<E> const& other,
 		typename boost::disable_if<
-			boost::is_same<E,vector_range>
+			std::is_same<E,vector_range>
 		>::type* dummy = 0
 	):m_expression(other.expression())
 	, m_start(other.start()), m_size(other.size()){}
@@ -305,7 +307,7 @@ class dense_vector_adaptor: public vector_expression<dense_vector_adaptor<T>, cp
 public:
 
 	typedef std::size_t size_type;
-	typedef typename boost::remove_const<T>::type value_type;
+	typedef typename std::remove_const<T>::type value_type;
 	typedef value_type const& const_reference;
 	typedef T&  reference;
 
@@ -478,8 +480,8 @@ class sparse_vector_adaptor: public vector_expression<sparse_vector_adaptor<T,I>
 public:
 
 	//std::container types
-	typedef typename boost::remove_const<I>::type size_type;
-	typedef typename boost::remove_const<T>::type value_type;
+	typedef typename std::remove_const<I>::type size_type;
+	typedef typename std::remove_const<T>::type value_type;
 	typedef value_type const& const_reference;
 	typedef const_reference reference;
 	

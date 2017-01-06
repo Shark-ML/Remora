@@ -34,6 +34,9 @@
 #include <boost/compute/command_queue.hpp>
 #endif
 
+#include <boost/utility/enable_if.hpp>
+#include <boost/mpl/or.hpp>
+#include <type_traits>
 namespace remora{
 	
 	
@@ -213,8 +216,8 @@ public:
 		matrix_transpose<E> const& m,
 		typename boost::disable_if<
 			boost::mpl::or_<
-				boost::is_same<matrix_transpose<E>,matrix_transpose>,
-				boost::is_same<matrix_transpose<E>,matrix_closure_type>
+				std::is_same<matrix_transpose<E>,matrix_transpose>,
+				std::is_same<matrix_transpose<E>,matrix_closure_type>
 			> 
 		>::type* dummy = 0
 	):m_expression(m.expression()) {}
@@ -350,7 +353,7 @@ class matrix_row: public vector_expression<matrix_row<M>, typename M::device_typ
 private:
 	typedef typename closure<M>::type matrix_closure_type;
 	static_assert((!std::is_same<typename M::evaluation_category::tag,sparse_tag>::value ||
-			!boost::is_same<typename M::orientation::orientation, column_major>::value),
+			!std::is_same<typename M::orientation::orientation, column_major>::value),
 			"Can not get row of sparse column major matrix");
 public:
 	typedef typename M::value_type value_type;
@@ -652,7 +655,7 @@ public:
 	matrix_range(
 		matrix_range<E> const& other,
 		typename boost::disable_if<
-			boost::is_same<E,matrix_range>
+			std::is_same<E,matrix_range>
 		>::type* dummy = 0
 	):m_expression(other.expression())
 	, m_start1(other.start1()), m_size1(other.size1())
@@ -820,7 +823,7 @@ class dense_matrix_adaptor: public matrix_expression<dense_matrix_adaptor<T,Orie
 	typedef dense_matrix_adaptor<T,Orientation> self_type;
 public:
 	typedef std::size_t size_type;
-	typedef typename boost::remove_const<T>::type value_type;
+	typedef typename std::remove_const<T>::type value_type;
 	typedef value_type const& const_reference;
 	typedef T& reference;
 
@@ -854,7 +857,7 @@ public:
 		m_values = storage_type.values;
 		m_stride1 = Orientation::index_M(storage_type.leading_dimension,1);
 		m_stride2 = Orientation::index_m(storage_type.leading_dimension,1);
-		static_assert(boost::is_same<typename E::orientation,orientation>::value, "matrix orientation mismatch");
+		static_assert(std::is_same<typename E::orientation,orientation>::value, "matrix orientation mismatch");
 	}
 
 	/// \brief Constructor of a vector proxy from a Dense MatrixExpression
@@ -870,7 +873,7 @@ public:
 		m_values = storage_type.values;
 		m_stride1 = Orientation::index_M(storage_type.leading_dimension,1);
 		m_stride2 = Orientation::index_m(storage_type.leading_dimension,1);
-		static_assert(boost::is_same<typename E::orientation,orientation>::value, "matrix orientation mismatch");
+		static_assert(std::is_same<typename E::orientation,orientation>::value, "matrix orientation mismatch");
 	}
 		
 	/// \brief Constructor of a vector proxy from a block of memory

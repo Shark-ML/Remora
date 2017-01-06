@@ -29,10 +29,8 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_BLAS_H
-#define SHARK_LINALG_BLAS_BLAS_H
-
-#include <shark/Core/Shark.h>
+#ifndef SHARK_LINALG_BLAS_REMORA_HPP
+#define SHARK_LINALG_BLAS_REMORA_HPP
 
 //proxies
 #include <remora/vector_proxy.hpp>
