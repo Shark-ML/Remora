@@ -195,10 +195,16 @@ endif()
 
 
 #####################################################################
-#                       General Path settings
+#                       Include Headers
 #####################################################################
 include_directories( ${remora_SOURCE_DIR}/include )
 add_subdirectory( include )
+
+#####################################################################
+#                       Include Examples
+#####################################################################
+option( BUILD_EXAMPLES "Build example programs." ON )
+add_subdirectory( examples )
 
 #####################################################################
 #                       Include Unit Tests
