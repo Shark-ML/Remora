@@ -1,0 +1,615 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Quick Reference &#8212; Remora 0.1.REMORA_VERSION_PATCH@ documentation</title>
+    
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.REMORA_VERSION_PATCH@',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&delayStartupUntilConfig"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Summary" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Summary"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Remora 0.1.REMORA_VERSION_PATCH@ documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Quick Reference</a><ul>
+<li><a class="reference internal" href="#aliasing">Aliasing</a></li>
+<li><a class="reference internal" href="#operations">Operations</a></li>
+<li><a class="reference internal" href="#assignment">Assignment</a></li>
+<li><a class="reference internal" href="#arithmetic-operations-and-expressions">Arithmetic Operations and Expressions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Summary</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/quick_ref.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="quick-reference">
+<h1>Quick Reference<a class="headerlink" href="#quick-reference" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="aliasing">
+<h2>Aliasing<a class="headerlink" href="#aliasing" title="Permalink to this headline">¶</a></h2>
+<p>In an expression such as <code class="docutils literal"><span class="pre">C=A+B</span></code> it i assumed that the left and right hand side are aliasing, i.e. that the same variable appears on
+both sides of the expression. In many cases this means that changing elements of the result during computation,
+will change future results. This happens for example in a matrix-matrix multiplication where the same variables are
+read at different points in time. To prevent this, the library generates temporary variables. So that an expression like
+<code class="docutils literal"><span class="pre">A</span> <span class="pre">=</span> <span class="pre">A</span> <span class="pre">%</span> <span class="pre">B</span></code> will be computed as:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span></span><span class="n">matrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">Temp</span> <span class="o">=</span> <span class="n">A</span> <span class="o">%</span> <span class="n">B</span><span class="p">;</span>
+<span class="n">A</span> <span class="o">=</span> <span class="n">Temp</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>In many cases aliasing will not happen and this temporary result is an unneeded overhead. For this case, the
+noalias-proxy can be used:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span></span><span class="n">noalias</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">=</span> <span class="n">prod</span><span class="p">(</span><span class="n">B</span><span class="p">,</span><span class="n">C</span><span class="p">);</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="operations">
+<h2>Operations<a class="headerlink" href="#operations" title="Permalink to this headline">¶</a></h2>
+<p>We use the following notation for vectors, arguments and scalars:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="38%" />
+<col width="62%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Symbol</th>
+<th class="head">Meaning</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>A,B,C</td>
+<td>Matrix expression</td>
+</tr>
+<tr class="row-odd"><td>x,y</td>
+<td>Vector expression</td>
+</tr>
+<tr class="row-even"><td>t</td>
+<td>Scalar value with the same type as
+the elements stored inside the matrix</td>
+</tr>
+<tr class="row-odd"><td>i,jk,l,m,n</td>
+<td>Integer values</td>
+</tr>
+<tr class="row-even"><td>b</td>
+<td>Boolean value</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="matrices-and-matrix-proxies-and-basic-operations">
+<h3>Matrices and Matrix-Proxies and basic operations<a class="headerlink" href="#matrices-and-matrix-proxies-and-basic-operations" title="Permalink to this headline">¶</a></h3>
+<p>We first want to describe the fundamental operations that are needed to use the library.
+All operations are in the namespace <code class="docutils literal"><span class="pre">blas::</span></code>.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation/Class</th>
+<th class="head">Effect</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">vector&lt;T&gt;</span></code></td>
+<td>Dense Vector storing values of type T.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">matrix&lt;T,Orientation&gt;</span></code></td>
+<td>Dense Matrix storing values of type T.
+Values are either stored in row-major or
+column-major format depicted by the tags
+blas::row_major and blas::column_major.
+row-major is the default format.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">compressed_vector&lt;T&gt;</span></code></td>
+<td>Sparse Vector storing values of type T in compressed format.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">compressed_matrix&lt;T&gt;</span></code></td>
+<td>Sparse Matrix storing values of type T in compressed format.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">vector&lt;T&gt;</span> <span class="pre">x(n,t)</span></code></td>
+<td>Creates a XVector x of size i with elements initialized to t.
+By default t is 0.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">matrix&lt;T,orientation&gt;</span> <span class="pre">A(m,n,t)</span></code></td>
+<td>Creates a mxn matrix with elements initialized to t. By default t is 0.
+Orientation describes the storage scheme. Can either be
+<code class="docutils literal"><span class="pre">row_major</span></code> or <code class="docutils literal"><span class="pre">column_major</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">x.size()</span></code></td>
+<td>Dimensionality of x.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">A.size1(),A.size2()</span></code></td>
+<td>Size of the first (number of rows) and second(number of columns) dimension of A.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">A(i,j)</span></code></td>
+<td>Returns the ij-th element of the matrix A.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">x(i)</span></code></td>
+<td>Returns the i-th element of the vector x.</td>
+</tr>
+</tbody>
+</table>
+<p>A number of proxy operations are available:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="60%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation/Class</th>
+<th class="head">Effect</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">subrange(x,i,j)</span></code></td>
+<td>Returns a sub-vector of x with the elements <span class="math">\(x_i,\dots,x_{j-1}\)</span>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">subrange(A,i,j,k,l)</span></code></td>
+<td>Returns a sub-matrix of A with elements indicated by i,j and k,l.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">trans(A)</span></code></td>
+<td>Returns a proxy for the transpose of A.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">row(A,k)</span></code></td>
+<td>Returns the k-th row of A as a vector-proxy.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">column(A,k)</span></code></td>
+<td>Returns the k-th column of A as a vector-proxy.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">rows(A,k,l)</span></code></td>
+<td>Returns the rows k,...,l of A as a matrix-proxy.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">columns(A,k,l)</span></code></td>
+<td>Returns the columns k,...,l of A as a matrix-proxy.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">diag(A)</span></code></td>
+<td>Returns a vector-proxy to the matrix diagonal</td>
+</tr>
+</tbody>
+</table>
+<p>Be aware that the library is heavily optimizing the generated expressions, therefore it is not straight forward
+to assess the type of a returned expression. Thus the auto keyword should be used when generating a proxy:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span></span><span class="k">auto</span> <span class="n">row_proxy</span> <span class="o">=</span> <span class="n">row</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="mi">3</span><span class="p">);</span> <span class="c1">//3d matrix row</span>
+<span class="k">auto</span> <span class="n">sub_proxy</span> <span class="o">=</span> <span class="n">subrange</span><span class="p">(</span><span class="n">row_proxy</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">);</span> <span class="c1">//elements with indices 3 to 5</span>
+<span class="n">sub_proxy</span><span class="p">(</span><span class="n">A</span><span class="p">)</span> <span class="o">*=</span> <span class="mi">2</span><span class="p">;</span> <span class="c1">//multiplies the elements A(3,3) A(3,4) and A(3,5) with 2</span>
+<span class="n">subrange</span><span class="p">(</span><span class="n">row</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">)</span> <span class="o">*=</span><span class="mi">2</span><span class="p">;</span> <span class="c1">//shorthand notation</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="assignment">
+<h2>Assignment<a class="headerlink" href="#assignment" title="Permalink to this headline">¶</a></h2>
+<p>Every Container and Proxy can be assigned values of an expression with the same size.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="29%" />
+<col width="71%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Effect</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">E</span></code></td>
+<td>Evaluates E and assigns it to C using a temporary matrix.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">noalias(C)</span> <span class="pre">=</span> <span class="pre">E</span></code></td>
+<td>Like above with the difference that E is assigned
+directly to C without a temporary. C is required to have the
+same dimnsions as E.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">C</span> <span class="pre">+=</span> <span class="pre">E,</span> <span class="pre">C-=E,</span> <span class="pre">C*=E,</span> <span class="pre">C/=E</span></code></td>
+<td>Equivalent to <code class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">C+E,</span> <span class="pre">C</span> <span class="pre">=</span> <span class="pre">C-E,</span> <span class="pre">C</span> <span class="pre">=</span> <span class="pre">C*E</span></code> and <code class="docutils literal"><span class="pre">C=</span> <span class="pre">C/E</span></code>.
+See the section of Arithmetic operations for further details.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">C</span> <span class="pre">*=</span> <span class="pre">t,</span> <span class="pre">C/=t</span></code></td>
+<td>Equivalent to <code class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">C*t</span></code> and <code class="docutils literal"><span class="pre">C=</span> <span class="pre">C/t</span></code> without creating a temporary value
+See the section of Arithmetic operations for further details.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">noalias(C)</span> <span class="pre">+=</span> <span class="pre">E,</span> <span class="pre">...</span></code></td>
+<td>Equivalent to <code class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">C+E,...</span></code> without creating a temporary value.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="arithmetic-operations-and-expressions">
+<h2>Arithmetic Operations and Expressions<a class="headerlink" href="#arithmetic-operations-and-expressions" title="Permalink to this headline">¶</a></h2>
+<p>In the following we present a list of arithmetic operations of vectors and matrices.</p>
+<p>Elementwise operations transform a matrix or a vector by applying
+a function on every element of the matrix: <span class="math">\(f(A)_{i,j} =f(A_{i,j})\)</span>.
+For binary elementwise functions, both arguments are assumed to have
+the same dimensionality and the function is applied on every pair
+with the same index, that is <span class="math">\(f(A,B)_{i,j} = f(A_{i,j},B_{i,j})\)</span>.
+It is checked in debug mode that both arguments have the same size.
+The operations are the same for vectors and matrices and
+we only present the matrix version:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="28%" />
+<col width="72%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Effect</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">t*B,</span> <span class="pre">B*t</span></code></td>
+<td>scalar multiplication: <span class="math">\(t \cdot A_{ij}\)</span> and <span class="math">\(A_{ij}\cdot t\)</span>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">B/t</span></code></td>
+<td>scalar division: <span class="math">\(A_{ij}/t\)</span>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">A+B,</span> <span class="pre">A+t,</span> <span class="pre">A-B,</span> <span class="pre">A-y</span></code></td>
+<td>Elementwise Addition or Subtraction: <span class="math">\(A_{ij}+B_{ij}\)</span> or <span class="math">\(A_{ij}+t\)</span>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">min(A,B),</span> <span class="pre">min(A,t),...</span></code></td>
+<td>Elementwise min/max <span class="math">\(min(A_{ij},B_{ij})\)</span> <span class="math">\(min(A_{ij},t)\)</span>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">A*B,</span> <span class="pre">element_prod(A,B)</span></code></td>
+<td>Elementwise Multiplication or Hadamard-Product:
+<span class="math">\(A_{ij} \cdot B_{ij}\)</span>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">A/B,</span> <span class="pre">element_div(A,B),</span> <span class="pre">A/t</span></code></td>
+<td>Elementwise division: <span class="math">\(A_{ij} \cdot B_{ij}\)</span>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">safe_div(A,B,t)</span></code></td>
+<td>Elementwise division with check for division for zero.
+If <span class="math">\(B_{ij} = 0\)</span> than the result is t.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">-A</span></code></td>
+<td>Negates A: <span class="math">\(-A_{ij}\)</span>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">exp(A),</span> <span class="pre">log(A),abs(A)...</span></code></td>
+<td>Math functions applied on every element of the matrix,
+that is for example <span class="math">\(exp(A_{ij})\)</span>. Supported are:
+exp,log,abs, tanh and sqrt.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">pow(A,t)</span></code></td>
+<td>Applies the pow function on every element of A: <span class="math">\(pow(A_{ij},t)\)</span></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">sqr(A)</span></code></td>
+<td>Squares every entry of A, equivalent to A*A.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">sigmoid(A)</span></code></td>
+<td>Applies the sigmoid function <span class="math">\(f(x)=\frac{1}{1+e^{-x}}\)</span>
+to every element of A.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">softPlus(A)</span></code></td>
+<td>Applies the softplus function <span class="math">\(f(x)=log(1+e^{x})\)</span>
+to every element of A.</td>
+</tr>
+</tbody>
+</table>
+<p>Be aware that <code class="docutils literal"><span class="pre">A*B</span></code> is not the same as the typical matrix-product. For the typical
+matrix-vector operations we use the following syntax:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Effect</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">A%B,</span> <span class="pre">prod(A,B)</span></code></td>
+<td>Matrix-Matrix product. Be aware that A is a mxk and B kxn matrix
+so that the resulting matrix is a mxn matrix.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">x</span> <span class="pre">%</span> <span class="pre">A,</span> <span class="pre">A</span> <span class="pre">%</span> <span class="pre">x,</span> <span class="pre">prod(A,x),</span> <span class="pre">prod(x,A)</span></code></td>
+<td>Matrix-Vector product <span class="math">\(Ax\)</span> and <span class="math">\(xA\)</span>.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">triangular_prod&lt;Type&gt;(A,x)</span></code></td>
+<td>Interpretes the matrix A as triangular matrix
+and calculates <span class="math">\(Ax\)</span>.
+Type specifies the part of A that
+is going to be treated as triangular.
+Type can be lower,upper, unit_lower and unit_upper. The
+unit-variants represent a matrix with unit diagonal.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">triangular_prod&lt;Type&gt;(A,B)</span></code></td>
+<td>Interpretes the matrix A as triangular matrix
+and calculates <span class="math">\(AB\)</span>.
+Type specifies the part of A that
+is going to be treated as triangular.
+Type is the same as above.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">inner_prod(x,y)</span></code></td>
+<td>vector product leading a scalar: <span class="math">\(\sum_i x_i y_i\)</span>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">outer_prod(x,y)</span></code></td>
+<td>outer product leading a matrix C with <span class="math">\(C_{ij}=x_i y_j\)</span>.</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="matrix-and-vector-reductions">
+<h3>Matrix and Vector Reductions<a class="headerlink" href="#matrix-and-vector-reductions" title="Permalink to this headline">¶</a></h3>
+<p>Matrix reductions leaving either a vector or a scalar:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Effect</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">sum(A)</span></code></td>
+<td>Sum of elements of A <span class="math">\(\sum_{ij} A_{ij}\)</span></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">max(A),</span> <span class="pre">min(A)</span></code></td>
+<td>Maximum/Minimum element of A <span class="math">\(\max_{ij} A_{ij}\)</span></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">sum_rows(A)</span></code></td>
+<td>Sum of rows of A <span class="math">\(a_i = \sum_{j} A_{ij}\)</span></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">sum_columns(A)</span></code></td>
+<td>Sum of columns of A <span class="math">\(a_j = \sum_{i} A_{ij}\)</span></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">trace(A)</span></code></td>
+<td>Sum of diagonal elements of A <span class="math">\(a_j = \sum_{i} A_{ii}\)</span></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">norm_1(A),</span> <span class="pre">norm_inf(A)</span></code></td>
+<td>p-norm of A</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">norm_sqr(A)</span></code></td>
+<td>squared 2-norm of A</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">norm_frobenius(A)</span></code></td>
+<td>frobenius norm of A <span class="math">\(\sum_{ij} A_{ij}A_{ij}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Vetor reductions to a scalar:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Effect</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">sum(v)</span></code></td>
+<td>Sum of elements of A <span class="math">\(\sum_{ij} A_{ij}\)</span></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">max(v),</span> <span class="pre">min(v)</span></code></td>
+<td>Maximum/Minimum element of v <span class="math">\(\max_{ij} A_{ij}\)</span></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">norm_1(v),</span> <span class="pre">norm_2(v),</span> <span class="pre">norm_inf(v)</span></code></td>
+<td>p-norm of v</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">norm_sqr(v)</span></code></td>
+<td>squared 2-norm of v</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="misc">
+<h3>Misc<a class="headerlink" href="#misc" title="Permalink to this headline">¶</a></h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="32%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Effect</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">repeat(x,m)</span></code></td>
+<td>matrix with m rows that are a copy of x <span class="math">\(C_{ij}=x_j\)</span>.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">repeat(t,m,n)</span></code></td>
+<td>Matrix with m rows and n columns with <span class="math">\(C_{ij}=t\)</span>.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="solving-systems-of-linear-equations-and-matrix-inverses">
+<h3>Solving Systems of Linear Equations and Matrix Inverses<a class="headerlink" href="#solving-systems-of-linear-equations-and-matrix-inverses" title="Permalink to this headline">¶</a></h3>
+<p>The library comes with a set of operations to solve linear equations or inverting matrices.
+A system of linear equations can have the forms</p>
+<div class="math">
+\[\begin{split}Ax=b \\
+xA=b \\
+AX=B \\
+XA=B\end{split}\]</div>
+<p>Thus A can either be on the left or right side, or we solve for a single vector or a whole matrix.</p>
+<p>There are many different types of system, depending on the shape of A. If A is for example symmetric positive definite,
+we can use more efficient and numerically stable algorithms than if A is an arbitrary matrix. Independend of the type of system,
+the library offers the following functions:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="32%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Operation</th>
+<th class="head">Effect</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">solve(A,</span> <span class="pre">b,Type,</span> <span class="pre">Side)</span></code></td>
+<td>Solves a system of equations Ax=b or xA=b for a shape of A given
+by Type and the side of A given by the Side parameter
+(<code class="docutils literal"><span class="pre">blas::left</span></code> or <code class="docutils literal"><span class="pre">blas::right</span></code>)</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">solve(A,B,Type,</span> <span class="pre">Side)</span></code></td>
+<td>Solves a system of equations AX=b or XA=b for a shape of A given
+by Type and the side of A given by the Side parameter
+(<code class="docutils literal"><span class="pre">blas::left</span></code> or <code class="docutils literal"><span class="pre">blas::right</span></code>)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">inv(A,</span> <span class="pre">type)</span></code></td>
+<td>Computes the explicit inverse of A with the shape given by Type.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">inv(A,type)</span> <span class="pre">%</span> <span class="pre">b</span></code></td>
+<td>Computes <span class="math">\(A^{-1}b\)</span>.
+Equivalent to <code class="docutils literal"><span class="pre">solve(A,</span> <span class="pre">b,</span> <span class="pre">Type,</span> <span class="pre">left)</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">b</span> <span class="pre">%</span> <span class="pre">inv(A,type)</span></code></td>
+<td>Equivalent to <code class="docutils literal"><span class="pre">solve(A,</span> <span class="pre">b,</span> <span class="pre">Type,</span> <span class="pre">right)</span></code></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">inv(A,type)</span> <span class="pre">%</span> <span class="pre">B</span></code></td>
+<td>Computes <span class="math">\(A^{-1}B\)</span>.
+Equivalent to <code class="docutils literal"><span class="pre">solve(A,</span> <span class="pre">B,</span> <span class="pre">Type,</span> <span class="pre">left)</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">B</span> <span class="pre">%</span> <span class="pre">inv(A,type)</span></code></td>
+<td>Equivalent to <code class="docutils literal"><span class="pre">solve(A,</span> <span class="pre">B,</span> <span class="pre">Type,</span> <span class="pre">right)</span></code></td>
+</tr>
+</tbody>
+</table>
+<p>Note that the <code class="docutils literal"><span class="pre">prod()</span></code>-versions are 100% equivalent to the <code class="docutils literal"><span class="pre">solve()</span></code> calls due to the
+expression optimizations and it is thus up to preference which version is used.</p>
+<p>Shark supports the following choices for Type:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="42%" />
+<col width="58%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Type</th>
+<th class="head">Effect</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">blas::lower()</span></code></td>
+<td>A is a full rank lower triangular matrix.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">blas::upper()</span></code></td>
+<td>A is a full rank upper triangular matrix.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">blas::unit_lower()</span></code></td>
+<td>A is a lower triangular matrix with unit diagonal.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">blas::unit_upper()</span></code></td>
+<td>A is a upper triangular matrix with unit diagonal.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">blas::symm_pos_def()</span></code></td>
+<td>A is symmetric positive definite.
+Uses the cholesky decomposition to solve the system</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">blas::conjugate_gradient(epsilon,max_iter)</span></code></td>
+<td>Uses the iterative conjugate gradient method to solve a
+symmetric positive definite system.
+Stopping criteria are math:<code class="docutils literal"><span class="pre">||Ax-b||_{\infty}</span> <span class="pre">&lt;</span> <span class="pre">\epsilon</span></code>
+or the maximum number of iterations is reached. Default
+is math:<code class="docutils literal"><span class="pre">\epsilon=10^{-10}</span></code> and unlimited max iterations.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">blas::indefinite_full_rank()</span></code></td>
+<td>A is an arbitrary full rank matrix.
+Uses the LU-decomposition to solve the system.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">blas::symm_semi_pos_def()</span></code></td>
+<td>A is symmetric positive definite but rank deficient, meaning
+that there might be no solution for Ax=b. Instead
+the solution that minimizes math:<code class="docutils literal"><span class="pre">||Ax-b||_2</span></code> is computed.</td>
+</tr>
+</tbody>
+</table>
+<p>A small example for the usage is:</p>
+<div class="highlight-c++"><div class="highlight"><pre><span></span><span class="n">blas</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">C</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mi">50</span><span class="p">);</span>
+<span class="c1">//skip: fill C</span>
+<span class="c1">//compute a symmetric pos semi-definite matrix A</span>
+<span class="n">blas</span><span class="o">::</span><span class="n">matrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">A</span> <span class="o">=</span> <span class="n">C</span> <span class="o">%</span> <span class="n">trans</span><span class="p">(</span><span class="n">C</span><span class="p">);</span>
+<span class="n">blas</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">b</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span><span class="mf">1.0</span><span class="p">);</span><span class="c1">//all ones vector</span>
+
+<span class="n">blas</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">solution</span> <span class="o">=</span> <span class="n">inv</span><span class="p">(</span><span class="n">A</span><span class="p">,</span><span class="n">blas</span><span class="o">::</span><span class="n">symm_semi_pos_def</span><span class="p">())</span> <span class="o">%</span> <span class="n">b</span><span class="p">;</span><span class="c1">//solves Ax=b</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Summary"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Remora 0.1.REMORA_VERSION_PATCH@ documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright Oswin Krause.
+      Last updated on 06/01/2017.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
+    </div>
+  </body>
+</html>
