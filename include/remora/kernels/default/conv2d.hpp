@@ -1,5 +1,5 @@
 /*!
- * 
+ *
  *
  * \brief       Implements the 2D convolution kernel for cpus
  *
@@ -8,21 +8,21 @@
  *
  *
  * \par Copyright 1995-2015 Shark Development Team
- * 
+ *
  * <BR><HR>
  * This file is part of Shark.
  * <http://image.diku.dk/shark/>
- * 
+ *
  * Shark is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published 
+ * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Shark is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -38,17 +38,16 @@ namespace remora{namespace bindings {
 
 template <typename T>
 struct conv2d_block_size {
-	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
+	typedef detail::block<T> block;
 	static const unsigned col_block_size = 3; //number of neighbouring columbs to be computed in a mini block
-	static const unsigned num_filter_outputs = 2*vector_length; //number of filters to be computed in a block. must be multiple of vector_length
+	static const unsigned num_filter_outputs = 2 * block::max_vector_elements; //number of filters to be computed in a block. must be multiple of vector_length
 	static const unsigned output_block_size = (200/col_block_size) * col_block_size; // maximum size of the tile of an output. Bigger is not always better.
-	static const unsigned align = 64; //alignment of the memory
 };
 
 
 // convolution micro kernel
 // computes the convolution of single channel image with a set of filters
-// the following is assumed: 
+// the following is assumed:
 // image is an image with a single channel of size image_size1 * image_size2 stored in row-major format
 // filter is an image of size filter_size1x filter_size2 where every pixel consists of block_size::num_filter_outputs
 // values standing for the outputs of the filter. those valeus are stored interleaved.
@@ -64,34 +63,26 @@ void uConv2d(T const* image, T const* filter, T* output,
 	std::size_t filter_size1, std::size_t filter_size2,
 	block_size
 ){
-	BOOST_ALIGN_ASSUME_ALIGNED(image, block_size::align);
-	BOOST_ALIGN_ASSUME_ALIGNED(filter, block_size::align);
-	BOOST_ALIGN_ASSUME_ALIGNED(output, block_size::align);
+	BOOST_ALIGN_ASSUME_ALIGNED(image, block_size::block::align);
+	BOOST_ALIGN_ASSUME_ALIGNED(filter, block_size::block::align);
+	BOOST_ALIGN_ASSUME_ALIGNED(output, block_size::block::align);
 	static std::size_t const col_block_size = block_size::col_block_size;
 	static std::size_t const num_filter_outputs = block_size::num_filter_outputs;
-	
-#ifdef REMORA_USE_SIMD
-	static const std::size_t num_filter_vec = num_filter_outputs/block_size::vector_length;
-#ifdef BOOST_COMP_CLANG_DETECTION
-	typedef T vx __attribute__((ext_vector_type (block_size::vector_length)));
-#else
-	typedef T vx __attribute__((vector_size (block_size::vector_length * sizeof(T))));
-#endif
-#else
-	typedef T vx;
-	static const std::size_t num_filter_vec = num_filter_outputs;
-#endif
-	vx* output_packed = (vx*) output; 
+	typedef typename block_size::block::type vx;
+	static const std::size_t vector_length = block_size::block::vector_elements;
+	static const std::size_t num_filter_vec = num_filter_outputs/block_size::block::vector_elements;
+
+	vx* output_packed = (vx*) output;
 	std::size_t output_size1 = image_size1 - filter_size1 + 1;
 	std::size_t output_size2 = image_size2 - filter_size2 + 1;
-	
+
 	for(std::size_t i = 0; i != output_size1; ++i){
 		for(std::size_t j = 0; j != output_size2; j += col_block_size){//we hand unroll this loop, thus output_size2 must be divisable by col_block_size
 			//create local accumulator register
 #ifdef REMORA_USE_SIMD
 			vx acc[num_filter_vec * col_block_size] = {};
 #else
-			typename std::aligned_storage<sizeof(T[num_filter_outputs * col_block_size]),block_size::align>::type Pa;
+			typename std::aligned_storage<sizeof(vx[num_filter_outputs * col_block_size]),block_size::block::align>::type Pa;
 			T* acc = reinterpret_cast<T*>(&Pa);
 			for (std::size_t l = 0; l < num_filter_vec * col_block_size; l++)
 				acc[l] = 0;
@@ -115,7 +106,7 @@ void uConv2d(T const* image, T const* filter, T* output,
 				for (std::size_t k0 = 0; k0 < num_filter_vec; ++k0){
 					*output_packed += acc[ j1 * num_filter_vec + k0];
 					++output_packed;
-					
+
 				}
 			}
 		}
@@ -125,17 +116,17 @@ void uConv2d(T const* image, T const* filter, T* output,
 //takes a filter and transforms it into block-interleaved format as described above
 template<class T, class E, class block_size>
 void pack_filter(
-	T* p, matrix_expression<E, cpu_tag> const& filter_im, std::size_t num_channels, std::size_t num_filters, 
+	T* p, matrix_expression<E, cpu_tag> const& filter_im, std::size_t num_channels, std::size_t num_filters,
 	block_size
 ){
 	static std::size_t const num_filter_outputs = block_size::num_filter_outputs;
 	std::size_t size1 = filter_im().size1()/num_channels/num_filters;
 	std::size_t size2 = filter_im().size2();
-	
+
 	std::size_t filter_blocks = (num_filters + num_filter_outputs - 1)/num_filter_outputs;
 	std::size_t filter_packed_stride2 = num_filter_outputs;
 	std::size_t filter_packed_stride1 = size2 * filter_packed_stride2;
-	
+
 	for( std::size_t filter_block = 0; filter_block != filter_blocks; ++filter_block){
 		for(std::size_t channel = 0; channel != num_channels; ++channel){
 			for(std::size_t f = 0; f != num_filter_outputs; ++f){
@@ -163,10 +154,10 @@ void pack_image(
 	std::size_t start1, std::size_t start2,
 	std::size_t size1, std::size_t size2,
 	block_size
-){	
+){
 	//the padded region does not matter as pixels affected by it are thrown away
 	std::size_t unpadded_size2 = std::min(size2, image().size2() - start2);
-	
+
 	for(std::size_t channel = 0; channel != num_channels; ++channel){
 		std::size_t image_channel_start1 = channel * image().size1()/num_channels +start1;
 
@@ -176,7 +167,7 @@ void pack_image(
 		//obtain proxy to current image channel and assign it(handles case of E being column major)
 		matrix_range<typename const_expression<E>::type > image_channel(image(),image_channel_start1,image_channel_start1 + size1, start2, start2 + unpadded_size2);
 		noalias(image_packed_channel) = image_channel;
-		
+
 		//move pointer to next channel
 		p += size1 * size2;
 	}
@@ -189,14 +180,14 @@ void conv2d(
 	matrix_expression<M, cpu_tag>& output,
 	std::size_t num_channels,
 	std::size_t num_filters
-){	
+){
 	typedef typename std::common_type<typename E1::value_type, typename E2::value_type>::type value_type;
 	typedef conv2d_block_size<value_type> block_size;
-		
+
 	static std::size_t const col_block_size = block_size::col_block_size;
 	static std::size_t const num_filter_outputs = block_size::num_filter_outputs;
 	static std::size_t const output_block_size = block_size::output_block_size;
-	
+
 	std::size_t filter_blocks = (num_filters + num_filter_outputs-1)/num_filter_outputs;
 	std::size_t filter_size1 = filter().size1()/(num_channels * num_filters);
 	std::size_t filter_size2 = filter().size2();
@@ -208,15 +199,15 @@ void conv2d(
 	std::size_t size_filter_block = num_filter_outputs * filter_size1 * filter_size2;
 	std::size_t output_blocks1 = (output_size1+output_block_size - 1)/output_block_size;
 	std::size_t output_blocks2 = (output_size2+output_block_size - 1)/output_block_size;
-	
-	boost::alignment::aligned_allocator<value_type,block_size::align> allocator;
+
+	boost::alignment::aligned_allocator<value_type,block_size::block::align> allocator;
 	value_type* filter_temporary = allocator.allocate(filter_blocks * num_channels * size_filter_block);
 	value_type* image_temporary = allocator.allocate(num_channels * image_block_size * image_block_size);
 	value_type* output_temporary = allocator.allocate(num_filter_outputs * output_block_size * output_block_size);
-	
+
 	//pack filter into temporary memory
 	pack_filter(filter_temporary,filter,num_channels, num_filters, block_size());
-	
+
 	for(std::size_t i = 0; i != output_blocks1; ++i){
 		std::size_t cur_out_size1 = std::min(output_block_size, output_size1 - i * output_block_size);
 		std::size_t cur_image_size1 = cur_out_size1 + filter_size1 -1;//extend image area to fit the patch
@@ -226,14 +217,14 @@ void conv2d(
 			cur_out_size2 = (cur_out_size2 +col_block_size -1)/col_block_size * col_block_size;//take padding into account
 			std::size_t cur_image_size2 = cur_out_size2 + filter_size2 -1;//extend image area to fit the patch
 			std::size_t block_start2 = j * output_block_size;
-	
+
 			pack_image(
 				image_temporary, image, num_channels,
 				block_start1,block_start2,
 				cur_image_size1, cur_image_size2,
 				block_size()
 			);
-			
+
 			for( std::size_t block = 0; block != filter_blocks; ++block){
 				//clear temporary output memory
 				for(std::size_t l = 0; l != num_filter_outputs * cur_out_size1 * cur_out_size2; ++l){
@@ -246,7 +237,7 @@ void conv2d(
 						cur_image_size1, cur_image_size2, filter_size1, filter_size2, block_size()
 					);
 				}
-				
+
 				//copy result to output
 				std::size_t unpadded_size2 = std::min(cur_out_size2,output_size2 - block_start2);
 				for(std::size_t f = 0; f != num_filter_outputs; ++f){

@@ -42,9 +42,9 @@ namespace remora{ namespace bindings {
 
 template <typename T>
 struct trmm_block_size {
-	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
+	typedef detail::block<T> block;
 	static const unsigned mr = 4; // stripe width for lhs
-	static const unsigned nr = 3 * vector_length; // stripe width for rhs
+	static const unsigned nr = 3 * block::max_vector_elements; // stripe width for rhs
 	static const unsigned lhs_block_size = 32 * mr;
 	static const unsigned rhs_column_size = (1024 / nr) * nr;
 	static const unsigned align = 64; // align temporary arrays to this boundary
@@ -53,7 +53,7 @@ struct trmm_block_size {
 template <class E, class T, class block_size, bool unit>
 void pack_A_triangular(matrix_expression<E, cpu_tag> const& A, T* p, block_size, triangular_tag<false,unit>)
 {
-	BOOST_ALIGN_ASSUME_ALIGNED(p, block_size::align);
+	BOOST_ALIGN_ASSUME_ALIGNED(p, block_size::block::align);
 
 	std::size_t const mc = A().size1();
 	std::size_t const kc = A().size2();
@@ -76,7 +76,7 @@ void pack_A_triangular(matrix_expression<E, cpu_tag> const& A, T* p, block_size,
 template <class E, class T, class block_size, bool unit>
 void pack_A_triangular(matrix_expression<E, cpu_tag> const& A, T* p, block_size, triangular_tag<true,unit>)
 {
-	BOOST_ALIGN_ASSUME_ALIGNED(p, block_size::align);
+	BOOST_ALIGN_ASSUME_ALIGNED(p, block_size::block::align);
 
 	std::size_t const mc = A().size1();
 	std::size_t const kc = A().size2();
@@ -110,7 +110,7 @@ void trmm_impl(
     static const std::size_t BC = block_size::rhs_column_size;
 
 	//obtain uninitialized aligned storage
-	boost::alignment::aligned_allocator<value_type,block_size::align> allocator;
+	boost::alignment::aligned_allocator<value_type,block_size::block::align> allocator;
 	value_type* A = allocator.allocate(AC * AC);
 	value_type* B = allocator.allocate(AC * BC);
 

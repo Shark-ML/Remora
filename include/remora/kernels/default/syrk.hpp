@@ -43,12 +43,11 @@ namespace remora { namespace bindings {
 
 template <typename T>
 struct syrk_block_size {
-	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
+	typedef detail::block<T> block;
 	static const unsigned mr = 4; // stripe width for E_left
-	static const unsigned nr = mr * vector_length; // stripe width for E_right
+	static const unsigned nr = mr * block::max_vector_elements; // stripe width for E_right
 	static const unsigned lhs_block_size = 3 * mr * nr;//square block size of M to compute
 	static const unsigned rhs_k_size = 1024;//strip of ks to compute
-	static const unsigned align = 64; // align temporary arrays to this boundary
 };
 template <class E, class Mat, class Triangular>
 void syrk_impl(
@@ -64,8 +63,8 @@ void syrk_impl(
     static const std::size_t EC = block_size::rhs_k_size;
 
 	//obtain uninitialized aligned storage
-	boost::alignment::aligned_allocator<value_type,block_size::align> allocatorE;
-	boost::alignment::aligned_allocator<typename Mat::value_type,block_size::align> allocatorM;
+	boost::alignment::aligned_allocator<value_type,block_size::block::align> allocatorE;
+	boost::alignment::aligned_allocator<typename Mat::value_type,block_size::block::align> allocatorM;
 	value_type* E_left = allocatorE.allocate(MC * EC);
 	value_type* E_right = allocatorE.allocate(MC * EC);
 	auto M_diagonal_block = allocatorM.allocate(MC * MC);

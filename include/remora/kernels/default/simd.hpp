@@ -67,4 +67,22 @@
 	#define REMORA_VECTOR_LENGTH 16
 #endif
 
+namespace remora{namespace detail{
+template<class T>
+struct block{
+	static const std::size_t max_vector_elements = REMORA_VECTOR_LENGTH/sizeof(T);
+	#ifdef REMORA_USE_SIMD
+		static const std::size_t vector_elements = REMORA_VECTOR_LENGTH/sizeof(T);
+		#ifdef BOOST_COMP_CLANG_DETECTION
+			typedef T type __attribute__((ext_vector_type (vector_elements)));
+		#else
+		    typedef T type __attribute__((vector_size (REMORA_VECTOR_LENGTH)));
+		#endif
+	#else
+		static const std::size_t vector_elements = 1;
+		typedef T type;
+	#endif
+	static const std::size_t align = 64;
+};
+}}
 #endif

@@ -36,7 +36,6 @@
 #include "../../vector.hpp"//sparse gemm needs temporary vector
 #include "../../detail/matrix_proxy_classes.hpp"//matrix row,column,transpose,range
 #include "mgemm.hpp" //block macro kernel for dense gemm
-#include <boost/align/aligned_allocator.hpp> //mgemm requires aligned allocations
 #include <boost/mpl/bool.hpp> //boost::mpl::false_ marker for unoptimized
 
 #include <type_traits> //std::common_type
@@ -55,35 +54,32 @@ namespace remora{namespace bindings {
 
 template <typename T>
 struct gemm_block_size {
-	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
+	typedef detail::block<T> block;
 	static const unsigned mr = 4; // stripe width for lhs
-	static const unsigned nr = 3 * vector_length; // stripe width for rhs
+	static const unsigned nr = 3 * block::max_vector_elements; // stripe width for rhs
 	static const unsigned mc = 128;
 	static const unsigned kc = 512; // stripe length
 	static const unsigned nc = (1024/nr) * nr;
-	static const unsigned align = 64; // align temporary arrays to this boundary
 };
 
 template <>
 struct gemm_block_size<float> {
-	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(float);
+	typedef detail::block<float> block;
 	static const unsigned mc = 256;
 	static const unsigned kc = 512; // stripe length
 	static const unsigned nc = 4096;
 	static const unsigned mr = 4; // stripe width for lhs
 	static const unsigned nr = 16; // stripe width for rhs
-	static const unsigned align = 64; // align temporary arrays to this boundary
 };
 
 template <>
 struct gemm_block_size<long double> {
-	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(long double);
+	typedef detail::block<long double> block;
 	static const unsigned mc = 256;
 	static const unsigned kc = 512; // stripe length
 	static const unsigned nc = 4096;
 	static const unsigned mr = 1; // stripe width for lhs
 	static const unsigned nr = 4; // stripe width for rhs
-	static const unsigned align = 64; // align temporary arrays to this boundary
 };
 
 //-- Dense gemm
@@ -109,7 +105,7 @@ void gemm_impl(
 	static const std::size_t KC = block_size::kc;
 
 	//obtain uninitialized aligned storage
-	boost::alignment::aligned_allocator<value_type,block_size::align> allocator;
+	boost::alignment::aligned_allocator<value_type,block_size::block::align> allocator;
 	value_type* A = allocator.allocate(MC * KC);
 	value_type* B = allocator.allocate(NC * KC);
 

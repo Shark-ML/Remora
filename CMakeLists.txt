@@ -33,7 +33,7 @@ endif()
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
 	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${remora_BINARY_DIR}/lib")
 endif()
-mark_as_advanced( 
+mark_as_advanced(
 	CMAKE_RUNTIME_OUTPUT_DIRECTORY
 	CMAKE_LIBRARY_OUTPUT_DIRECTORY
 	CMAKE_ARCHIVE_OUTPUT_DIRECTORY
@@ -86,7 +86,7 @@ message(STATUS "Will build: " ${CMAKE_BUILD_TYPE})
 set(Boost_USE_STATIC_LIBS OFF CACHE BOOL "use static libraries from Boost")
 add_definitions(-DBOOST_TEST_DYN_LINK)
 
-find_package( 
+find_package(
 	Boost 1.54.0 REQUIRED
 )
 
@@ -103,7 +103,7 @@ message( STATUS "Using boost" ${Boost_VERSION} " from " ${Boost_LIBRARY_DIR} )
 
 option( ENABLE_SIMD "Use SIMD for computational routines" OFF )
 if( ENABLE_SIMD )
-	set( REMORA_USE_SIMD 1)
+	add_definitions(-DREMORA_USE_SIMD)
 endif()
 
 option( ENABLE_CBLAS "Use Installed Linear Algebra Library" ON )
@@ -136,20 +136,20 @@ if( ENABLE_CBLAS )
 		#find the cblas.h include path
 		if(CBLAS_LIBRARY )
 			get_filename_component(CBLAS_LIB_PATH ${CBLAS_LIBRARY} PATH )
-		elseif( OPENBLAS_LIBRARY)	
+		elseif( OPENBLAS_LIBRARY)
 			get_filename_component(CBLAS_LIB_PATH ${OPENBLAS_LIBRARY} PATH )
 		endif()
 		if(CBLAS_LIB_PATH)
-			find_file(CBLAS_INCLUDES cblas.h 
+			find_file(CBLAS_INCLUDES cblas.h
 				PATHS ${CBLAS_LIB_PATH} ${CBLAS_LIB_PATH}/../include
 			)
 			get_filename_component(CBLAS_INCLUDES ${CBLAS_INCLUDES} PATH )
 		endif()
 		if(ATLAS_LIBRARY)
 			get_filename_component(ATLAS_LIBRARY_PATH ${ATLAS_LIBRARY} PATH )
-			find_file(CLAPACK_INCLUDES clapack.h 
+			find_file(CLAPACK_INCLUDES clapack.h
 				PATHS
-				${ATLAS_LIBRARY_PATH} 
+				${ATLAS_LIBRARY_PATH}
 				${ATLAS_LIBRARY_PATH}/../include
 				${ATLAS_LIBRARY_PATH}/../include/atlas
 				${ATLAS_LIBRARY_PATH}/../../include/atlas
@@ -167,7 +167,7 @@ if( ENABLE_CBLAS )
 		elseif( CBLAS_LIBRARY AND CBLAS_INCLUDES)
 			#check that we can compile a basic program with the libraries we have found
 			#vendor versions might come with additional libraries which would be bad.
-			try_compile(CBLAS_COMPILE 
+			try_compile(CBLAS_COMPILE
 				"${PROJECT_BINARY_DIR}/cBlasCheck"
 				"${CMAKE_SOURCE_DIR}/cBlasCheck.cpp"
 				CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${CBLAS_INCLUDES}"
@@ -181,7 +181,7 @@ if( ENABLE_CBLAS )
 			endif()
 		endif()
 	endif()
-	
+
 	if(CBLAS_VENDOR)
 		message(STATUS "CBLAS FOUND: " ${CBLAS_VENDOR} " with include directory " ${CBLAS_INCLUDES} )
 		set(REMORA_USE_CBLAS 1)

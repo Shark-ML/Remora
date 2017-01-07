@@ -40,4 +40,20 @@ macro( REMORA_ADD_EXAMPLE TUT_SRC NAME)
 	endif()
 endmacro()
 
+macro( REMORA_ADD_BENCHMARK SRC NAME)
+	add_executable(${NAME} ${CMAKE_CURRENT_SOURCE_DIR}/Benchmarks/${SRC}.cpp)
+	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD 11)
+	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
+
+	# Add the dependencies to the target examples
+	add_dependencies(remoraexamples ${NAME})
+
+	set_target_properties( ${NAME} PROPERTIES FOLDER "examples")
+endmacro()
+
 REMORA_ADD_EXAMPLE(linear_regression LinearRegression)
+REMORA_ADD_BENCHMARK(conv2d Benchmark_Conv2D)
+REMORA_ADD_BENCHMARK(gemm Benchmark_Gemm)
+REMORA_ADD_BENCHMARK(trmm Benchmark_Trmm)
+REMORA_ADD_BENCHMARK(syrk Benchmark_Syrk)
+REMORA_ADD_BENCHMARK(potrf Benchmark_Potrf)

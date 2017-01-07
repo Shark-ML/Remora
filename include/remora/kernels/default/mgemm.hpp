@@ -32,8 +32,6 @@
 #define REMORA_KERNELS_DEFAULT_MGEMM_HPP
 
 #include "simd.hpp"
-
-#include <cstddef>//std::size_t
 #include <algorithm>//std::fill
 
 
@@ -54,21 +52,16 @@ void ugemm(
 	std::size_t kc, TC alpha, T const* A, T const* B,
 	TC* C, std::size_t stride1, std::size_t stride2
 ){
-	BOOST_ALIGN_ASSUME_ALIGNED(A, block_size::align);
-	BOOST_ALIGN_ASSUME_ALIGNED(B, block_size::align);
+	BOOST_ALIGN_ASSUME_ALIGNED(A, block_size::block::align);
+	BOOST_ALIGN_ASSUME_ALIGNED(B, block_size::block::align);
 
+	typedef typename block_size::block::type vx;
+	static const std::size_t vector_length = block_size::block::vector_elements;
+	static const std::size_t vecNR = block_size::nr/vector_length;
 #ifdef REMORA_USE_SIMD
-	static const std::size_t vecNR = block_size::nr/block_size::vector_length;
-#ifdef BOOST_COMP_CLANG_DETECTION
-	typedef T vx __attribute__((ext_vector_type (block_size::vector_length)));
-#else
-        typedef T vx __attribute__((vector_size (REMORA_VECTOR_LENGTH)));
-#endif
 	vx P[block_size::mr * vecNR] = {};
 #else
-typedef T vx;
-static const std::size_t vecNR = block_size::nr;
-typename std::aligned_storage<sizeof(T[block_size::mr*vecNR]),block_size::align>::type Pa;
+	typename std::aligned_storage<sizeof(vx[block_size::mr*vecNR]),block_size::block::align>::type Pa;
 	T* P = reinterpret_cast<T*>(&Pa);
 	for (std::size_t c = 0; c < block_size::mr*vecNR; c++)
 		P[c] = 0;
@@ -154,7 +147,7 @@ void mgemm(
 template <class E, class T, class block_size>
 void pack_A_dense(matrix_expression<E, cpu_tag> const& A, T* p, block_size)
 {
-	BOOST_ALIGN_ASSUME_ALIGNED(p, block_size::align);
+	BOOST_ALIGN_ASSUME_ALIGNED(p, block_size::block::align);
 
 	std::size_t const mc = A().size1();
 	std::size_t const kc = A().size2();
@@ -175,7 +168,7 @@ void pack_A_dense(matrix_expression<E, cpu_tag> const& A, T* p, block_size)
 template <class E, class T, class block_size>
 void pack_B_dense(matrix_expression<E, cpu_tag> const& B, T* p, block_size)
 {
-    BOOST_ALIGN_ASSUME_ALIGNED(p, block_size::align);
+    BOOST_ALIGN_ASSUME_ALIGNED(p, block_size::block::align);
 
     std::size_t const kc = B ().size1();
     std::size_t const nc = B ().size2();
