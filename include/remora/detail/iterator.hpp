@@ -32,6 +32,8 @@
 #include <iterator>
 #include <type_traits>
 #include <limits>
+#include <algorithm>
+#include <cstdlib>
 
 #include "check.hpp"
 
