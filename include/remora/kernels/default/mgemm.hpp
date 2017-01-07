@@ -1,5 +1,5 @@
 /*!
- * 
+ *
  *
  * \brief       The mgemm macro kernel used for implementing gemm
  *
@@ -8,21 +8,21 @@
  *
  *
  * \par Copyright 1995-2015 Shark Development Team
- * 
+ *
  * <BR><HR>
  * This file is part of Shark.
  * <http://image.diku.dk/shark/>
- * 
+ *
  * Shark is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published 
+ * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Shark is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -38,7 +38,7 @@
 
 
 namespace remora{namespace bindings {
-	
+
 //  Block-GEMM implementation based on boost.ublas
 //  written by:
 //  Copyright (c) 2016
@@ -56,7 +56,7 @@ void ugemm(
 ){
 	BOOST_ALIGN_ASSUME_ALIGNED(A, block_size::align);
 	BOOST_ALIGN_ASSUME_ALIGNED(B, block_size::align);
-	
+
 #ifdef REMORA_USE_SIMD
 	static const std::size_t vecNR = block_size::nr/block_size::vector_length;
 #ifdef BOOST_COMP_CLANG_DETECTION
@@ -73,9 +73,9 @@ typename std::aligned_storage<sizeof(T[block_size::mr*vecNR]),block_size::align>
 	for (std::size_t c = 0; c < block_size::mr*vecNR; c++)
 		P[c] = 0;
 #endif
-	
-	
-	// perform the matrix-matrix product as outer product 
+
+
+	// perform the matrix-matrix product as outer product
 	// of rows of A and B
 	vx const* b = (vx const*)B;
 	for (std::size_t l=0; l<kc; ++l) {
@@ -95,7 +95,7 @@ typename std::aligned_storage<sizeof(T[block_size::mr*vecNR]),block_size::align>
 			}
 		}
 	}
-	
+
 	//add result to C
 	T const* p = (T const*) P;
 	for (std::size_t i=0; i<block_size::mr; ++i) {
@@ -117,7 +117,7 @@ void mgemm(
 	static std::size_t const NR = block_size::nr;
 	std::size_t const mp  = (mc+MR-1) / MR;
 	std::size_t const np  = (nc+NR-1) / NR;
-	
+
 	for (std::size_t j=0; j<np; ++j) {
 		std::size_t const nr = std::min(NR, nc - j*NR);
 
@@ -138,8 +138,8 @@ void mgemm(
 					&A[i*kc*MR], &B[j*kc*NR],
 					CTempBlock, NR, 1
 				);
-				
-				for (std::size_t i0=0; i0<mr; ++i0){	
+
+				for (std::size_t i0=0; i0<mr; ++i0){
 					for (std::size_t j0=0; j0<nr; ++j0) {
 						CBlockStart[i0*stride1+j0 * stride2] += CTempBlock[i0*NR+j0];
 					}
@@ -175,12 +175,12 @@ void pack_A_dense(matrix_expression<E, cpu_tag> const& A, T* p, block_size)
 template <class E, class T, class block_size>
 void pack_B_dense(matrix_expression<E, cpu_tag> const& B, T* p, block_size)
 {
-        BOOST_ALIGN_ASSUME_ALIGNED(p, block_size::align);
+    BOOST_ALIGN_ASSUME_ALIGNED(p, block_size::align);
 
-        std::size_t const kc = B ().size1();
-        std::size_t const nc = B ().size2();
-        static std::size_t const NR = block_size::nr;
-        std::size_t const np = (nc+NR-1) / NR;
+    std::size_t const kc = B ().size1();
+    std::size_t const nc = B ().size2();
+    static std::size_t const NR = block_size::nr;
+    std::size_t const np = (nc+NR-1) / NR;
 
 	std::size_t nu = 0;
         for (std::size_t l=0; l<np; ++l) {

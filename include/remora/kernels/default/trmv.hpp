@@ -8,21 +8,21 @@
  *
  *
  * \par Copyright 1995-2015 Shark Development Team
- * 
+ *
  * <BR><HR>
  * This file is part of Shark.
  * <http://image.diku.dk/shark/>
- * 
+ *
  * Shark is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published 
+ * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Shark is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -39,40 +39,40 @@
 #include <boost/mpl/bool.hpp>
 
 namespace remora{ namespace bindings{
-	
+
 //Lower triangular(row-major) - vector
 template<bool Unit, class MatA, class V>
 void trmv_impl(
 	matrix_expression<MatA, cpu_tag> const& A,
 	vector_expression<V, cpu_tag> &b,
-        boost::mpl::false_, row_major
+    boost::mpl::false_, row_major
 ){
 	typedef typename MatA::value_type value_typeA;
 	typedef typename V::value_type value_typeV;
 	std::size_t size = A().size1();
 	std::size_t const blockSize = 128;
 	std::size_t numBlocks = size/blockSize;
-	if(numBlocks*blockSize < size) ++numBlocks; 
-	
+	if(numBlocks*blockSize < size) ++numBlocks;
+
 	//this implementation partitions A into
 	//a set of panels, where a Panel is a set
 	// of columns. We start with the last panel
 	//and compute the product of it with the part of the vector
 	// and than just add the previous panel on top etc.
-	
+
 	//tmporary storage for subblocks of b
 	value_typeV valueStorage[blockSize];
-	
+
 	for(std::size_t bi = 1; bi <= numBlocks; ++bi){
 		std::size_t startbi = blockSize*(numBlocks-bi);
 		std::size_t sizebi = std::min(blockSize,size-startbi);
 		dense_vector_adaptor<value_typeA> values(valueStorage,sizebi);
-		
+
 		//store and save the values of b we are now changing
 		vector_range<V> bupper(b(),startbi,startbi+sizebi);
 		vector_range<V> blower(b(),startbi+sizebi,size);
 		noalias(values) = bupper;
-		
+
 		//multiply with triangular part of the block
 		for (std::size_t i = 0; i != sizebi; ++i) {
 			std::size_t posi = startbi+i;
@@ -93,7 +93,7 @@ template<bool Unit, class MatA, class V>
 void trmv_impl(
 	matrix_expression<MatA, cpu_tag> const& A,
 	vector_expression<V, cpu_tag>& b,
-        boost::mpl::true_, row_major
+    boost::mpl::true_, row_major
 ){
 	std::size_t size = A().size1();
 	for (std::size_t i = 0; i < size; ++ i) {
@@ -115,9 +115,9 @@ template<bool Unit, class MatA, class V>
 void trmv_impl(
 	matrix_expression<MatA, cpu_tag> const& A,
 	vector_expression<V, cpu_tag> &b,
-        boost::mpl::false_, column_major
+    boost::mpl::false_, column_major
 ){
-	
+
 	std::size_t size = A().size1();
 	for (std::size_t n = 1; n <= size; ++n) {
 		std::size_t i = size-n;
@@ -135,29 +135,29 @@ template<bool Unit, class MatA, class V>
 void trmv_impl(
 	matrix_expression<MatA, cpu_tag> const& A,
 	vector_expression<V, cpu_tag>& b,
-        boost::mpl::true_, column_major
+    boost::mpl::true_, column_major
 ){
 	typedef typename MatA::value_type value_typeA;
 	typedef typename V::value_type value_typeV;
 	std::size_t size = A().size1();
 	std::size_t const blockSize = 128;
 	std::size_t numBlocks = size/blockSize;
-	if(numBlocks*blockSize < size) ++numBlocks; 
-	
+	if(numBlocks*blockSize < size) ++numBlocks;
+
 	//this implementation partitions A into
 	//a set of panels, where a Panel is a set
 	// of rows. We start with the first panel
 	//and compute the product of it with the part of the vector
 	// and than just add the next panel on top etc.
-	
+
 	//tmporary storage for subblocks of b
 	value_typeV valueStorage[blockSize];
-	
+
 	for(std::size_t bj = 0; bj != numBlocks; ++bj){
 		std::size_t startbj = blockSize*bj;
 		std::size_t sizebj = std::min(blockSize,size-startbj);
 		dense_vector_adaptor<value_typeA> values(valueStorage,sizebj);
-		
+
 		//store and save the values of b we are now changing
 		vector_range<V> bupper(b(),startbj,startbj+sizebj);
 		vector_range<V> blower(b(),startbj+sizebj,size);
@@ -180,7 +180,7 @@ void trmv_impl(
 //dispatcher
 template <bool Upper,bool Unit,typename MatA, typename V>
 void trmv(
-	matrix_expression<MatA, cpu_tag> const& A, 
+	matrix_expression<MatA, cpu_tag> const& A,
 	vector_expression<V, cpu_tag> & b,
 	boost::mpl::false_//unoptimized
 ){

@@ -107,7 +107,7 @@ void trmm_impl(
 	typedef trmm_block_size<value_type> block_size;
 
 	static const std::size_t AC = block_size::lhs_block_size;
-        static const std::size_t BC = block_size::rhs_column_size;
+    static const std::size_t BC = block_size::rhs_column_size;
 
 	//obtain uninitialized aligned storage
 	boost::alignment::aligned_allocator<value_type,block_size::align> allocator;
@@ -115,16 +115,16 @@ void trmm_impl(
 	value_type* B = allocator.allocate(AC * BC);
 
 	//figure out number of blocks to use
-        const std::size_t  M = e1().size1();
-        const std::size_t  N = e2().size2();
-        const std::size_t Ab = (M+AC-1) / AC;
-        const std::size_t Bb = (N+BC-1) / BC;
+    const std::size_t  M = e1().size1();
+    const std::size_t  N = e2().size2();
+    const std::size_t Ab = (M+AC-1) / AC;
+    const std::size_t Bb = (N+BC-1) / BC;
 
 	//get access to raw storage of B
 	auto storageB = e2().raw_storage();
-        auto Bpointer = storageB.values;
-        const std::size_t stride1 = E2::orientation::index_M(storageB.leading_dimension,1);
-        const std::size_t stride2 = E2::orientation::index_m(storageB.leading_dimension,1);
+    auto Bpointer = storageB.values;
+    const std::size_t stride1 = E2::orientation::index_M(storageB.leading_dimension,1);
+    const std::size_t stride2 = E2::orientation::index_m(storageB.leading_dimension,1);
 
 	for (std::size_t j = 0; j < Bb; ++j) {//columns of B
 		std::size_t nc = std::min(BC, N - j * BC);

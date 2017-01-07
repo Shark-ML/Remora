@@ -1,5 +1,5 @@
 /*!
- * 
+ *
  *
  * \brief       -
  *
@@ -8,21 +8,21 @@
  *
  *
  * \par Copyright 1995-2015 Shark Development Team
- * 
+ *
  * <BR><HR>
  * This file is part of Shark.
  * <http://image.diku.dk/shark/>
- * 
+ *
  * Shark is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published 
+ * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Shark is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -40,7 +40,7 @@
 
 namespace remora { namespace bindings {
 
-	
+
 template <typename T>
 struct syrk_block_size {
 	static const unsigned vector_length = REMORA_VECTOR_LENGTH/sizeof(T); // Number of elements in a vector register
@@ -52,17 +52,17 @@ struct syrk_block_size {
 };
 template <class E, class Mat, class Triangular>
 void syrk_impl(
-	matrix_expression<E, cpu_tag> const& e, 
+	matrix_expression<E, cpu_tag> const& e,
 	matrix_expression<Mat, cpu_tag>& m,
 	typename Mat::value_type& alpha,
 	Triangular t
 ){
 	typedef typename E::value_type value_type;
 	typedef syrk_block_size<value_type> block_size;
-	
+
 	static const std::size_t MC = block_size::lhs_block_size;
-        static const std::size_t EC = block_size::rhs_k_size;
-	
+    static const std::size_t EC = block_size::rhs_k_size;
+
 	//obtain uninitialized aligned storage
 	boost::alignment::aligned_allocator<value_type,block_size::align> allocatorE;
 	boost::alignment::aligned_allocator<typename Mat::value_type,block_size::align> allocatorM;
@@ -71,17 +71,17 @@ void syrk_impl(
 	auto M_diagonal_block = allocatorM.allocate(MC * MC);
 
 	//figure out number of blocks to use
-        const std::size_t  M = e().size1();
-        const std::size_t  K = e().size2();
-        const std::size_t Mb = (M+MC-1) / MC;//we split m in Mb x Mb blocks
-        const std::size_t Eb = (K+EC-1) / EC;//we split B in Mb x Eb blocks
-	
+    const std::size_t  M = e().size1();
+    const std::size_t  K = e().size2();
+    const std::size_t Mb = (M+MC-1) / MC;//we split m in Mb x Mb blocks
+    const std::size_t Eb = (K+EC-1) / EC;//we split B in Mb x Eb blocks
+
 	//get access to raw storage of M
 	auto storageM = m().raw_storage();
-        auto Mpointer = storageM.values;
-        const std::size_t stride1 = Mat::orientation::index_M(storageM.leading_dimension,1);
-        const std::size_t stride2 = Mat::orientation::index_m(storageM.leading_dimension,1);
-	
+    auto Mpointer = storageM.values;
+    const std::size_t stride1 = Mat::orientation::index_M(storageM.leading_dimension,1);
+    const std::size_t stride2 = Mat::orientation::index_m(storageM.leading_dimension,1);
+
 	for (std::size_t k = 0; k < Eb; ++k) {//column blocks of E
 		std::size_t kc = std::min(EC, K - k * EC);
 		for (std::size_t i = 0; i < Mb; ++i){//row-blocks of M
@@ -89,16 +89,16 @@ void syrk_impl(
 			//load block of the left E into memory
 			matrix_range<E const> E_lefts(e(), i * MC, i * MC + mc, k*EC, k*EC + kc );
 			pack_A_dense(E_lefts, E_left, block_size());
-			
+
 			std::size_t start_j = Triangular::is_upper? i : 0;
 			std::size_t end_j = Triangular::is_upper? Mb : i+1;
 			for(std::size_t j = start_j; j < end_j; ++j){//traverse over the blocks that are to be computed
 				std::size_t mc2 = std::min(MC, M - j * MC);
 				//load block of the right E into memory
 				matrix_range<typename const_expression<E>::type> E_rights(e(), j * MC, j * MC + mc2, k*EC, k*EC + kc );
-				matrix_transpose<matrix_range<typename const_expression<E>::type> > E_rights_trans(E_rights); 
+				matrix_transpose<matrix_range<typename const_expression<E>::type> > E_rights_trans(E_rights);
 				pack_B_dense(E_rights_trans, E_right, block_size());
-				
+
 				if(i==j){//diagonal block: we have to ensure that we only access elements on the diagonal
 					for(std::size_t i0 = 0; i0 != mc; ++i0){
 						for(std::size_t j0 = 0; j0 != mc2; ++j0){
@@ -137,7 +137,7 @@ void syrk_impl(
 //main kernel runs the kernel above recursively and calls gemv
 template <bool Upper, typename M, typename E>
 void syrk(
-	matrix_expression<E, cpu_tag> const& e, 
+	matrix_expression<E, cpu_tag> const& e,
 	matrix_expression<M, cpu_tag>& m,
 	typename M::value_type& alpha,
 	boost::mpl::false_ //unoptimized

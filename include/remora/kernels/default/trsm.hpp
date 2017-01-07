@@ -1,5 +1,5 @@
 /*!
- * 
+ *
  *
  * \brief       -
  *
@@ -8,21 +8,21 @@
  *
  *
  * \par Copyright 1995-2015 Shark Development Team
- * 
+ *
  * <BR><HR>
  * This file is part of Shark.
  * <http://image.diku.dk/shark/>
- * 
+ *
  * Shark is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published 
+ * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Shark is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -45,14 +45,14 @@ template<std::size_t maxBlockSize1,std::size_t maxBlockSize2, bool Unit, class M
 void trsm_block(
 	matrix_expression<MatA, cpu_tag> const& A,
 	matrix_expression<MatB, cpu_tag> &B,
-        lower,
+    lower,
 	row_major // B is row-major
 ){
 	SIZE_CHECK(A().size1() <= maxBlockSize1);
 	typedef typename MatA::value_type value_typeA;
 	typedef typename MatB::value_type value_typeB;
 
-	
+
 	//evaluate and copy block of A
 	std::size_t size = A().size1();
 	value_typeA blockA[maxBlockSize1][maxBlockSize1];
@@ -61,14 +61,14 @@ void trsm_block(
 			blockA[i][j] = A()(i,j);
 		}
 	}
-	
-	
+
+
 	value_typeB blockB[maxBlockSize2][maxBlockSize1];
 	std::size_t numBlocks = (B().size2()+maxBlockSize2-1)/maxBlockSize2;
 	for(std::size_t i = 0; i != numBlocks; ++i){
 		std::size_t startB= i*maxBlockSize2;
 		std::size_t curBlockSize2 =std::min(maxBlockSize2, B().size2() - startB);
-		
+
 		//copy blockB transposed in memory
 		for(std::size_t i = 0; i != size; ++i){
 			for(std::size_t k = 0; k != curBlockSize2; ++k){
@@ -101,7 +101,7 @@ void trsm_block(
 template<std::size_t maxBlockSize1,std::size_t maxBlockSize2, bool Unit, class MatA, class MatB>
 void trsm_block(
 	matrix_expression<MatA, cpu_tag> const& A,
-	matrix_expression<MatB, cpu_tag>& B, 
+	matrix_expression<MatB, cpu_tag>& B,
 	lower,
 	column_major // B is column-major
 ) {
@@ -114,7 +114,7 @@ void trsm_block(
 			blockA[i][j] = A()(i,j);
 		}
 	}
-	
+
 	//compute trsv kernel for each column in B
 	for(std::size_t k = 0; k != B().size2(); ++k){
 		for (std::size_t i = 0; i != size; ++i) {
@@ -136,13 +136,13 @@ template<std::size_t maxBlockSize1, std::size_t maxBlockSize2, bool Unit, class 
 void trsm_block(
 	matrix_expression<MatA, cpu_tag> const& A,
 	matrix_expression<MatB, cpu_tag> &B,
-        upper,
+    upper,
 	row_major // B is row-major
 ){
 	SIZE_CHECK(A().size1() <= maxBlockSize1);
 	typedef typename MatA::value_type value_typeA;
 	typedef typename MatB::value_type value_typeB;
-	
+
 	//evaluate and copy block of A
 	std::size_t size = A().size1();
 	value_typeA blockA[maxBlockSize1][maxBlockSize1];
@@ -157,7 +157,7 @@ void trsm_block(
 	for(std::size_t i = 0; i != numBlocks; ++i){
 		std::size_t startB= i*maxBlockSize2;
 		std::size_t curBlockSize2 =std::min(maxBlockSize2, B().size2() - startB);
-		
+
 		//copy blockB transposed in memory
 		for(std::size_t i = 0; i != size; ++i){
 			for(std::size_t k = 0; k != curBlockSize2; ++k){
@@ -191,7 +191,7 @@ void trsm_block(
 template<std::size_t maxBlockSize1,std::size_t maxBlockSize2, bool Unit, class MatA, class MatB>
 void trsm_block(
 	matrix_expression<MatA, cpu_tag> const& A,
-	matrix_expression<MatB, cpu_tag>& B, 
+	matrix_expression<MatB, cpu_tag>& B,
 	upper,
 	column_major // B is column-major
 ) {
@@ -204,7 +204,7 @@ void trsm_block(
 			blockA[i][j] = A()(i,j);
 		}
 	}
-	
+
 	//compute trsv kernel for each column in B
 	for(std::size_t k = 0; k != B().size2(); ++k){
 		for (std::size_t n = 0; n != size; ++n) {
@@ -223,7 +223,7 @@ void trsm_block(
 
 template <typename MatA, typename MatB, class Triangular>
 void trsm_recursive(
-	matrix_expression<MatA, cpu_tag> const& Afull, 
+	matrix_expression<MatA, cpu_tag> const& Afull,
 	matrix_expression<MatB, cpu_tag> & Bfull,
 	std::size_t start,
 	std::size_t end,
@@ -240,11 +240,11 @@ void trsm_recursive(
 		return;
 	}
 	std::size_t size = A.size1();
-	std::size_t numBlocks =(A.size1()+Block_Size-1)/Block_Size; 
+	std::size_t numBlocks =(A.size1()+Block_Size-1)/Block_Size;
 	std::size_t split = numBlocks/2*Block_Size;
 	auto Bfront = simple_subrange(B,0,split,0,num_rhs);
 	auto Bback = simple_subrange(B,split,size,0,num_rhs);
-	
+
 	//otherwise run the kernel recursively
 	if(Triangular::is_upper){ //Upper triangular case
 		trsm_recursive(Afull, Bfull,start+split,end, t, l);
@@ -259,7 +259,7 @@ void trsm_recursive(
 
 template <typename MatA, typename MatB, class Triangular>
 void trsm_recursive(
-	matrix_expression<MatA, cpu_tag> const& Afull, 
+	matrix_expression<MatA, cpu_tag> const& Afull,
 	matrix_expression<MatB, cpu_tag> & Bfull,
 	std::size_t start,
 	std::size_t end,
@@ -274,11 +274,11 @@ void trsm_recursive(
 //main kernel runs the kernel above recursively and calls gemv
 template <class Triangular, class Side, typename MatA, typename MatB>
 void trsm(
-	matrix_expression<MatA, cpu_tag> const& A, 
+	matrix_expression<MatA, cpu_tag> const& A,
 	matrix_expression<MatB, cpu_tag>& B,
 	boost::mpl::false_ //unoptimized
 ){
-	
+
 	bindings::trsm_recursive(A,B,0,A().size1(), Triangular(), Side());
 }
 }}
