@@ -1,5 +1,5 @@
 /*!
- * 
+ *
  *
  * \brief       Some Macros and basic definitions for the use of SIMD block storage
  *
@@ -8,21 +8,21 @@
  *
  *
  * \par Copyright 1995-2015 Shark Development Team
- * 
+ *
  * <BR><HR>
  * This file is part of Shark.
  * <http://image.diku.dk/shark/>
- * 
+ *
  * Shark is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published 
+ * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Shark is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -31,10 +31,36 @@
 #ifndef REMORA_KERNELS_DEFAULT_SIMD_HPP
 #define REMORA_KERNELS_DEFAULT_SIMD_HPP
 
-#include <boost/align/assume_aligned.hpp>
+#include <boost/version.hpp>
+#include <cstddef>
+
+#if (BOOST_VERSION >= 106100)
+	#include <boost/align/assume_aligned.hpp>
+#else
+	#if defined(BOOST_MSVC)
+		#define BOOST_ALIGN_ASSUME_ALIGNED(p, n) \
+		__assume(((std::size_t)(p) & ((n) - 1)) == 0)
+	#elif defined(BOOST_CLANG) && defined(__has_builtin)
+		#if __has_builtin(__builtin_assume_aligned)
+			#define BOOST_ALIGN_ASSUME_ALIGNED(p, n) \
+			(p) = (__typeof__(p))(__builtin_assume_aligned((p), (n)))
+		#else
+			#define BOOST_ALIGN_ASSUME_ALIGNED(ptr, alignment)
+		#endif
+	#elif BOOST_GCC_VERSION >= 40700
+		#define BOOST_ALIGN_ASSUME_ALIGNED(p, n) \
+		(p) = (__typeof__(p))(__builtin_assume_aligned((p), (n)))
+	#elif defined(__INTEL_COMPILER)
+		#define BOOST_ALIGN_ASSUME_ALIGNED(p, n) \
+		__assume_aligned((p), (n))
+	#else
+		#define BOOST_ALIGN_ASSUME_ALIGNED(ptr, alignment)
+	#endif
+#endif
+
 #include <boost/align/aligned_allocator.hpp> //for aligned allocations
-#include <cstddef>//std::size_t
-#include <algorithm>//std::fill
+
+
 #ifdef __AVX__
 	#define REMORA_VECTOR_LENGTH 32
 #else
