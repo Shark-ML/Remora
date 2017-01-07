@@ -105,92 +105,20 @@ option( ENABLE_SIMD "Use SIMD for computational routines" OFF )
 if( ENABLE_SIMD )
 	add_definitions(-DREMORA_USE_SIMD)
 endif()
+option( ENABLE_ACCELERATE "Use Installed Accelerate framework" OFF )
+if( ENABLE_ACCELERATE )
+	set(CBLAS_LIBRARIES "-framework Accelerate" )
+	add_definitions(-DREMORA_USE_CBLAS)
+endif()
 
-option( ENABLE_CBLAS "Use Installed Linear Algebra Library" ON )
-if( ENABLE_CBLAS )
-	set(CBLAS_VENDOR FALSE)
-	if( APPLE )
-		set(CBLAS_VENDOR "Accelerate")
-		set(CBLAS_INCLUDES "")
-		set(CBLAS_LIBRARIES "-framework Accelerate" )
-	else()
-		#todo: do a propper vendor check
-		find_library(OPENBLAS_LIBRARY openblas
-			HINTS ${CBLAS_ROOT}/lib /opt/local/lib /usr/lib/openblas-base
-		)
-		find_library(CBLAS_LIBRARY cblas
-			HINTS ${ATLAS_ROOT}/lib ${CBLAS_ROOT}/lib /opt/local/lib /usr/lib64/atlas/ /usr/lib/libblas
-		)
-		find_library(CLAPACK_LIBRARY lapack
-			HINTS ${ATLAS_ROOT}/lib ${CBLAS_ROOT}/lib /opt/local/lib /usr/lib64/atlas/ /usr/lib/lapack
-		)
-		find_library(ATLAS_LIBRARY atlas
-			HINTS ${ATLAS_ROOT}/lib ${CBLAS_ROOT}/lib /opt/local/lib /usr/lib64/atlas/ /usr/lib/atlas-base
-		)
-		mark_as_advanced(
-			OPENBLAS_LIBRARY
-			CBLAS_LIBRARY
-			CLAPACK_LIBRARY
-			ATLAS_LIBRARY
-		)
-		#find the cblas.h include path
-		if(CBLAS_LIBRARY )
-			get_filename_component(CBLAS_LIB_PATH ${CBLAS_LIBRARY} PATH )
-		elseif( OPENBLAS_LIBRARY)
-			get_filename_component(CBLAS_LIB_PATH ${OPENBLAS_LIBRARY} PATH )
-		endif()
-		if(CBLAS_LIB_PATH)
-			find_file(CBLAS_INCLUDES cblas.h
-				PATHS ${CBLAS_LIB_PATH} ${CBLAS_LIB_PATH}/../include
-			)
-			get_filename_component(CBLAS_INCLUDES ${CBLAS_INCLUDES} PATH )
-		endif()
-		if(ATLAS_LIBRARY)
-			get_filename_component(ATLAS_LIBRARY_PATH ${ATLAS_LIBRARY} PATH )
-			find_file(CLAPACK_INCLUDES clapack.h
-				PATHS
-				${ATLAS_LIBRARY_PATH}
-				${ATLAS_LIBRARY_PATH}/../include
-				${ATLAS_LIBRARY_PATH}/../include/atlas
-				${ATLAS_LIBRARY_PATH}/../../include/atlas
-			)
-			get_filename_component(CLAPACK_INCLUDES ${CLAPACK_INCLUDES} PATH )
-			set(CBLAS_INCLUDES ${CBLAS_INCLUDES} ${CLAPACK_INCLUDES})
-		endif()
-
-		if( OPENBLAS_LIBRARY AND CBLAS_INCLUDES)
-			set(CBLAS_VENDOR "OpenBLAS")
-			set(CBLAS_LIBRARIES ${OPENBLAS_LIBRARY})
-		elseif( CBLAS_LIBRARY AND CLAPACK_LIBRARY AND ATLAS_LIBRARY AND CBLAS_INCLUDES)
-			set(CBLAS_VENDOR "ATLAS")
-			set(CBLAS_LIBRARIES ${CLAPACK_LIBRARY} ${CBLAS_LIBRARY} ${ATLAS_LIBRARY})
-		elseif( CBLAS_LIBRARY AND CBLAS_INCLUDES)
-			#check that we can compile a basic program with the libraries we have found
-			#vendor versions might come with additional libraries which would be bad.
-			try_compile(CBLAS_COMPILE
-				"${PROJECT_BINARY_DIR}/cBlasCheck"
-				"${CMAKE_SOURCE_DIR}/cBlasCheck.cpp"
-				CMAKE_FLAGS "-DINCLUDE_DIRECTORIES=${CBLAS_INCLUDES}"
-				LINK_LIBRARIES ${CBLAS_LIBRARY}
-			)
-			if(CBLAS_COMPILE)
-				set(CBLAS_VENDOR "GENERIC")
-				set(CBLAS_LIBRARIES ${CBLAS_LIBRARY})
-			else()
-				message(WARNING "Unknown CBLAS. Can not use it")
-			endif()
-		endif()
-	endif()
-
-	if(CBLAS_VENDOR)
-		message(STATUS "CBLAS FOUND: " ${CBLAS_VENDOR} " with include directory " ${CBLAS_INCLUDES} )
-		set(REMORA_USE_CBLAS 1)
-		list(APPEND EXTRA_INCLUDE_DIRECTORIES ${CBLAS_INCLUDES} )
-		list(APPEND LINK_LIBRARIES ${CBLAS_LIBRARIES})
-		include_directories ( ${CBLAS_INCLUDES} )
-	else()
-		message(STATUS "No usable CBLAS Library found. No fast linear Algebra used.")
-	endif()
+option( ENABLE_OPENBLAS "Use Installed OpenBLAS" OFF )
+if( ENABLE_OPENBLAS )
+find_package(
+	OpenBLAS
+)
+	include_directories(${OpenBLAS_INCLUDE_DIRS} )
+	set(CBLAS_LIBRARIES ${OpenBLAS_LIBRARIES} )
+	add_definitions(-DREMORA_USE_CBLAS)
 endif()
 
 

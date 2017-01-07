@@ -8,13 +8,13 @@
 #####################################################################
 #       Get Boost Unit test                                         #
 #####################################################################
-find_package( 
+find_package(
 	Boost 1.48.0 REQUIRED COMPONENTS
 	unit_test_framework
 )
 
 macro(REMORA_ADD_TEST SRC NAME)
-   
+
 	if( OPT_LOG_TEST_OUTPUT )
 		set( XML_LOGGING_COMMAND_LINE_ARGS "--log_level=test_suite --log_format=XML --log_sink=${NAME}_Log.xml --report_level=no" )
 	endif( OPT_LOG_TEST_OUTPUT )
@@ -22,7 +22,7 @@ macro(REMORA_ADD_TEST SRC NAME)
 	# Create the test executable
 	# Add the test
 	add_executable( ${NAME} ${SRC} )
-	target_link_libraries( ${NAME} ${Boost_LIBRARIES} )
+	target_link_libraries( ${NAME} ${Boost_LIBRARIES} ${CBLAS_LIBRARIES})
 	add_test( ${NAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${NAME} ${XML_LOGGING_COMMAND_LINE_ARGS} )
 	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD 11)
 	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD_REQUIRED ON)

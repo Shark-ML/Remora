@@ -1,42 +1,43 @@
 //===========================================================================
 /*!
- * 
  *
- * \brief       -
+ *
+ * \brief       cblas binding for dense gemm
  *
  * \author      O. Krause
- * \date        2010
+ * \date        2016
  *
  *
  * \par Copyright 1995-2015 Shark Development Team
- * 
+ *
  * <BR><HR>
  * This file is part of Shark.
  * <http://image.diku.dk/shark/>
- * 
+ *
  * Shark is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published 
+ * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Shark is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 //===========================================================================
-#ifndef REMORA_KERNELS_CBLAS_GEMM_HPP
-#define REMORA_KERNELS_CBLAS_GEMM_HPP
+#ifndef REMORA_KERNELS_CBLAS_DENSE_GEMM_HPP
+#define REMORA_KERNELS_CBLAS_DENSE_GEMM_HPP
 
 #include "cblas_inc.hpp"
-
+#include "../../detail/matrix_proxy_classes.hpp"
+#include "../default/simd.hpp"
 namespace remora{ namespace bindings {
 
-inline void gemm(
+inline void dense_gemm(
 	CBLAS_ORDER const Order, CBLAS_TRANSPOSE TransA, CBLAS_TRANSPOSE TransB,
 	int M, int N, int K,
 	float alpha, float const *A, int lda,
@@ -52,7 +53,7 @@ inline void gemm(
 	);
 }
 
-inline void gemm(
+inline void dense_gemm(
 	CBLAS_ORDER const Order, CBLAS_TRANSPOSE TransA, CBLAS_TRANSPOSE TransB,
 	int M, int N, int K,
 	double alpha, double const *A, int lda,
@@ -62,15 +63,15 @@ inline void gemm(
 	cblas_dgemm(
 		Order, TransA, TransB,
 		M, N, K,
-		alpha, 
+		alpha,
 		A, lda,
 		B, ldb,
-		beta, 
+		beta,
 		C, ldc
 	);
 }
 
-inline void gemm(
+inline void dense_gemm(
 	CBLAS_ORDER const Order, CBLAS_TRANSPOSE TransA, CBLAS_TRANSPOSE TransB,
 	int M, int N, int K,
 	float alpha,
@@ -92,7 +93,7 @@ inline void gemm(
 	);
 }
 
-inline void gemm(
+inline void dense_gemm(
 	CBLAS_ORDER const Order, CBLAS_TRANSPOSE TransA, CBLAS_TRANSPOSE TransB,
 	int M, int N, int K,
 	double alpha,
@@ -114,19 +115,17 @@ inline void gemm(
 	);
 }
 
-// C <- alpha * A * B + beta * C
+//optimized cblas version
 template <typename MatA, typename MatB, typename MatC>
-void gemm(
+void dense_gemm(
 	matrix_expression<MatA, cpu_tag> const& A,
 	matrix_expression<MatB, cpu_tag> const& B,
-	matrix_expression<MatC, cpu_tag>& C, 
+	matrix_expression<MatC, cpu_tag>& C,
 	typename MatC::value_type alpha,
 	boost::mpl::true_
-) {
-	SIZE_CHECK(A().size1() == C().size1());
-	SIZE_CHECK(B().size2() == C().size2());
-	SIZE_CHECK(A().size2()== B().size1());
-	
+){
+	static_assert(std::is_same<typename MatC::orientation,row_major>::value,"C must be row major");
+
 	CBLAS_TRANSPOSE transA = std::is_same<typename MatA::orientation,typename MatC::orientation>::value?CblasNoTrans:CblasTrans;
 	CBLAS_TRANSPOSE transB = std::is_same<typename MatB::orientation,typename MatC::orientation>::value?CblasNoTrans:CblasTrans;
 	std::size_t m = C().size1();
@@ -137,15 +136,47 @@ void gemm(
 	auto storageA = A().raw_storage();
 	auto storageB = B().raw_storage();
 	auto storageC = C().raw_storage();
-	gemm(stor_ord, transA, transB, (int)m, (int)n, (int)k, alpha,
+	dense_gemm(stor_ord, transA, transB, (int)m, (int)n, (int)k, alpha,
 		storageA.values,
-	        storageA.leading_dimension,
+	    storageA.leading_dimension,
 		storageB.values,
-	        storageB.leading_dimension,
+	    storageB.leading_dimension,
 		typename MatC::value_type(1),
 		storageC.values,
-	        storageC.leading_dimension
+	    storageC.leading_dimension
 	);
+}
+
+template <typename MatA, typename MatB, typename MatC>
+void dense_gemm(
+	matrix_expression<MatA, cpu_tag> const& A,
+	matrix_expression<MatB, cpu_tag> const& B,
+	matrix_expression<MatC, cpu_tag>& C,
+	typename MatC::value_type alpha,
+	boost::mpl::false_
+){
+	typedef typename MatC::value_type value_type;
+	std::size_t const tile_size = 2048;
+	static const std::size_t align = 64;
+	std::size_t size1 = C().size1();
+	std::size_t size2 = C().size2();
+	std::size_t num_blocks = (A().size2()+tile_size-1)/tile_size;
+	boost::alignment::aligned_allocator<value_type,64> allocator;
+	value_type* A_pointer = allocator.allocate(size1 * tile_size);
+	value_type* B_pointer = allocator.allocate(size2 * tile_size);
+	dense_matrix_adaptor<value_type,row_major> A_block(A_pointer,size1, tile_size);
+	dense_matrix_adaptor<value_type,row_major> B_block(B_pointer, tile_size, size2);
+	for(std::size_t k = 0; k != num_blocks; ++k){
+		std::size_t start_k = k * tile_size;
+		std::size_t current_size = A().size2 - start_k;
+		matrix_range<MatA> A_range(A(), 0, size1, start_k, start_k + current_size);
+		matrix_range<MatB> B_range(B(), start_k, start_k + current_size, 0, size2);
+		noalias(A_block) = A_range;
+		noalias(B_block) = B_range;
+		dense_gemm(A_range, B_range, C, alpha, boost::mpl::true_());
+	}
+	allocator.deallocate(A_pointer, size1 * tile_size);
+	allocator.deallocate(B_pointer, size1 * tile_size);
 }
 
 
@@ -155,14 +186,14 @@ struct optimized_gemm_detail{
 };
 template<>
 struct optimized_gemm_detail<
-	dense_tag, dense_tag, dense_tag, 
+	dense_tag, dense_tag, dense_tag,
 	double, double, double
 >{
 	typedef boost::mpl::true_ type;
 };
 template<>
 struct optimized_gemm_detail<
-	dense_tag, dense_tag, dense_tag, 
+	dense_tag, dense_tag, dense_tag,
 	float, float, float
 >{
 	typedef boost::mpl::true_ type;
@@ -193,6 +224,22 @@ struct  has_optimized_gemm
 	typename M2::value_type,
 	typename M3::value_type
 >{};
+
+template <typename MatA, typename MatB, typename MatC>
+void dense_gemm(
+	matrix_expression<MatA, cpu_tag> const& A,
+	matrix_expression<MatB, cpu_tag> const& B,
+	matrix_expression<MatC, cpu_tag>& C,
+	typename MatC::value_type alpha
+){
+	SIZE_CHECK(A().size1() == C().size1());
+	SIZE_CHECK(B().size2() == C().size2());
+	SIZE_CHECK(A().size2()== B().size1());
+	dense_gemm(
+		A,B,C,alpha,
+		typename has_optimized_gemm<MatA,MatB,MatC>::type()
+	);
+}
 
 }}
 

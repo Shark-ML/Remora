@@ -22,6 +22,7 @@ macro( REMORA_ADD_EXAMPLE TUT_SRC NAME)
 		add_executable(${NAME} ${EXAMPLES_CPP_DIR}/${TUT_SRC}.cpp)
 		set_property(TARGET ${NAME} PROPERTY CXX_STANDARD 11)
 		set_property(TARGET ${NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
+		target_link_libraries( ${NAME} ${CBLAS_LIBRARIES})
 
 		# Add the dependencies to the target examples
 		add_dependencies(remoraexamples ${NAME})
@@ -44,9 +45,7 @@ macro( REMORA_ADD_BENCHMARK SRC NAME)
 	add_executable(${NAME} ${CMAKE_CURRENT_SOURCE_DIR}/Benchmarks/${SRC}.cpp)
 	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD 11)
 	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
-
-	# Add the dependencies to the target examples
-	add_dependencies(remoraexamples ${NAME})
+	target_link_libraries( ${NAME} ${CBLAS_LIBRARIES})
 
 	set_target_properties( ${NAME} PROPERTIES FOLDER "examples")
 endmacro()
