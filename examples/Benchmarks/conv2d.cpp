@@ -42,8 +42,8 @@ int main(int argc, char **argv) {
 	std::cout<<"performance float"<<std::endl;
 	for(std::size_t filterSize = 4; filterSize != 32; filterSize *= 2){
 		for(std::size_t iter = 0; iter != 6; ++iter){
-			std::size_t sizeOut1 = (3+16 * 2<<iter);
-			std::size_t sizeOut2 = (3+16 * 2<<iter);
+			std::size_t sizeOut1 = 3+16 * (2<<iter);
+			std::size_t sizeOut2 = 3+16 * (2<<iter);
 			std::size_t sizeIm1 = sizeOut1 + filterSize-1;
 			std::size_t sizeIm2 = sizeOut2 + filterSize-1;
 

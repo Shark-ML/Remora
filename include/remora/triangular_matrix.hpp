@@ -1,26 +1,26 @@
 /*!
  * \brief       Implements a matrix with triangular storage layout
- * 
+ *
  * \author      O. Krause
  * \date        2015
  *
  *
  * \par Copyright 1995-2015 Shark Development Team
- * 
+ *
  * <BR><HR>
  * This file is part of Shark.
  * <http://image.diku.dk/shark/>
- * 
+ *
  * Shark is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published 
+ * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Shark is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -86,7 +86,7 @@ public:
 	{
 		assign(*this, e);
 	}
-	
+
 	///\brief Returns the number of rows of the matrix.
 	size_type size1() const {
 		return m_size;
@@ -95,11 +95,11 @@ public:
 	size_type size2() const {
 		return m_size;
 	}
-	
+
 	storage_type raw_storage(){
 		return {m_data.data(), m_data.size()};
 	}
-	
+
 	const_storage_type raw_storage()const{
 		return {m_data.data(), m_data.size()};
 	}
@@ -113,13 +113,13 @@ public:
 		m_data.resize(size*(size+1)/2);
 		m_size = size;
 	}
-	
+
 	void resize(size_type size1, size_type size2) {
 		SIZE_CHECK(size1 == size2);
 		resize(size1);
 		(void)size2;
 	}
-	
+
 	void clear(){
 		std::fill(m_data.begin(), m_data.end(), value_type/*zero*/());
 	}
@@ -128,12 +128,12 @@ public:
 	const_reference operator()(size_type i, size_type j) const {
 		SIZE_CHECK(i < size1());
 		SIZE_CHECK(j < size2());
-		if(!orientation::non_zero(i,j)) 
+		if(!orientation::non_zero(i,j))
 			return value_type();
 		SIZE_CHECK(orientation::element(i,j,size1(),packed_tag())<m_data.size());
 		return m_data [orientation::element(i,j,size1(),packed_tag())];
 	}
-	
+
 	// separate write access
 	void set_element(size_type i,size_type j, value_type t){
 		SIZE_CHECK(i < size1());
@@ -141,13 +141,13 @@ public:
 		SIZE_CHECK(orientation::non_zero(i,j));
 		m_data [orientation::element(i,j,size1(),packed_tag())] = t;
 	}
-	
+
 	bool non_zero(size_type i,size_type j)const{
 		SIZE_CHECK(i < size1());
 		SIZE_CHECK(j < size2());
 		return orientation::non_zero(i,j);
 	}
-	
+
 	/*! @note "pass by value" the key idea to enable move semantics */
 	triangular_matrix& operator = (triangular_matrix m) {
 		swap(m);
@@ -175,7 +175,7 @@ public:
 	friend void swap(triangular_matrix& m1, triangular_matrix& m2) {
 		m1.swap(m2);
 	}
-	
+
 	///////////iterators
 	template<class TIter>
 	class major1_iterator:
@@ -185,7 +185,7 @@ public:
 		iterators::packed_random_access_iterator_tag
 	>{
 	private:
-		size_type offset(size_type n)const{
+		std::ptrdiff_t offset(std::ptrdiff_t n)const{
 			size_type k = m_index;
 			if(n >= 0){
 				return (n*(2*k+n+1))/2;
@@ -204,11 +204,11 @@ public:
 		major1_iterator() {}
 		major1_iterator(pointer arrayBegin, size_type index, size_type /*size*/)
 		:m_pos(arrayBegin), m_index(index){}
-		
+
 		template<class U>
 		major1_iterator(major1_iterator<U> const& iter)
 		:m_pos(iter.m_pos), m_index(iter.m_index){}
-			
+
 		template<class U>
 		major1_iterator& operator=(major1_iterator<U> const& iter){
 			m_pos = iter.m_pos;
@@ -233,7 +233,7 @@ public:
 			return *this;
 		}
 		major1_iterator& operator -= (size_type n) {
-			m_pos += offset(-n);
+			m_pos += offset(-(std::ptrdiff_t)n);
 			m_index -= n;
 			return *this;
 		}
@@ -270,7 +270,7 @@ public:
 		size_type m_index;
 		template<class> friend class major1_iterator;
 	};
-	
+
 	template<class TIter>
 	class major2_iterator:
 	public iterators::random_access_iterator_base<
@@ -279,7 +279,7 @@ public:
 		iterators::packed_random_access_iterator_tag
 	>{
 	private:
-		size_type offset(size_type n)const{
+		std::ptrdiff_t offset(std::ptrdiff_t n)const{
 			size_type k = m_size-m_index-1;
 			if(n >= 0){
 				return (2*k*n-n*n+n)/2;
@@ -298,11 +298,11 @@ public:
 		major2_iterator() {}
 		major2_iterator(pointer arrayBegin, size_type index, size_type size)
 		:m_pos(arrayBegin), m_index(index), m_size(size){}
-		
+
 		template<class U>
 		major2_iterator(major2_iterator<U> const& iter)
 		:m_pos(iter.m_pos), m_index(iter.m_index), m_size(iter.m_size){}
-			
+
 		template<class U>
 		major2_iterator& operator=(major2_iterator<U> const& iter){
 			m_pos = iter.m_pos;
@@ -328,7 +328,7 @@ public:
 			return *this;
 		}
 		major2_iterator& operator -= (size_type n) {
-			m_pos += offset(-n);
+			m_pos += offset(-(std::ptrdiff_t)n);
 			m_index -= n;
 			return *this;
 		}
@@ -366,7 +366,7 @@ public:
 		size_type m_size;
 		template<class> friend class major2_iterator;
 	};
-	
+
 	typedef typename boost::mpl::if_<
 		boost::is_same<Orientation,row_major>,
 		iterators::dense_storage_iterator<value_type,iterators::packed_random_access_iterator_tag>,
@@ -385,7 +385,7 @@ public:
 		>::type,
 		iterators::dense_storage_iterator<value_type,iterators::packed_random_access_iterator_tag>
 	>::type column_iterator;
-	
+
 	typedef typename boost::mpl::if_<
 		boost::is_same<Orientation,row_major>,
 		iterators::dense_storage_iterator<value_type const,iterators::packed_random_access_iterator_tag>,
@@ -404,7 +404,7 @@ public:
 		>::type,
 		iterators::dense_storage_iterator<value_type const,iterators::packed_random_access_iterator_tag>
 	>::type const_column_iterator;
-	
+
 public:
 
 	const_row_iterator row_begin(size_type i) const {
@@ -439,7 +439,7 @@ public:
 			,orientation::orientation::stride2(size1(),size2())//1 if row_major, size2() otherwise
 		);
 	}
-	
+
 	const_column_iterator column_begin(size_type i) const {
 		size_type index = TriangularType::is_upper?0:i;
 		return const_column_iterator(
