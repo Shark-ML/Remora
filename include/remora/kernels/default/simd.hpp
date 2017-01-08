@@ -34,31 +34,16 @@
 #include <boost/version.hpp>
 #include <cstddef>
 
-#if (BOOST_VERSION >= 106100)
-	#include <boost/align/assume_aligned.hpp>
-#else
-	#if defined(BOOST_MSVC)
-		#define BOOST_ALIGN_ASSUME_ALIGNED(p, n) \
-		__assume(((std::size_t)(p) & ((n) - 1)) == 0)
-	#elif defined(BOOST_CLANG) && defined(__has_builtin)
-		#if __has_builtin(__builtin_assume_aligned)
-			#define BOOST_ALIGN_ASSUME_ALIGNED(p, n) \
-			(p) = (__typeof__(p))(__builtin_assume_aligned((p), (n)))
-		#else
-			#define BOOST_ALIGN_ASSUME_ALIGNED(ptr, alignment)
-		#endif
-	#elif BOOST_GCC_VERSION >= 40700
-		#define BOOST_ALIGN_ASSUME_ALIGNED(p, n) \
-		(p) = (__typeof__(p))(__builtin_assume_aligned((p), (n)))
-	#elif defined(__INTEL_COMPILER)
-		#define BOOST_ALIGN_ASSUME_ALIGNED(p, n) \
-		__assume_aligned((p), (n))
-	#else
-		#define BOOST_ALIGN_ASSUME_ALIGNED(ptr, alignment)
-	#endif
+//older boost versions have some issues
+ #if (BOOST_VERSION >= 106300)
+ 	#include <boost/align/assume_aligned.hpp>
+ 	#include <boost/align/aligned_allocator.hpp>
+#else//subset of boost/align 1.63
+	#include "boost_align/assume_aligned.hpp"
+	#include "boost_align/aligned_allocator.hpp"
 #endif
 
-#include <boost/align/aligned_allocator.hpp> //for aligned allocations
+
 
 
 #ifdef __AVX__
