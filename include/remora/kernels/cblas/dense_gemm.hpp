@@ -156,24 +156,24 @@ void dense_gemm(
 	boost::mpl::false_
 ){
 	typedef typename MatC::value_type value_type;
-	std::size_t const tile_size = 2048;
+	std::size_t const tile_size = 512;
 	static const std::size_t align = 64;
 	std::size_t size1 = C().size1();
 	std::size_t size2 = C().size2();
 	std::size_t num_blocks = (A().size2()+tile_size-1)/tile_size;
-	boost::alignment::aligned_allocator<value_type,64> allocator;
+	boost::alignment::aligned_allocator<value_type,align> allocator;
 	value_type* A_pointer = allocator.allocate(size1 * tile_size);
 	value_type* B_pointer = allocator.allocate(size2 * tile_size);
-	dense_matrix_adaptor<value_type,row_major> A_block(A_pointer,size1, tile_size);
-	dense_matrix_adaptor<value_type,row_major> B_block(B_pointer, tile_size, size2);
 	for(std::size_t k = 0; k != num_blocks; ++k){
 		std::size_t start_k = k * tile_size;
-		std::size_t current_size = A().size2 - start_k;
+		std::size_t current_size = std::min(tile_size,A().size2() - start_k);
+		dense_matrix_adaptor<value_type,row_major> A_block(A_pointer, size1, current_size);
+		dense_matrix_adaptor<value_type,row_major> B_block(B_pointer, current_size, size2);
 		matrix_range<MatA> A_range(A(), 0, size1, start_k, start_k + current_size);
 		matrix_range<MatB> B_range(B(), start_k, start_k + current_size, 0, size2);
 		noalias(A_block) = A_range;
 		noalias(B_block) = B_range;
-		dense_gemm(A_range, B_range, C, alpha, boost::mpl::true_());
+		dense_gemm(A_block, B_block, C, alpha, boost::mpl::true_());
 	}
 	allocator.deallocate(A_pointer, size1 * tile_size);
 	allocator.deallocate(B_pointer, size1 * tile_size);
