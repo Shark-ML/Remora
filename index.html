@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Installation &mdash; Remora 0.1.0 documentation</title>
+    <title>Installation &#8212; Remora 0.1.0 documentation</title>
     
     <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -17,18 +17,20 @@
         VERSION:     '0.1.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
-    <link rel="top" title="Remora 0.1.0 documentation" href="#" />
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Quick Reference" href="quick_ref.html" /> 
   </head>
-  <body>
-    <div class="related">
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -37,10 +39,10 @@
         <li class="right" >
           <a href="quick_ref.html" title="Quick Reference"
              accesskey="N">next</a> |</li>
-        <li><a href="#">Remora 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="#">Remora 0.1.0 documentation</a> &#187;</li> 
       </ul>
     </div>
-      <div class="sphinxsidebar">
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
@@ -54,22 +56,21 @@
   <h4>Next topic</h4>
   <p class="topless"><a href="quick_ref.html"
                         title="next chapter">Quick Reference</a></p>
-  <h3>This Page</h3>
-  <ul class="this-page-menu">
-    <li><a href="_sources/index.txt"
-           rel="nofollow">Show Source</a></li>
-  </ul>
-<div id="searchbox" style="display: none">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -78,7 +79,7 @@
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="toctree-wrapper compound">
 </div>
@@ -89,7 +90,7 @@
 Just download and copy the contents of the include/ folder into its
 target location. Currently the project can only be downloaded from github:</p>
 <blockquote>
-<div><div class="highlight-none"><div class="highlight"><pre>git clone https://github.com/Shark-ML/Remora
+<div><div class="highlight-none"><div class="highlight"><pre><span></span>git clone https://github.com/Shark-ML/Remora
 </pre></div>
 </div>
 </div></blockquote>
@@ -123,12 +124,12 @@ close to formulas as possible.</p>
 <h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
 <p>The power of Remora can be seen in the following lines. We use here linear regression as an example.</p>
 <p>Remora gets included via:</p>
-<div class="highlight-c++"><div class="highlight"><pre><span class="cp">#include &lt;remora/remora.hpp&gt;</span>
+<div class="highlight-c++"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;remora/remora.hpp&gt;</span><span class="cp"></span>
 <span class="k">using</span> <span class="k">namespace</span> <span class="n">remora</span><span class="p">;</span>
 </pre></div>
 </div>
 <p>We first generate the data and label matrices for linear regression:</p>
-<div class="highlight-c++"><div class="highlight"><pre><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">num_data_points</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+<div class="highlight-c++"><div class="highlight"><pre><span></span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">num_data_points</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
 <span class="n">std</span><span class="o">::</span><span class="kt">size_t</span> <span class="n">num_dims</span> <span class="o">=</span> <span class="mi">50</span><span class="p">;</span>
 <span class="n">matrix</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">X</span><span class="p">(</span><span class="n">num_data_points</span><span class="p">,</span><span class="n">num_dims</span><span class="p">);</span>
 <span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">y</span><span class="p">(</span><span class="n">num_data_points</span><span class="p">);</span>
@@ -137,11 +138,11 @@ close to formulas as possible.</p>
 <p>We skip the step of data generation, but <cite>X(i,j) = value;</cite> and <cite>y(i) = value;</cite> do the trick.
 The formula for linear regression is <span class="math">\(w = (X^TX)^{-1}X^T y\)</span>. In a typical
 implementation we have to be careful, that the matrix has full rank and use a pseudo-inverse instead:</p>
-<div class="highlight-c++"><div class="highlight"><pre><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">w</span> <span class="o">=</span> <span class="n">inv</span><span class="p">(</span><span class="n">trans</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">%</span> <span class="n">X</span><span class="p">,</span> <span class="n">symm_semi_pos_def</span><span class="p">())</span> <span class="o">%</span> <span class="n">trans</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">%</span> <span class="n">y</span><span class="p">;</span>
+<div class="highlight-c++"><div class="highlight"><pre><span></span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">w</span> <span class="o">=</span> <span class="n">inv</span><span class="p">(</span><span class="n">trans</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">%</span> <span class="n">X</span><span class="p">,</span> <span class="n">symm_semi_pos_def</span><span class="p">())</span> <span class="o">%</span> <span class="n">trans</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">%</span> <span class="n">y</span><span class="p">;</span>
 </pre></div>
 </div>
-<p>Operator <tt class="docutils literal"><span class="pre">%</span></tt> performs matrix-multiplication, <tt class="docutils literal"><span class="pre">trans(X)</span></tt> is matrix transposition
-and <tt class="docutils literal"><span class="pre">inv(A,tag)</span></tt> performs matrix inversion where we have to supply information
+<p>Operator <code class="docutils literal"><span class="pre">%</span></code> performs matrix-multiplication, <code class="docutils literal"><span class="pre">trans(X)</span></code> is matrix transposition
+and <code class="docutils literal"><span class="pre">inv(A,tag)</span></code> performs matrix inversion where we have to supply information
 about how to invert that matrix.  Note that no actual matrix inversion is taking place.
 The system automatically detects that the matrix inverse is multiplied with another
 matrix and instead instructs to solve
@@ -149,14 +150,14 @@ a system of equations with multiple right hand sides <span class="math">\(X^T\)<
 Likewise it detects the result is then multiplied with a vector from the right.
 This allows the transformation <span class="math">\((X^TX) w = X^Ty\)</span> where we solve for <span class="math">\(w\)</span>.</p>
 <p>Finally, we compute goodness of fit using the formula <span class="math">\(E(w)=\frac 1 {2N} \sum_{i=1}^N (x_i^Tw -y)^2\)</span>:</p>
-<div class="highlight-c++"><div class="highlight"><pre><span class="kt">double</span> <span class="n">error</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">sum</span><span class="p">(</span><span class="n">sqr</span><span class="p">(</span><span class="n">X</span> <span class="o">%</span> <span class="n">w</span> <span class="o">-</span> <span class="n">y</span><span class="p">))</span><span class="o">/</span><span class="n">num_data_points</span><span class="p">;</span>
+<div class="highlight-c++"><div class="highlight"><pre><span></span><span class="kt">double</span> <span class="n">error</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">sum</span><span class="p">(</span><span class="n">sqr</span><span class="p">(</span><span class="n">X</span> <span class="o">%</span> <span class="n">w</span> <span class="o">-</span> <span class="n">y</span><span class="p">))</span><span class="o">/</span><span class="n">num_data_points</span><span class="p">;</span>
 </pre></div>
 </div>
-<p>where <tt class="docutils literal"><span class="pre">sqr(x)</span></tt> is elementwise squaring of the entries and <tt class="docutils literal"><span class="pre">sum(x)</span></tt> sums
+<p>where <code class="docutils literal"><span class="pre">sqr(x)</span></code> is elementwise squaring of the entries and <code class="docutils literal"><span class="pre">sum(x)</span></code> sums
 all entries of the vector. Similar we can check whether the solution found is actually correct
 by checking whether it is a minimizer, that is the derivative of the error measure above is close
 to 0:</p>
-<div class="highlight-c++"><div class="highlight"><pre><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">derE</span><span class="o">=</span> <span class="n">trans</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="n">X</span> <span class="o">%</span> <span class="n">w</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_data_points</span><span class="p">;</span>
+<div class="highlight-c++"><div class="highlight"><pre><span></span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">derE</span><span class="o">=</span> <span class="n">trans</span><span class="p">(</span><span class="n">X</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="n">X</span> <span class="o">%</span> <span class="n">w</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_data_points</span><span class="p">;</span>
 <span class="kt">double</span> <span class="n">error_derivative</span> <span class="o">=</span> <span class="n">norm_inf</span><span class="p">(</span><span class="n">derE</span><span class="p">);</span>
 </pre></div>
 </div>
@@ -164,7 +165,7 @@ to 0:</p>
 </div>
 <div class="section" id="tutorials-and-quick-reference">
 <h1>Tutorials and Quick Reference<a class="headerlink" href="#tutorials-and-quick-reference" title="Permalink to this headline">¶</a></h1>
-<p>An overview of the operations supported by Remora is given in the <a class="reference internal" href="quick_ref.html"><em>Quick Reference</em></a></p>
+<p>An overview of the operations supported by Remora is given in the <a class="reference internal" href="quick_ref.html"><span class="doc">Quick Reference</span></a></p>
 </div>
 <div class="section" id="compile-flags">
 <h1>Compile Flags<a class="headerlink" href="#compile-flags" title="Permalink to this headline">¶</a></h1>
@@ -188,7 +189,7 @@ are performed to ensure correctness of the code, while in release high level of 
       </div>
       <div class="clearer"></div>
     </div>
-    <div class="related">
+    <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
@@ -197,13 +198,13 @@ are performed to ensure correctness of the code, while in release high level of 
         <li class="right" >
           <a href="quick_ref.html" title="Quick Reference"
              >next</a> |</li>
-        <li><a href="#">Remora 0.1.0 documentation</a> &raquo;</li> 
+        <li class="nav-item nav-item-0"><a href="#">Remora 0.1.0 documentation</a> &#187;</li> 
       </ul>
     </div>
-    <div class="footer">
-        &copy; Copyright Oswin Krause.
-      Last updated on 08/01/2017.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    <div class="footer" role="contentinfo">
+        &#169; Copyright Oswin Krause.
+      Last updated on 09/01/2017.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.1.
     </div>
   </body>
 </html>

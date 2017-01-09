@@ -1,22 +1,44 @@
 .. toctree::
-  :hidden:
-  
-  ./quick_ref.rst
-   
+	:hidden:
+
+	./quick_ref.rst
+
+Installation
+===============================================
+Remora is hosted on `Github <https://github.com/Shark-ML/Remora/>`_ under LGPL3
+
+Remora is header-only and depends only on header-only boost c++ libraries.
+Just download and copy the contents of the include/ folder into its
+target location. Currently the project can only be downloaded from github:
+
+	.. code-block:: none
+
+	    git clone https://github.com/Shark-ML/Remora
+
 Summary
 =======
 
-Remora is a general purpose linear algebra library written in C++11. 
+Remora is a general purpose linear algebra library written in C++11.
 It features:
 
-  * Dense and Sparse Matrix and Vector operations
-  * A basic set of optimized routines for matrix products, solving linear systems of equations etc
-  * Bindings to highly optimized routines of BLAS packages
-  * A powerful expression template syntax which features algebraic optimizations of operations
-  * Remora is header only, just plug and play!
+	* Dense and Sparse Matrix and Vector operations
+	* A basic set of optimized routines for matrix products, solving linear systems of equations etc
+	* Bindings to highly optimized routines of BLAS packages
+	* A powerful expression template syntax which features algebraic optimizations of operations
+	* Remora is header only, just plug and play!
 
 The goal of Remora is to allow writing of formulas in C++ code as close to mathematical syntax as possible
-without penalties in runtime or numerical accuracy.
+without penalties in runtime or numerical accuracy. Currently it relies on bindings for good performance.
+
+Remora is designed for rapid prototyping, especially involving big matrices. It uses
+build-in rules deciding whether a set of operations can be exchanged by a set of
+more efficient operations. A simple example is a formula like :math:`B = A + A^T`.
+In general, this formula can be evaluated without a temporary by computing :math:`B_{ij} = A_{ij} + A_{ji}`.
+However, for big matrices this is very inefficient as we have to traverse the matrix along the rows
+and along the columns simultaneously which can be very inefficient. Instead the right
+order of computations is :math:`B=A` followed by :math:`B+=A^T`. Remora does this simple
+transformation, and many more, automatically allowing you to write concise equations which are as
+close to formulas as possible.
 
 Quickstart
 ============================
@@ -28,7 +50,7 @@ Remora gets included via::
 	#include <remora/remora.hpp>
 	using namespace remora;
 	
-  
+
 We first generate the data and label matrices for linear regression::
 
   
@@ -37,7 +59,7 @@ We first generate the data and label matrices for linear regression::
 		matrix<double> X(num_data_points,num_dims);
 		vector<double> y(num_data_points);
 		
-  
+
 We skip the step of data generation, but `X(i,j) = value;` and `y(i) = value;` do the trick.
 The formula for linear regression is :math:`w = (X^TX)^{-1}X^T y`. In a typical
 implementation we have to be careful, that the matrix has full rank and use a pseudo-inverse instead::
@@ -45,14 +67,14 @@ implementation we have to be careful, that the matrix has full rank and use a ps
     
 		vector<double> w = inv(trans(X) % X, symm_semi_pos_def()) % trans(X) % y; 
 		
-    
+
 Operator ``%`` performs matrix-multiplication, ``trans(X)`` is matrix transposition
 and ``inv(A,tag)`` performs matrix inversion where we have to supply information
 about how to invert that matrix.  Note that no actual matrix inversion is taking place.
 The system automatically detects that the matrix inverse is multiplied with another
 matrix and instead instructs to solve
 a system of equations with multiple right hand sides :math:`X^T`.
-Likewise it detects the result is then multiplied with a vector from the right. 
+Likewise it detects the result is then multiplied with a vector from the right.
 This allows the transformation :math:`(X^TX) w = X^Ty` where we solve for :math:`w`.
 
 Finally, we compute goodness of fit using the formula :math:`E(w)=\frac 1 {2N} \sum_{i=1}^N (x_i^Tw -y)^2`::
@@ -60,45 +82,36 @@ Finally, we compute goodness of fit using the formula :math:`E(w)=\frac 1 {2N} \
   
 		double error = 0.5 * sum(sqr(X % w - y))/num_data_points;
 		
- 
+
 where ``sqr(x)`` is elementwise squaring of the entries and ``sum(x)`` sums
 all entries of the vector. Similar we can check whether the solution found is actually correct
 by checking whether it is a minimizer, that is the derivative of the error measure above is close
 to 0::
- 
+
   
 		vector<double> derE= trans(X) % (X % w - y) / num_data_points;
 		double error_derivative = norm_inf(derE);
 		
-  
+
 norm_inf is the infinity norm, which returns the maximum element of the vector.
 
 Tutorials and Quick Reference
---------------------------------------------------------------
+=========================================
 
 An overview of the operations supported by Remora is given in the :doc:`./quick_ref`
 
 
-Installation and Compile Flags
--------------------------------------------------------------
-  
-Remora is header-only. just download and copy the contents of the include/ folder into its 
-target location. Currently the project can only be downloaded from github:
-
-.. code-block:: none
-
-      git clone https://github.com/Shark-ML/Remora
-
-Remora depends only on header-only boost c++ libraries.
+Compile Flags
+=============================================
 When using Remora, the following defines can be supplied at compile time
-  
-* REMORA_USE_SIMD if defined, Remora uses the compilers' auto vectorizing capabilities 
+
+* REMORA_USE_SIMD if defined, Remora uses the compilers' auto vectorizing capabilities
   to speed up its computational routines. Requires G++ or clang
-* REMORA_USE_CBLAS if defined, Remora binds to a cblas library. 
+* REMORA_USE_CBLAS if defined, Remora binds to a cblas library.
   On MacOsX, this flag is interpreted as using the accelerate framework.
   Make sure to add the appropriate compile and linker flags for the library.
 * REMORA_USE_GPU if defined, Remora is enabling gpu support via the boost/compute
   library. Highly experimental.
-  
+
 Remora depends strogly on the optimization level of the compiler. In Debug, many costly index checks
 are performed to ensure correctness of the code, while in release high level of optimization should be applied.
