@@ -70,7 +70,7 @@ void uConv2d(T const* image, T const* filter, T* output,
 	static std::size_t const num_filter_outputs = block_size::num_filter_outputs;
 	typedef typename block_size::block::type vx;
 	static const std::size_t vector_length = block_size::block::vector_elements;
-	static const std::size_t num_filter_vec = num_filter_outputs/block_size::block::vector_elements;
+	static const std::size_t num_filter_vec = num_filter_outputs/vector_length;
 
 	vx* output_packed = (vx*) output;
 	std::size_t output_size1 = image_size1 - filter_size1 + 1;

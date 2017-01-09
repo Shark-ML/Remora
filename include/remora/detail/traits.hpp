@@ -231,6 +231,14 @@ struct device_traits;
 
 template<>
 struct device_traits<cpu_tag>{
+	//queue (not used on cpu)
+	struct queue_type{};
+	
+	static queue_type& default_queue(){
+		static queue_type queue;
+		return queue;
+	}
+	
 	//adding of indices
 	static std::size_t index_add(std::size_t i, std::size_t j){
 		return i+j;

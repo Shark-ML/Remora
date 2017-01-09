@@ -173,6 +173,10 @@ public:
 	const_storage_type raw_storage() const{
 		return {m_values.data(), m_indices.data(), m_nnz};
 	}
+	
+	typename device_traits<cpu_tag>::queue_type& queue(){
+		return device_traits<cpu_tag>::default_queue();
+	}
 
 	void resize(size_type size) {
 		m_size = size;

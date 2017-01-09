@@ -80,11 +80,9 @@ public:
 	expression_closure_type const& expression() const{
 		return m_expression;
 	};
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_expression.queue();
 	}
-#endif
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
@@ -183,11 +181,9 @@ public:
 	rhs_closure_type const& rhs()const{
 		return m_rhs;
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_lhs.queue();
 	}
-#endif
 
         // Element access
 	template <class IndexExpr1, class IndexExpr2>
@@ -291,11 +287,10 @@ public:
 	auto operator()(IndexExpr1 const& /*i*/, IndexExpr2 const& j) const -> decltype(this->expression()(j)){
 		return m_vector(j);
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+	
+	typename device_traits<typename V::device_type>::queue_type& queue()const{
 		return m_vector.queue();
 	}
-#endif
 
 	// Iterator types
 	typedef typename V::const_iterator const_row_iterator;
@@ -360,11 +355,10 @@ public:
 	size_type size2() const {
 		return m_size2;
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
-		return boost::compute::system::default_queue();
+	
+	typename device_traits<Device>::queue_type& queue()const{
+		return device_traits<Device>::default_queue();
 	}
-#endif
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
@@ -442,11 +436,10 @@ public:
 	functor_type const& functor() const {
 		return m_functor;
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+	
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_expression.queue();
 	}
-#endif
 	
 	//computation kernels
 	template<class MatX>
@@ -550,11 +543,10 @@ public:
 	functor_type const& functor() const {
 		return m_functor;
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_lhs.queue();
 	}
-#endif
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
@@ -667,11 +659,11 @@ public:
 	rhs_closure_type const& rhs() const {
 		return m_rhs;
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_lhs.queue();
 	}
-#endif
+
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
 	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(functor_type_op()(this->lhs()(i),this->rhs()(j))){
@@ -752,11 +744,11 @@ public:
 	typedef typename MatA::const_row_iterator const_iterator;
 	typedef const_iterator iterator;
 
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_matrix.queue();
 	}
-#endif	
+	
 	//dispatcher to computation kernels
 	template<class VecX>
 	void assign_to(vector_expression<VecX, device_type>& x, value_type alpha )const{
@@ -838,11 +830,10 @@ public:
 	matrix_closure_type const& matrix() const {
 		return m_matrix;
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_matrix.queue();
 	}
-#endif
 	
 	typedef typename MatA::const_row_iterator const_iterator;
 	typedef const_iterator iterator;
@@ -901,11 +892,9 @@ public:
 		return expression().size2 ();
         }
 	
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+	typename device_traits<typename M::device_type>::queue_type& queue()const{
 		return m_expression.queue();
 	}
-#endif
 	
 	///\brief Returns the underlying storage_type structure for low level access
 	storage_type raw_storage_type(){
@@ -965,11 +954,10 @@ public:
 	matrix_closure_typeB const& rhs() const {
 		return m_rhs;
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_lhs.queue();
 	}
-#endif
 	
 	//FIXME: This workaround is required
 	//as other expressions might query the iterator type
@@ -1047,11 +1035,9 @@ public:
 	size_type size2() const {
 		return m_diagonal.size();
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_diagonal.queue();
 	}
-#endif
 	
 	// Element access
 	const_reference operator()(size_type i, size_type j) const {

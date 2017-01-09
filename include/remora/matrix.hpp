@@ -187,6 +187,9 @@ public:
 	const_storage_type raw_storage()const{
 		return {m_data.data(), orientation::index_m(m_size1,m_size2)};
 	}
+	typename device_traits<cpu_tag>::queue_type& queue(){
+		return device_traits<cpu_tag>::default_queue();
+	}
 	
 	// ---------
 	// High level interface

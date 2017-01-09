@@ -157,6 +157,9 @@ public:
 	const_storage_type raw_storage() const{
 		return {m_storage.data(),1};
 	}
+	typename device_traits<cpu_tag>::queue_type& queue(){
+		return device_traits<cpu_tag>::default_queue();
+	}
 	
 	// ---------
 	// High level interface

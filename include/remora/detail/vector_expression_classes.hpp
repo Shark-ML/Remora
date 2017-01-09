@@ -31,9 +31,6 @@
 #include "../assignment.hpp"
 #include "iterator.hpp"
 #include "traits.hpp"
-#ifdef REMORA_USE_CLBLAS
-#include <boost/compute/command_queue.hpp>
-#endif
 
 namespace remora{
 
@@ -77,11 +74,10 @@ public:
 	functor_type functor()const{
 		return functor_type(m_scalar);
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_expression.queue();
 	}
-#endif
 
 	// Element access
 	template <class IndexExpr>
@@ -148,11 +144,9 @@ public:
 	const_reference operator()(IndexExpr const& /*i*/) const {
 		return m_value;
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
-		return boost::compute::system::default_queue();
+	typename device_traits<Device>::queue_type& queue()const{
+		return device_traits<Device>::default_queue();
 	}
-#endif
 public:
 	typedef typename device_traits<Device>:: template constant_iterator<T> iterator;
 	typedef typename device_traits<Device>:: template constant_iterator<T> const_iterator;
@@ -203,11 +197,9 @@ public:
 		SIZE_CHECK(i < m_size);
 		return (i == m_index)? value_type(1) : value_type(0);
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
-		return boost::compute::system::default_queue();
+	typename device_traits<Device>::queue_type& queue()const{
+		return device_traits<Device>::default_queue();
 	}
-#endif
 public:
 	typedef typename device_traits<Device>:: template one_hot_iterator<value_type const> const_iterator;
 	typedef const_iterator iterator;
@@ -262,12 +254,9 @@ public:
 	functor_type const& functor()const{
 		return m_functor;
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_expression.queue();
-	}
-#endif
-	
+	}	
 	//computation kernels
 	template<class VecX>
 	void assign_to(vector_expression<VecX, device_type>& x, value_type alpha)const{
@@ -354,11 +343,10 @@ public:
 	rhs_closure_type const& rhs() const {
 		return m_rhs;
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_lhs.queue();
 	}
-#endif
 
 	// Element access
 	template <class IndexExpr>
@@ -447,11 +435,10 @@ public:
 	functor_type const& functor()const{
 		return m_functor;
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<device_type>::queue_type& queue()const{
 		return m_lhs.queue();
 	}
-#endif
 
 	// Element access
 	template <class IndexExpr>

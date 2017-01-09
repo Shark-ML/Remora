@@ -30,9 +30,6 @@
 
 #include "../expression_types.hpp"
 #include "../assignment.hpp"
-#ifdef REMORA_USE_CLBLAS
-#include <boost/compute/command_queue.hpp>
-#endif
 
 #include <boost/utility/enable_if.hpp>
 #include <boost/mpl/or.hpp>
@@ -83,11 +80,10 @@ public:
 	storage_type raw_storage()const{
 		return m_expression->raw_storage();
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<typename M::device_type>::queue_type& queue()const{
 		return m_expression->queue();
 	}
-#endif
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
@@ -243,11 +239,10 @@ public:
 	storage_type raw_storage()const{
 		return m_expression.raw_storage();
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<typename M::device_type>::queue_type& queue()const{
 		return m_expression.queue();
 	}
-#endif
 
 	// ---------
 	// High level interface
@@ -396,11 +391,10 @@ public:
 	storage_type raw_storage()const{
 		return m_expression.raw_storage().row(m_i, typename M::orientation());
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<typename M::device_type>::queue_type& queue()const{
 		return m_expression.queue();
 	}
-#endif
 	
 	// ---------
 	// High level interface
@@ -556,11 +550,11 @@ public:
 	storage_type raw_storage()const{
 		return m_expression.raw_storage().diag();
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<typename M::device_type>::queue_type& queue()const{
 		return m_expression.queue();
 	}
-#endif
+
 	// ---------
 	// High level interface
 	// ---------
@@ -689,11 +683,11 @@ public:
 	storage_type raw_storage()const{
 		return m_expression.raw_storage().sub_region(m_start1, m_start2, typename M::orientation());
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<typename M::device_type>::queue_type& queue()const{
 		return m_expression.queue();
 	}
-#endif
+
 	// ---------
 	// High level interface
 	// ---------
@@ -915,6 +909,10 @@ public:
 	///\brief Returns the underlying storage_type structure for low level access
 	storage_type raw_storage()const{
 		return {m_values, orientation::index_M(m_stride1,m_stride2)};
+	}
+	
+	typename device_traits<cpu_tag>::queue_type& queue()const{
+		return device_traits<cpu_tag>::default_queue();
 	}
 	
 	// ---------

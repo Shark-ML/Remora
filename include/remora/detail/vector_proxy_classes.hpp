@@ -30,9 +30,6 @@
 
 #include "iterator.hpp"
 #include "traits.hpp"
-#ifdef REMORA_USE_CLBLAS
-#include <boost/compute/command_queue.hpp>
-#endif
 
 #include <boost/utility/enable_if.hpp>
 #include <type_traits>
@@ -76,11 +73,10 @@ public:
 	storage_type raw_storage()const{
 		return expression().raw_storage();
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+	
+	typename device_traits<typename V::device_type>::queue_type& queue()const{
 		return m_expression->queue();
 	}
-#endif
 	
 	// ---------
 	// High level interface
@@ -213,11 +209,10 @@ public:
 	storage_type raw_storage()const{
 		return expression().raw_storage().sub_region(start());
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
+
+	typename device_traits<typename V::device_type>::queue_type& queue()const{
 		return m_expression.queue();
 	}
-#endif
 	
 	// ---------
 	// High level interface
@@ -364,6 +359,9 @@ public:
 		return {m_values,m_stride};
 	}
 	
+	typename device_traits<cpu_tag>::queue_type& queue(){
+		return device_traits<cpu_tag>::default_queue();
+	}
 	// --------------
 	// Element access
 	// --------------
@@ -530,6 +528,10 @@ public:
 	///\brief Returns the underlying storage_type structure for low level access
 	storage_type raw_storage() const{
 		return {m_values,m_indices, m_nonZeros};
+	}
+	
+	typename device_traits<cpu_tag>::queue_type& queue(){
+		return device_traits<cpu_tag>::default_queue();
 	}
 
 	/// \brief Return a const reference to the element \f$i\f$

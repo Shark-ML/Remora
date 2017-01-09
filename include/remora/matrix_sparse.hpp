@@ -163,6 +163,10 @@ public:
 	const_storage_type raw_storage() const{
 		return {m_values.data(),m_indices.data(), m_rowStart.data(), m_rowEnd.data()};
 	}
+	
+	typename device_traits<cpu_tag>::queue_type& queue(){
+		return device_traits<cpu_tag>::default_queue();
+	}
 
 	void set_filled(std::size_t non_zeros) {
 		m_nnz = non_zeros;

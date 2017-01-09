@@ -34,6 +34,7 @@
 #define REMORA_GPU_DETAIL_TRAITS_HPP
 
 #include "../detail/traits.hpp"
+#include <boost/compute/command_queue.hpp>
 #include <boost/compute/core.hpp>
 #include <boost/compute/functional/detail/unpack.hpp>
 #include <boost/compute/container/vector.hpp>
@@ -344,6 +345,12 @@ private:
 
 template<>
 struct device_traits<gpu_tag>{
+	typedef boost::compute::command_queue queue_type;
+	
+	queue_type& default_queue() const{
+		return boost::compute::system::default_queue();
+	}
+	
 	//adding of indices
 	template<class Expr1, class Expr2>
 	static auto index_add(Expr1 const& expr1, Expr2 const& expr2) -> decltype(boost::compute::plus<std::size_t>()(expr1,expr2)){
