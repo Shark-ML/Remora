@@ -9,6 +9,7 @@
 #include <remora/vector.hpp>
 #include <remora/matrix.hpp>
 
+#include <iostream>
 using namespace remora;
 
 template<class M, class V, class Result>

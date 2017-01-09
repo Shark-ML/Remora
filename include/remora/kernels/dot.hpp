@@ -31,7 +31,7 @@
 #define REMORA_KERNELS_DOT_HPP
 
 #include "default/dot.hpp"
-#ifdef REMORA_USE_CLBLAS
+#ifdef REMORA_USE_GPU
 #include "clblas/dot.hpp"
 #endif
 	

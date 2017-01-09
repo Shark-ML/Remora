@@ -52,7 +52,7 @@ remora_add_test( general_solve.cpp General_Solve)
 remora_add_test( cholesky.cpp Cholesky)
 
 #GPU tests
-if(ENABLE_GPU_SUPPORT)
+if(ENABLE_GPU)
 remora_add_test( gpu_vector_assign.cpp GPU_Vector_Assign)
 remora_add_test( gpu_matrix_assign.cpp GPU_Matrix_Assign)
 remora_add_test( gpu_vector_proxy.cpp GPU_Vector_Proxy)

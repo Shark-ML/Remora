@@ -62,11 +62,9 @@ public:
 	size_type size() const {
 		return m_rhs.size();
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
-		return m_rhs.queue();
+	typename device_traits<device_type>::queue_type& queue()const{
+		return m_matrix.queue();
 	}
-#endif
 	matrix_vector_solve(
 		matrix_closure_type const& matrix, vector_closure_type const&rhs, 
 		SystemType system_type = SystemType()
@@ -142,11 +140,9 @@ public:
 	size_type size2() const {
 		return m_rhs.size2();
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
-		return m_rhs.queue();
+	typename device_traits<device_type>::queue_type& queue()const{
+		return m_matrix.queue();
 	}
-#endif
 	
 	matrixA_closure_type const& lhs()const{
 		return m_matrix;
@@ -214,11 +210,10 @@ public:
 	size_type size2() const {
 		return m_matrix.size1();
 	}
-#ifdef REMORA_USE_CLBLAS
-	boost::compute::command_queue& queue()const{
-		return m_rhs.queue();
+
+	typename device_traits<device_type>::queue_type& queue()const{
+		return m_matrix.queue();
 	}
-#endif
 	
 	matrix_closure_type const& matrix()const{
 		return m_matrix;

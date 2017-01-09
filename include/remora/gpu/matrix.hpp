@@ -31,6 +31,7 @@
 #include "traits.hpp"
 //~ #include "scalar.hpp"
 #include "../assignment.hpp"
+#include "../detail/matrix_proxy_classes.hpp"
 #include <boost/compute/container/vector.hpp>
 #include <boost/compute/iterator/strided_iterator.hpp>
 

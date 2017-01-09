@@ -30,8 +30,8 @@
  */
 //===========================================================================
 
-#ifndef REMORA_GPU_DETAIL_TRAITS_HPP
-#define REMORA_GPU_DETAIL_TRAITS_HPP
+#ifndef REMORA_GPU_TRAITS_HPP
+#define REMORA_GPU_TRAITS_HPP
 
 #include "../detail/traits.hpp"
 #include <boost/compute/command_queue.hpp>
@@ -347,7 +347,7 @@ template<>
 struct device_traits<gpu_tag>{
 	typedef boost::compute::command_queue queue_type;
 	
-	queue_type& default_queue() const{
+	static queue_type& default_queue(){
 		return boost::compute::system::default_queue();
 	}
 	
@@ -369,8 +369,8 @@ struct device_traits<gpu_tag>{
 	template<class T>
 	using constant_iterator = boost::compute::constant_iterator<T>;
 	
-	//~ template<class T>
-	//~ using one_hot_iterator = iterators::one_hot_iterator<T>;
+	template<class T>
+	using one_hot_iterator = iterators::one_hot_iterator<T>;
 	
 	template<class Closure>
 	using indexed_iterator = gpu::detail::indexed_iterator<Closure>;
@@ -504,20 +504,17 @@ struct device_traits<gpu_tag>{
 	template<class T>
 	using max = boost::compute::fmax<T>;
 	
-	//math binary functions
-	
-	
 };
 
-}}
+}
 
 namespace boost{namespace compute{
 template<class I1, class I2, class F>
-struct is_device_iterator<gpu::detail::binary_transform_iterator<I1,I2, F> > : boost::true_type {};
+struct is_device_iterator<remora::gpu::detail::binary_transform_iterator<I1,I2, F> > : boost::true_type {};
 template<class Closure>
-struct is_device_iterator<gpu::detail::indexed_iterator<Closure> > : boost::true_type {};
+struct is_device_iterator<remora::gpu::detail::indexed_iterator<Closure> > : boost::true_type {};
 template<class Iterator>
-struct is_device_iterator<gpu::detail::subrange_iterator<Iterator> > : boost::true_type {};
-}
+struct is_device_iterator<remora::gpu::detail::subrange_iterator<Iterator> > : boost::true_type {};
+}}
 
 #endif

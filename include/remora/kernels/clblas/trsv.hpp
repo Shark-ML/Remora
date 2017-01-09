@@ -162,25 +162,42 @@ void trsv_recursive(
 		trsv_recursive(Afull, bfull, kernel, start+split,end, tileSize, numWorkers, t);
 	}
 }
+
+template <typename MatA, typename VecB, class Triangular>
+void trsv_call(
+	matrix_expression<MatA, gpu_tag> const& A, 
+	vector_expression<VecB, gpu_tag>& b,
+	Triangular,
+	left
+){
+	std::size_t const TileSize = 32;//size of the diagonal blocks where the single kernel runs
+	std::size_t const numWorkers = TileSize; //number of workers
+	char const* options ="-DTILE_SIZE=32ul";
+	auto kernel = bindings::createTRSVDiagBlockKernel(A,b,options);
+	trsv_recursive(A,b,kernel,0,A().size1(), TileSize, numWorkers, Triangular());
+}
+
+template <typename MatA, typename VecB, class Triangular>
+void trsv_call(
+	matrix_expression<MatA, gpu_tag> const& A, 
+	vector_expression<VecB, gpu_tag>& b,
+	Triangular,
+	right
+){
+	matrix_transpose<typename const_expression<MatA>::type> transA(A());
+	trsv_call(transA,b,typename Triangular::transposed_orientation(),left());
+}
 }
 namespace kernels{
 //main kernel runs the kernel above recursively and calls gemv
-template <class Triangular,typename MatA, typename VecB>
+template <class Triangular,class Side, typename MatA, typename VecB>
 void trsv(
 	matrix_expression<MatA, gpu_tag> const& A, 
 	vector_expression<VecB, gpu_tag>& b
 ){
 	SIZE_CHECK(A().size1() == A().size2());
 	SIZE_CHECK(A().size2() == b().size());
-	
-	std::size_t const TileSize = 32;//size of the diagonal blocks where the single kernel runs
-	std::size_t const numWorkers = TileSize; //number of workers
-	//~ std::size_t const numWorkers = 1; //number of workers
-	char const* options ="-DTILE_SIZE=32ul";
-	auto kernel = bindings::createTRSVDiagBlockKernel(A,b,options);
-	
-	
-	bindings::trsv_recursive(A,b,kernel,0,A().size1(), TileSize, numWorkers, Triangular());
+	bindings::trsv_call(A,b,Triangular(), Side());
 }
 }}
 #endif

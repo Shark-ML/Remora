@@ -30,7 +30,7 @@
 
 #include "../detail/traits.hpp"
 #include "default/matrix_fold.hpp"
-#ifdef REMORA_USE_CLBLAS
+#ifdef REMORA_USE_GPU
 #include "clblas/matrix_fold.hpp"
 #endif
 

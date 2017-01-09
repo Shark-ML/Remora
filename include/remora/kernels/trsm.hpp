@@ -66,7 +66,7 @@ void trsm(
 
 }}
 
-#ifdef REMORA_USE_CLBLAS
+#ifdef REMORA_USE_GPU
 #include "clblas/trsm.hpp"
 #endif
 

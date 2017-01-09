@@ -32,7 +32,7 @@
 #define REMORA_KERNELS_SUM_ROWS_HPP
 
 #include "default/sum_rows.hpp"
-#ifdef REMORA_USE_CLBLAS
+#ifdef REMORA_USE_GPU
 #include "clblas/sum_rows.hpp"
 #endif
 

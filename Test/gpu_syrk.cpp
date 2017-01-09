@@ -8,6 +8,9 @@
 #include <remora/kernels/syrk.hpp>
 #include <remora/gpu/matrix.hpp>
 #include <remora/gpu/copy.hpp>
+#include <remora/matrix.hpp>
+#include <remora/matrix_expression.hpp>
+
 
 #include <iostream>
 using namespace remora;

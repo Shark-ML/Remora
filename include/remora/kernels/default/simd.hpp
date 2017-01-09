@@ -52,7 +52,7 @@
 	#define REMORA_VECTOR_LENGTH 16
 #endif
 
-namespace remora{namespace detail{
+namespace remora{namespace bindings{namespace detail{
 template<class T>
 struct block{
 	static const std::size_t max_vector_elements = REMORA_VECTOR_LENGTH/sizeof(T);
@@ -69,5 +69,5 @@ struct block{
 	#endif
 	static const std::size_t align = 64;
 };
-}}
+}}}
 #endif

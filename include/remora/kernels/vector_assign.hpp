@@ -30,7 +30,7 @@
 
 #include "../detail/traits.hpp"
 #include "default/vector_assign.hpp"
-#ifdef REMORA_USE_CLBLAS
+#ifdef REMORA_USE_GPU
 #include "clblas/vector_assign.hpp"
 #endif
 

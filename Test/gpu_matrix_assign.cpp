@@ -3,14 +3,15 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <remora/kernels/assign.hpp>
+#include <remora/kernels/matrix_assign.hpp>
 #include <remora/vector.hpp>
 #include <remora/matrix.hpp>
 #include <remora/gpu/vector.hpp>
 #include <remora/gpu/matrix.hpp>
+#include <remora/matrix_proxy.hpp>//FIXME: should be unneeded
 #include <remora/gpu/copy.hpp>
 
-
+#include <iostream>
 using namespace remora;
 
 template<class M1, class M2>

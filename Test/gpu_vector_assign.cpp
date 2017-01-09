@@ -6,6 +6,7 @@
 #include <remora/gpu/vector.hpp>
 #include <remora/gpu/copy.hpp>
 
+#include <iostream>
 using namespace remora;
 
 template<class V1, class V2>

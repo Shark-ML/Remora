@@ -30,7 +30,7 @@
 
 #include "../detail/traits.hpp"
 #include "default/vector_fold.hpp"
-#ifdef REMORA_USE_CLBLAS
+#ifdef REMORA_USE_GPU
 #include "clblas/vector_fold.hpp"
 #endif
 

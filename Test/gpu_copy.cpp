@@ -7,7 +7,9 @@
 #include <remora/gpu/matrix.hpp>
 #include <remora/vector.hpp>
 #include <remora/matrix.hpp>
+#include <remora/matrix_expression.hpp>
 
+#include <iostream>
 using namespace remora;
 
 

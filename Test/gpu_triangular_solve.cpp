@@ -13,6 +13,7 @@
 #include <remora/vector_expression.hpp>
 
 #include <iostream>
+#include <boost/mpl/list.hpp>
 
 using namespace remora;
 
@@ -59,7 +60,7 @@ BOOST_AUTO_TEST_CASE( Solve_Vector ){
 	
 	std::cout<<"left - unit_lower"<<std::endl;
 	{
-		gpu::vector<float> testResult = solve(A,b, unit_ower(), left());
+		gpu::vector<float> testResult = solve(A,b, unit_lower(), left());
 		vector<float> result = copy_to_cpu(triangular_prod<unit_lower>(A,testResult));
 		float error = norm_inf(result-b_cpu);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
@@ -103,7 +104,7 @@ BOOST_AUTO_TEST_CASE( Solve_Vector ){
 	}
 }
 
-typedef std::tuple<row_major,column_major> result_orientations;
+typedef boost::mpl::list<row_major,column_major> result_orientations;
 BOOST_AUTO_TEST_CASE_TEMPLATE(GPU_Solve_Matrix, Orientation,result_orientations) {
 	std::size_t size = 139;
 	std::size_t k = 238;
@@ -161,28 +162,28 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(GPU_Solve_Matrix, Orientation,result_orientations)
 	
 	std::cout<<"left - upper"<<std::endl;
 	{
-		gpu::matrix<float,Orientation> testResult = solve(A,B, upper(), left());
+		gpu::matrix<float,Orientation> testResult = solve(Aupper,B, upper(), left());
 		gpu::matrix<float,row_major> result = triangular_prod<upper>(Aupper,testResult);
 		float error = norm_inf(result-B);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	std::cout<<"right - upper"<<std::endl;
 	{
-		gpu::matrix<float,Orientation> testResult = solve(A,Bright, upper(), right());
+		gpu::matrix<float,Orientation> testResult = solve(Aupper,Bright, upper(), right());
 		gpu::matrix<float> result = trans(gpu::matrix<float>(triangular_prod<lower>(A,trans(testResult))));
 		float error = norm_inf(result-Bright);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	std::cout<<"left - unit_upper"<<std::endl;
 	{
-		gpu::matrix<float,Orientation> testResult = solve(A,B, unit_upper(), left());
+		gpu::matrix<float,Orientation> testResult = solve(Aupper,B, unit_upper(), left());
 		gpu::matrix<float,row_major> result = triangular_prod<unit_upper>(Aupper,testResult);
 		float error = norm_inf(result-B);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	std::cout<<"right - unit_upper"<<std::endl;
 	{
-		gpu::matrix<float,Orientation> testResult = solve(A,Bright, unit_upper(), right());
+		gpu::matrix<float,Orientation> testResult = solve(Aupper,Bright, unit_upper(), right());
 		gpu::matrix<float,row_major> result = trans(gpu::matrix<float>(triangular_prod<unit_lower>(A,trans(testResult))));
 		float error = norm_inf(result-Bright);
 		BOOST_CHECK_SMALL(error, 1.e-5f);

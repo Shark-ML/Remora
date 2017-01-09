@@ -31,7 +31,7 @@
 #define REMORA_KERNELS_VECTOR_MAX_HPP
 
 #include "default/vector_max.hpp"
-#ifdef REMORA_USE_CLBLAS
+#ifdef REMORA_USE_GPU
 #include "clblas/vector_max.hpp"
 #endif
 	

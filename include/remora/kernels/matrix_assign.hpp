@@ -29,7 +29,7 @@
 #define REMORA_KERNELS_MATRIX_ASSIGN_HPP
 
 #include "default/matrix_assign.hpp"
-#ifdef REMORA_USE_CLBLAS
+#ifdef REMORA_USE_GPU
 #include "clblas/matrix_assign.hpp"
 #endif
 

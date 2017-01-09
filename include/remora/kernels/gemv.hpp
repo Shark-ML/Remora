@@ -73,7 +73,7 @@ void gemv(
 
 }}
 
-#ifdef REMORA_USE_CLBLAS
+#ifdef REMORA_USE_GPU
 #include "clblas/gemv.hpp"
 #endif
 

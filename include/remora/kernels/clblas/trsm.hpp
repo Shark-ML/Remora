@@ -176,25 +176,46 @@ void trsm_recursive(
 		trsm_recursive(Afull, Bfull, kernel, start+split,end, tileSizeA,tileSizeB, numWorkers, t);
 	}
 }
-}
-namespace kernels{
-//main kernel runs the kernel above recursively and calls gemv
-template <class Triangular,typename MatA, typename MatB>
-void trsm(
+
+template <typename MatA, typename MatB, class Triangular>
+void trsm_call(
 	matrix_expression<MatA, gpu_tag> const& A, 
-	matrix_expression<MatB, gpu_tag>& B
+	matrix_expression<MatB, gpu_tag>& B,
+	Triangular,
+	left
 ){
 	SIZE_CHECK(A().size1() == A().size2());
 	SIZE_CHECK(A().size2() == B().size1());
-	
 	std::size_t const TileSizeA = 32;//size of the diagonal blocks where the single kernel runs
 	std::size_t const TileSizeB = 32;// size of the blocks B is partitioned into along the number of columns
 	std::size_t const numWorkers = 8; //number of workers in two dimensions (e.g. 8x8=64)
 	char const* options ="-DTILE_SIZE=32ul -DTILE_SIZE_K=32ul";
 	auto kernel = bindings::createTRSMDiagBlockKernel(A,B,options);
 	
-	
-	bindings::trsm_recursive(A,B,kernel,0,A().size1(), TileSizeA, TileSizeB, numWorkers,Triangular());
+	trsm_recursive(A,B,kernel,0,A().size1(), TileSizeA, TileSizeB, numWorkers,Triangular());
+}
+
+template <typename MatA, typename MatB, class Triangular>
+void trsm_call(
+	matrix_expression<MatA, gpu_tag> const& A, 
+	matrix_expression<MatB, gpu_tag>& B,
+	Triangular,
+	right
+){
+	matrix_transpose<typename const_expression<MatA>::type> transA(A());
+	matrix_transpose<MatB> transB(B());
+	trsm_call(transA,transB,typename Triangular::transposed_orientation(),left());
+}
+
+}
+namespace kernels{
+//main kernel runs the kernel above recursively and calls gemv
+template <class Triangular, class Side, typename MatA, typename MatB>
+void trsm(
+	matrix_expression<MatA, gpu_tag> const& A, 
+	matrix_expression<MatB, gpu_tag>& B
+){
+	bindings::trsm_call(A,B,Triangular(), Side());
 }
 }}
 #endif
