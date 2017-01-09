@@ -113,11 +113,26 @@ endif()
 
 option( ENABLE_OPENBLAS "Use Installed OpenBLAS" OFF )
 if( ENABLE_OPENBLAS )
-find_package(
-	OpenBLAS
-)
+	find_package(
+		OpenBLAS
+	)
 	include_directories(${OpenBLAS_INCLUDE_DIRS} )
 	set(CBLAS_LIBRARIES ${OpenBLAS_LIBRARIES} )
+	add_definitions(-DREMORA_USE_CBLAS)
+endif()
+
+option( ENABLE_GENERIC_CBLAS "Use Installed cblas" OFF )
+if( ENABLE_GENERIC_CBLAS )
+	find_library(CBLAS_LIBRARY cblas
+		HINTS ${CBLAS_ROOT}/lib /opt/local/lib /usr/lib64/atlas/
+	)
+	get_filename_component(CBLAS_LIB_PATH ${CBLAS_LIBRARY} PATH )
+	find_file(CBLAS_INCLUDES cblas.h 
+		PATHS ${CBLAS_CBLAS_LIB_PATH}/../include
+	)
+	get_filename_component(CBLAS_INCLUDES ${CBLAS_INCLUDES} PATH )
+	include_directories(${CBLAS_INCLUDES} )
+	set(CBLAS_LIBRARIES ${CBLAS_LIBRARY} )
 	add_definitions(-DREMORA_USE_CBLAS)
 endif()
 
