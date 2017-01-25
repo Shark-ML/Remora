@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Scalar_Concat )
 	}
 	vector<double> test_assign = x|alpha;
 	vector<double> test_plus_assign(Dimensions+1,1.0); 
-	test_plus_assign += x|alpha;
+	noalias(test_plus_assign) += x|alpha;
 	checkDenseExpressionEquality(test_assign,result);
 	checkDenseExpressionEquality(test_plus_assign,result+1.0);
 }
@@ -293,7 +293,7 @@ BOOST_AUTO_TEST_CASE( Remora_Scalar_Vector_Concat )
 	}
 	vector<double> test_assign = alpha|x;
 	vector<double> test_plus_assign(Dimensions+1,1.0); 
-	test_plus_assign += alpha|x;
+	noalias(test_plus_assign) += alpha|x;
 	checkDenseExpressionEquality(test_assign,result);
 	checkDenseExpressionEquality(test_plus_assign,result+1.0);
 }
@@ -311,7 +311,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Vector_Concat )
 	}
 	vector<double> test_assign = x|y;
 	vector<double> test_plus_assign(Dimensions * 2,1.0); 
-	test_plus_assign += x|y;
+	noalias(test_plus_assign) += x|y;
 	checkDenseExpressionEquality(test_assign,result);
 	checkDenseExpressionEquality(test_plus_assign,result+1.0);
 }
