@@ -53,21 +53,22 @@ We first generate the data and label matrices for linear regression::
   ..includecode<linear_regression.tpp,data_declaration>
 
 We skip the step of data generation, but `X(i,j) = value;` and `y(i) = value;` do the trick.
-The formula for linear regression is :math:`w = (X^TX)^{-1}X^T y`. In a typical
+The formula for linear regression with bias is :math:`w = ((X|1)^T(X|1))^{-1}(X|1)^T y`. Here,
+(X|1) stands for the matrix X where a column of ones is added to the end. In a typical
 implementation we have to be careful, that the matrix has full rank and use a pseudo-inverse instead::
 
     ..includecode<linear_regression.tpp,solve_w>
 
-Operator ``%`` performs matrix-multiplication, ``trans(X)`` is matrix transposition
+Operator ``%`` performs matrix-multiplication, ``trans(A)`` is matrix transposition
 and ``inv(A,tag)`` performs matrix inversion where we have to supply information
 about how to invert that matrix.  Note that no actual matrix inversion is taking place.
 The system automatically detects that the matrix inverse is multiplied with another
 matrix and instead instructs to solve
-a system of equations with multiple right hand sides :math:`X^T`.
+a system of equations with multiple right hand sides :math:`(X|1)^T`.
 Likewise it detects the result is then multiplied with a vector from the right.
-This allows the transformation :math:`(X^TX) w = X^Ty` where we solve for :math:`w`.
+This allows the transformation :math:`((X|1)^T(X|1)) w = (X|1)^Ty` where we solve for :math:`w`.
 
-Finally, we compute goodness of fit using the formula :math:`E(w)=\frac 1 {2N} \sum_{i=1}^N (x_i^Tw -y)^2`::
+Finally, we compute goodness of fit using the formula :math:`E(w)=\frac 1 {2N} \sum_{i=1}^N ((x_i|1)^Tw -y)^2`::
 
   ..includecode<linear_regression.tpp,compute_error>
 
