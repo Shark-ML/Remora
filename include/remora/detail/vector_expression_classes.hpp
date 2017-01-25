@@ -528,9 +528,7 @@ public:
 	explicit vector_concat(
 		lhs_closure_type e1, 
 		rhs_closure_type e2
-	):m_lhs(e1),m_rhs(e2){
-		SIZE_CHECK(e1.size() == e2.size());
-	}
+	):m_lhs(e1),m_rhs(e2){}
 
 	// Accessors
 	size_type size() const {
