@@ -503,6 +503,220 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Min)
 }
 
 
+/////////////////////////////////////////////////////////////
+//////MATRIX CONCATENATION
+/////////////////////////////////////////////////////////////
+
+BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Matrix_Right)
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double> y(Dimension1,2 * Dimension2); 
+	matrix<double> result(Dimension1, 3 * Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = 50.0+i-j;
+			y(i,j) = i+j+1;
+			y(i,j+Dimension2) = i+j+2;
+			result(i,j)= x(i,j);
+			result(i,j+Dimension2)= y(i,j);
+			result(i,j+2*Dimension2)= y(i,j+Dimension2);
+		}
+	}
+	matrix<double> test_assign = x|y;
+	matrix<double> test_plus_assign(Dimension1, 3 * Dimension2,1.0); 
+	noalias(test_plus_assign) += x|y;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Matrix_Bottom)
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double> y(2 * Dimension1,Dimension2); 
+	matrix<double> result(3 *Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = 50.0+i-j;
+			y(i,j) = i+j+1;
+			y(i+Dimension1, j) = i+j+2;
+			result(i,j)= x(i,j);
+			result(i + Dimension1, j)= y(i,j);
+			result(i + 2 * Dimension1, j)= y(i + Dimension1,j);
+		}
+	}
+	matrix<double> test_assign = x & y;
+	matrix<double> test_plus_assign(3 * Dimension1, Dimension2,1.0); 
+	noalias(test_plus_assign) += x & y;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Vector_Right)
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	vector<double> y(Dimension1); 
+	matrix<double> result(Dimension1, Dimension2+1);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = 50.0+i-j;
+			result(i,j)= x(i,j);
+		}
+		y(i) = i;
+		result(i,Dimension2) = y(i);
+	}
+	matrix<double> test_assign = x|y;
+	matrix<double> test_plus_assign(Dimension1, Dimension2 +1 ,1.0); 
+	noalias(test_plus_assign) += x|y;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Vector_Left)
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	vector<double> y(Dimension1); 
+	matrix<double> result(Dimension1, Dimension2+1);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = 50.0+i-j;
+			result(i,j + 1)= x(i,j);
+		}
+		y(i) = i;
+		result(i,0) = y(i);
+	}
+	matrix<double> test_assign = y|x;
+	matrix<double> test_plus_assign(Dimension1, Dimension2 +1 ,1.0); 
+	noalias(test_plus_assign) += y|x;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Vector_Bottom)
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	vector<double> y(Dimension2); 
+	matrix<double> result(Dimension1 + 1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = 50.0+i-j;
+			result(i,j)= x(i,j);
+		}
+	}
+	for (size_t i = 0; i < Dimension2; i++){
+		y(i) = i;
+		result(Dimension1,i) = y(i);
+	}
+	matrix<double> test_assign = x&y;
+	matrix<double> test_plus_assign(Dimension1 + 1, Dimension2 ,1.0); 
+	noalias(test_plus_assign) += x&y;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Vector_Top)
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	vector<double> y(Dimension2); 
+	matrix<double> result(Dimension1 + 1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = 50.0+i-j;
+			result(i + 1,j)= x(i,j);
+		}
+	}
+	for (size_t i = 0; i < Dimension2; i++){
+		y(i) = i;
+		result(0,i) = y(i);
+	}
+	matrix<double> test_assign = y&x;
+	matrix<double> test_plus_assign(Dimension1 + 1, Dimension2 ,1.0); 
+	noalias(test_plus_assign) += y&x;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Scalar_Left){
+	matrix<double> x(Dimension1, Dimension2); 
+	double t = 2.0;
+	matrix<double> result(Dimension1, Dimension2 + 1);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = 50.0+i-j;
+			result(i,j+1)= x(i,j);
+			result(i,0) = t;
+		}
+	}
+	matrix<double> test_assign = t | x;
+	matrix<double> test_plus_assign(Dimension1, Dimension2 + 1,1.0); 
+	noalias(test_plus_assign) += t | x;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Scalar_Right){
+	matrix<double> x(Dimension1, Dimension2); 
+	double t = 2.0;
+	matrix<double> result(Dimension1, Dimension2 + 1);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = 50.0+i-j;
+			result(i,j)= x(i,j);
+			result(i,Dimension2) = t;
+		}
+	}
+	matrix<double> test_assign = x | t;
+	matrix<double> test_plus_assign(Dimension1, Dimension2 + 1,1.0); 
+	noalias(test_plus_assign) += x | t;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Scalar_Bottom){
+	matrix<double> x(Dimension1, Dimension2); 
+	double t = 2.0;
+	matrix<double> result(Dimension1 + 1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = 50.0+i-j;
+			result(i,j)= x(i,j);
+			result(Dimension1, j) = t;
+		}
+	}
+	matrix<double> test_assign = x & t;
+	matrix<double> test_plus_assign(Dimension1 + 1, Dimension2,1.0); 
+	noalias(test_plus_assign) += x & t;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Scalar_Top){
+	matrix<double> x(Dimension1, Dimension2); 
+	double t = 2.0;
+	matrix<double> result(Dimension1 + 1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = 50.0+i-j;
+			result(i + 1,j)= x(i,j);
+			result(0, j) = t;
+		}
+	}
+	matrix<double> test_assign = t & x;
+	matrix<double> test_plus_assign(Dimension1 + 1, Dimension2,1.0); 
+	noalias(test_plus_assign) += t & x;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+
 ////////////////////////////////////////////////////////////////////////
 ////////////ROW-WISE REDUCTIONS
 ////////////////////////////////////////////////////////////////////////

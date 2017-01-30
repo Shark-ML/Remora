@@ -261,6 +261,62 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Safe_Div )
 }
 
 /////////////////////////////////////////////////////
+///////////Vector Concatenation///////////
+/////////////////////////////////////////////////////
+BOOST_AUTO_TEST_CASE( Remora_Vector_Scalar_Concat )
+{
+	vector<double> x(Dimensions); 
+	double alpha = 2.0;
+	vector<double> result(Dimensions+1);
+	result(Dimensions) = alpha;
+	
+	for (size_t i = 0; i < Dimensions; i++){
+		x(i) = exp(-(i-5.0)*(i-5.0));
+		result(i) = x(i);
+	}
+	vector<double> test_assign = x|alpha;
+	vector<double> test_plus_assign(Dimensions+1,1.0); 
+	noalias(test_plus_assign) += x|alpha;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+BOOST_AUTO_TEST_CASE( Remora_Scalar_Vector_Concat )
+{
+	vector<double> x(Dimensions); 
+	double alpha = 2.0;
+	vector<double> result(Dimensions+1);
+	result(0) = alpha;
+	
+	for (size_t i = 0; i < Dimensions; i++){
+		x(i) = exp(-(i-5.0)*(i-5.0));
+		result(i+1) = x(i);
+	}
+	vector<double> test_assign = alpha|x;
+	vector<double> test_plus_assign(Dimensions+1,1.0); 
+	noalias(test_plus_assign) += alpha|x;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_Vector_Concat )
+{
+	vector<double> x(Dimensions); 
+	vector<double> y(Dimensions); 
+	vector<double> result(Dimensions * 2);
+	
+	for (size_t i = 0; i < Dimensions; i++){
+		x(i) = exp(-(i-5.0)*(i-5.0));
+		y(i) = exp(-(i-3.0)*(i-3.0));
+		result(i) = x(i);
+		result(i+Dimensions) = y(i);
+	}
+	vector<double> test_assign = x|y;
+	vector<double> test_plus_assign(Dimensions * 2,1.0); 
+	noalias(test_plus_assign) += x|y;
+	checkDenseExpressionEquality(test_assign,result);
+	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+}
+
+/////////////////////////////////////////////////////
 ///////////Vector Reductions///////////
 /////////////////////////////////////////////////////
 
@@ -340,7 +396,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_norm_sqr )
 	double result = 0;
 	
 	for (size_t i = 0; i < Dimensions; i++){
-		x(i) = 2*i-5;
+		x(i) = 2.0*i-5;
 		result +=x(i)*x(i);
 	}
 	BOOST_CHECK_CLOSE(norm_sqr(x),result,1.e-10);
@@ -351,7 +407,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_norm_2 )
 	double result = 0;
 	
 	for (size_t i = 0; i < Dimensions; i++){
-		x(i) = 2*i-5;
+		x(i) = 2.0*i-5;
 		result +=x(i)*x(i);
 	}
 	result = std::sqrt(result);
@@ -388,8 +444,6 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_inner_prod )
 	}
 	BOOST_CHECK_CLOSE(inner_prod(x,y),(double)Dimensions,1.e-5);
 }
-
-
 
 //////////////////////////////SPARSE TESTS//////////////////////////////
 

@@ -168,6 +168,37 @@ Operation           			Effect
 ``outer_prod(x,y)``			outer product leading a matrix C with :math:`C_{ij}=x_i y_j`.
 ======================================= ==================================================================
 
+Block Matrix Operations
+*********************************************
+These matrix operation create larger matrices from smaller ones using operators ``&`` and ``|``.
+Asumme you have matrices A,B,C and D. And you want to create
+
+.. math::
+	C=
+		\left[
+			\begin{array}{c|c}
+				A & B \\
+				\hline
+				C & D
+			\end{array}
+		\right]
+
+This can easily be done using ``(A | B) & (C | D)``. The allowed
+operations are:
+
+======================================= ==================================================================
+Operation           			Effect
+======================================= ==================================================================
+``x | y``				Creates a vector of the values of x followed by values of y
+``A | B``				Block Matrix where B is right of A
+``A & B``				Block Matrix where B is below A
+``A | x, x | A``			Vector x is interpreted as matrix with one column
+``A & x, x & A``			Vector x is interpreted as matrix with one row
+``A | t, t | A, A & t, t & A``		Scalar t is interpreted as matrix with a single
+					row or column matching A. 
+					``(A|1)`` adds a column of all ones to the right
+======================================= ==================================================================
+
 
 Matrix and Vector Reductions
 *************************************************************************************
