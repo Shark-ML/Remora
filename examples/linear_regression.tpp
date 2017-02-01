@@ -22,7 +22,7 @@ int main(){
 	//###begin<data_declaration>
 	std::size_t num_data_points = 100;
 	std::size_t num_dims = 50;
-	matrix<double> X(num_data_points,num_dims);
+	matrix<double> X(num_data_points, num_dims);
 	vector<double> y(num_data_points);
 	//###end<data_declaration>
 	//###begin<generate_X>
@@ -55,12 +55,12 @@ int main(){
 	// Step 3: evaluate solution
 	// we compute: E(w) = 1/(2N) sum_i (f(x_i)-y_i)^2
 	//###begin<compute_error>
-	double error = 0.5 * sum(sqr((X|1) % w - y))/num_data_points;
+	double error = 0.5 * sum(sqr((X|1) % w - y)) / num_data_points;
 	//###end<compute_error>
 	// Step 4: For ensuring correctness, we will check that
 	// the derivative of E(w) at the solution is small (on the order of 1.e-14)
 	//###begin<verify_derivative>
-	vector<double> derE= trans(X|1) % ((X|1) % w - y) / num_data_points;
+	vector<double> derE = trans(X|1) % ((X|1) % w - y) / num_data_points;
 	double error_derivative = norm_inf(derE);
 	//###end<verify_derivative>
 	std::cout<<"final error of fit: "<< error<<std::endl;
