@@ -239,8 +239,8 @@ to deduce the type of a returned expression. Thus the auto keyword should be use
 <p>Every Container and Proxy can be assigned values of an expression with the same size.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="31%" />
-<col width="69%" />
+<col width="34%" />
+<col width="66%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">Operation</th>
@@ -252,21 +252,17 @@ to deduce the type of a returned expression. Thus the auto keyword should be use
 <td>Evaluates E and assigns it to C using a temporary matrix.</td>
 </tr>
 <tr class="row-odd"><td><tt class="docutils literal"><span class="pre">noalias(C)</span> <span class="pre">=</span> <span class="pre">E</span></tt></td>
-<td><blockquote class="first">
-<div>Like above with the difference that E is assigned</div></blockquote>
-<p class="last">directly to C without a temporary. C is required to have the
-same dimensions as E.</p>
-</td>
+<td>Like above with the difference that E is assigned
+directly to C without a temporary. C is required to have the
+same dimensions as E.</td>
 </tr>
 <tr class="row-even"><td><tt class="docutils literal"><span class="pre">C</span> <span class="pre">+=</span> <span class="pre">E,</span> <span class="pre">C</span> <span class="pre">-=</span> <span class="pre">E,</span> <span class="pre">C</span> <span class="pre">*=</span> <span class="pre">E,</span> <span class="pre">C</span> <span class="pre">/=</span> <span class="pre">E</span></tt></td>
 <td>Equivalent to <tt class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">C+E,</span> <span class="pre">C</span> <span class="pre">=</span> <span class="pre">C-E,</span> <span class="pre">C</span> <span class="pre">=</span> <span class="pre">C*E</span></tt> and <tt class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">C/E</span></tt>.
 See the section of Arithmetic operations for further details.</td>
 </tr>
 <tr class="row-odd"><td><tt class="docutils literal"><span class="pre">C</span> <span class="pre">*=</span> <span class="pre">t,</span> <span class="pre">C</span> <span class="pre">/=</span> <span class="pre">t</span></tt></td>
-<td><blockquote class="first">
-<div>Equivalent to <tt class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">C*t</span></tt> and <tt class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">C/t</span></tt> without creating a temporary value</div></blockquote>
-<p class="last">See the section of Arithmetic operations for further details.</p>
-</td>
+<td>Equivalent to <tt class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">C*t</span></tt> and <tt class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">C/t</span></tt> without creating a temporary value
+See the section of Arithmetic operations for further details.</td>
 </tr>
 <tr class="row-even"><td><tt class="docutils literal"><span class="pre">noalias(C)</span> <span class="pre">+=</span> <span class="pre">E,</span> <span class="pre">...</span></tt></td>
 <td>Equivalent to <tt class="docutils literal"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">C+E,...</span></tt> without creating a temporary value.</td>
@@ -611,9 +607,9 @@ Uses the cholesky decomposition to solve the system</td>
 <tr class="row-odd"><td><tt class="docutils literal"><span class="pre">conjugate_gradient(epsilon,max_iter)</span></tt></td>
 <td>Uses the iterative conjugate gradient method to solve a
 symmetric positive definite system.
-Stopping criteria are :math:<tt class="docutils literal"><span class="pre">||Ax-b||_{\infty}</span> <span class="pre">&lt;</span> <span class="pre">\epsilon</span></tt>
+Stopping criteria are <span class="math">\(||Ax-b||_{\infty} &lt; \epsilon\)</span>
 or the maximum number of iterations is reached. Default
-is :math:<tt class="docutils literal"><span class="pre">\epsilon=10^{-10}</span></tt> and unlimited iterations.</td>
+is <span class="math">\(\epsilon=10^{-10}\)</span> and unlimited iterations.</td>
 </tr>
 <tr class="row-even"><td><tt class="docutils literal"><span class="pre">indefinite_full_rank()</span></tt></td>
 <td>A is an arbitrary full rank matrix.
@@ -622,7 +618,7 @@ Uses the LU-decomposition to solve the system.</td>
 <tr class="row-odd"><td><tt class="docutils literal"><span class="pre">symm_semi_pos_def()</span></tt></td>
 <td>A is symmetric positive definite but rank deficient, meaning
 that there might be no solution for Ax=b. Instead
-the solution that minimizes :math:<tt class="docutils literal"><span class="pre">||Ax-b||_2</span></tt> is computed.</td>
+the solution that minimizes <span class="math">\(||Ax-b||_2\)</span> is computed.</td>
 </tr>
 </tbody>
 </table>

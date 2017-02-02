@@ -91,19 +91,19 @@ Assignment
 
 Every Container and Proxy can be assigned values of an expression with the same size.
 
-==================================== ==============================================
-Operation           		         Effect
-==================================== ==============================================
-``C = E``                            Evaluates E and assigns it to C using a temporary matrix.
-``noalias(C) = E``		             Like above with the difference that E is assigned
-                                     directly to C without a temporary. C is required to have the
-                                     same dimensions as E.
-``C += E, C -= E, C *= E, C /= E``   Equivalent to ``C = C+E, C = C-E, C = C*E`` and ``C = C/E``.
-                                     See the section of Arithmetic operations for further details.
-``C *= t, C /= t``        	         Equivalent to ``C = C*t`` and ``C = C/t`` without creating a temporary value
-                                     See the section of Arithmetic operations for further details.
-``noalias(C) += E, ...``             Equivalent to ``C = C+E,...`` without creating a temporary value.
-==================================== ==============================================
+======================================= ==============================================
+Operation                               Effect
+======================================= ==============================================
+``C = E``                               Evaluates E and assigns it to C using a temporary matrix.
+``noalias(C) = E``                      Like above with the difference that E is assigned
+                                        directly to C without a temporary. C is required to have the
+                                        same dimensions as E.
+``C += E, C -= E, C *= E, C /= E``      Equivalent to ``C = C+E, C = C-E, C = C*E`` and ``C = C/E``.
+                                        See the section of Arithmetic operations for further details.
+``C *= t, C /= t``                      Equivalent to ``C = C*t`` and ``C = C/t`` without creating a temporary value
+                                        See the section of Arithmetic operations for further details.
+``noalias(C) += E, ...``                Equivalent to ``C = C+E,...`` without creating a temporary value.
+======================================= ==============================================
 
 Arithmetic Operations and Expressions
 --------------------------------------------------
@@ -292,14 +292,14 @@ Type	        				Effect
 						Uses the cholesky decomposition to solve the system
 ``conjugate_gradient(epsilon,max_iter)``	Uses the iterative conjugate gradient method to solve a
 						symmetric positive definite system.
-						Stopping criteria are :math:``||Ax-b||_{\infty} < \epsilon``
+						Stopping criteria are :math:`||Ax-b||_{\infty} < \epsilon`
 						or the maximum number of iterations is reached. Default
-						is :math:``\epsilon=10^{-10}`` and unlimited iterations.
+						is :math:`\epsilon=10^{-10}` and unlimited iterations.
 ``indefinite_full_rank()``			A is an arbitrary full rank matrix.
 						Uses the LU-decomposition to solve the system.
 ``symm_semi_pos_def()``				A is symmetric positive definite but rank deficient, meaning
 						that there might be no solution for Ax=b. Instead
-						the solution that minimizes :math:``||Ax-b||_2`` is computed.
+						the solution that minimizes :math:`||Ax-b||_2` is computed.
 =============================================== ==================================================================
 
 A small example for the usage is::
