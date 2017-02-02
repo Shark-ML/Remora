@@ -73,8 +73,8 @@ Operation/Class           			Effect
 ``trans(A)``					Returns a proxy for the transpose of A.
 ``row(A,k)``					Returns the k-th row of A as a vector-proxy.
 ``column(A,k)``					Returns the k-th column of A as a vector-proxy.
-``rows(A,k,l)``					Returns the rows :math:`k,\dots,l` of A as a matrix-proxy.
-``columns(A,k,l)``				Returns the columns :math:`k,\dots,l` of A as a matrix-proxy.
+``rows(A,k,l)``					Returns the rows :math:`k,\dots,l-1` of A as a matrix-proxy.
+``columns(A,k,l)``				Returns the columns :math:`k,\dots,l-1` of A as a matrix-proxy.
 ``diag(A)``					Returns a vector-proxy to the matrix diagonal
 =============================================== ==============================================
 
@@ -83,7 +83,7 @@ to deduce the type of a returned expression. Thus the auto keyword should be use
 
   auto row_proxy = row(A,3);  // 3rd matrix row
   auto sub_proxy = subrange(row_proxy,3,5);   // elements with indices 3 to 5
-  sub_proxy(A) *= 2;   // multiplies the elements A(3,3) A(3,4) and A(3,5) with 2
+  sub_proxy(A) *= 2;   // multiplies the elements A(3,3) and A(3,4) with 2
   subrange(row(A,3),3,5) *=2; //shorthand notation
 
 Assignment
