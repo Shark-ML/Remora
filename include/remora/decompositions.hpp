@@ -265,7 +265,7 @@ public:
 		m_cholesky.decompose(prod(trans(L),L));
 	}
 	
-	unsigned rank()const{
+	std::size_t rank()const{
 		return m_rank;
 	}
 	
@@ -330,7 +330,7 @@ public:
 		swap_rows_inverted(m_permutation,b);
 	}
 private:
-	unsigned int m_rank;
+	std::size_t m_rank;
 	MatrixStorage m_factor;
 	cholesky_decomposition<MatrixStorage> m_cholesky;
 	permutation_matrix m_permutation;
