@@ -1039,6 +1039,9 @@ public:
 		return m_diagonal.queue();
 	}
 	
+	vector_closure_type const& expression()const{
+		return m_diagonal;
+	}
 	// Element access
 	const_reference operator()(size_type i, size_type j) const {
 		if (i == j)

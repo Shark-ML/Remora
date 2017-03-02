@@ -138,6 +138,17 @@ BOOST_AUTO_TEST_CASE( Remora_prod_matrix_vector_expression_optimize ){
 		> e = prod(v,prod(m1,m2));
 		BOOST_CHECK_SMALL(norm_inf(e - prod(v,matrix<double>(prod(m1,m2)))), 1.e-10);
 	}
+	//diagonal-matrix-product
+	{
+		typedef diagonal_matrix<V1> M;
+		typedef functors::scalar_binary_multiply<double> F;
+		V1 v1 = create_vector(5);
+		V v = create_vector(5);
+		M m(v1);
+		vector_binary<V1,V,F> result = m % v;
+		BOOST_CHECK_SMALL(norm_inf(result - prod(matrix<float>(m),v)), 1.e-10);
+	}
+	
 	//solve 
 	{
 		M1 m1 = create_matrix(10,10);
