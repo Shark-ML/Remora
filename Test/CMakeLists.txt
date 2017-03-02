@@ -50,6 +50,7 @@ remora_add_test( triangular_solve.cpp Triangular_Solve)
 remora_add_test( symm_solve.cpp Symm_Solve)
 remora_add_test( general_solve.cpp General_Solve)
 remora_add_test( cholesky.cpp Cholesky)
+remora_add_test( eigensymm.cpp Eigensymm)
 
 #GPU tests
 if(ENABLE_GPU)
