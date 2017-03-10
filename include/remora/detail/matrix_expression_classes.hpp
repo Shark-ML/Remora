@@ -472,10 +472,10 @@ public:
 	}
 
 	const_column_iterator column_begin(size_type i) const {
-		return const_row_iterator(m_expression.column_begin(i),m_functor);
+		return const_column_iterator(m_expression.column_begin(i),m_functor);
 	}
 	const_column_iterator column_end(size_type i) const {
-		return const_row_iterator(m_expression.column_end(i),m_functor);
+		return const_column_iterator(m_expression.column_end(i),m_functor);
 	}
 
 private:
