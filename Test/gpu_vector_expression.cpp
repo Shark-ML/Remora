@@ -131,6 +131,19 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Sqrt )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(sqrt(x),result);
 }
+BOOST_AUTO_TEST_CASE( Remora_Vector_Cbrt )
+{
+	vector<float> x_cpu(Dimensions); 
+	vector<float> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x_cpu(i) = i;
+		result(i)= cbrt(x_cpu(i));
+	}
+	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(cbrt(x),result);
+}
 BOOST_AUTO_TEST_CASE( Remora_Vector_Exp )
 {
 	vector<float> x_cpu(Dimensions); 
@@ -158,6 +171,115 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Log )
 	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(log(x),result);
 }
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_sin )
+{
+
+	vector<float> x_cpu(Dimensions); 
+	vector<float> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x_cpu(i) = i+1;
+		result(i)=std::sin(x_cpu(i));
+	}
+	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(sin(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_cos )
+{
+
+	vector<float> x_cpu(Dimensions); 
+	vector<float> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x_cpu(i) = i+1;
+		result(i)=std::cos(x_cpu(i));
+	}
+	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(cos(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_tan )
+{
+
+	vector<float> x_cpu(Dimensions); 
+	vector<float> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x_cpu(i) = i+1;
+		result(i)=std::tan(x_cpu(i));
+	}
+	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(tan(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_asin )
+{
+
+	vector<float> x_cpu(Dimensions); 
+	vector<float> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x_cpu(i) = (2.0*(i+1))/Dimensions -1.0;
+		result(i)=std::asin(x_cpu(i));
+	}
+	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(asin(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_acos )
+{
+
+	vector<float> x_cpu(Dimensions); 
+	vector<float> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x_cpu(i) = (2.0*(i+1))/Dimensions -1.0;
+		result(i)=std::acos(x_cpu(i));
+	}
+	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(acos(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_atan ){
+	vector<float> x_cpu(Dimensions); 
+	vector<float> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x_cpu(i) = (2.0*(i+1))/Dimensions -1.0;
+		result(i)=std::atan(x_cpu(i));
+	}
+	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(atan(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_erf ){
+	vector<float> x_cpu(Dimensions); 
+	vector<float> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x_cpu(i) = (2.0*(i+1))/Dimensions -1.0;
+		result(i)=std::erf(x_cpu(i));
+	}
+	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(erf(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_erfc ){
+	vector<float> x_cpu(Dimensions); 
+	vector<float> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x_cpu(i) = (2.0*(i+1))/Dimensions -1.0;
+		result(i)=std::erfc(x_cpu(i));
+	}
+	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(erfc(x),result);
+}
+
 BOOST_AUTO_TEST_CASE( Remora_Vector_Tanh )
 {
 	vector<float> x_cpu(Dimensions); 

@@ -262,6 +262,19 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Sqrt )
 	}
 	checkDenseExpressionEquality(sqrt(x),result);
 }
+BOOST_AUTO_TEST_CASE( Remora_matrix_Cbrt )
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = i+j+3.0;
+			result(i,j)= std::cbrt(x(i,j));
+		}
+	}
+	checkDenseExpressionEquality(cbrt(x),result);
+}
 BOOST_AUTO_TEST_CASE( Remora_matrix_Exp )
 {
 	matrix<double> x(Dimension1, Dimension2); 
@@ -269,7 +282,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Exp )
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
-			x(i,j) = i-3.0-j;
+			x(i,j) = i-3.0-double(j);
 			result(i,j)= std::exp(x(i,j));
 		}
 	}
@@ -289,6 +302,118 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Log )
 	}
 	checkDenseExpressionEquality(log(x),result);
 }
+BOOST_AUTO_TEST_CASE( Remora_matrix_sin )
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = double(i)/Dimension1-double(j)/Dimension2;
+			result(i,j)= std::sin(x(i,j));
+		}
+	}
+	checkDenseExpressionEquality(sin(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_matrix_cos )
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = double(i)/Dimension1-double(j)/Dimension2;
+			result(i,j)= std::cos(x(i,j));
+		}
+	}
+	checkDenseExpressionEquality(cos(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_matrix_tan )
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = double(i)/Dimension1-double(j)/Dimension2;
+			result(i,j)= std::tan(x(i,j));
+		}
+	}
+	checkDenseExpressionEquality(tan(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_matrix_asin )
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = double(i)/Dimension1-double(j)/Dimension2;
+			result(i,j)= std::asin(x(i,j));
+		}
+	}
+	checkDenseExpressionEquality(asin(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_matrix_acos )
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = double(i)/Dimension1-double(j)/Dimension2;
+			result(i,j)= std::acos(x(i,j));
+		}
+	}
+	checkDenseExpressionEquality(acos(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_matrix_atan )
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = double(i)/Dimension1-double(j)/Dimension2;
+			result(i,j)= std::atan(x(i,j));
+		}
+	}
+	checkDenseExpressionEquality(atan(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_matrix_erf )
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = double(i)/Dimension1-double(j)/Dimension2;
+			result(i,j)= std::erf(x(i,j));
+		}
+	}
+	checkDenseExpressionEquality(erf(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_matrix_erfc )
+{
+	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = double(i)/Dimension1-double(j)/Dimension2;
+			result(i,j)= std::erfc(x(i,j));
+		}
+	}
+	checkDenseExpressionEquality(erfc(x),result);
+}
+
 BOOST_AUTO_TEST_CASE( Remora_matrix_Tanh )
 {
 	matrix<double> x(Dimension1, Dimension2); 

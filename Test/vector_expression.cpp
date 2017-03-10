@@ -108,6 +108,19 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Sqrt )
 	}
 	checkDenseExpressionEquality(sqrt(x),result);
 }
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Cbrt )
+{
+	vector<double> x(Dimensions); 
+	vector<double> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x(i) = i;
+		result(i)= cbrt(x(i));
+	}
+	checkDenseExpressionEquality(cbrt(x),result);
+}
 BOOST_AUTO_TEST_CASE( Remora_Vector_Exp )
 {
 	vector<double> x(Dimensions); 
@@ -133,6 +146,118 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Log )
 	}
 	checkDenseExpressionEquality(log(x),result);
 }
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Sin )
+{
+
+	vector<double> x(Dimensions); 
+	vector<double> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x(i) = i+1;
+		result(i)=std::sin(x(i));
+	}
+	checkDenseExpressionEquality(sin(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Cos )
+{
+
+	vector<double> x(Dimensions); 
+	vector<double> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x(i) = i+1;
+		result(i)=std::cos(x(i));
+	}
+	checkDenseExpressionEquality(cos(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Tan )
+{
+
+	vector<double> x(Dimensions); 
+	vector<double> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x(i) = i+1;
+		result(i)=std::tan(x(i));
+	}
+	checkDenseExpressionEquality(tan(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_aSin )
+{
+
+	vector<double> x(Dimensions); 
+	vector<double> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x(i) = (2.0*(i+1))/Dimensions -1.0;
+		result(i) = std::asin(x(i));
+	}
+	checkDenseExpressionEquality(asin(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_aCos )
+{
+
+	vector<double> x(Dimensions); 
+	vector<double> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x(i) = (2.0*(i+1))/Dimensions -1.0;
+		result(i) = std::acos(x(i));
+	}
+	checkDenseExpressionEquality(acos(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_aTan )
+{
+
+	vector<double> x(Dimensions); 
+	vector<double> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x(i) = (2.0*(i+1))/Dimensions -1.0;
+		result(i) = std::atan(x(i));
+	}
+	checkDenseExpressionEquality(atan(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_erf )
+{
+
+	vector<double> x(Dimensions); 
+	vector<double> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x(i) = i+1;
+		result(i)=std::erf(x(i));
+	}
+	checkDenseExpressionEquality(erf(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_erfc )
+{
+
+	vector<double> x(Dimensions); 
+	vector<double> result(Dimensions);
+	
+	for (size_t i = 0; i < Dimensions; i++)
+	{
+		x(i) = i+1;
+		result(i)=std::erfc(x(i));
+	}
+	checkDenseExpressionEquality(erfc(x),result);
+}
+
 BOOST_AUTO_TEST_CASE( Remora_Vector_Tanh )
 {
 	vector<double> x(Dimensions); 

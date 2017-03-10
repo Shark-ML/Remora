@@ -247,6 +247,21 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Sqrt )
 	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(sqrt(x),result);
 }
+BOOST_AUTO_TEST_CASE( Remora_matrix_Cbrt)
+{
+	matrix<float> x_cpu(Dimension1, Dimension2); 
+	matrix<float> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x_cpu(i,j) = i+j+3.0;
+			result(i,j)= std::cbrt(x_cpu(i,j));
+		}
+	}
+	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(cbrt(x),result);
+}
+
 BOOST_AUTO_TEST_CASE( Remora_matrix_Exp )
 {
 	matrix<float> x_cpu(Dimension1, Dimension2); 
@@ -276,6 +291,121 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Log )
 	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(log(x),result);
 }
+BOOST_AUTO_TEST_CASE( Remora_matrix_sin )
+{
+	matrix<float> x_cpu(Dimension1, Dimension2); 
+	matrix<float> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x_cpu(i,j) = -3.0+double(i)/Dimension1 - double(j)/Dimension2;
+			result(i,j)= std::sin(x_cpu(i,j));
+		}
+	}
+	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(sin(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_matrix_cos )
+{
+	matrix<float> x_cpu(Dimension1, Dimension2); 
+	matrix<float> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x_cpu(i,j) = -3.0+double(i)/Dimension1 - double(j)/Dimension2;
+			result(i,j)= std::cos(x_cpu(i,j));
+		}
+	}
+	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(cos(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_matrix_tan )
+{
+	matrix<float> x_cpu(Dimension1, Dimension2); 
+	matrix<float> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x_cpu(i,j) = -3.0+double(i)/Dimension1 - double(j)/Dimension2;
+			result(i,j)= std::tan(x_cpu(i,j));
+		}
+	}
+	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(tan(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_matrix_asin )
+{
+	matrix<float> x_cpu(Dimension1, Dimension2); 
+	matrix<float> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x_cpu(i,j) = double(i)/Dimension1 - double(j)/Dimension2;
+			result(i,j)= std::asin(x_cpu(i,j));
+		}
+	}
+	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(asin(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_matrix_acos )
+{
+	matrix<float> x_cpu(Dimension1, Dimension2); 
+	matrix<float> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x_cpu(i,j) = double(i)/Dimension1 - double(j)/Dimension2;
+			result(i,j)= std::acos(x_cpu(i,j));
+		}
+	}
+	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(acos(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_matrix_atan )
+{
+	matrix<float> x_cpu(Dimension1, Dimension2); 
+	matrix<float> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x_cpu(i,j) = -3.0+double(i)/Dimension1 - double(j)/Dimension2;
+			result(i,j)= std::atan(x_cpu(i,j));
+		}
+	}
+	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(atan(x),result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_matrix_erf )
+{
+	matrix<float> x_cpu(Dimension1, Dimension2); 
+	matrix<float> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x_cpu(i,j) = -3.0+double(i)/Dimension1 - double(j)/Dimension2;
+			result(i,j)= std::erf(x_cpu(i,j));
+		}
+	}
+	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(erf(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_matrix_erfc )
+{
+	matrix<float> x_cpu(Dimension1, Dimension2); 
+	matrix<float> result(Dimension1, Dimension2);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x_cpu(i,j) = -3.0+double(i)/Dimension1 - double(j)/Dimension2;
+			result(i,j)= std::erfc(x_cpu(i,j));
+		}
+	}
+	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(erfc(x),result);
+}
+
 BOOST_AUTO_TEST_CASE( Remora_matrix_Tanh )
 {
 	matrix<float> x_cpu(Dimension1, Dimension2); 
