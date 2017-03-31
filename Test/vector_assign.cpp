@@ -84,6 +84,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Assign_Functor ){
 	source_sparse(2) = 1;
 	source_sparse(5) = 2;
 	source_sparse(7) = 3;
+	typedef device_traits<cpu_tag>::add<unsigned int> functor;
 
 	//test all 4 combinations
 	{
@@ -94,7 +95,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Assign_Functor ){
 			result_dense(i) = source_dense(i)+target_dense(i);
 		}
 		std::cout<<"testing dense-dense"<<std::endl;
-		kernels::assign<functors::scalar_binary_plus<unsigned int> >(target_dense,source_dense);
+		kernels::assign<functor >(target_dense,source_dense);
 		checkVectorEqual(target_dense,result_dense);
 	}
 	
@@ -106,7 +107,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Assign_Functor ){
 			result_dense(i) = source_sparse(i)+target_dense(i);
 		}
 		std::cout<<"testing dense-sparse"<<std::endl;
-		kernels::assign<functors::scalar_binary_plus<unsigned int> >(target_dense,source_sparse);
+		kernels::assign<functor >(target_dense,source_sparse);
 		checkVectorEqual(target_dense,result_dense);
 	}
 	
@@ -121,7 +122,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Assign_Functor ){
 			result_dense(i) = source_dense(i)+target_sparse(i);
 		}
 		std::cout<<"testing sparse-dense"<<std::endl;
-		kernels::assign<functors::scalar_binary_plus<unsigned int> >(target_sparse,source_dense);
+		kernels::assign<functor >(target_sparse,source_dense);
 		BOOST_CHECK_EQUAL(target_sparse.nnz(), 10);
 		checkVectorEqual(target_sparse,result_dense);
 	}
@@ -136,7 +137,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Assign_Functor ){
 			result_dense(i) = source_sparse(i)+target_sparse(i);
 		}
 		std::cout<<"testing sparse-sparse"<<std::endl;
-		kernels::assign<functors::scalar_binary_plus<unsigned int> >(target_sparse,source_sparse);
+		kernels::assign<functor >(target_sparse,source_sparse);
 		BOOST_CHECK_EQUAL(target_sparse.nnz(), 5);
 		checkVectorEqual(target_sparse,result_dense);
 	}
