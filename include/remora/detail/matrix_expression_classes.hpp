@@ -86,7 +86,7 @@ public:
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(this->functor()(this->expression()(i,j))){
+	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<functor_type>()(std::declval<E const&>()(i,j))){
 		return functor()(m_expression(i,j));
 	}
 	
@@ -187,7 +187,7 @@ public:
 
         // Element access
 	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(functor_type()(this->lhs()(i,j),this->rhs()(i,j))){
+	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<functor_type>()(std::declval<E1 const&>()(i,j),std::declval<E2 const&>()(i,j))){
 		return functor_type()(lhs()(i,j),rhs()(i,j));
 	}
 	
@@ -284,7 +284,7 @@ public:
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& /*i*/, IndexExpr2 const& j) const -> decltype(this->expression()(j)){
+	auto operator()(IndexExpr1 const& /*i*/, IndexExpr2 const& j) const -> decltype(std::declval<V const&>()(j)){
 		return m_vector(j);
 	}
 	
@@ -454,7 +454,7 @@ public:
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(this->functor()(this->expression()(i,j))){
+	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<functor_type>()(std::declval<E const&>()(i,j))){
 		return functor()(m_expression(i,j));
 	}
 
@@ -550,7 +550,7 @@ public:
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(this->functor()(this->lhs()(i,j),this->rhs()(i,j))){
+	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<functor_type>()(std::declval<E1 const&>()(i,j),std::declval<E2 const&>()(i,j))){
 		return functor()(lhs()(i,j),rhs()(i,j));
 	}
 	
@@ -666,7 +666,7 @@ public:
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(functor_type_op()(this->lhs()(i),this->rhs()(j))){
+	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(functor_type_op()(std::declval<E1 const&>()(i),std::declval<E2 const&>()(j))){
 		return functor_type_op()(lhs()(i),rhs()(j));
 	}
 

@@ -81,7 +81,7 @@ public:
 
 	// Element access
 	template <class IndexExpr>
-	auto operator()(IndexExpr const& i) const -> decltype(this->functor()(this->expression()(i))){
+	auto operator()(IndexExpr const& i) const -> decltype(std::declval<functor_type>()(std::declval<E const&>()(i))){
 		functor_type f(m_scalar);
 		return f(m_expression(i));
 	}
@@ -270,7 +270,7 @@ public:
 
 	// Element access
 	template <class IndexExpr>
-	auto operator()(IndexExpr const& i) const -> decltype(this->functor()(this->expression()(i))){
+	auto operator()(IndexExpr const& i) const -> decltype(std::declval<F>()(std::declval<E const&>()(i))){
 		return m_functor(m_expression(i));
 	}
 
@@ -350,7 +350,7 @@ public:
 
 	// Element access
 	template <class IndexExpr>
-	auto operator()(IndexExpr const& i) const -> decltype(functor_type()(this->lhs()(i),this->rhs()(i))){
+	auto operator()(IndexExpr const& i) const -> decltype(functor_type()(std::declval<E1 const&>()(i),std::declval<E2 const&>()(i))){
 		SIZE_CHECK(i < size());
 		return functor_type()(m_lhs(i),m_rhs(i));
 	}
@@ -442,7 +442,7 @@ public:
 
 	// Element access
 	template <class IndexExpr>
-	auto operator()(IndexExpr const& i) const -> decltype(this->functor()(this->lhs()(i),this->rhs()(i))){
+	auto operator()(IndexExpr const& i) const -> decltype(std::declval<F>()(std::declval<E1 const&>()(i),std::declval<E2 const&>()(i))){
 		SIZE_CHECK(i < size());
 		return m_functor(m_lhs(i),m_rhs(i));
 	}

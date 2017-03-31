@@ -87,7 +87,7 @@ public:
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(this->expression()(i,j)){
+	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<M&>()(i,j)){
 		return (*m_expression)(i, j);
 	}
 	
@@ -250,7 +250,7 @@ public:
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(this->expression()(j,i)){
+	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<M&>()(j,i)){
 		return expression()(j, i);
 	}
 	
@@ -402,11 +402,11 @@ public:
 	
 	// Element access
 	template <class IndexExpr>
-	auto operator()(IndexExpr const& j) const -> decltype(this->expression()(this->index(),j)){
+	auto operator()(IndexExpr const& j) const -> decltype(std::declval<M&>()(std::size_t(),j)){
 		return expression()(index(), j);
 	}
 	template <class IndexExpr>
-	auto operator[](IndexExpr const& j) const -> decltype(this->expression()(this->index(),j)){
+	auto operator[](IndexExpr const& j) const -> decltype(std::declval<M&>()(std::size_t(),j)){
 		return (*this)(j);
 	}
 	
@@ -561,9 +561,9 @@ public:
 
 	// Element access
 	template <class IndexExpr>
-	auto operator()(IndexExpr const& i) const -> decltype(this->expression()(
-		device_traits<typename M::device_type>::index_add(this->start1(),i),
-		device_traits<typename M::device_type>::index_add(this->start2(),i)
+	auto operator()(IndexExpr const& i) const -> decltype(std::declval<M&>()(
+		device_traits<typename M::device_type>::index_add(std::size_t(),i),
+		device_traits<typename M::device_type>::index_add(std::size_t(),i)
 	)){
 		return m_expression(
 			device_traits<typename M::device_type>::index_add(start1(),i),
@@ -695,9 +695,9 @@ public:
 
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(this->expression()(
-		device_traits<typename M::device_type>::index_add(this->start1(),i),
-		device_traits<typename M::device_type>::index_add(this->start2(),j)
+	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<M&>()(
+		device_traits<typename M::device_type>::index_add(std::size_t(),i),
+		device_traits<typename M::device_type>::index_add(std::size_t(),j)
 	)){
 		return m_expression(
 			device_traits<typename M::device_type>::index_add(start1(),i),
