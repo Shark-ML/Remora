@@ -97,7 +97,7 @@ public:
 	}
 	
 	//iterators
-	typedef typename device_traits<device_type>:: template transform_iterator<typename E::const_iterator,functor_type > const_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename E::const_iterator,functor_type >::type const_iterator;
 	typedef const_iterator iterator;
 	
 	const_iterator begin() const {
@@ -148,8 +148,8 @@ public:
 		return device_traits<Device>::default_queue();
 	}
 public:
-	typedef typename device_traits<Device>:: template constant_iterator<T> iterator;
-	typedef typename device_traits<Device>:: template constant_iterator<T> const_iterator;
+	typedef typename device_traits<Device>:: template constant_iterator<T>::type iterator;
+	typedef typename device_traits<Device>:: template constant_iterator<T>::type const_iterator;
 
 	const_iterator begin() const {
 		return const_iterator(m_value,0);
@@ -201,7 +201,7 @@ public:
 		return device_traits<Device>::default_queue();
 	}
 public:
-	typedef typename device_traits<Device>:: template one_hot_iterator<value_type const> const_iterator;
+	typedef typename device_traits<Device>:: template one_hot_iterator<value_type const>::type const_iterator;
 	typedef const_iterator iterator;
 
 	const_iterator begin() const {
@@ -277,7 +277,7 @@ public:
 	typedef typename device_traits<device_type>:: template transform_iterator<
 		typename E::const_iterator,
 		functor_type
-	> const_iterator;
+	>::type const_iterator;
 	typedef const_iterator iterator;
 
 	// Element lookup
@@ -372,7 +372,7 @@ public:
 		typename E1::const_iterator,
 		typename E2::const_iterator,
 		functor_type
-	> const_iterator;
+	>::type const_iterator;
 	typedef const_iterator iterator;
 
 	const_iterator begin () const {
@@ -465,7 +465,7 @@ public:
 		typename E1::const_iterator,
 		typename E2::const_iterator,
 		functor_type
-	> const_iterator;
+	>::type const_iterator;
 	typedef const_iterator iterator;
 
 	const_iterator begin () const {

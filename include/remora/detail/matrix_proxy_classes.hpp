@@ -585,8 +585,8 @@ public:
 		return assign(*this, typename vector_temporary<M>::type(e));
 	}
 
-	typedef typename device_traits<typename M::device_type>:: template indexed_iterator<closure_type> iterator;
-	typedef typename device_traits<typename M::device_type>:: template indexed_iterator<const_closure_type> const_iterator;
+	typedef typename device_traits<typename M::device_type>:: template indexed_iterator<closure_type>::type iterator;
+	typedef typename device_traits<typename M::device_type>:: template indexed_iterator<const_closure_type>::type const_iterator;
 
 	// Element lookup
 	const_iterator begin()const{
