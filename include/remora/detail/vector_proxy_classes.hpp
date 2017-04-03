@@ -239,9 +239,9 @@ public:
 	}
 
 	typedef typename device_traits<typename V::device_type>:: 
-		template subrange_iterator< typename vector_closure_type::iterator> iterator;
+		template subrange_iterator< typename vector_closure_type::iterator>::type iterator;
 	typedef typename device_traits<typename V::device_type>:: 
-		template subrange_iterator< typename vector_closure_type::const_iterator> const_iterator;
+		template subrange_iterator< typename vector_closure_type::const_iterator>::type const_iterator;
 
 	const_iterator begin() const{
 		return const_iterator(

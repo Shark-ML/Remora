@@ -585,8 +585,8 @@ public:
 		return assign(*this, typename vector_temporary<M>::type(e));
 	}
 
-	typedef typename device_traits<typename M::device_type>:: template indexed_iterator<closure_type> iterator;
-	typedef typename device_traits<typename M::device_type>:: template indexed_iterator<const_closure_type> const_iterator;
+	typedef typename device_traits<typename M::device_type>:: template indexed_iterator<closure_type>::type iterator;
+	typedef typename device_traits<typename M::device_type>:: template indexed_iterator<const_closure_type>::type const_iterator;
 
 	// Element lookup
 	const_iterator begin()const{
@@ -716,10 +716,10 @@ public:
 	}
 
 	// Iterator types
-	typedef typename device_traits<typename M::device_type>:: template subrange_iterator<typename row_iterator<M>::type> row_iterator;
-	typedef typename device_traits<typename M::device_type>:: template subrange_iterator<typename column_iterator<M>::type> column_iterator;
-	typedef typename device_traits<typename M::device_type>:: template subrange_iterator<typename M::const_row_iterator> const_row_iterator;
-	typedef typename device_traits<typename M::device_type>:: template subrange_iterator<typename M::const_column_iterator> const_column_iterator;
+	typedef typename device_traits<typename M::device_type>:: template subrange_iterator<typename row_iterator<M>::type>::type row_iterator;
+	typedef typename device_traits<typename M::device_type>:: template subrange_iterator<typename column_iterator<M>::type>::type column_iterator;
+	typedef typename device_traits<typename M::device_type>:: template subrange_iterator<typename M::const_row_iterator>::type const_row_iterator;
+	typedef typename device_traits<typename M::device_type>:: template subrange_iterator<typename M::const_column_iterator>::type const_column_iterator;
 
 	// Element lookup
 	const_row_iterator row_begin(size_type i) const {

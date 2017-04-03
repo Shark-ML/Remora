@@ -103,10 +103,10 @@ public:
 	// Iterator types
 	typedef typename device_traits<device_type>:: template transform_iterator<
 		typename E::const_row_iterator, functor_type
-	> const_row_iterator;
+	>::type const_row_iterator;
 	typedef typename device_traits<device_type>:: template transform_iterator<
 		typename E::const_column_iterator, functor_type
-	> const_column_iterator;
+	>::type const_column_iterator;
 	typedef const_row_iterator row_iterator;
 	typedef const_column_iterator column_iterator;
 	
@@ -208,12 +208,12 @@ public:
 		typename E1::const_row_iterator,
 		typename E2::const_row_iterator,
 		functor_type
-	> const_row_iterator;
+	>::type const_row_iterator;
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
 		typename E1::const_column_iterator,
 		typename E2::const_column_iterator,
 		functor_type
-	> const_column_iterator;
+	>::type const_column_iterator;
 	typedef const_row_iterator row_iterator;
 	typedef const_column_iterator column_iterator;
 
@@ -295,7 +295,7 @@ public:
 	// Iterator types
 	typedef typename V::const_iterator const_row_iterator;
 	typedef const_row_iterator row_iterator;
-	typedef typename device_traits<typename V::device_type>:: template constant_iterator<value_type>  const_column_iterator;
+	typedef typename device_traits<typename V::device_type>:: template constant_iterator<value_type>::type  const_column_iterator;
 	typedef const_column_iterator column_iterator;
 
 	// Element lookup
@@ -367,8 +367,8 @@ public:
 	}
 	
 	//Iterators
-	typedef typename device_traits<Device>:: template constant_iterator<value_type> const_row_iterator;
-	typedef typename device_traits<Device>:: template constant_iterator<value_type> const_column_iterator;
+	typedef typename device_traits<Device>:: template constant_iterator<value_type>::type const_row_iterator;
+	typedef typename device_traits<Device>:: template constant_iterator<value_type>::type const_column_iterator;
 	typedef const_row_iterator row_iterator;
 	typedef const_column_iterator column_iterator;
 
@@ -459,8 +459,8 @@ public:
 	}
 
 	// Iterator types
-	typedef typename device_traits<device_type>:: template transform_iterator<typename E::const_row_iterator, F> const_row_iterator;
-	typedef typename device_traits<device_type>:: template transform_iterator<typename E::const_column_iterator, F> const_column_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename E::const_row_iterator, F>::type const_row_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename E::const_column_iterator, F>::type const_column_iterator;
 	typedef const_row_iterator row_iterator;
 	typedef const_column_iterator column_iterator;
 	
@@ -566,10 +566,10 @@ public:
 
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
 		typename E1::const_row_iterator,typename E2::const_row_iterator,functor_type
-	> const_row_iterator;
+	>::type const_row_iterator;
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
 		typename E1::const_column_iterator,typename E2::const_column_iterator,functor_type
-	> const_column_iterator;
+	>::type const_column_iterator;
 	typedef const_row_iterator row_iterator;
 	typedef const_column_iterator column_iterator;
 
@@ -670,8 +670,8 @@ public:
 		return functor_type_op()(lhs()(i),rhs()(j));
 	}
 
-	typedef typename device_traits<device_type>:: template transform_iterator<typename E2::const_iterator,functor_type> const_row_iterator;
-	typedef typename device_traits<device_type>:: template transform_iterator<typename E1::const_iterator,functor_type> const_column_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename E2::const_iterator,functor_type>::type const_row_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename E1::const_iterator,functor_type>::type const_column_iterator;
 	typedef const_row_iterator row_iterator;
 	typedef const_column_iterator column_iterator;
 	
@@ -1051,7 +1051,7 @@ public:
 	}
 	
 	//Iterators
-	typedef typename device_traits<device_type>:: template one_hot_iterator<value_type const> const_row_iterator;
+	typedef typename device_traits<device_type>:: template one_hot_iterator<value_type const>::type const_row_iterator;
 	typedef const_row_iterator const_column_iterator;
 	typedef const_row_iterator row_iterator;
 	typedef const_column_iterator column_iterator;
