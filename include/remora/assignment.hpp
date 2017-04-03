@@ -374,8 +374,9 @@ VecX& operator/=(vector_expression<VecX, Device>& x, vector_expression<VecV, Dev
 /// \brief  Adds a scalar to all elements of the vector
 ///
 /// Performs the operation x_i += t for all elements.
-template<class VecX, class Device>
-VecX& operator+=(vector_expression<VecX, Device>& x, typename VecX::value_type t){
+template<class VecX, class T, class Device>
+typename std::enable_if<std::is_convertible<T, typename VecX::value_type>::value,VecX&>::type
+operator+=(vector_expression<VecX, Device>& x, T t){
 	kernels::assign<typename device_traits<Device>:: template add<typename VecX::value_type> > (x, t);
 	return x();
 }
@@ -383,8 +384,9 @@ VecX& operator+=(vector_expression<VecX, Device>& x, typename VecX::value_type t
 /// \brief  Subtracts a scalar from all elements of the vector
 ///
 /// Performs the operation x_i += t for all elements.
-template<class VecX, class Device>
-VecX& operator-=(vector_expression<VecX, Device>& x, typename VecX::value_type t){
+template<class VecX, class T, class Device>
+typename std::enable_if<std::is_convertible<T, typename VecX::value_type>::value,VecX&>::type
+operator-=(vector_expression<VecX, Device>& x, T t){
 	kernels::assign<typename device_traits<Device>:: template subtract<typename VecX::value_type> > (x, t);
 	return x();
 }
@@ -392,8 +394,9 @@ VecX& operator-=(vector_expression<VecX, Device>& x, typename VecX::value_type t
 /// \brief  Multiplies a scalar with all elements of the vector
 ///
 /// Performs the operation x_i *= t for all elements.
-template<class VecX, class Device>
-VecX& operator*=(vector_expression<VecX, Device>& x, typename VecX::value_type t){
+template<class VecX, class T, class Device>
+typename std::enable_if<std::is_convertible<T, typename VecX::value_type>::value,VecX&>::type
+operator*=(vector_expression<VecX, Device>& x, T t){
 	kernels::assign<typename device_traits<Device>:: template multiply<typename VecX::value_type> > (x, t);
 	return x();
 }
@@ -401,8 +404,9 @@ VecX& operator*=(vector_expression<VecX, Device>& x, typename VecX::value_type t
 /// \brief  Divides all elements of the vector by a scalar
 ///
 /// Performs the operation x_i /= t for all elements.
-template<class VecX, class Device>
-VecX& operator/=(vector_expression<VecX, Device>& x, typename VecX::value_type t){
+template<class VecX, class T, class Device>
+typename std::enable_if<std::is_convertible<T, typename VecX::value_type>::value,VecX&>::type
+operator/=(vector_expression<VecX, Device>& x, T t){
 	kernels::assign<typename device_traits<Device>:: template divide<typename VecX::value_type> > (x, t);
 	return x();
 }
@@ -472,8 +476,9 @@ MatA& operator/=(matrix_expression<MatA, Device>& A, matrix_expression<MatB, Dev
 /// \brief  Adds a scalar to all elements of the matrix
 ///
 /// Performs the operation A_ij += t for all elements.
-template<class MatA, class Device>
-MatA& operator+=(matrix_expression<MatA, Device>& A, typename MatA::value_type t){
+template<class MatA, class T, class Device>
+typename std::enable_if<std::is_convertible<T, typename MatA::value_type>::value,MatA&>::type
+operator+=(matrix_expression<MatA, Device>& A, T t){
 	kernels::assign<typename device_traits<Device>:: template add<typename MatA::value_type> > (A, t);
 	return A();
 }
@@ -481,8 +486,9 @@ MatA& operator+=(matrix_expression<MatA, Device>& A, typename MatA::value_type t
 /// \brief  Subtracts a scalar from all elements of the matrix
 ///
 /// Performs the operation A_ij -= t for all elements.
-template<class MatA, class Device>
-MatA& operator-=(matrix_expression<MatA, Device>& A, typename MatA::value_type t){
+template<class MatA, class T, class Device>
+typename std::enable_if<std::is_convertible<T, typename MatA::value_type>::value,MatA&>::type
+operator-=(matrix_expression<MatA, Device>& A, T t){
 	kernels::assign<typename device_traits<Device>:: template subtract<typename MatA::value_type> > (A, t);
 	return A();
 }
@@ -490,8 +496,9 @@ MatA& operator-=(matrix_expression<MatA, Device>& A, typename MatA::value_type t
 /// \brief  Multiplies a scalar to all elements of the matrix
 ///
 /// Performs the operation A_ij *= t for all elements.
-template<class MatA, class Device>
-MatA& operator*=(matrix_expression<MatA, Device>& A, typename MatA::value_type t){
+template<class MatA, class T, class Device>
+typename std::enable_if<std::is_convertible<T, typename MatA::value_type>::value,MatA&>::type
+operator*=(matrix_expression<MatA, Device>& A, T t){
 	kernels::assign<typename device_traits<Device>:: template multiply<typename MatA::value_type> > (A, t);
 	return A();
 }
@@ -499,8 +506,9 @@ MatA& operator*=(matrix_expression<MatA, Device>& A, typename MatA::value_type t
 /// \brief  Divides all elements of the matrix by a scalar
 ///
 /// Performs the operation A_ij /= t for all elements.
-template<class MatA, class Device>
-MatA& operator /=(matrix_expression<MatA, Device>& A, typename MatA::value_type t){
+template<class MatA, class T, class Device>
+typename std::enable_if<std::is_convertible<T, typename MatA::value_type>::value,MatA&>::type
+operator/=(matrix_expression<MatA, Device>& A, T t){
 	kernels::assign<typename device_traits<Device>:: template divide<typename MatA::value_type> > (A, t);
 	return A();
 }

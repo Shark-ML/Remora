@@ -37,8 +37,8 @@
 namespace remora{
 
 template<class T, class VecV, class Device>
-typename boost::enable_if<
-	std::is_convertible<T, typename VecV::value_type >,
+typename std::enable_if<
+	std::is_convertible<T, typename VecV::value_type >::value,
 	vector_scalar_multiply<VecV>
 >::type
 operator* (vector_expression<VecV, Device> const& v, T scalar){
@@ -46,8 +46,8 @@ operator* (vector_expression<VecV, Device> const& v, T scalar){
 	return vector_scalar_multiply<VecV>(v(), value_type(scalar));
 }
 template<class T, class VecV, class Device>
-typename boost::enable_if<
-	std::is_convertible<T, typename VecV::value_type >,
+typename std::enable_if<
+	std::is_convertible<T, typename VecV::value_type >::value,
         vector_scalar_multiply<VecV>
 >::type
 operator* (T scalar, vector_expression<VecV, Device> const& v){
@@ -66,7 +66,7 @@ vector_scalar_multiply<VecV> operator-(vector_expression<VecV, Device> const& v)
 ///@param scalar the value which is repeated
 ///@param elements the size of the resulting vector
 template<class T>
-typename boost::enable_if<std::is_arithmetic<T>, scalar_vector<T, cpu_tag> >::type
+typename std::enable_if<std::is_arithmetic<T>::value, scalar_vector<T, cpu_tag> >::type
 repeat(T scalar, std::size_t elements){
 	return scalar_vector<T, cpu_tag>(elements,scalar);
 }
@@ -120,8 +120,8 @@ vector_addition<VecV1, vector_scalar_multiply<VecV2> > operator- (
 
 ///\brief Adds a vector plus a scalar which is interpreted as a constant vector
 template<class VecV, class T, class Device>
-typename boost::enable_if<
-	std::is_convertible<T, typename VecV::value_type>, 
+typename std::enable_if<
+	std::is_convertible<T, typename VecV::value_type>::value, 
 	vector_addition<VecV, scalar_vector<T, Device> >
 >::type operator+ (
 	vector_expression<VecV, Device> const& v,
@@ -132,8 +132,8 @@ typename boost::enable_if<
 
 ///\brief Adds a vector plus a scalar which is interpreted as a constant vector
 template<class T, class VecV, class Device>
-typename boost::enable_if<
-	std::is_convertible<T, typename VecV::value_type>,
+typename std::enable_if<
+	std::is_convertible<T, typename VecV::value_type>::value,
 	vector_addition<VecV, scalar_vector<T, Device> >
 >::type operator+ (
 	T t,
@@ -144,8 +144,8 @@ typename boost::enable_if<
 
 ///\brief Subtracts a scalar which is interpreted as a constant vector.
 template<class VecV, class T, class Device>
-typename boost::enable_if<
-	std::is_convertible<T, typename VecV::value_type> ,
+typename std::enable_if<
+	std::is_convertible<T, typename VecV::value_type>::value ,
 	vector_addition<VecV, vector_scalar_multiply<scalar_vector<T, Device> > >
 >::type operator- (
 	vector_expression<VecV, Device> const& v,
@@ -156,8 +156,8 @@ typename boost::enable_if<
 
 ///\brief Subtracts a vector from a scalar which is interpreted as a constant vector
 template<class VecV, class T, class Device>
-typename boost::enable_if<
-	std::is_convertible<T, typename VecV::value_type>,
+typename std::enable_if<
+	std::is_convertible<T, typename VecV::value_type>::value,
 	vector_addition<scalar_vector<T, Device>, vector_scalar_multiply<VecV> >
 >::type operator- (
 	T t,
@@ -188,8 +188,8 @@ REMORA_BINARY_VECTOR_EXPRESSION(max, max)
 //operations of the form op(v,t)[i] = op(v[i],t)
 #define REMORA_VECTOR_SCALAR_TRANSFORMATION(name, F)\
 template<class T, class VecV, class Device> \
-typename boost::enable_if< \
-	std::is_convertible<T, typename VecV::value_type >,\
+typename std::enable_if< \
+	std::is_convertible<T, typename VecV::value_type >::value,\
         vector_binary<VecV, scalar_vector<typename VecV::value_type, Device>, \
 	typename device_traits<Device>:: template F<typename VecV::value_type> > \
 >::type \
@@ -213,8 +213,8 @@ REMORA_VECTOR_SCALAR_TRANSFORMATION(pow, pow)
 // operations of the form op(t,v)[i] = op(t,v[i])
 #define REMORA_VECTOR_SCALAR_TRANSFORMATION_2(name, F)\
 template<class T, class VecV, class Device> \
-typename boost::enable_if< \
-	std::is_convertible<T, typename VecV::value_type >,\
+typename std::enable_if< \
+	std::is_convertible<T, typename VecV::value_type >::value,\
 	vector_binary<scalar_vector<typename VecV::value_type, Device>, VecV, typename device_traits<Device>:: template F<typename VecV::value_type> > \
 >::type \
 name (T t, vector_expression<VecV, Device> const& v){ \
@@ -385,8 +385,8 @@ vector_concat<VecV1,VecV2> operator|(
 ///
 /// Given a vector v and a scalar t, forms the vector (v,t)
 template<class VecV, class T, class Device>
-typename boost::enable_if<
-	std::is_convertible<T, typename VecV::value_type>, 
+typename std::enable_if<
+	std::is_convertible<T, typename VecV::value_type>::value, 
 	vector_concat<VecV, scalar_vector<T, Device> >
 >::type operator| (
 	vector_expression<VecV, Device> const& v,
@@ -399,8 +399,8 @@ typename boost::enable_if<
 ///
 /// Given a vector v and a scalar t, forms the vector (v,t)
 template<class T, class VecV, class Device>
-typename boost::enable_if<
-	std::is_convertible<T, typename VecV::value_type>,
+typename std::enable_if<
+	std::is_convertible<T, typename VecV::value_type>::value,
 	vector_concat<scalar_vector<T, Device>,VecV >
 >::type operator| (
 	T t,
