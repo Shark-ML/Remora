@@ -95,7 +95,7 @@ public:
 		return m_cholesky;
 	}
 
-	auto upper_factor()const -> decltype(std::declval<cholesky_decomposition>().lower_factor()){
+	auto upper_factor()const -> decltype(trans(std::declval<cholesky_decomposition>().lower_factor())){
 		return trans(m_cholesky);
 	}
 	
