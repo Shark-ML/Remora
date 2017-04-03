@@ -3,7 +3,7 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/detail/iterator.hpp>
-#include <remora/detail/functional.hpp>
+#include <remora/detail/traits.hpp>
 
 using namespace remora;
 
@@ -363,13 +363,14 @@ BOOST_AUTO_TEST_CASE( Remora_Subrange_Iterator_Compressed)
 BOOST_AUTO_TEST_CASE( Remora_Transform_Iterator_Dense)
 {
 	double values[]={0.1,0.2,0.3,0.4,0.5,0.6};
+	typedef device_traits<cpu_tag>::sqr<double> functor;
 
 	typedef iterators::dense_storage_iterator<const double> iterator;
 	iterator dense_iter(values,0);
 	iterator dense_end(values,6);
-	iterators::transform_iterator<iterator,functors::scalar_sqr<double> > iter(dense_iter,functors::scalar_sqr<double>());
-	iterators::transform_iterator<iterator,functors::scalar_sqr<double> > start = iter;
-	iterators::transform_iterator<iterator,functors::scalar_sqr<double> > end(dense_end,functors::scalar_sqr<double>());
+	iterators::transform_iterator<iterator,functor > iter(dense_iter,functor());
+	iterators::transform_iterator<iterator,functor > start = iter;
+	iterators::transform_iterator<iterator,functor > end(dense_end,functor());
 	
 	BOOST_REQUIRE_EQUAL(end-start, 6);
 	BOOST_REQUIRE_EQUAL(start-iter, 0);
@@ -396,13 +397,13 @@ BOOST_AUTO_TEST_CASE( Remora_Transform_Iterator_Compressed)
 {
 	double values[]={0.1,0.2,0.3,0.4,0.5,0.6};
 	std::size_t indizes[]={3,8,11,12,15,16};
-	
+	typedef device_traits<cpu_tag>::sqr<double> functor;
 	typedef iterators::compressed_storage_iterator<const double,const std::size_t> iterator;
 	iterator compressed_iter(values,indizes,0);
 	iterator compressed_end(values,indizes,6);
-	iterators::transform_iterator<iterator,functors::scalar_sqr<double> > iter(compressed_iter,functors::scalar_sqr<double>());
-	iterators::transform_iterator<iterator,functors::scalar_sqr<double> > start = iter;
-	iterators::transform_iterator<iterator,functors::scalar_sqr<double> > end(compressed_end,functors::scalar_sqr<double>());
+	iterators::transform_iterator<iterator,functor > iter(compressed_iter,functor());
+	iterators::transform_iterator<iterator,functor > start = iter;
+	iterators::transform_iterator<iterator,functor > end(compressed_end,functor());
 	
 	BOOST_REQUIRE_EQUAL(end-start, 6);
 	BOOST_REQUIRE_EQUAL(start-iter, 0);
@@ -431,12 +432,13 @@ BOOST_AUTO_TEST_CASE( Remora_Binary_Transform_Iterator_Dense)
 	iterator dense_end1(values1,6);
 	iterator dense_iter2(values2,0);
 	iterator dense_end2(values2,6);
+	typedef device_traits<cpu_tag>::add<double> functor;
 	
-	typedef iterators::binary_transform_iterator<iterator,iterator,functors::scalar_binary_plus<double> > transform_iterator;
+	typedef iterators::binary_transform_iterator<iterator,iterator,functor > transform_iterator;
 	
-	transform_iterator iter(functors::scalar_binary_plus<double>(),dense_iter1,dense_end1,dense_iter2,dense_end2);
+	transform_iterator iter(functor(),dense_iter1,dense_end1,dense_iter2,dense_end2);
 	transform_iterator start = iter;
-	transform_iterator end(functors::scalar_binary_plus<double>(),dense_end1,dense_end1,dense_end2,dense_end2);
+	transform_iterator end(functor(),dense_end1,dense_end1,dense_end2,dense_end2);
 	
 	BOOST_REQUIRE_EQUAL(end-start, 6);
 	BOOST_REQUIRE_EQUAL(start-iter, 0);
@@ -470,9 +472,9 @@ BOOST_AUTO_TEST_CASE( Remora_Binary_Transform_Iterator_Compressed)
 	std::size_t indizes2[]={5,8,11,14};
 	std::size_t indizesResult[]={3,5,8,11,12,14,17,18};
 	
-
+	typedef device_traits<cpu_tag>::add<double> functor;
 	typedef iterators::compressed_storage_iterator<const double,const std::size_t> iterator;
-	typedef iterators::binary_transform_iterator<iterator,iterator,functors::scalar_binary_plus<double> > transform_iterator;
+	typedef iterators::binary_transform_iterator<iterator,iterator,functor > transform_iterator;
 	
 	//a+b
 	{
@@ -480,9 +482,9 @@ BOOST_AUTO_TEST_CASE( Remora_Binary_Transform_Iterator_Compressed)
 		iterator end1(values1,indizes1,6);
 		iterator iter2(values2,indizes2,0);
 		iterator end2(values2,indizes2,4);
-		transform_iterator iter(functors::scalar_binary_plus<double>(),iter1,end1,iter2,end2);
+		transform_iterator iter(functor(),iter1,end1,iter2,end2);
 		transform_iterator start = iter;
-		transform_iterator end(functors::scalar_binary_plus<double>(),end1,end1,end2,end2);
+		transform_iterator end(functor(),end1,end1,end2,end2);
 		
 		BOOST_REQUIRE(start == iter);
 		BOOST_REQUIRE(start != end);
@@ -502,9 +504,9 @@ BOOST_AUTO_TEST_CASE( Remora_Binary_Transform_Iterator_Compressed)
 		iterator end2(values1,indizes1,6);
 		iterator iter1(values2,indizes2,0);
 		iterator end1(values2,indizes2,4);
-		transform_iterator iter(functors::scalar_binary_plus<double>(),iter1,end1,iter2,end2);
+		transform_iterator iter(functor(),iter1,end1,iter2,end2);
 		transform_iterator start = iter;
-		transform_iterator end(functors::scalar_binary_plus<double>(),end1,end1,end2,end2);
+		transform_iterator end(functor(),end1,end1,end2,end2);
 		
 		BOOST_REQUIRE(start == iter);
 		BOOST_REQUIRE(start != end);
