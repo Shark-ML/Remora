@@ -244,22 +244,24 @@ struct device_traits<cpu_tag>{
 	}
 	
 	template <class Iterator, class Functor>
-	using transform_iterator = iterators::transform_iterator<Iterator, Functor>;
+	struct transform_iterator : iterators::transform_iterator<Iterator, Functor> {};
 
 	template <class Iterator>
-	using subrange_iterator = iterators::subrange_iterator<Iterator>;
+	struct subrange_iterator {
+		typedef iterators::subrange_iterator<Iterator> type;
+	};
 	
 	template<class Iterator1, class Iterator2, class Functor>
-	using binary_transform_iterator = iterators::binary_transform_iterator<Iterator1,Iterator2, Functor>;
+	struct binary_transform_iterator : iterators::binary_transform_iterator<Iterator1,Iterator2, Functor> {};
 	
 	template<class T>
-	using constant_iterator = iterators::constant_iterator<T>;
+	struct constant_iterator : iterators::constant_iterator<T> {};
 	
 	template<class T>
-	using one_hot_iterator = iterators::one_hot_iterator<T>;
+	struct one_hot_iterator : iterators::one_hot_iterator<T> {};
 	
 	template<class Closure>
-	using indexed_iterator = iterators::indexed_iterator<Closure>;
+	struct indexed_iterator : iterators::indexed_iterator<Closure> {};
 	
 	//functors
 	template<class T>
