@@ -100,5 +100,5 @@ When using Remora, the following defines can be supplied at compile time
 * REMORA_USE_GPU if defined, Remora is enabling gpu support via the boost/compute
   library. Highly experimental.
 
-Remora depends strogly on the optimization level of the compiler. In Debug, many costly index checks
+Remora depends strongly on the optimization level of the compiler. In Debug, many costly index checks
 are performed to ensure correctness of the code, while in release high level of optimization should be applied.
