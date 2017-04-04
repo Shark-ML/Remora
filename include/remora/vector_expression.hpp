@@ -32,7 +32,6 @@
 #include "kernels/dot.hpp"
 #include "kernels/vector_fold.hpp"
 #include "kernels/vector_max.hpp"
-#include <boost/utility/enable_if.hpp>
 
 namespace remora{
 

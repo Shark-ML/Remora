@@ -37,9 +37,7 @@
 #include "kernels/vector_assign.hpp"
 #include "detail/traits.hpp"
 
-#include <boost/mpl/eval_if.hpp>
-#include <boost/mpl/or.hpp>
-#include <boost/mpl/identity.hpp>
+#include <type_traits>
 namespace remora{
 	
 //////////////////////////////////////////////////////////////////////
@@ -52,13 +50,13 @@ namespace remora{
 /// the expression is assigned, which is then returned, otherwise the expression itself
 /// is returned
 template<class E, class Device>
-typename boost::mpl::eval_if<
+typename std::conditional<
 	std::is_base_of<
 		blockwise_tag,
 		typename E::evaluation_category
-	>,
-	vector_temporary<E>,
-	boost::mpl::identity<E const&>
+	>::value,
+	typename vector_temporary<E>::type,
+	E const&
 >::type
 eval_block(vector_expression<E, Device> const& e){
 	return e();//either casts to E const& or returns the copied expression
@@ -69,13 +67,13 @@ eval_block(vector_expression<E, Device> const& e){
 /// the expression is assigned, which is then returned, otherwise the expression itself
 /// is returned
 template<class E, class Device>
-typename boost::mpl::eval_if<
+typename std::conditional<
 	std::is_base_of<
 		blockwise_tag,
 		typename E::evaluation_category
-	>,
-	matrix_temporary<E>,
-	boost::mpl::identity<E const&>
+	>::value,
+	typename matrix_temporary<E>::type,
+	E const&
 >::type
 eval_block(matrix_expression<E, Device> const& e){
 	return e();//either casts to E const& or returns the copied expression

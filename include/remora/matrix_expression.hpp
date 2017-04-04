@@ -29,7 +29,6 @@
 #define REMORA_MATRIX_EXPRESSION_HPP
 
 #include "detail/expression_optimizers.hpp"
-#include <boost/utility/enable_if.hpp>
 #include "kernels/matrix_fold.hpp"
 #include "matrix_proxy.hpp"
 #include "vector_proxy.hpp"

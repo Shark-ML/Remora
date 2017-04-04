@@ -31,8 +31,6 @@
 #include "../expression_types.hpp"
 #include "../assignment.hpp"
 
-#include <boost/utility/enable_if.hpp>
-#include <boost/mpl/or.hpp>
 #include <type_traits>
 namespace remora{
 	
@@ -210,11 +208,9 @@ public:
 	template<class E>
 	matrix_transpose(
 		matrix_transpose<E> const& m,
-		typename boost::disable_if<
-			boost::mpl::or_<
-				std::is_same<matrix_transpose<E>,matrix_transpose>,
-				std::is_same<matrix_transpose<E>,matrix_closure_type>
-			> 
+		typename std::enable_if<
+			!(std::is_same<matrix_transpose<E>,matrix_transpose>::value
+			|| std::is_same<matrix_transpose<E>,matrix_closure_type>::value)
 		>::type* dummy = 0
 	):m_expression(m.expression()) {}
 
@@ -648,8 +644,8 @@ public:
 	template<class E>
 	matrix_range(
 		matrix_range<E> const& other,
-		typename boost::disable_if<
-			std::is_same<E,matrix_range>
+		typename std::enable_if<
+			!std::is_same<E,matrix_range>::value
 		>::type* dummy = 0
 	):m_expression(other.expression())
 	, m_start1(other.start1()), m_size1(other.size1())

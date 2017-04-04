@@ -146,15 +146,15 @@ public:
 	typedef const_closure_type closure_type;
 	typedef unknown_storage storage_type;
 	typedef unknown_storage const_storage_type;
-	typedef typename boost::mpl::if_< //the orientation is only known if E1 and E2 have the same
-		std::is_same<typename E1::orientation, typename E2::orientation>,
+	typedef typename std::conditional< //the orientation is only known if E1 and E2 have the same
+		std::is_same<typename E1::orientation, typename E2::orientation>::value,
 		typename E1::orientation,
 		unknown_orientation
 	>::type orientation;
 	//the evaluation category is blockwise if one of the expressions is blockwise or
 	// if the orientation is unknown (efficient for expressions like A=B+C^T
-	typedef typename boost::mpl::if_<
-		std::is_same<orientation, unknown_orientation>,
+	typedef typename std::conditional<
+		std::is_same<orientation, unknown_orientation>::value,
 		blockwise<typename evaluation_restrict_traits<E1,E2>::type::tag>,
 		typename evaluation_restrict_traits<E1,E2>::type
 	>::type evaluation_category;
@@ -510,8 +510,8 @@ public:
 	typedef const_closure_type closure_type;
 	typedef unknown_storage storage_type;
 	typedef unknown_storage const_storage_type;
-	typedef typename boost::mpl::if_< //the orientation is only known if E1 and E2 have the same
-		std::is_same<typename E1::orientation, typename E2::orientation>,
+	typedef typename std::conditional< //the orientation is only known if E1 and E2 have the same
+		std::is_same<typename E1::orientation, typename E2::orientation>::value,
 		typename E1::orientation,
 		unknown_orientation
 	>::type orientation;

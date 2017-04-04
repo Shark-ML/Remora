@@ -34,7 +34,6 @@
 #define REMORA_MATRIX_PROXY_HPP
 
 #include "detail/expression_optimizers.hpp"
-#include <boost/utility/enable_if.hpp>
 #include <type_traits>
 namespace remora{
 	
