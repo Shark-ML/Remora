@@ -305,4 +305,31 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_column){
 	}
 }
 
+BOOST_AUTO_TEST_CASE( Remora_To_Vector){	
+	
+	{
+		vector<double> vecTest(Dimensions1 * Dimensions2);
+		for(std::size_t i = 0; i != Dimensions1; ++i)
+			for(std::size_t j = 0;j != Dimensions2;++j)
+				vecTest(i * Dimensions2 + j) = denseData(i,j);
+		checkDenseVectorEqual(to_vector(denseData),vecTest);
+		
+		matrix<double,row_major> m(Dimensions1,Dimensions2,0);
+		auto test = to_vector(m);
+		checkDenseVectorAssignment(test,vecTest);	
+	}
+
+	{
+		vector<double> vecTest(Dimensions1 * Dimensions2);
+		for(std::size_t i = 0; i != Dimensions1; ++i)
+			for(std::size_t j = 0;j != Dimensions2;++j)
+				vecTest(j *  Dimensions1 + i) = denseData(i,j);
+		checkDenseVectorEqual(to_vector(denseDataColMajor),vecTest);
+		matrix<double,column_major> m(Dimensions1,Dimensions2,0);
+		auto test = to_vector(m);
+		checkDenseVectorAssignment(test,vecTest);	
+	}
+	
+}
+
 BOOST_AUTO_TEST_SUITE_END();

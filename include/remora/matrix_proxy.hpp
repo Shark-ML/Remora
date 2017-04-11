@@ -321,5 +321,32 @@ to_matrix(
 	return to_matrix(static_cast<E&>(v),size1,size2);
 }
 
+/// \brief Converts a dense matrix to a vector
+///
+/// The matrix is linearized along its fast index as indicated by the orientation.
+/// e.g. a row-major matrix is lienarized by concatenating its rows to one large vector.
+template<class E, class Device>
+typename std::enable_if<
+	std::is_same<typename E::evaluation_category::tag,dense_tag>::value,
+	temporary_proxy< linearized_matrix<typename const_expression<E>::type> >
+>::type 
+to_vector(matrix_expression<E, Device> const& e){
+	return linearized_matrix<typename const_expression<E>::type>(e());
+}
+
+template<class E, class Device>
+typename std::enable_if<
+	std::is_same<typename E::evaluation_category::tag,dense_tag>::value,
+	temporary_proxy< linearized_matrix<E> >
+>::type 
+to_vector(matrix_expression<E,Device>& e){
+	return linearized_matrix<E>(e());
+}
+
+template<class E>
+auto to_vector(temporary_proxy<E> e)->decltype(to_vector(static_cast<E&>(e))){
+	return to_vector(static_cast<E&>(e));
+}
+
 }
 #endif
