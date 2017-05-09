@@ -564,8 +564,8 @@ public:
 	}
 
 	// Iterator types
-	typedef typename E1::const_iterator const_iterator;
-	typedef const_iterator iterator;
+	typedef iterators::no_iterator const_iterator;
+	typedef iterators::no_iterator iterator;
 
 private:
 	lhs_closure_type m_lhs;

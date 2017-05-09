@@ -38,6 +38,10 @@
 
 namespace remora{ namespace iterators{
 
+//pure block expressions do not have an iterator but the interface still requires one.
+// this is our cheap way out.
+struct no_iterator{};
+
 // Iterator tags -- hierarchical definition of storage characteristics
 struct sparse_bidirectional_iterator_tag: public std::bidirectional_iterator_tag{};
 struct packed_random_access_iterator_tag: public std::random_access_iterator_tag{};

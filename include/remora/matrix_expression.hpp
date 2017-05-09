@@ -335,12 +335,13 @@ auto operator%(matrix_expression<MatA, Device> const& A,vector_expression<VecV, 
 ///
 ///Example: x += triangular_prod<lower>(A,v);
 template<class TriangularType, class MatA, class VecV, class Device>
-matrix_vector_prod<detail::dense_triangular_proxy<MatA const,TriangularType> ,VecV> triangular_prod(
+matrix_vector_prod<detail::dense_triangular_proxy<typename const_expression<MatA>::type,TriangularType> ,VecV>
+triangular_prod(
 	matrix_expression<MatA, Device> const& A,
 	vector_expression<VecV, Device>& v
 ) {
 	SIZE_CHECK(A().size2() == v().size());
-	typedef detail::dense_triangular_proxy<MatA const,TriangularType> Wrapper;
+	typedef detail::dense_triangular_proxy<typename const_expression<MatA>::type,TriangularType> Wrapper;
 	return matrix_vector_prod<Wrapper ,VecV>(Wrapper(A()), v());
 }
 
