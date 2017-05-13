@@ -28,6 +28,9 @@ macro( REMORA_ADD_EXAMPLE TUT_SRC NAME)
 		add_dependencies(remoraexamples ${NAME})
 
 		set_target_properties( ${NAME} PROPERTIES FOLDER "examples")
+		if(ENABLE_CLBLAST)
+			target_link_libraries( ${NAME} clblast)
+		endif()
 
 		# Installation
 		install(TARGETS ${NAME}
@@ -47,6 +50,9 @@ macro( REMORA_ADD_BENCHMARK SRC NAME)
 	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 	target_link_libraries( ${NAME} ${CBLAS_LIBRARIES})
 
+	if(ENABLE_CLBLAST)
+		target_link_libraries( ${NAME} clblast)
+	endif()
 	set_target_properties( ${NAME} PROPERTIES FOLDER "examples")
 endmacro()
 

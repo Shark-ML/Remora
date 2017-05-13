@@ -63,7 +63,9 @@ void trmm(
 
 }}
 
-#ifdef REMORA_USE_GPU
+#ifdef REMORA_USE_CLBLAST
+#include "clBlast/trmm.hpp"
+#elif REMORA_USE_GPU
 #include "gpu/trmm.hpp"
 #endif
 

@@ -29,8 +29,8 @@
  *
  */
 //===========================================================================
-#ifndef REMORA_KERNELS_CLBLAS_GEMM_HPP
-#define REMORA_KERNELS_CLBLAS_GEMM_HPP
+#ifndef REMORA_KERNELS_GPU_GEMM_HPP
+#define REMORA_KERNELS_GPU_GEMM_HPP
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"

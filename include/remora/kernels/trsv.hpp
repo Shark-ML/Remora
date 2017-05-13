@@ -65,7 +65,9 @@ void trsv(
 
 }}
 
-#ifdef REMORA_USE_GPU
+#ifdef REMORA_USE_CLBLAST
+#include "clBlast/trsv.hpp"
+#elif REMORA_USE_GPU
 #include "gpu/trsv.hpp"
 #endif
 

@@ -78,6 +78,42 @@ typename std::conditional<
 eval_block(matrix_expression<E, Device> const& e){
 	return e();//either casts to E const& or returns the copied expression
 }
+
+
+///\brief Evaluates an expression if it does not have a standard storage layout
+///
+/// This function evaluates an expression to a temporary if it does not have
+/// a known storage type. i.e. proxy expressions and containers are not evaluated but passed
+/// through while everything else is evaluated.
+template<class E, class Device>
+typename std::conditional<
+	std::is_same<
+		unknown_storage,
+		typename E::storage_type
+	>::value,
+	typename vector_temporary<E>::type,
+	E const&
+>::type
+eval_expression(vector_expression<E, Device> const& e){
+	return e();//either casts to E const& or returns the evaluated expression
+}
+///\brief Evaluates an expression if it does not have a standard storage layout
+///
+/// This function evaluates an expression to a temporary if it does not have
+/// a known storage type. i.e. proxy expressions and containers are not evaluated but passed
+/// through while everything else is evaluated.
+template<class E, class Device>
+typename std::conditional<
+	std::is_same<
+		unknown_storage,
+		typename E::storage_type
+	>::value,
+	typename matrix_temporary<E>::type,
+	E const&
+>::type
+eval_expression(matrix_expression<E, Device> const& e){
+	return e();//either casts to E const& or returns the evaluated expression
+}
 	
 /////////////////////////////////////////////////////////////////////////////////////
 ////// Vector Assign

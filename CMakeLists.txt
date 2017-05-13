@@ -136,14 +136,21 @@ if( ENABLE_GENERIC_CBLAS )
 	add_definitions(-DREMORA_USE_CBLAS)
 endif()
 
+option( ENABLE_CLBLAST "Use CLBlast as GPU backend" OFF )
+if(ENABLE_CLBLAST)
+	find_package(CLBlast REQUIRED)
+	add_definitions(-DREMORA_USE_CLBLAST)	
+endif()
 
 option( ENABLE_GPU "Use OpenCL and boost.compute" OFF )
-if(ENABLE_GPU)
+if(ENABLE_GPU OR ENABLE_CLBLAST)
 	find_package(OpenCL REQUIRED)
 	include_directories(${OpenCL_INCLUDE_DIRS})
 	list( APPEND CBLAS_LIBRARIES ${OpenCL_LIBRARY})
 	add_definitions(-DREMORA_USE_GPU)
 endif()
+
+
 
 #####################################################################
 #                       Include Headers

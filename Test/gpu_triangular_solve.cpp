@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(GPU_Solve_Matrix, Orientation,result_orientations)
 	matrix<float,row_major> A_cpu(size,size,1.0);
 	for(std::size_t i = 0; i != size; ++i){
 		for(std::size_t j = 0; j <=i; ++j){
-			A_cpu(i,j) = 0.1/size*i-0.05/(i+1.0)*j;
+			A_cpu(i,j) = 0.3*(0.1/size*i-0.05/(i+1.0)*j);
 			if(i ==j)
 				A_cpu(i,j) += 10;
 		}
