@@ -45,9 +45,9 @@ void gemm(
 	matrix_expression<MatC, gpu_tag>& C, 
 	typename MatC::value_type const& alpha
 ) {
-	SIZE_CHECK(A().size1() == C().size1());
-	SIZE_CHECK(B().size2() == C().size2());
-	SIZE_CHECK(A().size2()== B().size1());
+	REMORA_SIZE_CHECK(A().size1() == C().size1());
+	REMORA_SIZE_CHECK(B().size2() == C().size2());
+	REMORA_SIZE_CHECK(A().size2()== B().size1());
 	
 	static_assert(std::is_same<typename MatA::value_type, typename MatC::value_type>::value, "[gemm] Arguments do not have same element type");
 	static_assert(std::is_same<typename MatA::value_type, typename MatB::value_type>::value, "[gemm] Arguments do not have same element type");

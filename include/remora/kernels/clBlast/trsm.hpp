@@ -46,8 +46,8 @@ void trsm_impl(
 	Triangular,
 	left
 ){	
-	SIZE_CHECK(A().size1() == A().size2());
-	SIZE_CHECK(A().size2() == B().size1());
+	REMORA_SIZE_CHECK(A().size1() == A().size2());
+	REMORA_SIZE_CHECK(A().size2() == B().size1());
 	
 	static_assert(std::is_same<typename MatA::value_type, typename MatB::value_type>::value, "[trsm] Arguments do not have same element type");
 	static_assert(std::is_same<typename MatA::evaluation_category::tag, dense_tag>::value, "[trsm] A is not dense");

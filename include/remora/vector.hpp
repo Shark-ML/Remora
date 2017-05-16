@@ -191,7 +191,7 @@ public:
 	/// Return a const reference to the element \f$i\f$. With some compilers, this notation will be faster than \c operator[]
 	/// \param i index of the element
 	const_reference operator()(size_type i) const {
-		RANGE_CHECK(i < size());
+		REMORA_RANGE_CHECK(i < size());
 		return m_storage[i];
 	}
 
@@ -199,21 +199,21 @@ public:
 	/// Return a reference to the element \f$i\f$. With some compilers, this notation will be faster than \c operator[]
 	/// \param i index of the element
 	reference operator()(size_type i) {
-		RANGE_CHECK(i < size());
+		REMORA_RANGE_CHECK(i < size());
 		return m_storage[i];
 	}
 
 	/// \brief Return a const reference to the element \f$i\f$
 	/// \param i index of the element
 	const_reference operator [](size_type i) const {
-		RANGE_CHECK(i < size());
+		REMORA_RANGE_CHECK(i < size());
 		return m_storage[i];
 	}
 
 	/// \brief Return a reference to the element \f$i\f$
 	/// \param i index of the element
 	reference operator [](size_type i) {
-		RANGE_CHECK(i < size());
+		REMORA_RANGE_CHECK(i < size());
 		return m_storage[i];
 	}
 	
@@ -280,14 +280,14 @@ public:
 	
 	/////////////////sparse interface///////////////////////////////
 	iterator set_element(iterator pos, size_type index, value_type value) {
-		SIZE_CHECK(pos.index() == index);
+		REMORA_SIZE_CHECK(pos.index() == index);
 		(*this)(index) = value;
 		
 		return pos;
 	}
 
 	iterator clear_element(iterator pos) {
-		SIZE_CHECK(pos != end());
+		REMORA_SIZE_CHECK(pos != end());
 		v(pos.index()) = value_type();
 		
 		//return new iterator to the next element
@@ -295,7 +295,7 @@ public:
 	}
 	
 	iterator clear_range(iterator start, iterator end) {
-		RANGE_CHECK(start <= end);
+		REMORA_RANGE_CHECK(start <= end);
 		std::fill(start,end,value_type());
 		return end;
 	}

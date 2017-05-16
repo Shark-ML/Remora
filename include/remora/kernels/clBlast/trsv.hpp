@@ -43,8 +43,8 @@ void trsv(
 	matrix_expression<MatA, gpu_tag> const& A, 
 	vector_expression<VecB, gpu_tag>& b
 ){
-	SIZE_CHECK(A().size1() == A().size2());
-	SIZE_CHECK(A().size1() == b().size());
+	REMORA_SIZE_CHECK(A().size1() == A().size2());
+	REMORA_SIZE_CHECK(A().size1() == b().size());
 	
 	static_assert(std::is_same<typename MatA::value_type, typename VecB::value_type>::value, "[trsv] Arguments do not have same element type");
 	static_assert(std::is_same<typename MatA::evaluation_category::tag, dense_tag>::value, "[trsv] A is not dense");

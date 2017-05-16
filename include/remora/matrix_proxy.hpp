@@ -139,14 +139,14 @@ auto column(temporary_proxy<M> expression, typename M::size_type j) -> decltype(
 /// diag(A) = (1,5,9)
 template<class M, class Device>
 matrix_vector_range<typename const_expression<M>::type > diag(matrix_expression<M, Device> const& mat){
-	SIZE_CHECK(mat().size1() == mat().size2());
+	REMORA_SIZE_CHECK(mat().size1() == mat().size2());
 	matrix_vector_range<typename const_expression<M>::type > diagonal(mat(),0,mat().size1(),0,mat().size1());
 	return diagonal;
 }
 
 template<class M, class Device>
 temporary_proxy< matrix_vector_range<M> > diag(matrix_expression<M, Device>& mat){
-	SIZE_CHECK(mat().size1() == mat().size2());
+	REMORA_SIZE_CHECK(mat().size1() == mat().size2());
 	matrix_vector_range<M> diagonal(mat(),0,mat().size1(),0,mat().size1());
 	return diagonal;
 }
@@ -178,10 +178,10 @@ temporary_proxy< typename detail::matrix_range_optimizer<M>::type > subrange(
 	std::size_t start1, std::size_t stop1,
 	std::size_t start2, std::size_t stop2
 ){
-	RANGE_CHECK(start1 <= stop1);
-	RANGE_CHECK(start2 <= stop2);
-	SIZE_CHECK(stop1 <= expression().size1());
-	SIZE_CHECK(stop2 <= expression().size2());
+	REMORA_RANGE_CHECK(start1 <= stop1);
+	REMORA_RANGE_CHECK(start2 <= stop2);
+	REMORA_SIZE_CHECK(stop1 <= expression().size1());
+	REMORA_SIZE_CHECK(stop2 <= expression().size2());
 	return detail::matrix_range_optimizer<M>::create(expression(), start1, stop1, start2, stop2);
 }
 template<class M, class Device>
@@ -190,10 +190,10 @@ typename detail::matrix_range_optimizer<typename const_expression<M>::type>::typ
 	std::size_t start1, std::size_t stop1,
 	std::size_t start2, std::size_t stop2
 ){
-	RANGE_CHECK(start1 <= stop1);
-	RANGE_CHECK(start2 <= stop2);
-	SIZE_CHECK(stop1 <= expression().size1());
-	SIZE_CHECK(stop2 <= expression().size2());
+	REMORA_RANGE_CHECK(start1 <= stop1);
+	REMORA_RANGE_CHECK(start2 <= stop2);
+	REMORA_SIZE_CHECK(stop1 <= expression().size1());
+	REMORA_SIZE_CHECK(stop2 <= expression().size2());
 	return detail::matrix_range_optimizer<typename const_expression<M>::type>::create(expression(), start1, stop1, start2, stop2);
 }
 
@@ -211,8 +211,8 @@ auto rows(
 	matrix_expression<M, Device>& expression, 
 	std::size_t start, std::size_t stop
 ) -> decltype(subrange(expression, start, stop, 0,expression().size2())){
-	RANGE_CHECK(start <= stop);
-	SIZE_CHECK(stop <= expression().size1());
+	REMORA_RANGE_CHECK(start <= stop);
+	REMORA_SIZE_CHECK(stop <= expression().size1());
 	return subrange(expression, start, stop, 0,expression().size2());
 }
 
@@ -221,8 +221,8 @@ auto rows(
 	matrix_expression<M, Device> const& expression, 
 	std::size_t start, std::size_t stop
 ) -> decltype(subrange(expression, start, stop, 0,expression().size2())){
-	RANGE_CHECK(start <= stop);
-	SIZE_CHECK(stop <= expression().size1());
+	REMORA_RANGE_CHECK(start <= stop);
+	REMORA_SIZE_CHECK(stop <= expression().size1());
 	return subrange(expression, start, stop, 0,expression().size2());
 }
 
@@ -239,8 +239,8 @@ auto columns(
 	matrix_expression<M, Device>& expression, 
 	typename M::size_type start, typename M::size_type stop
 ) -> decltype(subrange(expression, 0,expression().size1(), start, stop)){
-	RANGE_CHECK(start <= stop);
-	SIZE_CHECK(stop <= expression().size2());
+	REMORA_RANGE_CHECK(start <= stop);
+	REMORA_SIZE_CHECK(stop <= expression().size2());
 	return subrange(expression, 0,expression().size1(), start, stop);
 }
 
@@ -249,8 +249,8 @@ auto columns(
 	matrix_expression<M, Device> const& expression, 
 	typename M::size_type start, typename M::size_type stop
 ) -> decltype(subrange(expression, 0,expression().size1(), start, stop)){
-	RANGE_CHECK(start <= stop);
-	SIZE_CHECK(stop <= expression().size2());
+	REMORA_RANGE_CHECK(start <= stop);
+	REMORA_SIZE_CHECK(stop <= expression().size2());
 	return subrange(expression, 0,expression().size1(), start, stop);
 }
 

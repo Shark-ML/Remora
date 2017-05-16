@@ -91,9 +91,9 @@ void gemm(
 	matrix_expression<M, cpu_tag>& m,
 	typename M::value_type alpha
 ) {
-	SIZE_CHECK(m().size1() == e1().size1());
-	SIZE_CHECK(m().size2() == e2().size2());
-	SIZE_CHECK(e1().size2() == e2().size1());
+	REMORA_SIZE_CHECK(m().size1() == e1().size1());
+	REMORA_SIZE_CHECK(m().size2() == e2().size2());
+	REMORA_SIZE_CHECK(e1().size2() == e2().size1());
 
 	typedef typename M::orientation ResultOrientation;
 	typedef typename E1::orientation E1Orientation;

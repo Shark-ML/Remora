@@ -57,8 +57,8 @@ void trsv(
 	matrix_expression<MatA, cpu_tag> const &A, 
 	vector_expression<V, cpu_tag> &b
 ){
-	SIZE_CHECK(A().size1() == A().size2());
-	SIZE_CHECK(A().size1() == b().size());
+	REMORA_SIZE_CHECK(A().size1() == A().size2());
+	REMORA_SIZE_CHECK(A().size1() == b().size());
 	
 	bindings::trsv<Triangular, Side>(A,b,typename bindings::has_optimized_trsv<MatA, V>::type());
 }

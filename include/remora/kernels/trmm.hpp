@@ -55,8 +55,8 @@ void trmm(
 	matrix_expression<MatA, cpu_tag> const &A, 
 	matrix_expression<MatB, cpu_tag>& B
 ){
-	SIZE_CHECK(A().size1() == A().size2());
-	SIZE_CHECK(A().size1() == B().size1());
+	REMORA_SIZE_CHECK(A().size1() == A().size2());
+	REMORA_SIZE_CHECK(A().size1() == B().size1());
 	
 	bindings::trmm<Upper,Unit>(A,B,typename bindings::has_optimized_trmm<MatA, MatB>::type());
 }

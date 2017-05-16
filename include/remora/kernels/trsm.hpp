@@ -57,9 +57,9 @@ void trsm(
 	matrix_expression<MatA, cpu_tag> const &A, 
 	matrix_expression<MatB, cpu_tag> &B
 ){
-	SIZE_CHECK(A().size1() == A().size2());
-	SIZE_CHECK(!Side::is_left || A().size2() == B().size1());
-	SIZE_CHECK(Side::is_left || A().size2() == B().size2());
+	REMORA_SIZE_CHECK(A().size1() == A().size2());
+	REMORA_SIZE_CHECK(!Side::is_left || A().size2() == B().size1());
+	REMORA_SIZE_CHECK(Side::is_left || A().size2() == B().size2());
 	
 	bindings::trsm<Triangular, Side>(A,B,typename bindings::has_optimized_trsm<MatA, MatB>::type());
 }

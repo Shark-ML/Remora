@@ -43,8 +43,8 @@ void trmm(
 	matrix_expression<MatA, gpu_tag> const& A, 
 	matrix_expression<MatC, gpu_tag>& C
 ){
-	SIZE_CHECK(A().size1() == A().size2());
-	SIZE_CHECK(A().size2() == C().size1());
+	REMORA_SIZE_CHECK(A().size1() == A().size2());
+	REMORA_SIZE_CHECK(A().size2() == C().size1());
 	
 	static_assert(std::is_same<typename MatA::value_type, typename MatC::value_type>::value, "[trmm] Arguments do not have same element type");
 	static_assert(std::is_same<typename MatA::evaluation_category::tag, dense_tag>::value, "[trmm] A is not dense");

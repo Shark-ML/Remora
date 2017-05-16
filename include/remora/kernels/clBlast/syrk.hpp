@@ -44,8 +44,8 @@ void syrk(
 	matrix_expression<MatC, gpu_tag>& C, 
 	typename MatC::value_type const& alpha
 ) {
-	SIZE_CHECK(A().size1() == C().size1());
-	SIZE_CHECK(C().size1()== C().size2());
+	REMORA_SIZE_CHECK(A().size1() == C().size1());
+	REMORA_SIZE_CHECK(C().size1()== C().size2());
 	
 	static_assert(std::is_same<typename MatA::value_type, typename MatC::value_type>::value, "[syrk] Arguments do not have same element type");
 	static_assert(std::is_same<typename MatA::evaluation_category::tag, dense_tag>::value, "[syrk] A is not dense");

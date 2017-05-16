@@ -48,8 +48,8 @@ void gemv(
 	vector_expression<VecV, gpu_tag>& v, 
 	typename VecV::value_type const& alpha
 ) {
-	SIZE_CHECK(A().size1() == v().size());
-	SIZE_CHECK(A().size2() == x().size());
+	REMORA_SIZE_CHECK(A().size1() == v().size());
+	REMORA_SIZE_CHECK(A().size2() == x().size());
 	
 	
 	typedef typename VecV::value_type value_type;

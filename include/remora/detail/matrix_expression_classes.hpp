@@ -301,20 +301,20 @@ public:
 	// Element lookup
 	
 	const_row_iterator row_begin(size_type i) const {
-		RANGE_CHECK( i < size1());
+		REMORA_RANGE_CHECK( i < size1());
 		return m_vector.begin();
 	}
 	const_row_iterator row_end(size_type i) const {
-		RANGE_CHECK( i < size1());
+		REMORA_RANGE_CHECK( i < size1());
 		return m_vector.end();
 	}
 	
 	const_column_iterator column_begin(size_type j) const {
-		RANGE_CHECK( j < size2());
+		REMORA_RANGE_CHECK( j < size2());
 		return const_column_iterator(m_vector(j),0);
 	}
 	const_column_iterator column_end(size_type j) const {
-		RANGE_CHECK( j < size2());
+		REMORA_RANGE_CHECK( j < size2());
 		return const_column_iterator(m_vector(j),size1());
 	}
 private:
@@ -890,7 +890,7 @@ public:
 	// Construction and destruction
 	explicit dense_triangular_proxy(matrix_closure_type const& m)
 	: m_expression(m) {
-		SIZE_CHECK(m.size1() == m.size2());
+		REMORA_SIZE_CHECK(m.size1() == m.size2());
 	}
 
 	// Expression accessors

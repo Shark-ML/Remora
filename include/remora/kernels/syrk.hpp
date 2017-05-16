@@ -58,8 +58,8 @@ void syrk(
 	matrix_expression<M, cpu_tag>& m,
 	typename M::value_type alpha
 ) {
-	SIZE_CHECK(m().size1() == m().size2());
-	SIZE_CHECK(m().size1() == e().size1());
+	REMORA_SIZE_CHECK(m().size1() == m().size2());
+	REMORA_SIZE_CHECK(m().size1() == e().size1());
 	
 	bindings::syrk<Upper>(e, m, alpha,
 		typename bindings::has_optimized_syrk<M,E>::type()

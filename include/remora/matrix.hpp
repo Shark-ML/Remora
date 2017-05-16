@@ -82,7 +82,7 @@ public:
 	, m_data(m_size1*m_size2){
 		auto pos = list.begin();
 		for(std::size_t i = 0; i != list.size(); ++i,++pos){
-			SIZE_CHECK(pos->size() == m_size2);
+			REMORA_SIZE_CHECK(pos->size() == m_size2);
 			std::copy(pos->begin(),pos->end(),row_begin(i));
 		}
 	}
@@ -211,19 +211,19 @@ public:
 
 	// Element access
 	const_reference operator()(size_type i, size_type j) const {
-		SIZE_CHECK(i < size1());
-		SIZE_CHECK(j < size2());
+		REMORA_SIZE_CHECK(i < size1());
+		REMORA_SIZE_CHECK(j < size2());
 		return m_data[orientation::element(i, m_size1, j, m_size2)];
 	}
 	reference operator()(size_type i, size_type j) {
-		SIZE_CHECK(i < size1());
-		SIZE_CHECK(j < size2());
+		REMORA_SIZE_CHECK(i < size1());
+		REMORA_SIZE_CHECK(j < size2());
 		return m_data[orientation::element(i, m_size1, j, m_size2)];
 	}
 	
 	void set_element(size_type i, size_type j,value_type t){
-		SIZE_CHECK(i < size1());
-		SIZE_CHECK(j < size2());
+		REMORA_SIZE_CHECK(i < size1());
+		REMORA_SIZE_CHECK(j < size2());
 		m_data[orientation::element(i, m_size1, j, m_size2)]  = t;
 	}
 
@@ -238,9 +238,9 @@ public:
 	}
 	
 	friend void swap_rows(matrix& a, size_type i, matrix& b, size_type j){
-		SIZE_CHECK(i < a.size1());
-		SIZE_CHECK(j < b.size1());
-		SIZE_CHECK(a.size2() == b.size2());
+		REMORA_SIZE_CHECK(i < a.size1());
+		REMORA_SIZE_CHECK(j < b.size1());
+		REMORA_SIZE_CHECK(a.size2() == b.size2());
 		for(std::size_t k = 0; k != a.size2(); ++k){
 			std::swap(a(i,k),b(j,k));
 		}
@@ -255,9 +255,9 @@ public:
 	
 	
 	friend void swap_columns(matrix& a, size_type i, matrix& b, size_type j){
-		SIZE_CHECK(i < a.size2());
-		SIZE_CHECK(j < b.size2());
-		SIZE_CHECK(a.size1() == b.size1());
+		REMORA_SIZE_CHECK(i < a.size2());
+		REMORA_SIZE_CHECK(j < b.size2());
+		REMORA_SIZE_CHECK(a.size1() == b.size1());
 		for(std::size_t k = 0; k != a.size1(); ++k){
 			std::swap(a(k,i),b(k,j));
 		}
@@ -306,7 +306,7 @@ public:
 	
 	//sparse interface
 	major_iterator set_element(major_iterator pos, size_type index, value_type value) {
-		RANGE_CHECK(pos.index() == index);
+		REMORA_RANGE_CHECK(pos.index() == index);
 		*pos=value;
 		return pos;
 	}

@@ -360,7 +360,7 @@ public:
 
 	// Construction and destruction
 	matrix_row(matrix_closure_type const& expression, size_type i):m_expression(expression), m_i(i) {
-		SIZE_CHECK (i < expression.size1());
+		REMORA_SIZE_CHECK (i < expression.size1());
 	}
 	
 	template<class E>
@@ -471,7 +471,7 @@ private:
 	}
 	//dense row major case
 	iterator set_element(iterator pos, size_type index, value_type value, column_major ) {
-		RANGE_CHECK(pos.index() == index);
+		REMORA_RANGE_CHECK(pos.index() == index);
 		*pos = value;
 		return pos;
 	}
@@ -509,11 +509,11 @@ public:
 	// Construction and destruction
 	matrix_vector_range(matrix_closure_type expression, size_type start1, size_type end1, size_type start2, size_type end2)
 	:m_expression(expression), m_start1(start1), m_start2(start2), m_size(end1-start1){
-		SIZE_CHECK(start1 <= expression.size1());
-		SIZE_CHECK(end1 <= expression.size1());
-		SIZE_CHECK(start2 <= expression.size2());
-		SIZE_CHECK(end2 <= expression.size2());
-		SIZE_CHECK(m_size == end2-start2);
+		REMORA_SIZE_CHECK(start1 <= expression.size1());
+		REMORA_SIZE_CHECK(end1 <= expression.size1());
+		REMORA_SIZE_CHECK(start2 <= expression.size2());
+		REMORA_SIZE_CHECK(end2 <= expression.size2());
+		REMORA_SIZE_CHECK(m_size == end2-start2);
 	}
 	
 	template<class E>
@@ -731,12 +731,12 @@ public:
 
 	matrix_range(matrix_closure_type expression, size_type start1, size_type end1, size_type start2, size_type end2)
 	:m_expression(expression), m_start1(start1), m_size1(end1-start1), m_start2(start2), m_size2(end2-start2){
-		SIZE_CHECK(start1 <= expression.size1());
-		SIZE_CHECK(end1 <= expression.size1());
-		SIZE_CHECK(start2 <= expression.size2());
-		SIZE_CHECK(end2 <= expression.size2());
-		SIZE_CHECK(start1 <= end1);
-		SIZE_CHECK(start2 <= end2);
+		REMORA_SIZE_CHECK(start1 <= expression.size1());
+		REMORA_SIZE_CHECK(end1 <= expression.size1());
+		REMORA_SIZE_CHECK(start2 <= expression.size2());
+		REMORA_SIZE_CHECK(end2 <= expression.size2());
+		REMORA_SIZE_CHECK(start1 <= end1);
+		REMORA_SIZE_CHECK(start2 <= end2);
 	}
 	
 	//conversion closure->const_closure
@@ -1019,14 +1019,14 @@ public:
 	// -------
 	
 	self_type& operator = (self_type const& e) {
-		SIZE_CHECK(size1() == e().size1());
-		SIZE_CHECK(size2() == e().size2());
+		REMORA_SIZE_CHECK(size1() == e().size1());
+		REMORA_SIZE_CHECK(size2() == e().size2());
 		return assign(*this, typename matrix_temporary<self_type>::type(e));
 	}
 	template<class E>
 	self_type& operator = (matrix_expression<E, cpu_tag> const& e) {
-		SIZE_CHECK(size1() == e().size1());
-		SIZE_CHECK(size2() == e().size2());
+		REMORA_SIZE_CHECK(size1() == e().size1());
+		REMORA_SIZE_CHECK(size2() == e().size2());
 		return assign(*this, typename matrix_temporary<self_type>::type(e));
 	}
 	
@@ -1082,7 +1082,7 @@ public:
 	typedef typename major_iterator<self_type>::type major_iterator;
 	
 	major_iterator set_element(major_iterator pos, size_type index, value_type value) {
-		RANGE_CHECK(pos.index() == index);
+		REMORA_RANGE_CHECK(pos.index() == index);
 		*pos=value;
 		return pos;
 	}

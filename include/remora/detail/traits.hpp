@@ -190,8 +190,8 @@ struct transposed_matrix_temporary{
 namespace detail{
 	template<class Matrix, class Device>
 	void ensure_size(matrix_expression<Matrix, Device>& mat,std::size_t rows, std::size_t columns){
-		SIZE_CHECK(mat().size1() == rows);
-		SIZE_CHECK(mat().size2() == columns);
+		REMORA_SIZE_CHECK(mat().size1() == rows);
+		REMORA_SIZE_CHECK(mat().size2() == columns);
 	}
 	template<class Matrix, class Device>
 	void ensure_size(matrix_container<Matrix, Device>& mat,std::size_t rows, std::size_t columns){
@@ -199,7 +199,7 @@ namespace detail{
 	}
 	template<class Vector, class Device>
 	void ensure_size(vector_expression<Vector, Device>& vec,std::size_t size){
-		SIZE_CHECK(vec().size() == size);
+		REMORA_SIZE_CHECK(vec().size() == size);
 	}
 	template<class Vector, class Device>
 	void ensure_size(vector_container<Vector, Device>& vec,std::size_t size){

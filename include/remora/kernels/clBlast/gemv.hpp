@@ -45,8 +45,8 @@ void gemv(
 	vector_expression<VecV, gpu_tag>& v, 
 	typename VecV::value_type const& alpha
 ) {
-	SIZE_CHECK(A().size1() == v().size());
-	SIZE_CHECK(A().size2() == x().size());
+	REMORA_SIZE_CHECK(A().size1() == v().size());
+	REMORA_SIZE_CHECK(A().size2() == x().size());
 	
 	static_assert(std::is_same<typename MatA::value_type, typename VecX::value_type>::value, "[gemv] Arguments do not have same element type");
 	static_assert(std::is_same<typename MatA::value_type, typename VecV::value_type>::value, "[gemv] Arguments do not have same element type");	
