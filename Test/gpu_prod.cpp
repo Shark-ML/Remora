@@ -3,9 +3,6 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/matrix_expression.hpp>
-#include <remora/gpu/vector.hpp>
-#include <remora/gpu/matrix.hpp>
-#include <remora/gpu/copy.hpp>
 #include <remora/vector.hpp>
 #include <remora/matrix.hpp>
 
@@ -51,34 +48,34 @@ BOOST_AUTO_TEST_CASE( Remora_gpu_prod_vector_dense ){
 		arg2_cpu(j)  = 0.1*j+0.1;
 	}
 	
-	gpu::matrix<float,row_major> arg1rm = gpu::copy_to_gpu(arg1rm_cpu);
-	gpu::matrix<float,column_major> arg1cm = gpu::copy_to_gpu(arg1cm_cpu);
-	gpu::matrix<float,row_major> arg1rmt = gpu::copy_to_gpu(arg1rmt_cpu);
-	gpu::matrix<float,column_major> arg1cmt = gpu::copy_to_gpu(arg1cmt_cpu);
-	gpu::vector<float> arg2 = gpu::copy_to_gpu(arg2_cpu);
+	matrix<float,row_major, gpu_tag> arg1rm = copy_to_gpu(arg1rm_cpu);
+	matrix<float,column_major, gpu_tag> arg1cm = copy_to_gpu(arg1cm_cpu);
+	matrix<float,row_major, gpu_tag> arg1rmt = copy_to_gpu(arg1rmt_cpu);
+	matrix<float,column_major, gpu_tag> arg1cmt = copy_to_gpu(arg1cmt_cpu);
+	vector<float, gpu_tag> arg2 = copy_to_gpu(arg2_cpu);
 	std::cout<<"\nchecking dense matrix-vector plusassign multiply"<<std::endl;
 	//test first expressions of the form A += alpha*B*C 
 	{
 		std::cout<<"row major Ax"<<std::endl;
-		gpu::vector<float> result(rows,1.5);
+		vector<float, gpu_tag> result(rows,1.5);
 		noalias(result) += -2*prod(arg1rm,arg2);
 		checkMatrixVectorMultiply(arg1rm,arg2,result,-2.0,1.5);
 	}
 	{
 		std::cout<<"column major Ax"<<std::endl;
-		gpu::vector<float> result(rows,1.5);
+		vector<float, gpu_tag> result(rows,1.5);
 		noalias(result) += -2*prod(arg1cm,arg2);
 		checkMatrixVectorMultiply(arg1cm,arg2,result,-2.0,1.5);
 	}
 	{
 		std::cout<<"row major xA"<<std::endl;
-		gpu::vector<float> result(rows,1.5);
+		vector<float, gpu_tag> result(rows,1.5);
 		noalias(result) += -2*prod(arg2,arg1rmt);
 		checkMatrixVectorMultiply(arg1rm,arg2,result,-2.0,1.5);
 	}
 	{
 		std::cout<<"column major xA"<<std::endl;
-		gpu::vector<float> result(rows,1.5);
+		vector<float, gpu_tag> result(rows,1.5);
 		noalias(result) += -2*prod(arg2,arg1cmt);
 		checkMatrixVectorMultiply(arg1cm,arg2,result,-2.0,1.5);
 	}
@@ -86,25 +83,25 @@ BOOST_AUTO_TEST_CASE( Remora_gpu_prod_vector_dense ){
 	//test expressions of the form A=B*C
 	{
 		std::cout<<"row major Ax"<<std::endl;
-		gpu::vector<float> result(rows,1.5);
+		vector<float, gpu_tag> result(rows,1.5);
 		noalias(result) = -2*prod(arg1rm,arg2);
 		checkMatrixVectorMultiply(arg1rm,arg2,result,-2.0,0);
 	}
 	{
 		std::cout<<"column major Ax"<<std::endl;
-		gpu::vector<float> result(rows,1.5);
+		vector<float, gpu_tag> result(rows,1.5);
 		noalias(result) = -2*prod(arg1cm,arg2);
 		checkMatrixVectorMultiply(arg1cm,arg2,result,-2.0,0);
 	}
 	{
 		std::cout<<"row major xA"<<std::endl;
-		gpu::vector<float> result(rows,1.5);
+		vector<float, gpu_tag> result(rows,1.5);
 		noalias(result) = -2*prod(arg2,arg1rmt);
 		checkMatrixVectorMultiply(arg1rm,arg2,result,-2.0,0);
 	}
 	{
 		std::cout<<"column major xA"<<std::endl;
-		gpu::vector<float> result(rows,1.5);
+		vector<float, gpu_tag> result(rows,1.5);
 		noalias(result) = -2*prod(arg2,arg1cmt);
 		checkMatrixVectorMultiply(arg1cm,arg2,result,-2.0,0);
 	}
@@ -151,59 +148,59 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(Remora_prod_gpu_matrix_dense_dense, Orientation,re
 		}
 	}
 	
-	gpu::matrix<float,row_major> arg1rm = gpu::copy_to_gpu(arg1rm_cpu);
-	gpu::matrix<float,column_major> arg1cm = gpu::copy_to_gpu(arg1cm_cpu);
-	gpu::matrix<float,row_major> arg2rm = gpu::copy_to_gpu(arg2rm_cpu);
-	gpu::matrix<float,column_major> arg2cm = gpu::copy_to_gpu(arg2cm_cpu);
+	matrix<float,row_major, gpu_tag> arg1rm = copy_to_gpu(arg1rm_cpu);
+	matrix<float,column_major, gpu_tag> arg1cm = copy_to_gpu(arg1cm_cpu);
+	matrix<float,row_major, gpu_tag> arg2rm = copy_to_gpu(arg2rm_cpu);
+	matrix<float,column_major, gpu_tag> arg2cm = copy_to_gpu(arg2cm_cpu);
 	
 	std::cout<<"\nchecking dense-dense matrix-matrix plusassign multiply"<<std::endl;
 	//test first expressions of the form A+=B*C
 	{
 		std::cout<<"rrr"<<std::endl;
-		gpu::matrix<float,row_major> resultrm(rows,columns,1.5);
+		matrix<float,row_major, gpu_tag> resultrm(rows,columns,1.5);
 		noalias(resultrm) += -2.0 * prod(arg1rm,arg2rm);
 		checkMatrixMatrixMultiply(arg1rm,arg2rm,resultrm,-2.0,1.5);
 	}
 	{
 		std::cout<<"rrc"<<std::endl;
-		gpu::matrix<float,column_major> resultcm(rows,columns,1.5);
+		matrix<float,column_major, gpu_tag> resultcm(rows,columns,1.5);
 		noalias(resultcm) += -2.0 * prod(arg1rm,arg2rm);
 		checkMatrixMatrixMultiply(arg1rm,arg2rm,resultcm,-2.0,1.5);
 	}
 	{
 		std::cout<<"rcr"<<std::endl;
-		gpu::matrix<float,row_major> resultrm(rows,columns,1.5);
+		matrix<float,row_major, gpu_tag> resultrm(rows,columns,1.5);
 		noalias(resultrm) += -2.0 * prod(arg1rm,arg2cm);
 		checkMatrixMatrixMultiply(arg1rm,arg2cm,resultrm,-2.0,1.5);
 	}
 	{
 		std::cout<<"rcc"<<std::endl;
-		gpu::matrix<float,column_major> resultcm(rows,columns,1.5);
+		matrix<float,column_major, gpu_tag> resultcm(rows,columns,1.5);
 		noalias(resultcm) += -2.0 * prod(arg1rm,arg2cm);
 		checkMatrixMatrixMultiply(arg1rm,arg2cm,resultcm,-2.0,1.5);
 	}
 	
 	{
 		std::cout<<"crr"<<std::endl;
-		gpu::matrix<float,row_major> resultrm(rows,columns,1.5);
+		matrix<float,row_major, gpu_tag> resultrm(rows,columns,1.5);
 		noalias(resultrm) += -2.0 * prod(arg1cm,arg2rm);
 		checkMatrixMatrixMultiply(arg1cm,arg2rm,resultrm,-2.0,1.5);
 	}
 	{
 		std::cout<<"crc"<<std::endl;
-		gpu::matrix<float,column_major> resultcm(rows,columns,1.5);
+		matrix<float,column_major, gpu_tag> resultcm(rows,columns,1.5);
 		noalias(resultcm) += -2.0 * prod(arg1cm,arg2rm);
 		checkMatrixMatrixMultiply(arg1cm,arg2rm,resultcm,-2.0,1.5);
 	}
 	{
 		std::cout<<"ccr"<<std::endl;
-		gpu::matrix<float,row_major> resultrm(rows,columns,1.5);
+		matrix<float,row_major, gpu_tag> resultrm(rows,columns,1.5);
 		noalias(resultrm) += -2.0 * prod(arg1cm,arg2cm);
 		checkMatrixMatrixMultiply(arg1cm,arg2cm,resultrm,-2.0,1.5);
 	}
 	{
 		std::cout<<"ccc"<<std::endl;
-		gpu::matrix<float,column_major> resultcm(rows,columns,1.5);
+		matrix<float,column_major, gpu_tag> resultcm(rows,columns,1.5);
 		noalias(resultcm) += -2.0 * prod(arg1cm,arg2cm);
 		checkMatrixMatrixMultiply(arg1cm,arg2cm,resultcm,-2.0,1.5);
 	}
@@ -212,50 +209,50 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(Remora_prod_gpu_matrix_dense_dense, Orientation,re
 	//testexpressions of the form A=B*C
 	{
 		std::cout<<"rrr"<<std::endl;
-		gpu::matrix<float,row_major> resultrm(rows,columns,1.5);
+		matrix<float,row_major, gpu_tag> resultrm(rows,columns,1.5);
 		noalias(resultrm) = -2.0 * prod(arg1rm,arg2rm);
 		checkMatrixMatrixMultiply(arg1rm,arg2rm,resultrm,-2.0,0);
 	}
 	{
 		std::cout<<"rrc"<<std::endl;
-		gpu::matrix<float,column_major> resultcm(rows,columns,1.5);
+		matrix<float,column_major, gpu_tag> resultcm(rows,columns,1.5);
 		noalias(resultcm) = -2.0 * prod(arg1rm,arg2rm);
 		checkMatrixMatrixMultiply(arg1rm,arg2rm,resultcm,-2.0,0);
 	}
 	{
 		std::cout<<"rcr"<<std::endl;
-		gpu::matrix<float,row_major> resultrm(rows,columns,1.5);
+		matrix<float,row_major, gpu_tag> resultrm(rows,columns,1.5);
 		noalias(resultrm) = -2.0 * prod(arg1rm,arg2cm);
 		checkMatrixMatrixMultiply(arg1rm,arg2cm,resultrm,-2.0,0);
 	}
 	{
 		std::cout<<"rcc"<<std::endl;
-		gpu::matrix<float,column_major> resultcm(rows,columns,1.5);
+		matrix<float,column_major, gpu_tag> resultcm(rows,columns,1.5);
 		noalias(resultcm) = -2.0 * prod(arg1rm,arg2cm);
 		checkMatrixMatrixMultiply(arg1rm,arg2cm,resultcm,-2.0,0);
 	}
 	
 	{
 		std::cout<<"crr"<<std::endl;
-		gpu::matrix<float,row_major> resultrm(rows,columns,1.5);
+		matrix<float,row_major, gpu_tag> resultrm(rows,columns,1.5);
 		noalias(resultrm) = -2.0 * prod(arg1cm,arg2rm);
 		checkMatrixMatrixMultiply(arg1cm,arg2rm,resultrm,-2.0,0);
 	}
 	{
 		std::cout<<"crc"<<std::endl;
-		gpu::matrix<float,column_major> resultcm(rows,columns,1.5);
+		matrix<float,column_major, gpu_tag> resultcm(rows,columns,1.5);
 		noalias(resultcm) = -2.0 * prod(arg1cm,arg2rm);
 		checkMatrixMatrixMultiply(arg1cm,arg2rm,resultcm,-2.0,0);
 	}
 	{
 		std::cout<<"ccr"<<std::endl;
-		gpu::matrix<float,row_major> resultrm(rows,columns,1.5);
+		matrix<float,row_major, gpu_tag> resultrm(rows,columns,1.5);
 		noalias(resultrm) = -2.0 * prod(arg1cm,arg2cm);
 		checkMatrixMatrixMultiply(arg1cm,arg2cm,resultrm,-2.0,0);
 	}
 	{
 		std::cout<<"ccc"<<std::endl;
-		gpu::matrix<float,column_major> resultcm(rows,columns,1.5);
+		matrix<float,column_major, gpu_tag> resultcm(rows,columns,1.5);
 		noalias(resultcm) = -2.0 * prod(arg1cm,arg2cm);
 		checkMatrixMatrixMultiply(arg1cm,arg2cm,resultcm,-2.0,0);
 	}

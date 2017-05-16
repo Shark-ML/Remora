@@ -6,8 +6,6 @@
 
 #define BOOST_COMPUTE_DEBUG_KERNEL_COMPILATION
 #include <remora/kernels/syrk.hpp>
-#include <remora/gpu/matrix.hpp>
-#include <remora/gpu/copy.hpp>
 #include <remora/matrix.hpp>
 #include <remora/matrix_expression.hpp>
 
@@ -63,31 +61,31 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(syrk_test, Orientation,result_orientations) {
 		}
 	}
 	
-	gpu::matrix<float,row_major> argrm = gpu::copy_to_gpu(arg_cpu);
-	gpu::matrix<float,column_major> argcm = gpu::copy_to_gpu(arg_cpu);
+	matrix<float,row_major, gpu_tag> argrm = copy_to_gpu(arg_cpu);
+	matrix<float,column_major, gpu_tag> argcm = copy_to_gpu(arg_cpu);
 
 	std::cout << "\nchecking syrk V+=AA^T" << std::endl;
 	{
 		std::cout<<"row major A, lower V"<<std::endl;
-		gpu::matrix<float,Orientation> result(dims,dims,3.0);
+		matrix<float, Orientation, gpu_tag> result(dims,dims,3.0);
 		kernels::syrk<false>(argrm,result, 2.0);
 		checkSyrk(argrm,result, 3.0, 2.0,false);
 	}
 	{
 		std::cout<<"row major A, upper V"<<std::endl;
-		gpu::matrix<float,Orientation> result(dims,dims,3.0);
+		matrix<float, Orientation, gpu_tag> result(dims,dims,3.0);
 		kernels::syrk<true>(argrm,result, 2.0);
 		checkSyrk(argrm,result, 3.0, 2.0,true);
 	}
 	{
 		std::cout<<"column major A, lower V"<<std::endl;
-		gpu::matrix<float,Orientation> result(dims,dims,3.0);
+		matrix<float, Orientation, gpu_tag> result(dims,dims,3.0);
 		kernels::syrk<false>(argcm,result, 2.0);
 		checkSyrk(argrm,result, 3.0, 2.0,false);
 	}
 	{
 		std::cout<<"column major A, upper V"<<std::endl;
-		gpu::matrix<float,Orientation> result(dims,dims,3.0);
+		matrix<float, Orientation, gpu_tag> result(dims,dims,3.0);
 		kernels::syrk<true>(argcm,result, 2.0);
 		checkSyrk(argrm,result, 3.0, 2.0,true);
 	}

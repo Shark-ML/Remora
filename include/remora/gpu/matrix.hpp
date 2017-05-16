@@ -29,13 +29,12 @@
 #define REMORA_GPU_MATRIX_HPP
 
 #include "traits.hpp"
-//~ #include "scalar.hpp"
 #include "../assignment.hpp"
 #include "../detail/matrix_proxy_classes.hpp"
 #include <boost/compute/container/vector.hpp>
 #include <boost/compute/iterator/strided_iterator.hpp>
 
-namespace remora{namespace gpu{
+namespace remora{
 	
 namespace detail{
 template<class Arg1, class Arg2, class T>
@@ -68,8 +67,8 @@ boost::compute::detail::meta_kernel& operator<< (
 ///
 /// \tparam T the type of object stored in the matrix (like double, float, complex, etc...)
 /// \tparam L the storage organization. It can be either \c row_major or \c column_major. Default is \c row_major
-template<class T, class L = row_major>
-class matrix: public matrix_container<matrix<T,L>, gpu_tag > {
+template<class T, class L>
+class matrix<T,L, gpu_tag> : public matrix_container<matrix<T,L, gpu_tag>, gpu_tag > {
 private:
 	template<class IndexExpr1, class IndexExpr2>
 	detail::induced_matrix_element<IndexExpr1, IndexExpr2, T> get_element(
@@ -87,7 +86,6 @@ private:
 	}
 public:
 	typedef T value_type;
-	//~ typedef scalar<T> value_type;
 	typedef value_type const_reference;
 	typedef value_type reference;
 	typedef std::size_t size_type;
@@ -323,17 +321,7 @@ private:
 	size_type m_size1;
 	size_type m_size2;
 };
-}
 
-template<class T, class L>
-struct matrix_temporary_type<T,L,dense_tag, gpu_tag>{
-	typedef gpu::matrix<T, L> type;
-};
-
-template<class T>
-struct matrix_temporary_type<T,unknown_orientation,dense_tag, gpu_tag>{
-	typedef gpu::matrix<T, row_major> type;
-};
 }
 
 #endif

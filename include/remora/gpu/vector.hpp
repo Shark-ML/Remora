@@ -28,14 +28,16 @@
 #ifndef REMORA_GPU_VECTOR_HPP
 #define REMORA_GPU_VECTOR_HPP
 
+//INCLUDED BY ../vector.hpp!
+
 #include "traits.hpp"
 #include "../detail/vector_proxy_classes.hpp"
 #include "../assignment.hpp"
 #include <boost/compute/container/vector.hpp>
 #include <boost/compute/algorithm/fill.hpp>
 
-namespace remora{ namespace gpu{
-	
+namespace remora{
+
 namespace detail{
 template<class Arg, class T>
 struct induced_vector_element{
@@ -62,10 +64,9 @@ boost::compute::detail::meta_kernel& operator<< (
 ///
 /// \tparam T type of the objects stored in the vector (like int, double, complex,...)
 template<class T>
-class vector: public vector_container<vector<T>, gpu_tag > {
+class vector<T, gpu_tag>: public vector_container<vector<T, gpu_tag>, gpu_tag > {
 public:
 	typedef T value_type;
-	//~ typedef scalar<T> value_type;
 	typedef value_type const_reference;
 	typedef value_type reference;
 	typedef std::size_t size_type;
@@ -272,13 +273,6 @@ private:
 	boost::compute::vector<T> m_storage;
 	boost::compute::command_queue* m_queue;
 };
-}
-
-template<class T>
-struct vector_temporary_type<T,dense_tag, gpu_tag>{
-	typedef gpu::vector<T> type;
-};
-
 }
 
 #endif

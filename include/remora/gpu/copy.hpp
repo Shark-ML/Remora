@@ -35,7 +35,7 @@
 #include "../detail/matrix_proxy_classes.hpp"
 #include "../detail/matrix_expression_classes.hpp"
 
-namespace remora{ namespace gpu{
+namespace remora{
 
 ///////////////////////////////////////
 //////// Vector Transport
@@ -511,6 +511,7 @@ private:
 ///////////////////////////////////////////////
 ////////Proxy expressions
 ///////////////////////////////////////////////
+
 template<class E>
 vector_transport_to_cpu<E> copy_to_cpu(vector_expression<E, gpu_tag> const& e){
 	return vector_transport_to_cpu<E>(e());
@@ -535,7 +536,25 @@ matrix_transport_to_gpu<E> copy_to_gpu(
 ){
 	return matrix_transport_to_gpu<E>(e(),queue);
 }
+
+
+//moving gpu->gpu is for free
+template<class E>
+E const& copy_to_gpu(
+	vector_expression<E, gpu_tag> const& e,
+	boost::compute::command_queue& queue = boost::compute::system::default_queue()
+){
+	return e();
+}
+
+template<class E>
+E const& copy_to_gpu(
+	matrix_expression<E, gpu_tag> const& e,
+	boost::compute::command_queue& queue = boost::compute::system::default_queue()
+){
+	return e();
+}
 	
-}}
+}
 
 #endif

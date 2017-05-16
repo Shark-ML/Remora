@@ -24,7 +24,7 @@ void checkDenseVectorEquality(
 	
 	//test iterators
 	BOOST_REQUIRE_EQUAL(op_gpu.end() - op_gpu.begin(), op.size());
-	gpu::vector<float> opcopy_gpu(op.size());
+	vector<float, gpu_tag> opcopy_gpu(op.size());
 	boost::compute::copy(op_gpu.begin(),op_gpu.end(),opcopy_gpu.begin());
 	vector<float> opcopy = copy_to_cpu(opcopy_gpu);
 	for(std::size_t i = 0; i != result.size(); ++i){
@@ -35,14 +35,14 @@ void checkDenseVectorEquality(
 std::size_t Dimensions = 20;
 struct VectorProxyFixture
 {
-	gpu::vector<float> denseData;
+	vector<float, gpu_tag> denseData;
 	vector<float> denseData_cpu;
 	
 	VectorProxyFixture():denseData_cpu(Dimensions){
 		for(std::size_t i = 0; i!= Dimensions;++i){
 			denseData_cpu(i) = i+5;
 		}
-		denseData = gpu::copy_to_gpu(denseData_cpu);
+		denseData = copy_to_gpu(denseData_cpu);
 	}
 };
 
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Subrange ){
 			checkDenseVectorEquality(subrange(denseData,rangeBegin,rangeEnd),vTest);
 			
 			//now test whether we can assign to a range like this.
-			gpu::vector<float> newData(Dimensions,1.0);
+			vector<float, gpu_tag> newData(Dimensions,1.0);
 			auto rangeTest = subrange(newData,rangeBegin,rangeEnd);
 			noalias(rangeTest) = subrange(denseData,rangeBegin,rangeEnd);
 			//check that the assignment has been carried out correctly

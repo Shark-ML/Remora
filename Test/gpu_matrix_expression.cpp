@@ -6,9 +6,6 @@
 #include <remora/matrix_expression.hpp>
 #include <remora/vector.hpp>
 #include <remora/matrix.hpp>
-#include <remora/gpu/vector.hpp>
-#include <remora/gpu/matrix.hpp>
-#include <remora/gpu/copy.hpp>
 
 using namespace remora;
 
@@ -27,8 +24,8 @@ void checkDenseExpressionEquality(
 			BOOST_CHECK_CLOSE(result(i,j), op(i,j),1.e-4);
 		}
 	}
-	gpu::vector<float> op_row_gpu(op_gpu().size2());
-	gpu::vector<float> op_col_gpu(op_gpu().size1());
+	vector<float, gpu_tag> op_row_gpu(op_gpu().size2());
+	vector<float, gpu_tag> op_col_gpu(op_gpu().size1());
 	vector<float> op_row(op_gpu().size2());
 	vector<float> op_col(op_gpu().size2());
 	//~ //check that row iterator work
@@ -93,8 +90,8 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Outer_Prod ){
 			result(i,j)= x_cpu(i)*y_cpu(j);
 		}
 	}
-	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
-	gpu::vector<float> y = gpu::copy_to_gpu(y_cpu);
+	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
+	vector<float, gpu_tag> y = copy_to_gpu(y_cpu);
 	checkDenseExpressionEquality(outer_prod(x,y),result);
 }
 
@@ -110,7 +107,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Vector_Repeater){
 			result(i,j)= x_cpu(j);
 		}
 	}
-	gpu::vector<float> x = gpu::copy_to_gpu(x_cpu);
+	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(repeat(x,Dimension1),result);
 }
 
@@ -128,7 +125,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Unary_Minus )
 			result(i,j)= -x_cpu(i,j);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(-x,result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Multiply )
@@ -142,7 +139,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Multiply )
 			result(i,j)= 5.0* x_cpu(i,j);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(5.0*x,result);
 	checkDenseExpressionEquality(x*5.0,result);
 }
@@ -157,7 +154,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Add )
 			result(i,j)= 5.0 + x_cpu(i,j);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(5.0+x,result);
 	checkDenseExpressionEquality(x+5.0,result);
 }
@@ -174,7 +171,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Subtract )
 			result2(i,j)= x_cpu(i,j) - 5.0;
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(5.0- x,result1);
 	checkDenseExpressionEquality(x - 5.0,result2);
 }
@@ -189,7 +186,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Div )
 			result(i,j)= x_cpu(i,j)/5.0;
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(x/5.0f,result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_elem_inv)
@@ -203,7 +200,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_elem_inv)
 			result(i,j)= 1.0/x_cpu(i,j);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(elem_inv(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Abs )
@@ -217,7 +214,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Abs )
 			result(i,j)= std::abs(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(abs(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Sqr )
@@ -230,7 +227,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Sqr )
 			result(i,j)= x_cpu(i,j) * x_cpu(i,j);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(sqr(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Sqrt )
@@ -244,7 +241,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Sqrt )
 			result(i,j)= std::sqrt(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(sqrt(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Cbrt)
@@ -258,7 +255,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Cbrt)
 			result(i,j)= std::cbrt(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(cbrt(x),result);
 }
 
@@ -273,7 +270,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Exp )
 			result(i,j)= std::exp(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(exp(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Log )
@@ -288,7 +285,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Log )
 			result(i,j)= std::log(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(log(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_sin )
@@ -302,7 +299,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_sin )
 			result(i,j)= std::sin(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(sin(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_cos )
@@ -316,7 +313,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_cos )
 			result(i,j)= std::cos(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(cos(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_tan )
@@ -330,7 +327,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_tan )
 			result(i,j)= std::tan(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(tan(x),result);
 }
 
@@ -345,7 +342,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_asin )
 			result(i,j)= std::asin(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(asin(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_acos )
@@ -359,7 +356,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_acos )
 			result(i,j)= std::acos(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(acos(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_atan )
@@ -373,7 +370,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_atan )
 			result(i,j)= std::atan(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(atan(x),result);
 }
 
@@ -388,7 +385,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_erf )
 			result(i,j)= std::erf(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(erf(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_erfc )
@@ -402,7 +399,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_erfc )
 			result(i,j)= std::erfc(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(erfc(x),result);
 }
 
@@ -417,7 +414,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Tanh )
 			result(i,j)= std::tanh(x_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(tanh(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Sigmoid )
@@ -431,7 +428,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Sigmoid )
 			result(i,j)= 1.0/(1.0+std::exp(-x_cpu(i,j)));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(sigmoid(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_SoftPlus )
@@ -445,7 +442,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_SoftPlus )
 			result(i,j)= std::log(1+std::exp(x_cpu(i,j)));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(softPlus(x),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Pow )
@@ -459,7 +456,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Pow )
 			result(i,j)= std::pow(x_cpu(i,j),3.2);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(pow(x,3.2),result);
 }
 
@@ -474,7 +471,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Unary_Min)
 			result(i,j)= std::min(x_cpu(i,j),5.0f);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(min(x,5.0f),result);
 	checkDenseExpressionEquality(min(5.0f,x),result);
 }
@@ -489,7 +486,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Unary_Max)
 			result(i,j)= std::max(x_cpu(i,j),5.0f);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(max(x,5.0f),result);
 	checkDenseExpressionEquality(max(5.0f,x),result);
 }
@@ -511,8 +508,8 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Plus)
 			result(i,j)= x_cpu(i,j)+y_cpu(i,j);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float> y = gpu::copy_to_gpu(y_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> y = copy_to_gpu(y_cpu);
 	checkDenseExpressionEquality(x+y,result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Minus)
@@ -528,8 +525,8 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Minus)
 			result(i,j)= x_cpu(i,j)-y_cpu(i,j);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float> y = gpu::copy_to_gpu(y_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> y = copy_to_gpu(y_cpu);
 	checkDenseExpressionEquality(x-y,result);
 }
 
@@ -546,8 +543,8 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Multiply)
 			result(i,j)= x_cpu(i,j)*y_cpu(i,j);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float> y = gpu::copy_to_gpu(y_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> y = copy_to_gpu(y_cpu);
 	checkDenseExpressionEquality(x*y,result);
 	checkDenseExpressionEquality(element_prod(x,y),result);
 }
@@ -565,8 +562,8 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Div)
 			result(i,j)= x_cpu(i,j)/y_cpu(i,j);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float> y = gpu::copy_to_gpu(y_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> y = copy_to_gpu(y_cpu);
 	checkDenseExpressionEquality(x/y,result);
 	checkDenseExpressionEquality(element_div(x,y),result);
 }
@@ -583,8 +580,8 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Safe_Div )
 			result(i,j)= ((i+j) % 3 == 0)? 2.0: x_cpu(i,j)/y_cpu(i,j);
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float> y = gpu::copy_to_gpu(y_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> y = copy_to_gpu(y_cpu);
 	checkDenseExpressionEquality(safe_div(x,y,2.0),result);
 }
 
@@ -601,8 +598,8 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Pow)
 			result(i,j)= std::pow(x_cpu(i,j),y_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float> y = gpu::copy_to_gpu(y_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> y = copy_to_gpu(y_cpu);
 	checkDenseExpressionEquality(pow(x,y),result);
 }
 
@@ -619,8 +616,8 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Max)
 			result(i,j)= std::max(x_cpu(i,j),y_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float> y = gpu::copy_to_gpu(y_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> y = copy_to_gpu(y_cpu);
 	checkDenseExpressionEquality(max(x,y),result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Min)
@@ -636,8 +633,8 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Min)
 			result(i,j)= std::min(x_cpu(i,j),y_cpu(i,j));
 		}
 	}
-	gpu::matrix<float> x = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float> y = gpu::copy_to_gpu(y_cpu);
+	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> y = copy_to_gpu(y_cpu);
 	checkDenseExpressionEquality(min(x,y),result);
 }
 
@@ -654,8 +651,8 @@ BOOST_AUTO_TEST_CASE( Remora_sum_rows){
 		}
 	}
 	vector<float> result = sum_rows(x_cpu);
-	gpu::matrix<float,row_major> x_row = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float,column_major> x_col = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(sum_rows(x_row),result);
 	checkDenseExpressionEquality(sum_rows(x_col),result);
 }
@@ -668,8 +665,8 @@ BOOST_AUTO_TEST_CASE( Remora_sum_columns){
 		}
 	}
 	vector<float> result = sum_columns(x_cpu);
-	gpu::matrix<float,row_major> x_row = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float,column_major> x_col = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
 	checkDenseExpressionEquality(sum_columns(x_row),result);
 	checkDenseExpressionEquality(sum_columns(x_col),result);
 }
@@ -687,8 +684,8 @@ BOOST_AUTO_TEST_CASE( Remora_trace){
 		}
 		result += x_cpu(i,i);
 	}
-	gpu::matrix<float,row_major> x_row = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float,column_major> x_col = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
 	BOOST_CHECK_CLOSE(trace(x_row),result, 1.e-6);
 	BOOST_CHECK_CLOSE(trace(x_col),result, 1.e-6);
 }
@@ -702,8 +699,8 @@ BOOST_AUTO_TEST_CASE( Remora_norm_1){
 	}
 	float result = norm_1(x_cpu);
 	
-	gpu::matrix<float,row_major> x_row = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float,column_major> x_col = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
 	BOOST_CHECK_CLOSE(norm_1(x_row),result, 1.e-6);
 	BOOST_CHECK_CLOSE(norm_1(x_col),result, 1.e-6);
 }
@@ -716,8 +713,8 @@ BOOST_AUTO_TEST_CASE( Remora_norm_inf){
 	}
 	float result = norm_inf(x_cpu);
 	
-	gpu::matrix<float,row_major> x_row = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float,column_major> x_col = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
 	BOOST_CHECK_CLOSE(norm_inf(x_row),result, 1.e-6);
 	BOOST_CHECK_CLOSE(norm_inf(x_col),result, 1.e-6);
 }
@@ -731,8 +728,8 @@ BOOST_AUTO_TEST_CASE( Remora_norm_Frobenius){
 	}
 	float result = norm_frobenius(x_cpu);
 	
-	gpu::matrix<float,row_major> x_row = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float,column_major> x_col = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
 	BOOST_CHECK_CLOSE(norm_frobenius(x_row),result, 1.e-6);
 	BOOST_CHECK_CLOSE(norm_frobenius(x_col),result, 1.e-6);
 }
@@ -746,8 +743,8 @@ BOOST_AUTO_TEST_CASE( Remora_sum){
 	}
 	float result = sum(x_cpu);
 	
-	gpu::matrix<float,row_major> x_row = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float,column_major> x_col = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
 	BOOST_CHECK_CLOSE(sum(x_row),result, 1.e-6);
 	BOOST_CHECK_CLOSE(sum(x_col),result, 1.e-6);
 }
@@ -761,8 +758,8 @@ BOOST_AUTO_TEST_CASE( Remora_max){
 	}
 	float result = max(x_cpu);
 	
-	gpu::matrix<float,row_major> x_row = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float,column_major> x_col = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
 	BOOST_CHECK_CLOSE(max(x_row),result, 1.e-6);
 	BOOST_CHECK_CLOSE(max(x_col),result, 1.e-6);
 }
@@ -776,8 +773,8 @@ BOOST_AUTO_TEST_CASE( Remora_min){
 	}
 	float result = min(x_cpu);
 	
-	gpu::matrix<float,row_major> x_row = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float,column_major> x_col = gpu::copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
 	BOOST_CHECK_CLOSE(min(x_row),result, 1.e-6);
 	BOOST_CHECK_CLOSE(min(x_col),result, 1.e-6);
 }
@@ -793,10 +790,10 @@ BOOST_AUTO_TEST_CASE( Remora_frobenius_prod){
 	}
 	float result = frobenius_prod(x_cpu,y_cpu);
 	
-	gpu::matrix<float,row_major> x_row = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float,column_major> x_col = gpu::copy_to_gpu(x_cpu);
-	gpu::matrix<float,row_major> y_row = gpu::copy_to_gpu(y_cpu);
-	gpu::matrix<float,column_major> y_col = gpu::copy_to_gpu(y_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
+	matrix<float, row_major, gpu_tag> y_row = copy_to_gpu(y_cpu);
+	matrix<float, column_major, gpu_tag> y_col = copy_to_gpu(y_cpu);
 	BOOST_CHECK_CLOSE(frobenius_prod(x_row,y_row),result, 1.e-6);
 	BOOST_CHECK_CLOSE(frobenius_prod(x_row,y_col),result, 1.e-6);
 	BOOST_CHECK_CLOSE(frobenius_prod(x_col,y_row),result, 1.e-6);

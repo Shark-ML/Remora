@@ -3,8 +3,8 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/kernels/vector_assign.hpp>
-#include <remora/gpu/vector.hpp>
-#include <remora/gpu/copy.hpp>
+#include <remora/vector.hpp>
+#include <remora/vector_expression.hpp>
 
 #include <iostream>
 using namespace remora;
@@ -35,24 +35,24 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Assign_Dense ){
 		result_add_cpu(i) = source_cpu(i) + target_cpu(i);
 		result_add_scalar_cpu(i) = target_cpu(i) + scalar;
 	}
-	gpu::vector<unsigned int> source = gpu::copy_to_gpu(source_cpu);
-	gpu::vector<unsigned int> result_add = gpu::copy_to_gpu(result_add_cpu);
-	gpu::vector<unsigned int> result_add_scalar = gpu::copy_to_gpu(result_add_scalar_cpu);
+	vector<unsigned int, gpu_tag> source = copy_to_gpu(source_cpu);
+	vector<unsigned int, gpu_tag> result_add = copy_to_gpu(result_add_cpu);
+	vector<unsigned int, gpu_tag> result_add_scalar = copy_to_gpu(result_add_scalar_cpu);
 	{
 		std::cout<<"testing direct assignment"<<std::endl;
-		gpu::vector<unsigned int> target = gpu::copy_to_gpu(target_cpu);
+		vector<unsigned int, gpu_tag> target = copy_to_gpu(target_cpu);
 		kernels::assign(target,source);
 		checkVectorEqual(target,source);
 	}
 	{
 		std::cout<<"testing functor assignment"<<std::endl;
-		gpu::vector<unsigned int> target = gpu::copy_to_gpu(target_cpu);
+		vector<unsigned int, gpu_tag> target = copy_to_gpu(target_cpu);
 		kernels::assign<device_traits<gpu_tag>::add<unsigned int> >(target,source);
 		checkVectorEqual(target,result_add);
 	}
 	{
 		std::cout<<"testing functor scalar assignment"<<std::endl;
-		gpu::vector<unsigned int> target = gpu::copy_to_gpu(target_cpu);
+		vector<unsigned int, gpu_tag> target = copy_to_gpu(target_cpu);
 		kernels::assign<device_traits<gpu_tag>::add<unsigned int> >(target,scalar);
 		checkVectorEqual(target,result_add_scalar);
 	}

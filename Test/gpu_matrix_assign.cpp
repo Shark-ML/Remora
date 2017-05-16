@@ -6,10 +6,9 @@
 #include <remora/kernels/matrix_assign.hpp>
 #include <remora/vector.hpp>
 #include <remora/matrix.hpp>
-#include <remora/gpu/vector.hpp>
-#include <remora/gpu/matrix.hpp>
 #include <remora/matrix_proxy.hpp>//FIXME: should be unneeded
-#include <remora/gpu/copy.hpp>
+#include <remora/matrix_expression.hpp>// for copy
+#include <remora/vector_expression.hpp>
 
 #include <iostream>
 using namespace remora;
@@ -45,37 +44,37 @@ BOOST_AUTO_TEST_CASE( Remora_Matrix_Assign_Dense ){
 			result_add_scalar_cpu(i,j) = target_cpu(i,j) + scalar;
 		}
 	}
-	gpu::matrix<float, row_major> source = gpu::copy_to_gpu(source_cpu);
-	gpu::matrix<float, column_major> source_cm = gpu::copy_to_gpu(source_cpu);
-	gpu::matrix<float> result_add = gpu::copy_to_gpu(result_add_cpu);
-	gpu::matrix<float> result_add_scalar = gpu::copy_to_gpu(result_add_scalar_cpu);
+	matrix<float, row_major, gpu_tag> source = copy_to_gpu(source_cpu);
+	matrix<float, column_major, gpu_tag> source_cm = copy_to_gpu(source_cpu);
+	matrix<float, row_major, gpu_tag> result_add = copy_to_gpu(result_add_cpu);
+	matrix<float, row_major, gpu_tag> result_add_scalar = copy_to_gpu(result_add_scalar_cpu);
 	{
 		std::cout<<"testing direct assignment row-row"<<std::endl;
-		gpu::matrix<float> target = gpu::copy_to_gpu(target_cpu);
+		matrix<float, row_major, gpu_tag> target = copy_to_gpu(target_cpu);
 		kernels::assign(target,source);
 		checkMatrixEqual(target,source);
 	}
 	{
 		std::cout<<"testing functor assignment row-row"<<std::endl;
-		gpu::matrix<float> target = gpu::copy_to_gpu(target_cpu);
+		matrix<float, row_major, gpu_tag> target = copy_to_gpu(target_cpu);
 		kernels::assign<device_traits<gpu_tag>::add<float> >(target,source);
 		checkMatrixEqual(target,result_add);
 	}
 	{
 		std::cout<<"testing direct assignment row-column"<<std::endl;
-		gpu::matrix<float> target = gpu::copy_to_gpu(target_cpu);
+		matrix<float, row_major, gpu_tag> target = copy_to_gpu(target_cpu);
 		kernels::assign(target,source_cm);
 		checkMatrixEqual(target,source_cm);
 	}
 	{
 		std::cout<<"testing functor assignment row-column"<<std::endl;
-		gpu::matrix<float> target = gpu::copy_to_gpu(target_cpu);
+		matrix<float, row_major, gpu_tag> target = copy_to_gpu(target_cpu);
 		kernels::assign<device_traits<gpu_tag>::add<float> >(target,source_cm);
 		checkMatrixEqual(target,result_add);
 	}
 	{
 		std::cout<<"testing functor scalar assignment"<<std::endl;
-		gpu::matrix<float> target = gpu::copy_to_gpu(target_cpu);
+		matrix<float, row_major, gpu_tag> target = copy_to_gpu(target_cpu);
 		kernels::assign<device_traits<gpu_tag>::add<float> >(target,scalar);
 		target.queue().finish();
 		checkMatrixEqual(target,result_add_scalar);

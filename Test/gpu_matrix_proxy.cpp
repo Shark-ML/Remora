@@ -6,9 +6,8 @@
 #include <remora/matrix_proxy.hpp>
 #include <remora/vector.hpp>
 #include <remora/matrix.hpp>
-#include <remora/gpu/vector.hpp>
-#include <remora/gpu/matrix.hpp>
-#include <remora/gpu/copy.hpp>
+#include <remora/vector_expression.hpp>
+#include <remora/matrix_expression.hpp>
 
 using namespace remora;
 
@@ -27,7 +26,7 @@ void checkDenseMatrixEquality(Operation op_gpu, Result const& result){
 	
 	//test row iterators
 	{
-		gpu::vector<float> opcopy_gpu(op.size2());
+		vector<float, gpu_tag> opcopy_gpu(op.size2());
 		for(std::size_t i = 0; i != op.size1(); ++i){
 			boost::compute::copy(op_gpu.row_begin(i),op_gpu.row_end(i),opcopy_gpu.begin());
 			vector<float> opcopy = copy_to_cpu(opcopy_gpu);
@@ -39,7 +38,7 @@ void checkDenseMatrixEquality(Operation op_gpu, Result const& result){
 	
 	//test column iterators
 	{
-		gpu::vector<float> opcopy_gpu(op.size1());
+		vector<float, gpu_tag> opcopy_gpu(op.size1());
 		for(std::size_t j = 0; j != op.size2(); ++j){
 			boost::compute::copy(op_gpu.column_begin(j),op_gpu.column_end(j),opcopy_gpu.begin());
 			vector<float> opcopy = copy_to_cpu(opcopy_gpu);
@@ -62,7 +61,7 @@ void checkDenseVectorEquality(Operation op_gpu, Result const& result){
 	
 	//test iterators
 	BOOST_REQUIRE_EQUAL(op_gpu.end() - op_gpu.begin(), op.size());
-	gpu::vector<float> opcopy_gpu(op.size());
+	vector<float, gpu_tag> opcopy_gpu(op.size());
 	boost::compute::copy(op_gpu.begin(),op_gpu.end(),opcopy_gpu.begin());
 	vector<float> opcopy = copy_to_cpu(opcopy_gpu);
 	for(std::size_t i = 0; i != result.size(); ++i){
@@ -76,8 +75,8 @@ std::size_t Dimensions2 = 10;
 struct MatrixProxyFixture
 {
 	matrix<float> denseData_cpu;
-	gpu::matrix<float,row_major> denseData;
-	gpu::matrix<float,column_major> denseDataColMajor;
+	matrix<float, row_major, gpu_tag> denseData;
+	matrix<float, column_major, gpu_tag> denseDataColMajor;
 	
 	MatrixProxyFixture():denseData_cpu(Dimensions1,Dimensions2){
 		for(std::size_t row=0;row!= Dimensions1;++row){
@@ -85,8 +84,8 @@ struct MatrixProxyFixture
 				denseData_cpu(row,col) = row*Dimensions2+col+5.0;
 			}
 		}
-		denseData = gpu::copy_to_gpu(denseData_cpu);
-		denseDataColMajor = gpu::copy_to_gpu(denseData_cpu);
+		denseData = copy_to_gpu(denseData_cpu);
+		denseDataColMajor = copy_to_gpu(denseData_cpu);
 	}
 };
 
@@ -112,8 +111,8 @@ BOOST_FIXTURE_TEST_SUITE (Remora_matrix_proxy, MatrixProxyFixture);
 					//~ checkDenseMatrixEquality(subrange(denseDataColMajor,rowBegin,rowEnd,colBegin,colEnd),mTest);
 
 					//~ //now test whether we can assign to a range like this.
-					//~ gpu::matrix<float> newData(Dimensions1,Dimensions2,1.0);
-					//~ gpu::matrix<float,column_major> newDataColMajor(Dimensions1,Dimensions2,1.0);
+					//~ matrix<float, row_major, gpu_tag> newData(Dimensions1,Dimensions2,1.0);
+					//~ matrix<float, column_major, gpu_tag> newDataColMajor(Dimensions1,Dimensions2,1.0);
 					//~ auto rangeTest = subrange(newData,rowBegin,rowEnd,colBegin,colEnd);
 					//~ auto rangeTestColMajor = subrange(newDataColMajor,rowBegin,rowEnd,colBegin,colEnd);
 					//~ noalias(rangeTest) = subrange(denseData,rowBegin,rowEnd,colBegin,colEnd);
@@ -152,8 +151,8 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_row){
 		checkDenseVectorEquality(row(denseData,r),vTest);
 		
 		//now test whether we can assign to a range like this.
-		gpu::matrix<float> newData(Dimensions1, Dimensions2,1.0);
-		gpu::vector<float> vTest_gpu = gpu::copy_to_gpu(vTest);
+		matrix<float, row_major, gpu_tag> newData(Dimensions1, Dimensions2,1.0);
+		vector<float, gpu_tag> vTest_gpu = copy_to_gpu(vTest);
 		auto rowTest = row(newData,r);
 		noalias(rowTest) = vTest_gpu;
 		//check that the assignment has been carried out correctly
@@ -180,8 +179,8 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_column){
 		checkDenseVectorEquality(column(denseData,c),vTest);
 		
 		//now test whether we can assign to a range like this.
-		gpu::matrix<float> newData(Dimensions1, Dimensions2,1.0);
-		gpu::vector<float> vTest_gpu = gpu::copy_to_gpu(vTest);
+		matrix<float, row_major, gpu_tag> newData(Dimensions1, Dimensions2,1.0);
+		vector<float, gpu_tag> vTest_gpu = copy_to_gpu(vTest);
 		auto columnTest = column(newData,c);
 		noalias(columnTest) = vTest_gpu;
 		//check that the assignment has been carried out correctly
@@ -202,15 +201,15 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_column){
 }
 
 BOOST_AUTO_TEST_CASE( Remora_Dense_diagonal){
-	gpu::matrix<float> square = subrange(denseData,0,Dimensions2,0,Dimensions2);
+	matrix<float, row_major, gpu_tag> square = subrange(denseData,0,Dimensions2,0,Dimensions2);
 	vector<float> vTest(Dimensions2);
 	for(std::size_t i = 0; i != Dimensions2; ++i)
 		vTest(i) = denseData_cpu(i,i);
 	checkDenseVectorEquality(diag(square),vTest);
 	
 	//now test whether we can assign to a range like this.
-	gpu::matrix<float> newData(Dimensions2, Dimensions2,1.0);
-	gpu::vector<float> vTest_gpu = gpu::copy_to_gpu(vTest);
+	matrix<float, row_major, gpu_tag> newData(Dimensions2, Dimensions2,1.0);
+	vector<float, gpu_tag> vTest_gpu = copy_to_gpu(vTest);
 	auto diagTest = diag(newData);
 	noalias(diagTest) = vTest_gpu;
 	//check that the assignment has been carried out correctly

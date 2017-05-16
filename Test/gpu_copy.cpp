@@ -2,12 +2,10 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <remora/gpu/copy.hpp>
-#include <remora/gpu/vector.hpp>
-#include <remora/gpu/matrix.hpp>
 #include <remora/vector.hpp>
 #include <remora/matrix.hpp>
 #include <remora/matrix_expression.hpp>
+#include <remora/vector_expression.hpp>
 
 #include <iostream>
 using namespace remora;
@@ -21,7 +19,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Copy ){
 	for(std::size_t i = 0; i != 100; ++i){
 		source(i) = 2*i+1;
 	}
-	gpu::vector<float> target_gpu = gpu::copy_to_gpu(source);
+	vector<float, gpu_tag> target_gpu = copy_to_gpu(source);
 	vector<float> target_cpu = copy_to_cpu(target_gpu);
 	
 	BOOST_CHECK_SMALL(norm_inf(source - target_cpu), 1.e-10f);	
@@ -32,8 +30,8 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Copy_Plus_Assign ){
 	for(std::size_t i = 0; i != 100; ++i){
 		source(i) = 2*i+1;
 	}
-	gpu::vector<float> target_gpu(100,1.0);
-	noalias(target_gpu) += gpu::copy_to_gpu(source);
+	vector<float, gpu_tag> target_gpu(100,1.0);
+	noalias(target_gpu) += copy_to_gpu(source);
 	vector<float> target_cpu(100,-2.0);
 	noalias(target_cpu) += copy_to_cpu(target_gpu);
 	
@@ -51,25 +49,25 @@ BOOST_AUTO_TEST_CASE( Remora_Matrix_Copy ){
 	matrix<float,column_major> source_cm  = source;
 	//row-major cpu to row-major gpu to row-major cpu
 	{
-		gpu::matrix<float,row_major> target_gpu = gpu::copy_to_gpu(source);
+		matrix<float,row_major, gpu_tag> target_gpu = copy_to_gpu(source);
 		matrix<float,row_major> target_cpu = copy_to_cpu(target_gpu);
 		BOOST_CHECK_SMALL(norm_inf(source - target_cpu), 1.e-10f);
 	}
 	//row-major-cpu to column-major gpu to column-major cpu
 	{
-		gpu::matrix<float,column_major> target_gpu = gpu::copy_to_gpu(source);
+		matrix<float,column_major, gpu_tag> target_gpu = copy_to_gpu(source);
 		matrix<float,column_major> target_cpu = copy_to_cpu(target_gpu);
 		BOOST_CHECK_SMALL(norm_inf(source - target_cpu), 1.e-10f);
 	}
 	//column-major-cpu to column-major gpu to row-major cpu
 	{
-		gpu::matrix<float,column_major> target_gpu = gpu::copy_to_gpu(source_cm);
+		matrix<float,column_major, gpu_tag> target_gpu = copy_to_gpu(source_cm);
 		matrix<float,row_major> target_cpu = copy_to_cpu(target_gpu);
 		BOOST_CHECK_SMALL(norm_inf(source - target_cpu), 1.e-10f);
 	}
 	//column-major-cpu to row-major gpu to column-major cpu
 	{
-		gpu::matrix<float,row_major> target_gpu = gpu::copy_to_gpu(source_cm);
+		matrix<float,row_major, gpu_tag> target_gpu = copy_to_gpu(source_cm);
 		matrix<float,column_major> target_cpu = copy_to_cpu(target_gpu);
 		BOOST_CHECK_SMALL(norm_inf(source - target_cpu), 1.e-10f);
 	}
@@ -86,32 +84,32 @@ BOOST_AUTO_TEST_CASE( Remora_Matrix_Copy_Plus_Assign ){
 	matrix<float,column_major> source_cm  = source;
 	//row-major cpu to row-major gpu to row-major cpu
 	{
-		gpu::matrix<float,row_major> target_gpu(32,16,1.0);
-		noalias(target_gpu) += gpu::copy_to_gpu(source);
+		matrix<float,row_major, gpu_tag> target_gpu(32,16,1.0);
+		noalias(target_gpu) += copy_to_gpu(source);
 		matrix<float,row_major> target_cpu(32,16,-2.0);
 		noalias(target_cpu) += copy_to_cpu(target_gpu);
 		BOOST_CHECK_SMALL(norm_inf(source - target_cpu-1), 1.e-10f);	
 	}
 	//row-major-cpu to column-major gpu to column-major cpu
 	{
-		gpu::matrix<float,column_major> target_gpu(32,16,1.0);
-		noalias(target_gpu) += gpu::copy_to_gpu(source);
+		matrix<float,column_major, gpu_tag> target_gpu(32,16,1.0);
+		noalias(target_gpu) += copy_to_gpu(source);
 		matrix<float,column_major> target_cpu(32,16,-2.0);
 		noalias(target_cpu) += copy_to_cpu(target_gpu);
 		BOOST_CHECK_SMALL(norm_inf(source - target_cpu-1), 1.e-10f);	
 	}
 	//column-major-cpu to column-major gpu to row-major cpu
 	{
-		gpu::matrix<float,column_major> target_gpu(32,16,1.0);
-		noalias(target_gpu) += gpu::copy_to_gpu(source_cm);
+		matrix<float,column_major, gpu_tag> target_gpu(32,16,1.0);
+		noalias(target_gpu) += copy_to_gpu(source_cm);
 		matrix<float,row_major> target_cpu(32,16,-2.0);
 		noalias(target_cpu) += copy_to_cpu(target_gpu);
 		BOOST_CHECK_SMALL(norm_inf(source - target_cpu-1), 1.e-10f);	
 	}
 	//column-major-cpu to row-major gpu to column-major cpu
 	{
-		gpu::matrix<float,row_major> target_gpu(32,16,1.0);
-		noalias(target_gpu) += gpu::copy_to_gpu(source_cm);
+		matrix<float,row_major, gpu_tag> target_gpu(32,16,1.0);
+		noalias(target_gpu) += copy_to_gpu(source_cm);
 		matrix<float,column_major> target_cpu(32,16,-2.0);
 		noalias(target_cpu) += copy_to_cpu(target_gpu);
 		BOOST_CHECK_SMALL(norm_inf(source - target_cpu-1), 1.e-10f);	
