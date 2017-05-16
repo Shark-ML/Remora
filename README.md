@@ -8,7 +8,7 @@ It features:
   * A basic set of optimized routines for matrix products, solving linear systems of equations etc
   * Bindings to highly optimized routines of BLAS packages
   * A powerful expression template syntax which features algebraic optimizations of operations
-  * (experimental and very early) support
+  * (experimental and very early) GPU support via OpenCL
   
 Remora is used by the shark machine learning library.
   
@@ -26,7 +26,8 @@ When using Remora, the following defines can be supplied at compile time
   Make sure to add the appropriate compile and linker flags for the library.
 * REMORA_USE_GPU if defined, Remora is enabling gpu support via the boost/compute
   library. Highly experimental.
-  
+* REMORA_USE_CLBLAST if defined, Remora is using CLBlast as GPU/opencl backend. 
+  This should be more stable and give better performance on most devices.
   
 Contributing
 ----------------------------------------------------------
