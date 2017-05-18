@@ -907,9 +907,9 @@ private:
 	size_type m_size2;
 };
 
-template<class T,class Orientation=row_major>
-class dense_matrix_adaptor: public matrix_expression<dense_matrix_adaptor<T,Orientation>, cpu_tag > {
-	typedef dense_matrix_adaptor<T,Orientation> self_type;
+template<class T,class Orientation=row_major, class Tag = cpu_tag>
+class dense_matrix_adaptor: public matrix_expression<dense_matrix_adaptor<T,Orientation, Tag>, Tag > {
+	typedef dense_matrix_adaptor<T,Orientation, Tag> self_type;
 public:
 	typedef std::size_t size_type;
 	typedef typename std::remove_const<T>::type value_type;
@@ -986,6 +986,27 @@ public:
 			m_stride1= Orientation::stride1(m_size1,m_size2);
 		if(!m_stride2)
 			m_stride2= Orientation::stride2(m_size1,m_size2);
+	}
+	
+	
+	template<class E>
+	dense_matrix_adaptor(vector_expression<E, cpu_tag> const& expression, std::size_t size1, std::size_t size2)
+	: m_values(expression.raw_storage().values)
+	, m_size1(size1)
+	, m_size2(size2)
+	{
+		m_stride1= Orientation::stride1(1,expression.raw_storage().leading_dimension);
+		m_stride2= Orientation::stride2(1,expression.raw_storage().leading_dimension);
+	}
+	
+	template<class E>
+	dense_matrix_adaptor(vector_expression<E, cpu_tag>& expression, std::size_t size1, std::size_t size2)
+	: m_values(expression().raw_storage().values)
+	, m_size1(size1)
+	, m_size2(size2)
+	{
+		m_stride1= Orientation::stride1(1,expression.raw_storage().leading_dimension);
+		m_stride2= Orientation::stride2(1,expression.raw_storage().leading_dimension);
 	}
 	
 	// ---------

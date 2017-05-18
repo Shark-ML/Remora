@@ -219,7 +219,7 @@ public:
 	}
 	///\brief Returns the underlying storage structure for low level access
 	const_storage_type raw_storage() const{
-		return {m_storage,0,orientation::index_m(m_size1,m_size2)};
+		return {m_storage.get_buffer(),0,orientation::index_m(m_size1,m_size2)};
 	}
 	
 	// Element access

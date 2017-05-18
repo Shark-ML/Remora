@@ -279,39 +279,43 @@ temporary_proxy<dense_matrix_adaptor<T> > adapt_matrix(T (&array)[M][N]){
 }
 
 /// \brief Converts a dense vector to a matrix of a given size
-template <class V>
+template <class V, class Tag>
 typename std::enable_if<
 	std::is_same<typename V::storage_type::storage_tag,dense_tag>::value,
 	temporary_proxy< dense_matrix_adaptor<
-		typename std::remove_reference<typename V::reference>::type
+		typename std::remove_reference<typename V::reference>::type,row_major, Tag
 	> >
 >::type
 to_matrix(
-	vector_expression<V, cpu_tag>& v,
+	vector_expression<V, Tag>& v,
 	std::size_t size1, std::size_t size2
 ){
+	REMORA_SIZE_CHECK(size1 * size2 == v().size());
 	typedef typename std::remove_reference<typename V::reference>::type ElementType;
-	return dense_matrix_adaptor<ElementType>(v().raw_storage().values, size1, size2);
+	return dense_matrix_adaptor<ElementType, row_major, Tag>(v, size1, size2);
 }
 
 /// \brief Converts a dense vector to a matrix of a given size
-template <class V>
+template <class V, class Tag>
 typename std::enable_if<
 	std::is_same<typename V::storage_type::storage_tag,dense_tag>::value,
-	temporary_proxy< dense_matrix_adaptor<typename V::value_type const> >
+	temporary_proxy< dense_matrix_adaptor<typename V::value_type const,row_major, Tag> >
 >::type 
 to_matrix(
-	vector_expression<V, cpu_tag> const& v,
+	vector_expression<V, Tag> const& v,
 	std::size_t size1, std::size_t size2
 ){
-	return dense_matrix_adaptor<typename V::value_type const>(v().raw_storage().values, size1, size2);
+	REMORA_SIZE_CHECK(size1 * size2 == v().size());
+	return dense_matrix_adaptor<typename V::value_type const, row_major, Tag>(v, size1, size2);
 }
 
 template <class E>
 typename std::enable_if<
 	std::is_same<typename E::storage_type::storage_tag,dense_tag>::value,
 	temporary_proxy< dense_matrix_adaptor<
-		typename std::remove_reference<typename E::reference>::type
+		typename std::remove_reference<typename E::reference>::type,
+		row_major, 
+		typename E::device_type
 	> >
 >::type 
 to_matrix(
@@ -349,4 +353,9 @@ auto to_vector(temporary_proxy<E> e)->decltype(to_vector(static_cast<E&>(e))){
 }
 
 }
+
+#ifdef REMORA_USE_GPU
+#include "gpu/matrix_proxy.hpp"
+#endif
+
 #endif

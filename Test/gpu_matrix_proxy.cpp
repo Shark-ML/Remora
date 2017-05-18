@@ -228,4 +228,30 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_diagonal){
 	}
 }
 
+BOOST_AUTO_TEST_CASE( Remora_Dense_To_Matrix){
+	std::size_t Dimensions1 = 193;
+	std::size_t Dimensions2 = 201;
+	std::size_t offset = 23;
+	vector<float> vec_data_cpu(Dimensions1 * Dimensions2+offset+7,0.0);
+	matrix<float> mat_result_cpu(Dimensions1, Dimensions2);
+	for(std::size_t i = 0; i != Dimensions1; ++i){
+		for(std::size_t j = 0; j != Dimensions2; ++j){
+			mat_result_cpu(i,j) = 0.1f*i-0.2f*j;
+			vec_data_cpu(offset + i * Dimensions2 + j) = mat_result_cpu(i,j) ;
+		}
+	}
+	vector<float, gpu_tag> vec_data_full = copy_to_gpu(vec_data_cpu);
+	auto const& vec_data = subrange(vec_data_full,offset,offset+Dimensions1*Dimensions2);//create non-zero offset in internal storage
+	matrix<float, row_major, gpu_tag> mat_result = copy_to_gpu(mat_result_cpu);
+	//check whether the resulting matrix has the right values
+	checkDenseMatrixEquality(to_matrix(vec_data, Dimensions1, Dimensions2),mat_result_cpu);
+
+	//now test whether we can assign to it
+	vector<float, gpu_tag> new_data_full(2*offset + 7 + Dimensions1 * Dimensions2,1.0);
+	auto new_data = subrange(new_data_full,2*offset,2*offset+Dimensions1*Dimensions2);
+	noalias(to_matrix(new_data, Dimensions1, Dimensions2)) = mat_result; 
+	//check that the assignment has been carried out correctly
+	checkDenseMatrixEquality(to_matrix(new_data, Dimensions1, Dimensions2),mat_result_cpu);
+}
+
 BOOST_AUTO_TEST_SUITE_END();

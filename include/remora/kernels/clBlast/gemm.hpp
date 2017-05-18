@@ -79,10 +79,10 @@ void gemm(
 	auto code =  Gemm(layout, transA, transB,
                 m, n , k,
                 alpha,
-		storageA.buffer.get_buffer().get(), storageA.offset, storageA.leading_dimension,
-		storageB.buffer.get_buffer().get(), storageB.offset, storageB.leading_dimension,
+		storageA.buffer.get(), storageA.offset, storageA.leading_dimension,
+		storageB.buffer.get(), storageB.offset, storageB.leading_dimension,
                 typename MatC::value_type(1),
-		storageC.buffer.get_buffer().get(), storageC.offset, storageC.leading_dimension,
+		storageC.buffer.get(), storageC.offset, storageC.leading_dimension,
                 &C().queue().get(), event);
 		
 	assert(code == StatusCode::kSuccess);

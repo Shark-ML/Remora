@@ -192,7 +192,7 @@ public:
 	}
 	///\brief Returns the underlying storage structure for low level access
 	const_storage_type raw_storage() const{
-		return {m_storage,0,1};
+		return {m_storage.get_buffer(),0,1};
 	}
 	
 	/// \brief Resize the vector

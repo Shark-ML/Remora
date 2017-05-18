@@ -71,9 +71,9 @@ void syrk(
 	cl_event* event = nullptr;//todo: store events for out-of-order queues 
 	auto code =  Syrk(layout, triangular, transA,
                 n, k, alpha,
-		storageA.buffer.get_buffer().get(), storageA.offset, storageA.leading_dimension,
+		storageA.buffer.get(), storageA.offset, storageA.leading_dimension,
                 typename MatC::value_type(1),
-		storageC.buffer.get_buffer().get(), storageC.offset, storageC.leading_dimension,
+		storageC.buffer.get(), storageC.offset, storageC.leading_dimension,
                 &C().queue().get(), event
 	);
 		

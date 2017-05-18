@@ -73,8 +73,8 @@ void trsv(
 	cl_event* event = nullptr;//todo: store events for out-of-order queues 
 	auto code =  Trsv<typename VecB::value_type>(layout, triangular, Transpose::kNo , diagonal,
                 n,
-		storageA.buffer.get_buffer().get(), storageA.offset, storageA.leading_dimension,
-		storageb.buffer.get_buffer().get(), storageb.offset, storageb.stride,
+		storageA.buffer.get(), storageA.offset, storageA.leading_dimension,
+		storageb.buffer.get(), storageb.offset, storageb.stride,
                 &b().queue().get(), event
 	);
 	assert(code == StatusCode::kSuccess);

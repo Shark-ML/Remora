@@ -74,10 +74,10 @@ void gemv(
 	cl_event* event = nullptr;//todo: store events for out-of-order queues 
 	auto code =  Gemv(layout, Transpose::kNo,
 		m, n, alpha,
-		storageA.buffer.get_buffer().get(), storageA.offset, storageA.leading_dimension,
-		storagex.buffer.get_buffer().get(), storagex.offset, storagex.stride,
+		storageA.buffer.get(), storageA.offset, storageA.leading_dimension,
+		storagex.buffer.get(), storagex.offset, storagex.stride,
 		typename VecV::value_type(1),
-		storagev.buffer.get_buffer().get(), storagev.offset, storagev.stride,
+		storagev.buffer.get(), storagev.offset, storagev.stride,
 		&v().queue().get(), event
 	);
 	assert(code == StatusCode::kSuccess);

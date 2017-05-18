@@ -101,7 +101,7 @@ private:
 		value_type const& alpha, dense_tag
 	)const{
 		auto storageE = e().raw_storage();
-		auto& buffer = storageE.buffer.get_buffer();
+		auto& buffer = storageE.buffer;
 		//map buffer to host memory
 		typename VecE::value_type* p = (typename VecE::value_type*) e().queue().enqueue_map_buffer(
 			buffer, CL_MAP_READ, 0, buffer.size()
@@ -121,7 +121,7 @@ private:
 		value_type const& alpha, dense_tag
 	)const{
 		auto storageE = e().raw_storage();
-		auto& buffer = storageE.buffer.get_buffer();
+		auto& buffer = storageE.buffer;
 		//map buffer to host memory
 		typename VecE::value_type* p = (typename VecE::value_type*) e().queue().enqueue_map_buffer(
 			buffer, CL_MAP_READ, 0, buffer.size()
@@ -223,7 +223,7 @@ private:
 		value_type const& alpha, dense_tag
 	)const{
 		auto storagex = x().raw_storage();
-		auto& buffer = storagex.buffer.get_buffer();
+		auto& buffer = storagex.buffer;
 		//map buffer to host memory
 		typename VecX::value_type* p = (typename VecX::value_type*) x().queue().enqueue_map_buffer(
 			buffer, CL_MAP_WRITE, 0, buffer.size()
@@ -242,7 +242,7 @@ private:
 		value_type const& alpha, dense_tag
 	)const{
 		auto storagex = x().raw_storage();
-		auto& buffer = storagex.buffer.get_buffer();
+		auto& buffer = storagex.buffer;
 		//map buffer to host memory
 		typename VecX::value_type* p = (typename VecX::value_type*) x().queue().enqueue_map_buffer(
 			buffer, CL_MAP_WRITE, storagex.offset, buffer.size() - storagex.offset
@@ -328,7 +328,7 @@ private:
 		value_type const& alpha, dense_tag
 	)const{
 		auto storageE = e().raw_storage();
-		auto& buffer = storageE.buffer.get_buffer();
+		auto& buffer = storageE.buffer;
 		//map buffer to host memory
 		typename MatE::value_type* p = (typename MatE::value_type*) e().queue().enqueue_map_buffer(
 			buffer, CL_MAP_READ, 0, buffer.size()
@@ -352,7 +352,7 @@ private:
 		value_type const& alpha, dense_tag
 	)const{
 		auto storageE = e().raw_storage();
-		auto& buffer = storageE.buffer.get_buffer();
+		auto& buffer = storageE.buffer;
 		//map buffer to host memory
 		typename MatE::value_type* p = (typename MatE::value_type*) e().queue().enqueue_map_buffer(
 			buffer, CL_MAP_READ, 0, buffer.size()
@@ -463,7 +463,7 @@ private:
 		value_type const& alpha, dense_tag
 	)const{
 		auto storageX = X().raw_storage();
-		auto& buffer = storageX.buffer.get_buffer();
+		auto& buffer = storageX.buffer;
 		//map buffer to host memory
 		typename MatX::value_type* p = (typename MatX::value_type*) X().queue().enqueue_map_buffer(
 			buffer, CL_MAP_WRITE, 0, buffer.size()
@@ -485,7 +485,7 @@ private:
 		value_type const& alpha, dense_tag
 	)const{
 		auto storageX = X().raw_storage();
-		auto& buffer = storageX.buffer.get_buffer();
+		auto& buffer = storageX.buffer;
 		//map buffer to host memory
 		typename MatX::value_type* p = (typename MatX::value_type*) X().queue().enqueue_map_buffer(
 			buffer, CL_MAP_WRITE, 0, buffer.size()

@@ -50,7 +50,7 @@ namespace remora{namespace gpu{
 template<class T>
 struct dense_vector_storage{
 	typedef dense_tag storage_tag;
-	boost::compute::vector<T> const& buffer;
+	boost::compute::buffer buffer;
 	std::size_t offset;
 	std::size_t stride;
 	
@@ -63,7 +63,7 @@ template<class T>
 struct dense_matrix_storage{
 	typedef dense_tag storage_tag;
 	typedef dense_vector_storage<T> row_storage;
-	boost::compute::vector<T> const& buffer;
+	boost::compute::buffer buffer;
 	std::size_t offset;
 	std::size_t leading_dimension;
 	

@@ -68,8 +68,8 @@ void trmv(
 	cl_event* event = nullptr;//todo: store events for out-of-order queues 
 	auto code =  Trmv<typename VecV::value_type>(layout, triangular, Transpose::kNo, diagonal,
                 n,
-		storageA.buffer.get_buffer().get(), storageA.offset, storageA.leading_dimension,
-		storagev.buffer.get_buffer().get(), storagev.offset, storagev.stride,
+		storageA.buffer.get(), storageA.offset, storageA.leading_dimension,
+		storagev.buffer.get(), storagev.offset, storagev.stride,
                 &v().queue().get(), event
 	);
 	assert(code == StatusCode::kSuccess);

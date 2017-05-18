@@ -76,8 +76,8 @@ void trsm_impl(
 	cl_event* event = nullptr;//todo: store events for out-of-order queues 
 	auto code = Trsm(layout, Side::kLeft, triangular, transA, diagonal,
 		m, n, typename MatB::value_type(1),
-		storageA.buffer.get_buffer().get(), storageA.offset, storageA.leading_dimension,
-		storageB.buffer.get_buffer().get(), storageB.offset, storageB.leading_dimension,
+		storageA.buffer.get(), storageA.offset, storageA.leading_dimension,
+		storageB.buffer.get(), storageB.offset, storageB.leading_dimension,
                &B().queue().get(), event
 	);
 	assert(code == StatusCode::kSuccess);

@@ -73,8 +73,8 @@ void trmm(
 	cl_event* event = nullptr;//todo: store events for out-of-order queues 
 	auto code = Trmm(layout, Side::kLeft, triangular, transA, diagonal,
 		m, n, typename MatC::value_type(1),
-		storageA.buffer.get_buffer().get(), storageA.offset, storageA.leading_dimension,
-		storageC.buffer.get_buffer().get(), storageC.offset, storageC.leading_dimension,
+		storageA.buffer.get(), storageA.offset, storageA.leading_dimension,
+		storageC.buffer.get(), storageC.offset, storageC.leading_dimension,
                 &C().queue().get(), event
 	);
 	assert(code == StatusCode::kSuccess);
