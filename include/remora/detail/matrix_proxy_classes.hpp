@@ -989,12 +989,12 @@ public:
 	
 	template<class E>
 	dense_matrix_adaptor(vector_expression<E, cpu_tag> const& expression, std::size_t size1, std::size_t size2)
-	: m_values(expression.raw_storage().values)
+	: m_values(expression().raw_storage().values)
 	, m_size1(size1)
 	, m_size2(size2)
 	{
-		m_stride1= Orientation::stride1(1,expression.raw_storage().leading_dimension);
-		m_stride2= Orientation::stride2(1,expression.raw_storage().leading_dimension);
+		m_stride1= Orientation::stride1(1,expression().raw_storage().stride);
+		m_stride2= Orientation::stride2(1,expression().raw_storage().stride);
 	}
 	
 	template<class E>
@@ -1003,9 +1003,10 @@ public:
 	, m_size1(size1)
 	, m_size2(size2)
 	{
-		m_stride1= Orientation::stride1(1,expression.raw_storage().leading_dimension);
-		m_stride2= Orientation::stride2(1,expression.raw_storage().leading_dimension);
+		m_stride1= Orientation::stride1(1,expression().raw_storage().stride);
+		m_stride2= Orientation::stride2(1,expression().raw_storage().stride);
 	}
+	
 	
 	// ---------
 	// Dense low level interface
@@ -1147,5 +1148,8 @@ private:
 }
 
 
+#ifdef REMORA_USE_GPU
 #include "../gpu/matrix_proxy_classes.hpp"
+#endif
+
 #endif

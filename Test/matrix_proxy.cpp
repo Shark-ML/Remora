@@ -332,4 +332,18 @@ BOOST_AUTO_TEST_CASE( Remora_To_Vector){
 	
 }
 
+BOOST_AUTO_TEST_CASE( Remora_To_Matrix){	
+	vector<double> vecData(Dimensions1 * Dimensions2);
+	for(std::size_t i = 0; i != Dimensions1; ++i)
+		for(std::size_t j = 0;j != Dimensions2;++j)
+			vecData(i * Dimensions1 + j) = denseData(i,j);
+	checkDenseMatrixEqual(to_matrix(vecData,Dimensions1,Dimensions2),denseData);
+	vector<double> newData(Dimensions1 * Dimensions2,1.0);
+	auto test = to_matrix(newData,Dimensions1,Dimensions2);
+	checkDenseMatrixAssignment(test,denseData);
+	checkDenseVectorEqual(newData, vecData);
+	
+}
+
+
 BOOST_AUTO_TEST_SUITE_END();
