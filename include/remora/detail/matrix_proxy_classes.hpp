@@ -993,8 +993,8 @@ public:
 	, m_size1(size1)
 	, m_size2(size2)
 	{
-		m_stride1= Orientation::stride1(1,expression().raw_storage().stride);
-		m_stride2= Orientation::stride2(1,expression().raw_storage().stride);
+		m_stride1= Orientation::stride1(m_size1,m_size2);
+		m_stride2= Orientation::stride2(m_size1,m_size2);
 	}
 	
 	template<class E>
@@ -1003,8 +1003,8 @@ public:
 	, m_size1(size1)
 	, m_size2(size2)
 	{
-		m_stride1= Orientation::stride1(1,expression().raw_storage().stride);
-		m_stride2= Orientation::stride2(1,expression().raw_storage().stride);
+		m_stride1= Orientation::stride1(m_size1,m_size2);
+		m_stride2= Orientation::stride2(m_size1,m_size2);
 	}
 	
 	
