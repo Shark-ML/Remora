@@ -610,7 +610,6 @@ private:
 	size_type m_size;
 };
 
-/// \brief Linearizes a matrix as a vector along its preferred orientation
 template<class M>
 class linearized_matrix: public vector_expression<linearized_matrix<M>, typename M::device_type > {
 private:
@@ -620,6 +619,13 @@ private:
 		row_major,
 		typename M::orientation::orientation
 	>::type orientation;
+
+	template<class IndexExpr>
+	struct OperatorReturn{//workaround for gcc 4.6 which would not like the type below inside a function signature.
+		typedef decltype(device_traits<typename matrix_closure_type::device_type>::linearized_matrix_element(
+			std::declval<matrix_closure_type const&>(),std::declval<IndexExpr const&>()
+		)) type;
+	};
 public:
 	typedef typename M::value_type value_type;
 	typedef typename M::const_reference const_reference;
@@ -662,10 +668,7 @@ public:
 
 	// Element access
 	template <class IndexExpr>
-	auto operator()(IndexExpr const& i) const 
-	-> decltype(device_traits<typename M::device_type>::linearized_matrix_element(
-			std::declval<matrix_closure_type const&>(),std::declval<IndexExpr const&>()
-	)){
+	typename OperatorReturn<IndexExpr>::type operator()(IndexExpr const& i) const{
 		return device_traits<typename M::device_type>::linearized_matrix_element(m_expression,i);
 	}
 	reference operator [](size_type i) const{
