@@ -254,4 +254,59 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_To_Matrix){
 	checkDenseMatrixEquality(to_matrix(new_data, Dimensions1, Dimensions2),mat_result_cpu);
 }
 
+
+BOOST_AUTO_TEST_CASE( Remora_Dense_To_Vector_Row_Major){
+	std::size_t Dimensions1 = 193;
+	std::size_t Dimensions2 = 201;
+	std::size_t offset1 = 23;
+	vector<float> vec_result_cpu((Dimensions1-offset1) * Dimensions2,0.0);
+	matrix<float> mat_data_cpu(Dimensions1, Dimensions2);
+	for(std::size_t i = 0; i != Dimensions1; ++i){
+		for(std::size_t j = 0; j != Dimensions2; ++j){
+			mat_data_cpu(i,j) = 0.1f*i-0.2f*j;
+			if(i >= offset1)
+				vec_result_cpu((i-offset1) * Dimensions2 + j) = mat_data_cpu(i,j) ;
+		}
+	}
+	vector<float, gpu_tag> vec_result = copy_to_gpu(vec_result_cpu);
+	matrix<float, row_major, gpu_tag> mat_data_full = copy_to_gpu(mat_data_cpu);
+	matrix<float, row_major, gpu_tag> mat_data = subrange(mat_data_full,offset1,Dimensions1,0, Dimensions2);
+	//check whether the resulting matrix has the right values
+	checkDenseVectorEquality(to_vector(mat_data),vec_result_cpu);
+
+	//now test whether we can assign to it
+	matrix<float, row_major, gpu_tag> new_data_full(offset1 + Dimensions1, Dimensions2,1.0);
+	auto new_data = subrange(new_data_full,2*offset1,offset1+Dimensions1,0, Dimensions2);
+	noalias(to_vector(new_data)) = vec_result; 
+	//check that the assignment has been carried out correctly
+	checkDenseVectorEquality(to_vector(new_data),vec_result_cpu);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Dense_To_Vector_Column_Major){
+	std::size_t Dimensions1 = 193;
+	std::size_t Dimensions2 = 201;
+	std::size_t offset2 = 23;
+	vector<float> vec_result_cpu(Dimensions1* (Dimensions2-offset2) ,0.0);
+	matrix<float> mat_data_cpu(Dimensions1, Dimensions2);
+	for(std::size_t i = 0; i != Dimensions1; ++i){
+		for(std::size_t j = 0; j != Dimensions2; ++j){
+			mat_data_cpu(i,j) = 0.1f*i-0.2f*j;
+			if(j >= offset2)
+				vec_result_cpu((j-offset2) * Dimensions1 + i) = mat_data_cpu(i,j) ;
+		}
+	}
+	vector<float, gpu_tag> vec_result = copy_to_gpu(vec_result_cpu);
+	matrix<float, column_major, gpu_tag> mat_data_full = copy_to_gpu(mat_data_cpu);
+	matrix<float, column_major, gpu_tag> mat_data = subrange(mat_data_full,0,Dimensions1,offset2, Dimensions2);
+	//check whether the resulting matrix has the right values
+	checkDenseVectorEquality(to_vector(mat_data),vec_result_cpu);
+
+	//now test whether we can assign to it
+	matrix<float, column_major, gpu_tag> new_data_full(Dimensions1, offset2 + Dimensions2,1.0);
+	auto new_data = subrange(new_data_full,0,Dimensions1,2*offset2, offset2 + Dimensions2);
+	noalias(to_vector(new_data)) = vec_result; 
+	//check that the assignment has been carried out correctly
+	checkDenseVectorEquality(to_vector(new_data),vec_result_cpu);
+}
+
 BOOST_AUTO_TEST_SUITE_END();

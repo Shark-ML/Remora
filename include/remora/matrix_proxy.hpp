@@ -309,20 +309,9 @@ to_matrix(
 	return dense_matrix_adaptor<typename V::value_type const, row_major, Tag>(v, size1, size2);
 }
 
-template <class E>
-typename std::enable_if<
-	std::is_same<typename E::storage_type::storage_tag,dense_tag>::value,
-	temporary_proxy< dense_matrix_adaptor<
-		typename std::remove_reference<typename E::reference>::type,
-		row_major, 
-		typename E::device_type
-	> >
->::type 
-to_matrix(
-	temporary_proxy<E> v,
-	std::size_t size1, std::size_t size2
-){
-	return to_matrix(static_cast<E&>(v),size1,size2);
+template<class E>
+auto to_matrix(temporary_proxy<E> e, std::size_t size1, std::size_t size2)->decltype(to_matrix(static_cast<E&>(e),size1, size2)){
+	return to_matrix(static_cast<E&>(e), size1, size2);
 }
 
 /// \brief Converts a dense matrix to a vector
@@ -353,9 +342,5 @@ auto to_vector(temporary_proxy<E> e)->decltype(to_vector(static_cast<E&>(e))){
 }
 
 }
-
-#ifdef REMORA_USE_GPU
-#include "gpu/matrix_proxy.hpp"
-#endif
 
 #endif

@@ -662,11 +662,9 @@ public:
 
 	// Element access
 	template <class IndexExpr>
-	reference operator()(IndexExpr const& i) const{
-		std::size_t leading_dimension = orientation::index_m(m_expression.size1(), m_expression.size2());
-		std::size_t i1 = i / leading_dimension;
-		std::size_t i2 = i % leading_dimension;
-		return m_expression(orientation::index_M(i1,i2), orientation::index_m(i1,i2));
+	auto operator()(IndexExpr const& i) const 
+	-> decltype(device_traits<typename M::device_type>::linearized_matrix_element(std::declval<matrix_closure_type const&>(),i)){
+		return device_traits<typename M::device_type>::linearized_matrix_element(m_expression,i);
 	}
 	reference operator [](size_type i) const{
 		return (*this)(i);
@@ -1147,4 +1145,7 @@ private:
 };
 
 }
+
+
+#include "../gpu/matrix_proxy_classes.hpp"
 #endif

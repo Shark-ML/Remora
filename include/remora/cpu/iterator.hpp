@@ -34,7 +34,7 @@
 #include <algorithm>
 #include <cstdlib>
 
-#include "check.hpp"
+#include "../detail/check.hpp"
 
 namespace remora{ namespace iterators{
 

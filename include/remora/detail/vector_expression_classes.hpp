@@ -29,7 +29,6 @@
 #define REMORA_VECTOR_EXPRESSION_CLASSES_HPP
 
 #include "../assignment.hpp"
-#include "iterator.hpp"
 #include "traits.hpp"
 
 namespace remora{

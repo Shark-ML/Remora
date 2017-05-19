@@ -2,7 +2,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <remora/detail/iterator.hpp>
+#include <remora/cpu/iterator.hpp>
 #include <remora/detail/traits.hpp>
 
 using namespace remora;

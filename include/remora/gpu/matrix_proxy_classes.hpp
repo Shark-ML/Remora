@@ -25,10 +25,11 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef REMORA_GPU_MATRIX_PROXY_HPP
-#define REMORA_GPU_MATRIX_PROXY_HPP
+#ifndef REMORA_GPU_MATRIX_PROXY_CLASSES_HPP
+#define REMORA_GPU_MATRIX_PROXY_CLASSES_HPP
 
 #include "../expression_types.hpp"
+#include "../detail/traits.hpp"
 #include <boost/compute/iterator/strided_iterator.hpp>
 #include <boost/compute/iterator/buffer_iterator.hpp>
 
@@ -166,6 +167,11 @@ public:
 		return *m_queue;
 	}
 	///\brief Returns the underlying storage structure for low level access
+	storage_type raw_storage(){
+		return {m_storage.buffer, m_storage.offset, m_storage.leading_dimension};
+	}
+	
+	///\brief Returns the underlying storage structure for low level access
 	const_storage_type raw_storage() const{
 		return {m_storage.buffer, m_storage.offset, m_storage.leading_dimension};
 	}
@@ -173,10 +179,6 @@ public:
 	// Element access
 	template <class IndexExpr1, class IndexExpr2>
 	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<dense_matrix_adaptor const&>().get_element(i,j,orientation())){
-		return this->get_element(i,j,orientation());
-	}
-	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) -> decltype(std::declval<dense_matrix_adaptor&>().get_element(i,j,orientation())){
 		return this->get_element(i,j,orientation());
 	}
 	

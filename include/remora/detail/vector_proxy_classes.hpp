@@ -28,7 +28,7 @@
  #ifndef REMORA_VECTOR_PROXY_CLASSES_HPP
 #define REMORA_VECTOR_PROXY_CLASSES_HPP
 
-#include "iterator.hpp"
+#include "../cpu/iterator.hpp"
 #include "traits.hpp"
 
 #include <type_traits>
@@ -295,9 +295,9 @@ private:
 /// \brief Represents a given chunk of memory as a dense vector of elements of type T.
 ///
 /// This adaptor is read/write if T is non-const and read-only if T is const.
-template<class T>
-class dense_vector_adaptor: public vector_expression<dense_vector_adaptor<T>, cpu_tag > {
-	typedef dense_vector_adaptor<T> self_type;
+template<class T, class Tag = cpu_tag>
+class dense_vector_adaptor: public vector_expression<dense_vector_adaptor<T, Tag>, Tag > {
+	typedef dense_vector_adaptor<T, Tag> self_type;
 public:
 
 	typedef std::size_t size_type;

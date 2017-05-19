@@ -28,9 +28,7 @@
 #ifndef REMORA_GPU_VECTOR_HPP
 #define REMORA_GPU_VECTOR_HPP
 
-//INCLUDED BY ../vector.hpp!
-
-#include "traits.hpp"
+#include "../detail/traits.hpp"
 #include "../detail/vector_proxy_classes.hpp"
 #include "../assignment.hpp"
 #include <boost/compute/container/vector.hpp>
@@ -192,6 +190,11 @@ public:
 	}
 	///\brief Returns the underlying storage structure for low level access
 	const_storage_type raw_storage() const{
+		return {m_storage.get_buffer(),0,1};
+	}
+	
+	///\brief Returns the underlying storage structure for low level access
+	storage_type raw_storage(){
 		return {m_storage.get_buffer(),0,1};
 	}
 	

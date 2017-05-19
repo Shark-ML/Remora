@@ -28,7 +28,7 @@
 #ifndef REMORA_GPU_COPY_HPP
 #define REMORA_GPU_COPY_HPP
 
-#include "traits.hpp"
+#include "../detail/traits.hpp"
 //includes required for storage->vector/matrix and for scalar multiplication
 #include "../detail/vector_proxy_classes.hpp"
 #include "../detail/vector_expression_classes.hpp"

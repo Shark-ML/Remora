@@ -28,7 +28,7 @@
 #ifndef REMORA_GPU_MATRIX_HPP
 #define REMORA_GPU_MATRIX_HPP
 
-#include "traits.hpp"
+#include "../detail/traits.hpp"
 #include "../assignment.hpp"
 #include "../detail/matrix_proxy_classes.hpp"
 #include <boost/compute/container/vector.hpp>
@@ -93,7 +93,7 @@ public:
 	typedef matrix_reference<matrix const> const_closure_type;
 	typedef matrix_reference<matrix> closure_type;
 	typedef gpu::dense_matrix_storage<T> storage_type;
-	typedef gpu::dense_matrix_storage<T> const_storage_type;
+	typedef gpu::dense_matrix_storage<T const> const_storage_type;
 	typedef elementwise<dense_tag> evaluation_category;
 	typedef L orientation;
 
@@ -219,6 +219,11 @@ public:
 	}
 	///\brief Returns the underlying storage structure for low level access
 	const_storage_type raw_storage() const{
+		return {m_storage.get_buffer(),0,orientation::index_m(m_size1,m_size2)};
+	}
+	
+	///\brief Returns the underlying storage structure for low level access
+	storage_type raw_storage(){
 		return {m_storage.get_buffer(),0,orientation::index_m(m_size1,m_size2)};
 	}
 	
