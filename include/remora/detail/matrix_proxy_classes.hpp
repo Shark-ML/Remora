@@ -663,7 +663,9 @@ public:
 	// Element access
 	template <class IndexExpr>
 	auto operator()(IndexExpr const& i) const 
-	-> decltype(device_traits<typename M::device_type>::linearized_matrix_element(std::declval<matrix_closure_type const&>(),i)){
+	-> decltype(device_traits<typename M::device_type>::linearized_matrix_element(
+			std::declval<matrix_closure_type const&>(),std::declval<IndexExpr const&>()
+	)){
 		return device_traits<typename M::device_type>::linearized_matrix_element(m_expression,i);
 	}
 	reference operator [](size_type i) const{
