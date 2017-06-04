@@ -22,8 +22,8 @@ void checkDenseExpressionEquality(
 	for(std::size_t i = 0; i != op.size(); ++i,++pos){
 		BOOST_REQUIRE(pos != op.end());
 		BOOST_CHECK_EQUAL(pos.index(), i);
-		BOOST_CHECK_CLOSE(result(i), op(i),1.e-10);
-		BOOST_CHECK_CLOSE(*pos, op(i),1.e-10);
+		BOOST_CHECK_SMALL(result(i) - op(i),typename Result::value_type(1.e-10));
+		BOOST_CHECK_SMALL(*pos - op(i),typename Result::value_type(1.e-10));
 	}
 	BOOST_REQUIRE(pos == op.end());
 }
@@ -568,6 +568,74 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_inner_prod )
 		y(i) = exp((i-5.0)*(i-5.0));
 	}
 	BOOST_CHECK_CLOSE(inner_prod(x,y),(double)Dimensions,1.e-5);
+}
+
+/////////////////////////////////////////COMPARISONS///////////////////////////
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Equal ){
+	vector<int> x(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x(i) = -5 + 2*i;
+		result(i) = x(i) == 0;
+	}
+	checkDenseExpressionEquality(x == 0,result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Not_Equal ){
+	vector<int> x(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x(i) = -5 + 2*i;
+		result(i) = x(i) != 0;
+	}
+	checkDenseExpressionEquality(x != 0,result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Less ){
+	vector<int> x(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x(i) = -5 + 2*i;
+		result(i) = x(i) < 0;
+	}
+	checkDenseExpressionEquality(x < 0,result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Less_Equal ){
+	vector<int> x(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x(i) = -5 + 2*i;
+		result(i) = x(i) <= 0;
+	}
+	checkDenseExpressionEquality(x <= 0,result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Greater ){
+	vector<int> x(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x(i) = -5 + 2*i;
+		result(i) = x(i) > 0;
+	}
+	checkDenseExpressionEquality(x > 0,result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Greater_Equal ){
+	vector<int> x(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x(i) = -5 + 2*i;
+		result(i) = x(i) >= 0;
+	}
+	checkDenseExpressionEquality(x >= 0,result);
 }
 
 //////////////////////////////SPARSE TESTS//////////////////////////////

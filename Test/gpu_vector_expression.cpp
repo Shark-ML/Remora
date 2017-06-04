@@ -421,6 +421,81 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Safe_Div )
 	checkDenseExpressionEquality(safe_div(x,y,2.0),result);
 }
 
+/////////////////////////////////////////COMPARISONS///////////////////////////
+
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Equal ){
+	vector<int> x_cpu(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x_cpu(i) = -5 + 2*i;
+		result(i) = x_cpu(i) == 0;
+	}
+	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(x == 0,result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Not_Equal ){
+	vector<int> x_cpu(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x_cpu(i) = -5 + 2*i;
+		result(i) = x_cpu(i) != 0;
+	}
+	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(x != 0,result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Less ){
+	vector<int> x_cpu(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x_cpu(i) = -5 + 2*i;
+		result(i) = x_cpu(i) < 0;
+	}
+	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(x < 0,result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Less_Equal ){
+	vector<int> x_cpu(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x_cpu(i) = -5 + 2*i;
+		result(i) = x_cpu(i) <= 0;
+	}
+	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(x <= 0,result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Greater ){
+	vector<int> x_cpu(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x_cpu(i) = -5 + 2*i;
+		result(i) = x_cpu(i) > 0;
+	}
+	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(x > 0,result);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Vector_Greater_Equal ){
+	vector<int> x_cpu(Dimensions); 
+	vector<int> result(Dimensions);
+	
+	for (int i = 0; i < (int)Dimensions; i++){
+		x_cpu(i) = -5 + 2*i;
+		result(i) = x_cpu(i) >= 0;
+	}
+	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(x >= 0,result);
+}
+
 /////////////////////////////////////////////////////
 ///////////Vector Reductions///////////
 /////////////////////////////////////////////////////
