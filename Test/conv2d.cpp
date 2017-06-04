@@ -3,6 +3,9 @@
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/mpl/list.hpp>
 
+#include <remora/io.hpp>
+#include <iostream>
+
 #include <remora/kernels/conv2d.hpp>
 #include <remora/matrix_proxy.hpp>//fixme: required by assign :(
 #include <remora/matrix.hpp>
@@ -52,32 +55,41 @@ void test(
 	std::size_t num_filters
 ){
 	
-	matrix<T> image(num_channels * image_size1 , image_size2);
+	matrix<T> image(num_channels * image_size1, image_size2);
+	vector<T> image_lin(num_channels * image_size1 *  image_size2);
 	matrix<T> filter(num_channels * num_filters *  filter_size1, filter_size2);
+	vector<T> filter_lin(num_channels * num_filters *  filter_size1 * filter_size2);
 	
+	std::size_t lin_elem = 0;
 	for(std::size_t i = 0; i != num_channels * image_size1; ++i){
-		for(std::size_t j = 0; j != image_size2; ++j){
+		for(std::size_t j = 0; j != image_size2; ++j, ++lin_elem){
 			image(i,j)  = 1.0/(num_channels * image_size1)*i + 0.1 - (0.1/image_size2)*j;
+			image_lin(lin_elem) = image(i,j);
 		}
 	}
+	lin_elem = 0;
 	for(std::size_t i = 0; i != num_channels * num_filters * filter_size1; ++i){
-		for(std::size_t j = 0; j != filter_size2; ++j){
+		for(std::size_t j = 0; j != filter_size2; ++j, ++lin_elem){
 			filter(i,j)  = 1.0/(num_channels * filter_size1)*i + 0.1 - (0.1/filter_size2)*j;
+			filter_lin(lin_elem) = filter(i,j);
 		}
 	}
-	std::size_t output_size1 = image_size1 - filter_size1 +1;
-	std::size_t output_size2 = image_size2 - filter_size2 +1;
+	std::size_t output_size1 = image_size1 - filter_size1 + 1;
+	std::size_t output_size2 = image_size2 - filter_size2 + 1;
 	
-	matrix<T> out(output_size1 * num_filters, output_size2 ,0.0);
-	matrix<T> outTest(output_size1 * num_filters, output_size2 ,0.0);
+	vector<T> out_lin(output_size1 * output_size2 * num_filters, 0.0);
+	matrix<T> outTest(output_size1 * num_filters, output_size2, 0.0);
 	
-	kernels::conv2d(image,filter,out,num_channels, num_filters);
+	kernels::conv2d(
+		image_lin,filter_lin,out_lin,num_channels, num_filters, 
+		image_size1, image_size2, filter_size1, filter_size2
+	);
 	conv2dTest(image,filter,outTest,num_channels, num_filters);
 	
-	for(std::size_t i = 0; i != output_size1; ++i){
-		for(std::size_t j = 0; j != output_size2; ++j){
-			for(std::size_t k = 0; k != num_filters; ++k){
-				double val = out(k * output_size1 + i,j);
+	for(std::size_t k = 0; k != num_filters; ++k){
+		for(std::size_t i = 0; i != output_size1; ++i){
+			for(std::size_t j = 0; j != output_size2; ++j){
+				double val = out_lin(k * output_size1 * output_size2 + i * output_size2 + j);
 				double valTest = outTest(k * output_size1 + i,j);
 				BOOST_CHECK_CLOSE(val,valTest,1.e-3);
 			}
