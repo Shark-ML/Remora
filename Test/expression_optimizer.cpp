@@ -212,6 +212,7 @@ BOOST_AUTO_TEST_CASE( Remora_prod_matrix_matrix_expression_optimize ){
 BOOST_AUTO_TEST_CASE( Remora_prod_matrix_row_optimize ){
 	typedef matrix<double,row_major> M1;
 	typedef matrix<double,column_major> M2;
+	typedef vector<double> V1;
 	
 	//simple proxy cases
 	{
@@ -254,6 +255,15 @@ BOOST_AUTO_TEST_CASE( Remora_prod_matrix_row_optimize ){
 		vector_unary<matrix_row<matrix_transpose<M1 const> >,F> e2 = column(sqr(m1),1);
 		BOOST_CHECK_SMALL(norm_inf(e1 - row(matrix<double>(sqr(m1)),1)), 1.e-10);
 		BOOST_CHECK_SMALL(norm_inf(e2 - column(matrix<double>(sqr(m1)),1)), 1.e-10);
+	}
+	
+	//vector repeat
+	{
+		V1 v1 = create_vector(10);
+		typename V1::const_closure_type e1 = row(repeat(v1,20),2);
+		scalar_vector<double, cpu_tag> e2 = row(trans(repeat(v1,20)),2);
+		BOOST_CHECK_SMALL(norm_inf(e1 - row(matrix<double>(repeat(v1,20)),2)), 1.e-10);
+		BOOST_CHECK_SMALL(norm_inf(e2 - row(trans(matrix<double>(repeat(v1,20))),2)), 1.e-10);
 	}
 	//matrix binary
 	{
@@ -334,6 +344,7 @@ BOOST_AUTO_TEST_CASE( Remora_prod_vector_range_optimize ){
 BOOST_AUTO_TEST_CASE( Remora_prod_matrix_range_optimize ){
 	typedef matrix<double,row_major> M1;
 	typedef matrix<double,column_major> M2;
+	typedef vector<double> V1;
 	
 	//simple proxy cases
 	{
@@ -372,6 +383,15 @@ BOOST_AUTO_TEST_CASE( Remora_prod_matrix_range_optimize ){
 		typedef device_traits<cpu_tag>::multiply<double> F;
 		matrix_binary<matrix_range<M1 const>,matrix_range<M2 const>,F> e1 = subrange(m1*m2,1,4,3,7);
 		BOOST_CHECK_SMALL(norm_inf(e1 - subrange(matrix<double>(m1*m2),1,4,3,7)), 1.e-10);
+	}
+	
+	//vector repeat
+	{
+		V1 v1 = create_vector(10);
+		vector_repeater<vector_range<V1 const>, row_major > e1 = subrange(repeat(v1,20),1,4,3,5);
+		vector_repeater<vector_range<V1 const>,column_major > e2 = subrange(trans(repeat(v1,20)),1,4,3,5);
+		BOOST_CHECK_SMALL(norm_inf(e1 - subrange(matrix<double>(repeat(v1,20)),1,4,3,5)), 1.e-10);
+		BOOST_CHECK_SMALL(norm_inf(e2 - subrange(trans(matrix<double>(repeat(v1,20))),1,4,3,5)), 1.e-10);
 	}
 	
 	//matrix prod
