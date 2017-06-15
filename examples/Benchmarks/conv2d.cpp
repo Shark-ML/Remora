@@ -22,7 +22,7 @@ void benchmark(
 	double minOptTime = std::numeric_limits<double>::max();
 	for(std::size_t i = 0; i != 20; ++i){
 		Timer time;
-		kernels::conv2d(image,filter,out, num_channels, num_filters, image_size1, image_size2, filter_size, filter_size,false);
+		kernels::conv2d(image,filter,out, num_channels, num_filters, image_size1, image_size2, filter_size, filter_size,0,0);
 		minOptTime = std::min(minOptTime,time.stop());
 	}
 

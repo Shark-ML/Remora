@@ -131,7 +131,7 @@ void test_im_to_mat_pad(
 	matrix<T> output(output_rows_per_filter, filter_size,-1.0);
 	matrix<T> output_pad(output_rows_per_filter, filter_size);
 	bindings::im2mat(image_lin_pad,output_pad,num_channels, image_size1pad, image_size2pad, filter_size1, filter_size2);
-	bindings::im2mat_pad(image_lin,output,num_channels, image_size1, image_size2, filter_size1, filter_size2);
+	bindings::im2mat_pad(image_lin,output,num_channels, image_size1, image_size2, filter_size1, filter_size2, filter_size1-1, filter_size2-1);
 	for(std::size_t i = 0; i != output_rows_per_filter; ++i){
 		BOOST_CHECK_SMALL(norm_inf(row(output,i)-row(output_pad,i)),T(1.e-7));
 	}
@@ -174,11 +174,11 @@ void test_pad(
 	vector<T> out_lin_pad(image_size1 * image_size2 * num_filters, 0.0);
 	kernels::conv2d(
 		image_lin,filter_lin,out_lin,num_channels, num_filters, 
-		image_size1, image_size2, filter_size1, filter_size2,true
+		image_size1, image_size2, filter_size1, filter_size2,filter_size1 - 1, filter_size2 - 1
 	);
 	kernels::conv2d(
 		image_lin_pad,filter_lin,out_lin_pad,num_channels, num_filters, 
-		image_size1pad, image_size2pad, filter_size1, filter_size2,false
+		image_size1pad, image_size2pad, filter_size1, filter_size2,0,0
 	);
 	
 	for(std::size_t k = 0; k != num_filters; ++k){
@@ -211,9 +211,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(conv2d_test, value_type,data_types) {
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(conv2d_test_pad, value_type,data_types) {
 	test_pad<value_type>(32,16,4,8,5,7);
-	test<value_type>(16,12,4,8,1,1);
-	test<value_type>(57,33,7,3,22,15);
-	test<value_type>(192,333,7,3,22,15);
+	test_pad<value_type>(16,12,4,8,1,1);
+	test_pad<value_type>(57,33,7,3,22,15);
+	test_pad<value_type>(192,333,7,3,22,15);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
