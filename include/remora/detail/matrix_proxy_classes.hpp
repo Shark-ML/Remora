@@ -919,16 +919,18 @@ public:
 	typedef value_type const& const_reference;
 	typedef T& reference;
 
-	typedef matrix_reference<self_type> closure_type;
-	typedef matrix_reference<self_type const> const_closure_type;
+	typedef dense_matrix_adaptor<T,Orientation,Tag> closure_type;
+	typedef dense_matrix_adaptor<value_type const,Orientation,Tag> const_closure_type;
 	typedef dense_matrix_storage<T,dense_tag> storage_type;
 	typedef dense_matrix_storage<value_type const,dense_tag> const_storage_type;
         typedef Orientation orientation;
 	typedef elementwise<dense_tag> evaluation_category;
 
+	template<class,class,class> friend class dense_matrix_adaptor;
+
 	// Construction and destruction
-	
-	dense_matrix_adaptor(dense_matrix_adaptor<value_type, Orientation> const& expression)
+	template<class U>
+	dense_matrix_adaptor(dense_matrix_adaptor<U, Orientation, Tag> const& expression)
 	: m_values(expression.m_values)
 	, m_size1(expression.size1())
 	, m_size2(expression.size2())
@@ -1059,12 +1061,7 @@ public:
 	// Element access
 	// --------------
 	
-	const_reference operator() (size_type i, size_type j) const {
-		REMORA_SIZE_CHECK( i < m_size1);
-		REMORA_SIZE_CHECK( j < m_size2);
-		return m_values[i*m_stride1+j*m_stride2];
-        }
-        reference operator() (size_type i, size_type j) {
+	reference operator() (size_type i, size_type j) const {
 		REMORA_SIZE_CHECK( i < m_size1);
 		REMORA_SIZE_CHECK( j < m_size2);
 		return m_values[i*m_stride1+j*m_stride2];
