@@ -46,8 +46,8 @@ BOOST_AUTO_TEST_SUITE(Remora_SYRK)
 
 typedef boost::mpl::list<row_major,column_major> result_orientations;
 BOOST_AUTO_TEST_CASE_TEMPLATE(syrk_test, Orientation,result_orientations) {
-	std::size_t dims = 936;//chosen as not to be a multiple of the block size
-	std::size_t K = 1024;
+	std::size_t dims = 384;//chosen as not to be a multiple of the block size
+	std::size_t K = 244;
 
 	//rhs
 	matrix<double, row_major> argrm(dims, K, 1.0);

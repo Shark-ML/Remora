@@ -354,8 +354,8 @@ public:
 
 	typedef matrix_row<M> closure_type;
 	typedef matrix_row<typename const_expression<M>::type> const_closure_type;
-	typedef typename storage<M>::type::row_storage storage_type;
-	typedef typename M::const_storage_type::row_storage const_storage_type;
+	typedef typename storage<M>::type::template row_storage<typename M::orientation>::type storage_type;
+	typedef typename M::const_storage_type::template row_storage<typename M::orientation>::type const_storage_type;
 	typedef typename M::evaluation_category evaluation_category;
 
 	// Construction and destruction
@@ -502,7 +502,7 @@ public:
 
 	typedef matrix_vector_range<M> closure_type;
 	typedef matrix_vector_range<typename const_expression<M>::type> const_closure_type;
-	typedef typename storage<M>::type::row_storage storage_type;
+	typedef typename storage<M>::type::diag_storage storage_type;
 	typedef typename M::const_storage_type const_storage_type;
 	typedef typename M::evaluation_category evaluation_category;
 
@@ -725,8 +725,8 @@ public:
 	
 	typedef matrix_range<M> closure_type;
 	typedef matrix_range<typename const_expression<M>::type> const_closure_type;
-	typedef typename storage<M>::type storage_type;
-	typedef typename M::const_storage_type const_storage_type;
+	typedef typename storage<M>::type::sub_region_storage storage_type;
+	typedef typename M::const_storage_type::sub_region_storage const_storage_type;
 	typedef typename M::orientation orientation;
 	typedef typename M::evaluation_category evaluation_category;
 
@@ -921,8 +921,8 @@ public:
 
 	typedef matrix_reference<self_type> closure_type;
 	typedef matrix_reference<self_type const> const_closure_type;
-	typedef dense_matrix_storage<T> storage_type;
-	typedef dense_matrix_storage<value_type const> const_storage_type;
+	typedef dense_matrix_storage<T,dense_tag> storage_type;
+	typedef dense_matrix_storage<value_type const,dense_tag> const_storage_type;
         typedef Orientation orientation;
 	typedef elementwise<dense_tag> evaluation_category;
 
