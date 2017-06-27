@@ -41,70 +41,70 @@
 namespace remora{namespace bindings {
 
 //vector subrange
-template<class V>
+template<class V, class Device>
 vector_range<typename const_expression<V>::type>
-simple_subrange(vector_expression<V, cpu_tag> const& expression, std::size_t start, std::size_t stop){
+simple_subrange(vector_expression<V, Device> const& expression, std::size_t start, std::size_t stop){
 	return vector_range<typename const_expression<V>::type>(expression(), start, stop);
 }
 
-template<class V>
+template<class V, class Device>
 vector_range<V>
-simple_subrange(vector_expression<V, cpu_tag>& expression, std::size_t start, std::size_t stop){
+simple_subrange(vector_expression<V, Device>& expression, std::size_t start, std::size_t stop){
 	return vector_range<V>(expression(), start, stop);
 }
 
 //matrix subrange
-template<class M>
+template<class M, class Device>
 matrix_range<typename const_expression<M>::type>
-simple_subrange(matrix_expression<M, cpu_tag> const& expression, 
+simple_subrange(matrix_expression<M, Device> const& expression, 
 	std::size_t start1, std::size_t stop1, std::size_t start2, std::size_t stop2 ){
 	return matrix_range<typename const_expression<M>::type>(expression(), start1, stop1, start2, stop2);
 }
 
-template<class M>
+template<class M, class Device>
 matrix_range<M>
-simple_subrange(matrix_expression<M, cpu_tag>& expression, 
+simple_subrange(matrix_expression<M, Device>& expression, 
 	std::size_t start1, std::size_t stop1, std::size_t start2, std::size_t stop2 ){
 	return matrix_range<M>(expression(), start1, stop1, start2, stop2);
 }
 
 //matrix row
-template<class M>
+template<class M, class Device>
 matrix_row<typename const_expression<M>::type>
-simple_row(matrix_expression<M, cpu_tag> const& expression, typename M::size_type i){
+simple_row(matrix_expression<M, Device> const& expression, typename M::size_type i){
 	return matrix_row<typename const_expression<M>::type>(expression(), i);
 }
-template<class M>
+template<class M, class Device>
 matrix_row<M>
-simple_row(matrix_expression<M, cpu_tag>& expression, typename M::size_type i){
+simple_row(matrix_expression<M, Device>& expression, typename M::size_type i){
 	return matrix_row<M>(expression(), i);
 }
 
 //matrix column
-template<class M>
+template<class M, class Device>
 matrix_row< matrix_transpose< typename const_expression<M>::type > >
-simple_column(matrix_expression<M, cpu_tag> const& expression, typename M::size_type i){
+simple_column(matrix_expression<M, Device> const& expression, typename M::size_type i){
 	typedef matrix_transpose< typename const_expression<M>::type > TransE;
 	TransE transE(expression());
 	return matrix_row< TransE >(transE, i);
 }
-template<class M>
+template<class M, class Device>
 matrix_row< matrix_transpose<M> >
-simple_column(matrix_expression<M, cpu_tag>& expression, typename M::size_type i){
+simple_column(matrix_expression<M, Device>& expression, typename M::size_type i){
 	typedef matrix_transpose<M> TransE;
 	TransE transE(expression());
 	return matrix_row< TransE >(transE, i);
 }
 
 //simple trans
-template<class M>
+template<class M, class Device>
 matrix_transpose< typename const_expression<M>::type >
-simple_trans(matrix_expression<M, cpu_tag>const& m){
+simple_trans(matrix_expression<M, Device>const& m){
 	return matrix_transpose< typename const_expression<M>::type >(m());
 }
-template<class M>
+template<class M, class Device>
 matrix_transpose<M>
-simple_trans(matrix_expression<M, cpu_tag>& m){
+simple_trans(matrix_expression<M, Device>& m){
 	return matrix_transpose<M>(m());
 }
 

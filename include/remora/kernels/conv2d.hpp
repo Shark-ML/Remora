@@ -33,6 +33,9 @@
 
 #include "default/conv2d.hpp"
 
+#ifdef REMORA_USE_CLBLAST
+#include "clBlast/conv2d.hpp"
+#endif
 
 namespace remora{namespace kernels{
 	
@@ -52,11 +55,11 @@ namespace remora{namespace kernels{
 /// a filter.
 /// the output format is stored in the same way as image just with size (l* (m-m1+1))x(n-n1+1).
 /// The caller must ensure that enough memory is available.	
-template<class E1, class E2, class M>
+template<class E1, class E2, class M, class Device>
 void conv2d(
-	matrix_expression<E1, cpu_tag> const& images,
-	vector_expression<E2, cpu_tag> const& filter,
-	matrix_expression<M, cpu_tag>& outputs,
+	matrix_expression<E1, Device> const& images,
+	vector_expression<E2, Device> const& filter,
+	matrix_expression<M, Device>& outputs,
 	std::size_t num_channels,
 	std::size_t num_filters,
 	std::size_t image_height,
