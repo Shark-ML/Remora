@@ -92,9 +92,9 @@ void test(
 BOOST_AUTO_TEST_SUITE(Remora_Conv2d)
 
 BOOST_AUTO_TEST_CASE(conv2d_test) {
-	//~ test(32,16,4,8,5,1,1);
+	test(32,16,4,8,5,1,1);
 	test(16,12,4,8,4,4,3);
-	//~ test(57,33,7,3,22,15,3);
+	test(57,33,7,3,22,15,3);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
