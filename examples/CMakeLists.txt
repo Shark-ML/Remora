@@ -62,3 +62,7 @@ REMORA_ADD_BENCHMARK(gemm Benchmark_Gemm)
 REMORA_ADD_BENCHMARK(trmm Benchmark_Trmm)
 REMORA_ADD_BENCHMARK(syrk Benchmark_Syrk)
 REMORA_ADD_BENCHMARK(potrf Benchmark_Potrf)
+
+if(ENABLE_GPU)
+REMORA_ADD_BENCHMARK(gpu_conv2d Benchmark_GPU_Conv2D)
+endif()
