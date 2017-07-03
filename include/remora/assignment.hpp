@@ -121,63 +121,47 @@ eval_expression(matrix_expression<E, Device> const& e){
 	
 namespace detail{
 	template<class VecX, class VecV, class Device>
-	void assign(vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v,elementwise_tag){
-		kernels::assign(x,v);
-	}
-	template<class VecX, class VecV, class Device>
 	void assign(
 		vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v,
 		elementwise_tag, typename VecX::value_type alpha
 	){
-		typename device_traits<Device>:: template multiply_assign<typename common_value_type<VecX,VecV>::type> f(alpha);
-		kernels::assign(x, v,f);
+		typedef typename VecX::value_type  value_type;
+		if(alpha == value_type(1)){
+			kernels::assign(x, v);
+		}else{
+			typename device_traits<Device>:: template multiply_assign<value_type> f(alpha);
+			kernels::assign(x, v, f);
+		}
 	}
 	template<class VecX, class VecV, class Device>
 	void assign(
 		vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v,
-		blockwise_tag, typename VecX::value_type alpha = 1
+		blockwise_tag, typename VecX::value_type alpha
 	){
 		v().assign_to(x,alpha);
 	}
 	template<class VecX, class VecV, class Device>
-	void plus_assign(vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v,elementwise_tag){
-		kernels::assign<typename device_traits<Device>:: template add<typename common_value_type<VecX,VecV>::type> > (x, v);
-	}
-	template<class VecX, class VecV, class Device>
-	void plus_assign(
-		vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v,
+	void plus_assign(vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v,
 		elementwise_tag, typename  VecX::value_type alpha
 	){
 		typename device_traits<Device>:: template multiply_and_add<typename common_value_type<VecX,VecV>::type> f(alpha);
-		kernels::assign(x, v,f);
+		kernels::assign(x, v, f);
 	}
 	template<class VecX, class VecV, class Device>
 	void plus_assign(
 		vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v,
-		blockwise_tag,typename VecX::value_type alpha = 1
+		blockwise_tag,typename VecX::value_type alpha
 	){
 		v().plus_assign_to(x,alpha);
 	}
 }
-	
 
 /// \brief Dispatches vector assignment on an expression level
 ///
 /// This dispatcher takes care for whether the blockwise evaluation
 /// or the elementwise evaluation is called
 template<class VecX, class VecV, class Device>
-VecX& assign(vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v){
-	REMORA_SIZE_CHECK(x().size() == v().size());
-	detail::assign(x,v,typename VecV::evaluation_category());
-	return x();
-}
-
-/// \brief Dispatches vector assignment on an expression level
-///
-/// This dispatcher takes care for whether the blockwise evaluation
-/// or the elementwise evaluation is called
-template<class VecX, class VecV, class Device>
-VecX& assign(vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v, typename VecX::value_type alpha){
+VecX& assign(vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v, typename VecX::value_type alpha = 1){
 	REMORA_SIZE_CHECK(x().size() == v().size());
 	detail::assign(x,v,typename VecV::evaluation_category(),alpha);
 	return x();
@@ -188,18 +172,7 @@ VecX& assign(vector_expression<VecX, Device>& x, vector_expression<VecV, Device>
 /// This dispatcher takes care for whether the blockwise evaluation
 /// or the elementwise evaluation is called
 template<class VecX, class VecV, class Device>
-VecX& plus_assign(vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v){
-	REMORA_SIZE_CHECK(x().size() == v().size());
-	detail::plus_assign(x,v,typename VecV::evaluation_category());
-	return x();
-}
-
-/// \brief Dispatches vector plus-assignment on an expression level
-///
-/// This dispatcher takes care for whether the blockwise evaluation
-/// or the elementwise evaluation is called
-template<class VecX, class VecV, class Device>
-VecX& plus_assign(vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v, typename VecX::value_type alpha){
+VecX& plus_assign(vector_expression<VecX, Device>& x, vector_expression<VecV, Device> const& v, typename VecX::value_type alpha = 1){
 	REMORA_SIZE_CHECK(x().size() == v().size());
 	detail::plus_assign(x,v,typename VecV::evaluation_category(),alpha);
 	return x();
@@ -235,27 +208,24 @@ VecX& divide_assign(vector_expression<VecX, Device>& x, vector_expression<VecV, 
 	
 namespace detail{
 	template<class MatA, class MatB, class Device>
-	void assign(matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device> const& B,elementwise_tag){
-		kernels::assign(A,B);
-	}
-	template<class MatA, class MatB, class Device>
 	void assign(
 		matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device> const& B,
 		elementwise_tag,typename MatA::value_type alpha
 	){
-		typename device_traits<Device>:: template multiply_assign<typename common_value_type<MatA,MatB>::type> f(alpha);
-		kernels::assign(A,B,f);
+		typedef typename MatA::value_type  value_type;
+		if(alpha == value_type(1)){
+			kernels::assign(A, B);
+		}else{
+			typename device_traits<Device>:: template multiply_assign<value_type> f(alpha);
+			kernels::assign(A, B, f);
+		}
 	}
 	template<class MatA, class MatB, class Device>
 	void assign(
 		matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device> const& B,
-		blockwise_tag, typename MatA::value_type alpha = 1
+		blockwise_tag, typename MatA::value_type alpha
 	){
 		B().assign_to(A,alpha);
-	}
-	template<class MatA, class MatB, class Device>
-	void plus_assign(matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device> const& B,elementwise_tag){
-		kernels::assign<typename device_traits<Device>:: template add<typename common_value_type<MatA,MatB>::type> > (A, B);
 	}
 	template<class MatA, class MatB, class Device>
 	void plus_assign(
@@ -268,31 +238,18 @@ namespace detail{
 	template<class MatA, class MatB, class Device>
 	void plus_assign(
 		matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device> const& B,
-		blockwise_tag, typename MatA::value_type alpha = 1
+		blockwise_tag, typename MatA::value_type alpha
 	){
 		B().plus_assign_to(A,alpha);
 	}
 }
-	
 
 /// \brief Dispatches matrix assignment on an expression level
 ///
 /// This dispatcher takes care for whether the blockwise evaluation
 /// or the elementwise evaluation is called
 template<class MatA, class MatB, class Device>
-MatA& assign(matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device> const& B){
-	REMORA_SIZE_CHECK(A().size1() == B().size1());
-	REMORA_SIZE_CHECK(A().size2() == B().size2());
-	detail::assign(A,B, typename MatB::evaluation_category());
-	return A();
-}
-
-/// \brief Dispatches matrix assignment on an expression level
-///
-/// This dispatcher takes care for whether the blockwise evaluation
-/// or the elementwise evaluation is called
-template<class MatA, class MatB, class Device>
-MatA& assign(matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device> const& B, typename MatA::value_type alpha){
+MatA& assign(matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device> const& B, typename MatA::value_type alpha = 1){
 	REMORA_SIZE_CHECK(A().size1() == B().size1());
 	REMORA_SIZE_CHECK(A().size2() == B().size2());
 	detail::assign(A,B, typename MatB::evaluation_category(),alpha);
@@ -304,19 +261,7 @@ MatA& assign(matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device>
 /// This dispatcher takes care for whether the blockwise evaluation
 /// or the elementwise evaluation is called
 template<class MatA, class MatB, class Device>
-MatA& plus_assign(matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device> const& B){
-	REMORA_SIZE_CHECK(A().size1() == B().size1());
-	REMORA_SIZE_CHECK(A().size2() == B().size2());
-	detail::plus_assign(A,B, typename MatB::evaluation_category());
-	return A();
-}
-
-/// \brief Dispatches matrix plus-assignment on an expression level
-///
-/// This dispatcher takes care for whether the blockwise evaluation
-/// or the elementwise evaluation is called
-template<class MatA, class MatB, class Device>
-MatA& plus_assign(matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device> const& B, typename MatA::value_type alpha){
+MatA& plus_assign(matrix_expression<MatA, Device>& A, matrix_expression<MatB, Device> const& B, typename MatA::value_type alpha = 1){
 	REMORA_SIZE_CHECK(A().size1() == B().size1());
 	REMORA_SIZE_CHECK(A().size2() == B().size2());
 	detail::plus_assign(A,B, typename MatB::evaluation_category(),alpha);

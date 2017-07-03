@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Assign_Dense ){
 	{
 		std::cout<<"testing functor assignment"<<std::endl;
 		vector<unsigned int, gpu_tag> target = copy_to_gpu(target_cpu);
-		kernels::assign<device_traits<gpu_tag>::add<unsigned int> >(target,source);
+		kernels::assign(target,source, device_traits<gpu_tag>::add<unsigned int>());
 		checkVectorEqual(target,result_add);
 	}
 	{

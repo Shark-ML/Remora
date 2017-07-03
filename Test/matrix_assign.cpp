@@ -631,28 +631,28 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Dense_Matrix_Plus_Assign ){
 	{
 		matrix<unsigned int,row_major> target = preinit;
 		std::cout<<"testing row-row"<<std::endl;
-		kernels::assign<functor>(target,source_row_major);
+		kernels::assign(target,source_row_major, functor());
 		checkMatrixEqual(target,result);
 	}
 	
 	{
 		matrix<unsigned int,row_major> target = preinit;
 		std::cout<<"testing row-column"<<std::endl;
-		kernels::assign<functor >(target,source_column_major);
+		kernels::assign(target,source_column_major, functor());
 		checkMatrixEqual(target,result);
 	}
 	
 	{
 		matrix<unsigned int,column_major> target = preinit;
 		std::cout<<"testing column-row"<<std::endl;
-		kernels::assign<functor >(target,source_row_major);
+		kernels::assign(target,source_row_major, functor());
 		checkMatrixEqual(target,result);
 	}
 	
 	{
 		matrix<unsigned int,column_major> target = preinit;
 		std::cout<<"testing column-column"<<std::endl;
-		kernels::assign<functor >(target,source_column_major);
+		kernels::assign(target,source_column_major, functor());
 		checkMatrixEqual(target,result);
 	}
 }
@@ -684,28 +684,28 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Sparse_Matrix_Plus_Assign ){
 	{
 		matrix<unsigned int,row_major> target = preinit;
 		std::cout<<"testing row-row"<<std::endl;
-		kernels::assign<functor >(target,source_row_major);
+		kernels::assign(target,source_row_major, functor());
 		checkMatrixEqual(target,result);
 	}
 	
 	{
 		matrix<unsigned int,row_major> target = preinit;
 		std::cout<<"testing row-column"<<std::endl;
-		kernels::assign<functor >(target,source_column_major);
+		kernels::assign(target,source_column_major, functor());
 		checkMatrixEqual(target,result);
 	}
 	
 	{
 		matrix<unsigned int,column_major> target = preinit;
 		std::cout<<"testing column-row"<<std::endl;
-		kernels::assign<functor >(target,source_row_major);
+		kernels::assign(target,source_row_major, functor());
 		checkMatrixEqual(target,result);
 	}
 	
 	{
 		matrix<unsigned int,column_major> target = preinit;
 		std::cout<<"testing column-column"<<std::endl;
-		kernels::assign<functor >(target,source_column_major);
+		kernels::assign(target,source_column_major, functor());
 		checkMatrixEqual(target,result);
 	}
 }
@@ -745,14 +745,14 @@ BOOST_AUTO_TEST_CASE( Remora_Sparse_Sparse_Matrix_Plus_Assign ){
 	{
 		compressed_matrix<unsigned int> target = preinit;
 		std::cout<<"testing row-row"<<std::endl;
-		kernels::assign<functor >(target,source_row_major);
+		kernels::assign(target,source_row_major, functor());
 		checkMatrixEqual(target,result);
 	}
 	
 	{
 		matrix<unsigned int,row_major> target = preinit;
 		std::cout<<"testing row-column"<<std::endl;
-		kernels::assign<functor >(target,source_column_major);
+		kernels::assign(target,source_column_major, functor());
 		checkMatrixEqual(target,result);
 	}
 	{
@@ -760,7 +760,7 @@ BOOST_AUTO_TEST_CASE( Remora_Sparse_Sparse_Matrix_Plus_Assign ){
 		matrix_transpose<compressed_matrix<unsigned int> > target(target_base);
 		target = preinit;
 		std::cout<<"testing column-row"<<std::endl;
-		kernels::assign<functor >(target,source_row_major);
+		kernels::assign(target,source_row_major, functor());
 		checkMatrixEqual(target,result);
 	}
 	
@@ -769,7 +769,7 @@ BOOST_AUTO_TEST_CASE( Remora_Sparse_Sparse_Matrix_Plus_Assign ){
 		matrix_transpose<compressed_matrix<unsigned int> > target(target_base);
 		target = preinit;
 		std::cout<<"testing column-column"<<std::endl;
-		kernels::assign<functor >(target,source_column_major);
+		kernels::assign(target,source_column_major, functor());
 		checkMatrixEqual(target,result);
 	}
 }

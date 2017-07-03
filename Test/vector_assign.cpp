@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Assign_Functor ){
 			result_dense(i) = source_dense(i)+target_dense(i);
 		}
 		std::cout<<"testing dense-dense"<<std::endl;
-		kernels::assign<functor >(target_dense,source_dense);
+		kernels::assign(target_dense,source_dense,functor());
 		checkVectorEqual(target_dense,result_dense);
 	}
 	
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Assign_Functor ){
 			result_dense(i) = source_sparse(i)+target_dense(i);
 		}
 		std::cout<<"testing dense-sparse"<<std::endl;
-		kernels::assign<functor >(target_dense,source_sparse);
+		kernels::assign(target_dense,source_sparse,functor());
 		checkVectorEqual(target_dense,result_dense);
 	}
 	
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Assign_Functor ){
 			result_dense(i) = source_dense(i)+target_sparse(i);
 		}
 		std::cout<<"testing sparse-dense"<<std::endl;
-		kernels::assign<functor >(target_sparse,source_dense);
+		kernels::assign(target_sparse,source_dense,functor());
 		BOOST_CHECK_EQUAL(target_sparse.nnz(), 10);
 		checkVectorEqual(target_sparse,result_dense);
 	}
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Assign_Functor ){
 			result_dense(i) = source_sparse(i)+target_sparse(i);
 		}
 		std::cout<<"testing sparse-sparse"<<std::endl;
-		kernels::assign<functor >(target_sparse,source_sparse);
+		kernels::assign(target_sparse,source_sparse,functor());
 		BOOST_CHECK_EQUAL(target_sparse.nnz(), 5);
 		checkVectorEqual(target_sparse,result_dense);
 	}

@@ -36,11 +36,16 @@
 #include <boost/compute/functional/bind.hpp>
 
 namespace remora{namespace bindings{
+	
+template<class F, class V>
+void apply(vector_expression<V, gpu_tag>& v, F const& f) {
+	boost::compute::transform(v().begin(),v().end(), v().begin(), f, v().queue());
+}
 
 template<class F, class V>
 void assign(vector_expression<V, gpu_tag>& v, typename V::value_type t) {
 	auto unary = boost::compute::bind(F(),boost::compute::placeholders::_1, t);
-	boost::compute::transform(v().begin(),v().end(), v().begin(), unary, v().queue());
+	apply(v,unary);
 }
 
 /////////////////////////////////////////////////////////

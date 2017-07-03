@@ -33,13 +33,18 @@
 namespace remora{namespace bindings{
 
 template<class F, class V>
-void assign(vector_expression<V, cpu_tag>& v, typename V::value_type t) {
-	F f;
+void apply(vector_expression<V, cpu_tag>& v, F const& f) {
 	typedef typename V::iterator iterator;
 	iterator end = v().end();
 	for (iterator it = v().begin(); it != end; ++it){
-		*it = f(*it, t);
+		*it = f(*it);
 	}
+}
+
+template<class F, class V>
+void assign(vector_expression<V, cpu_tag>& v, typename V::value_type t) {
+	F f;
+	apply(v, [=](typename V::value_type x){return f(x,t);});
 }
 
 /////////////////////////////////////////////////////////

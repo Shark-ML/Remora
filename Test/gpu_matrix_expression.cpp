@@ -155,8 +155,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Add )
 		}
 	}
 	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
-	checkDenseExpressionEquality(5.0+x,result);
-	checkDenseExpressionEquality(x+5.0,result);
+	checkDenseExpressionEquality(5.0f+x,result);
+	
+	checkDenseExpressionEquality(x+5.0f,result);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Subtract )
 {
@@ -172,8 +173,8 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Subtract )
 		}
 	}
 	matrix<float, row_major, gpu_tag> x = copy_to_gpu(x_cpu);
-	checkDenseExpressionEquality(5.0- x,result1);
-	checkDenseExpressionEquality(x - 5.0,result2);
+	checkDenseExpressionEquality(5.0f- x,result1);
+	checkDenseExpressionEquality(x - 5.0f,result2);
 }
 BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Div )
 {

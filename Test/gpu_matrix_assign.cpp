@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE( Remora_Matrix_Assign_Dense ){
 	{
 		std::cout<<"testing functor assignment row-row"<<std::endl;
 		matrix<float, row_major, gpu_tag> target = copy_to_gpu(target_cpu);
-		kernels::assign<device_traits<gpu_tag>::add<float> >(target,source);
+		kernels::assign(target,source, device_traits<gpu_tag>::add<float>());
 		checkMatrixEqual(target,result_add);
 	}
 	{
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE( Remora_Matrix_Assign_Dense ){
 	{
 		std::cout<<"testing functor assignment row-column"<<std::endl;
 		matrix<float, row_major, gpu_tag> target = copy_to_gpu(target_cpu);
-		kernels::assign<device_traits<gpu_tag>::add<float> >(target,source_cm);
+		kernels::assign(target,source_cm, device_traits<gpu_tag>::add<float>());
 		checkMatrixEqual(target,result_add);
 	}
 	{

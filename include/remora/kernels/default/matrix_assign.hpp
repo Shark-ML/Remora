@@ -34,44 +34,57 @@
 #include <vector>
 namespace remora{namespace bindings{
 
+// Explicitly iterating row major
+template<class F, class M>
+void matrix_apply(
+	matrix_expression<M, cpu_tag> &m,
+	F const& f,
+	row_major
+){
+	for(std::size_t i = 0; i != m().size1(); ++i){
+		auto rowM = row(m,i);
+		kernels::apply(rowM,f);
+	}
+}
+// Explicitly iterating column major
+template<class F, class M>
+void matrix_apply(
+	matrix_expression<M, cpu_tag> &m,
+	F const& f,
+	column_major
+){
+	for(std::size_t j = 0; j != m().size2(); ++j){
+		auto columnM = column(m,j);
+		kernels::apply(columnM,f);
+	}
+}
+// Spcial case triangular packed - just calls the first two implementations.
+template<class F, class M, class Orientation, class Triangular>
+void matrix_apply(
+	matrix_expression<M, cpu_tag> &m,
+	F const& f,
+	triangular<Orientation,Triangular>
+){
+	matrix_apply(m,f,Orientation());
+}
+
 //////////////////////////////////////////////////////
 ////Scalar Assignment to Matrix
 /////////////////////////////////////////////////////
 
 
 // Explicitly iterating row major
-template<class F, class M>
+template<class F, class M, class Orientation>
 void matrix_assign(
 	matrix_expression<M, cpu_tag> &m,
 	typename M::value_type t,
-	row_major
+	Orientation
 ){
-	for(std::size_t i = 0; i != m().size1(); ++i){
-		auto rowM = row(m,i);
-		kernels::assign<F>(rowM,t);
-	}
+	F f;
+	matrix_apply(m, [=](typename M::value_type x){return f(x,t);},Orientation());
+
 }
-// Explicitly iterating column major
-template<class F, class M>
-void matrix_assign(
-	matrix_expression<M, cpu_tag> &m,
-	typename M::value_type t,
-	column_major
-){
-	for(std::size_t j = 0; j != m().size2(); ++j){
-		auto columnM = column(m,j);
-		kernels::assign<F>(columnM,t);
-	}
-}
-// Spcial case triangular packed - just calls the first two implementations.
-template<class F, class M, class Orientation, class Triangular>
-void matrix_assign(
-	matrix_expression<M, cpu_tag> &m,
-	typename M::value_type t,
-	triangular<Orientation,Triangular>
-){
-	matrix_assign<F>(m,t,Orientation());
-}
+
 
 
 /////////////////////////////////////////////////////////////////
@@ -410,18 +423,18 @@ void matrix_assign_functor(
 
 
 //kernels for packed
-template<class F, class M, class E, class Triangular>
+template<class F, class M, class E, class Triangular, class Tag1, class Tag2>
 void matrix_assign_functor(
 	matrix_expression<M, cpu_tag> &m,
 	matrix_expression<E, cpu_tag> const& e,
 	F f,
-	triangular<row_major,Triangular>, triangular<row_major,Triangular>
+	triangular<row_major,Triangular>, triangular<row_major,Triangular>,
+	Tag1, Tag2
 ) {
 	typedef typename M::row_iterator MIter;
 	typedef typename E::const_row_iterator EIter;
 	//there is nothing we can do if F does not leave the non-stored elements 0
 	//this is the case for all current assignment functors, but you never know :)
-	static_assert(F::left_zero_identity || F::right_zero_identity, "cannot handle the given packed matrix assignment function");
 
 	for(std::size_t i = 0; i != m().size1(); ++i){
 		MIter mpos = m().row_begin(i);
@@ -435,16 +448,16 @@ void matrix_assign_functor(
 }
 
 //todo: this is suboptimal as we do strided access!!!!
-template<class F, class M, class E, class Triangular>
+template<class F, class M, class E, class Triangular, class Tag1, class Tag2>
 void matrix_assign_functor(
 	matrix_expression<M, cpu_tag> &m,
 	matrix_expression<E, cpu_tag> const& e,
 	F f,
-	triangular<row_major,Triangular>, triangular<column_major,Triangular>
+	triangular<row_major,Triangular>, triangular<column_major,Triangular>,
+	Tag1, Tag2
 ) {
 	typedef typename M::row_iterator MIter;
 	//there is nothing we can do, if F does not leave the non-stored elements 0
-	static_assert(F::left_zero_identity, "cannot handle the given packed matrix assignment function");
 
 	for(std::size_t i = 0; i != m().size1(); ++i){
 		MIter mpos = m().row_begin(i);

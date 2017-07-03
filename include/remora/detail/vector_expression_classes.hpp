@@ -259,8 +259,9 @@ public:
 	//computation kernels
 	template<class VecX>
 	void assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
-		x().clear();
-		plus_assign_to(x,eval_block(m_expression), alpha);
+		assign(x,m_expression);
+		kernels::apply(x,m_functor);
+		noalias(x) *= alpha;
 	}
 	template<class VecX>
 	void plus_assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
@@ -293,9 +294,7 @@ private:
 		vector_expression<VecV, device_type> const& v,
 		typename VecX::value_type alpha
 	)const{
-		vector_unary<VecV, F> e(v(), m_functor);
-		vector_scalar_multiply<vector_unary<VecV,F> > e1(e,alpha);
-		plus_assign(x,e1);
+		kernels::assign(x,v, device_traits<device_type>::make_assignment_functor(m_functor), alpha);
 	}
 
 	expression_closure_type m_expression;

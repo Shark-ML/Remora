@@ -495,12 +495,15 @@ public:
 	//computation kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const {
-		X().clear();
-		plus_assign_to(X,eval_block(m_expression), alpha);
+		assign(X,m_expression);
+		kernels::apply(X,m_functor);
+		noalias(X) *= alpha;
 	}
 	template<class MatX>
 	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const {
-		plus_assign_to(X,eval_block(m_expression), alpha);
+		auto evalExp = eval_block(m_expression);
+		matrix_unary<decltype(evalExp), F> e(evalExp, m_functor);
+		plus_assign(X,e,alpha);
 	}
 
 	// Element access
@@ -532,16 +535,6 @@ public:
 private:
 	expression_closure_type m_expression;
 	functor_type m_functor;
-
-	template<class MatX, class MatA>
-	void plus_assign_to(
-		matrix_expression<MatX, device_type>& X,
-		matrix_expression<MatA, device_type> const& A,
-		typename MatX::value_type alpha
-	)const{
-		matrix_unary<MatA, F> e(A(), m_functor);
-		plus_assign(X,e,alpha);
-	}
 };
 
 template<class E1, class E2, class F>
@@ -607,12 +600,16 @@ public:
 	
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha )const{
-		X().clear();
-		plus_assign_to(X,eval_block(m_lhs), eval_block(m_rhs), alpha);
+		assign(X,m_lhs);
+		kernels::assign(X, eval_block(m_rhs), m_functor);
+		noalias(X) *= alpha;
 	}
 	template<class MatX>
 	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
-		plus_assign_to(X,eval_block(m_lhs), eval_block(m_rhs), alpha);
+		auto eval_lhs = eval_block(m_lhs);
+		auto eval_rhs = eval_block(m_lhs);
+		matrix_binary<decltype(eval_lhs),decltype(eval_rhs),F> e(lhs(),rhs(), m_functor);
+		plus_assign(X,e,alpha);		
 	}
 
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
@@ -654,18 +651,6 @@ private:
 	lhs_closure_type m_lhs;
         rhs_closure_type m_rhs;
 	functor_type m_functor;
-
-	template<class MatX, class LHS, class RHS>
-	void plus_assign_to(
-		matrix_expression<MatX, device_type>& X,
-		matrix_expression<LHS, device_type> const& lhs,
-		matrix_expression<RHS, device_type> const& rhs,
-		value_type alpha
-	)const{
-		//we know that lhs and rhs are elementwise expressions so we can now create the elementwise expression and assign it.
-		matrix_binary<LHS,RHS,F> e(lhs(),rhs(), m_functor);
-		plus_assign(X,e,alpha);
-	}
 };
 
 template<class E1, class E2>
