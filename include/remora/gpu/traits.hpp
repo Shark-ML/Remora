@@ -46,9 +46,6 @@
 
 namespace remora{namespace gpu{
 	
-template<class Device>
-struct device_traits;
-	
 template<class T, class Tag>
 struct dense_vector_storage{
 	typedef Tag storage_tag;
@@ -116,19 +113,34 @@ struct dense_matrix_storage{
 
 namespace detail{
 	
-template<class Arg1, class T>
+template<class Arg1, class F, class G>
+struct invoked_compose_unary{
+	Arg1 arg1;
+	F f;
+	G g;
+};
+
+template<class Arg1, class Arg2, class F, class G>
+struct invoked_compose_binary{
+	Arg1 arg1;
+	Arg2 arg2;
+	F f;
+	G g;
+};
+	
+template<class Arg1, class T, class Stored = T>
 struct invoked_multiply_scalar{
 	typedef T result_type;
 	Arg1 arg1;
-	T m_scalar;
+	Stored m_scalar;
 };
 
-template<class Arg1, class Arg2, class T>
+template<class Arg1, class Arg2, class T, class Stored=T>
 struct invoked_multiply_and_add{
 	typedef T result_type;
 	Arg1 arg1;
 	Arg2 arg2;
-	T m_scalar;
+	Stored m_scalar;
 };
 
 template<class Arg1, class T>
@@ -154,21 +166,30 @@ struct invoked_inv{
 	Arg1 arg1;
 };
 
-template<class Arg1, class Arg2, class T>
+template<class Arg1, class Arg2, class T, class S>
 struct invoked_safe_div{
 	typedef T result_type;
 	Arg1 arg1;
 	Arg2 arg2;
-	T default_value;
+	S default_value;
 };
 
+template<class Arg1, class F, class G>
+boost::compute::detail::meta_kernel& operator<<(boost::compute::detail::meta_kernel& k, invoked_compose_unary<Arg1,F, G> const& e){
+	return k << e.g(e.f(e.arg1));
+}
 
-template<class Arg1, class T>
-boost::compute::detail::meta_kernel& operator<<(boost::compute::detail::meta_kernel& k, invoked_multiply_scalar<Arg1,T> const& e){
+template<class Arg1, class Arg2, class F, class G>
+boost::compute::detail::meta_kernel& operator<<(boost::compute::detail::meta_kernel& k, invoked_compose_binary<Arg1,Arg2, F, G> const& e){
+	return k << e.g(e.f(e.arg1, e.arg2));
+}
+
+template<class Arg1, class T, class S>
+boost::compute::detail::meta_kernel& operator<<(boost::compute::detail::meta_kernel& k, invoked_multiply_scalar<Arg1,T, S> const& e){
 	return k << '('<<e.m_scalar << '*'<< e.arg1<<')';
 }
-template<class Arg1, class Arg2, class T>
-boost::compute::detail::meta_kernel& operator<<(boost::compute::detail::meta_kernel& k, invoked_multiply_and_add<Arg1,Arg2,T> const& e){
+template<class Arg1, class Arg2, class T, class S>
+boost::compute::detail::meta_kernel& operator<<(boost::compute::detail::meta_kernel& k, invoked_multiply_and_add<Arg1,Arg2,T, S> const& e){
 	return k << '('<<e.arg1<<'+'<<e.m_scalar << '*'<< e.arg2<<')';
 }
 template<class Arg1, class T>
@@ -188,8 +209,8 @@ boost::compute::detail::meta_kernel& operator<<(boost::compute::detail::meta_ker
 	return k << "1/("<<e.arg1<<')';
 }
 
-template<class Arg1, class Arg2, class T>
-boost::compute::detail::meta_kernel& operator<<(boost::compute::detail::meta_kernel& k, invoked_safe_div<Arg1,Arg2,T> const& e){
+template<class Arg1, class Arg2, class T, class S>
+boost::compute::detail::meta_kernel& operator<<(boost::compute::detail::meta_kernel& k, invoked_safe_div<Arg1,Arg2,T, S> const& e){
 	return k << "(("<<e.arg2<<"!=0)?"<<e.arg1<<'/'<<e.arg2<<':'<<e.default_value<<')';
 }
 
@@ -461,38 +482,37 @@ struct device_traits<gpu_tag>{
 	using divide = boost::compute::divides<T>;
 	template<class T>
 	using pow = boost::compute::pow<T>;
-	template<class T>
+	template<class T, class S=T>
 	struct safe_divide : public boost::compute::function<T (T, T)>{
 		typedef T result_type;
-		safe_divide(T default_value) : boost::compute::function<T (T, T)>("safe_divide"), default_value(default_value) { }
+		safe_divide(S const& default_value) : boost::compute::function<T (T, T)>("safe_divide"), default_value(default_value) { }
 		
 		template<class Arg1, class Arg2>
-		gpu::detail::invoked_safe_div<Arg1,Arg2, T> operator()(const Arg1 &x, const Arg2& y) const
+		gpu::detail::invoked_safe_div<Arg1,Arg2, T,S> operator()(const Arg1 &x, const Arg2& y) const
 		{
 			return {x,y,default_value};
 		}
-		T default_value;
+		S default_value;
 	};
-	template<class T>
+	template<class T, class S= T>
 	struct multiply_and_add : public boost::compute::function<T (T,T)>{
 		typedef T result_type;
-		multiply_and_add(T scalar) : boost::compute::function<T (T,T)>("multiply_and_add"), m_scalar(scalar) { }
+		multiply_and_add(S const& scalar) : boost::compute::function<T (T,T)>("multiply_and_add"), m_scalar(scalar) { }
 		
 		template<class Arg1, class Arg2>
-		gpu::detail::invoked_multiply_and_add<Arg1,Arg2,T> operator()(const Arg1 &x, const Arg2& y) const
+		gpu::detail::invoked_multiply_and_add<Arg1,Arg2,T,S> operator()(const Arg1 &x, const Arg2& y) const
 		{
 			return {x,y, m_scalar};
 		}
-	private:
-		T m_scalar;
+		S m_scalar;
 	};
-	template<class T>
+	template<class T, class S=T>
 	struct multiply_scalar : public boost::compute::function<T (T)>{
 		typedef T result_type;
-		multiply_scalar(T scalar) : boost::compute::function<T (T)>("multiply_scalar"), m_scalar(scalar) { }
+		multiply_scalar(S const& scalar) : boost::compute::function<T (T)>("multiply_scalar"), m_scalar(scalar) { }
 		
 		template<class Arg1>
-		gpu::detail::invoked_multiply_scalar<Arg1,T> operator()(const Arg1 &x) const
+		gpu::detail::invoked_multiply_scalar<Arg1,T,S> operator()(const Arg1 &x) const
 		{
 			return {x, m_scalar};
 		}
@@ -500,18 +520,17 @@ struct device_traits<gpu_tag>{
 		T m_scalar;
 	};
 	
-	template<class T>
+	template<class T, class S=T>
 	struct multiply_assign : public boost::compute::function<T (T,T)>{
 		typedef T result_type;
-		multiply_assign(T scalar) : boost::compute::function<T (T,T)>("multiply_assign"), m_scalar(scalar) { }
+		multiply_assign(S const& scalar) : boost::compute::function<T (T,T)>("multiply_assign"), m_scalar(scalar) { }
 		
 		template<class Arg1, class Arg2>
-		gpu::detail::invoked_multiply_scalar<Arg2,T> operator()(const Arg1&, const Arg2& y) const
+		gpu::detail::invoked_multiply_scalar<Arg2,T,S> operator()(const Arg1&, const Arg2& y) const
 		{
 			return {y, m_scalar};
 		}
-	private:
-		T m_scalar;
+		S m_scalar;
 	};
 	
 	//math unary functions
@@ -610,7 +629,155 @@ struct device_traits<gpu_tag>{
 	template<class T>
 	using not_equal  = boost::compute::not_equal_to<T>;
 	
+	
+	//functional
+	template<class F, class G>
+	struct compose{
+		typedef typename F::result_type result_type;
+		compose(F const& f, G const& g): m_f(f), m_g(g){ }
+		
+		template<class Arg1>
+		gpu::detail::invoked_compose_unary<Arg1,F, G> operator()(Arg1 const& x) const
+		{
+			return {x,m_f, m_g};
+		}
+		
+		template<class Arg1, class Arg2>
+		gpu::detail::invoked_compose_binary<Arg1,Arg2, F, G> operator()( Arg1 const& x, Arg2 const& y) const
+		{
+			return {x,y,m_f, m_g};
+		}
+		
+		F m_f;
+		G m_g;
+	};
 };
+
+namespace gpu{namespace detail{
+	
+template<class F, class Arg2>
+struct bind_second{
+	bind_second(F const& f, Arg2 const& arg2) : m_function(f), m_arg2(arg2){ }
+	
+	template<class Arg1>
+	auto operator()(Arg1 const& arg1) const -> decltype(std::declval<F const&>()(arg1,std::declval<Arg2 const&>()))
+	{
+		return m_function(arg1, m_arg2);
+	}
+	
+	F m_function;
+	Arg2 m_arg2;
+	
+};
+	
+template<class T>
+std::string add_kernel_arg(boost::compute::detail::meta_kernel& k, T const& value, std::size_t& curIndex){
+	std::string name = "rem_var"+std::to_string(curIndex+1);
+	curIndex = k.add_set_arg<T>(name,value);
+	return name;
+}
+template<class Entity>
+struct register_with_compute_kernel{
+	typedef Entity const& return_type;
+	static return_type reg(boost::compute::detail::meta_kernel&, Entity const& e, std::size_t& curIndex){
+		return e;
+	}
+};
+
+template<class F, class Arg2>
+struct register_with_compute_kernel<bind_second<F,Arg2> >{
+	typedef typename register_with_compute_kernel<F>::return_type f_type;
+	typedef bind_second<f_type,std::string> return_type;
+	static return_type reg(
+		boost::compute::detail::meta_kernel& k,
+		bind_second<F,Arg2> const& f,
+		std::size_t& curIndex
+	){
+		std::string arg2_name = add_kernel_arg(k,f.m_arg2, curIndex);
+		return return_type(register_with_compute_kernel<F>::reg(k,f.m_function, curIndex),arg2_name);
+	}
+};
+
+template<class F, class G>
+struct register_with_compute_kernel<device_traits<gpu_tag>::template compose<F, G> >{
+	typedef typename register_with_compute_kernel<F>::return_type f_type;
+	typedef typename register_with_compute_kernel<G>::return_type g_type;
+	typedef typename device_traits<gpu_tag>::template compose<f_type, g_type> return_type;
+	static return_type reg(
+		boost::compute::detail::meta_kernel& k,
+		device_traits<gpu_tag>::compose<F, G> const& composed,
+		std::size_t& curIndex
+	){
+		auto f_reg = register_with_compute_kernel<F>::reg(k,composed.m_f, curIndex);
+		auto g_reg = register_with_compute_kernel<G>::reg(k,composed.m_g, curIndex);
+		return return_type(f_reg, g_reg);
+	}
+};
+
+
+template<class T>
+struct register_with_compute_kernel<device_traits<gpu_tag>::template safe_divide<T,T> >{
+	typedef typename device_traits<gpu_tag>::template safe_divide<T,std::string> return_type;
+	static return_type reg(
+		boost::compute::detail::meta_kernel& k,
+		device_traits<gpu_tag>::safe_divide<T,T> const& f,
+		std::size_t& curIndex
+	){
+		return return_type(add_kernel_arg(k,f.default_value, curIndex));
+	}
+};
+
+template<class T>
+struct register_with_compute_kernel<device_traits<gpu_tag>::template multiply_and_add<T,T> >{
+	typedef typename device_traits<gpu_tag>::template multiply_and_add<T,std::string> return_type;
+	static return_type reg(
+		boost::compute::detail::meta_kernel& k,
+		device_traits<gpu_tag>::multiply_and_add<T,T> const& f,
+		std::size_t& curIndex
+	){
+		return return_type(add_kernel_arg(k,f.m_scalar, curIndex));
+	}
+};
+
+template<class T>
+struct register_with_compute_kernel<device_traits<gpu_tag>::template multiply_scalar<T,T> >{
+	typedef typename device_traits<gpu_tag>::template multiply_scalar<T,std::string> return_type;
+	static return_type reg(
+		boost::compute::detail::meta_kernel& k,
+		device_traits<gpu_tag>::multiply_scalar<T,T> const& f,
+		std::size_t& curIndex
+	){
+		return return_type(add_kernel_arg(k,f.m_scalar, curIndex));
+	}
+};
+
+template<class T>
+struct register_with_compute_kernel<device_traits<gpu_tag>::template multiply_assign<T,T> >{
+	typedef typename device_traits<gpu_tag>::template multiply_assign<T,std::string> return_type;
+	static return_type reg(
+		boost::compute::detail::meta_kernel& k,
+		device_traits<gpu_tag>::multiply_assign<T,T> const& f,
+		std::size_t& curIndex
+	){
+		return return_type(add_kernel_arg(k,f.m_scalar, curIndex));
+	}
+};
+
+
+
+struct meta_kernel: public boost::compute::detail::meta_kernel{
+	meta_kernel(std::string const& name):boost::compute::detail::meta_kernel(name), m_id(0){}
+	
+	template<class Entity>
+	typename register_with_compute_kernel<Entity>::return_type
+	register_args(Entity const& e){
+		return register_with_compute_kernel<Entity>::reg(*this,e,m_id);
+	}
+private:
+	std::size_t m_id;
+};
+
+}}
 
 }
 

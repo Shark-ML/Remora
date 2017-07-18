@@ -93,11 +93,11 @@ public:
 	//computation kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
-		m_expression.assign_to(X,alpha*m_scalar);
+		assign(X,m_expression,alpha*m_scalar);
 	}
 	template<class MatX>
 	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
-		m_expression.plus_assign_to(X,alpha*m_scalar);
+		plus_assign(X,m_expression,alpha*m_scalar);
 	}
 
 	// Iterator types
@@ -194,8 +194,14 @@ public:
 	//computation kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
-		assign(X, m_lhs,alpha);
-		plus_assign(X,m_rhs,alpha);
+		//working around a bug in non-dense assign
+		if(!std::is_base_of<dense_tag, typename E1::evaluation_category::tag>::value){
+			X().clear();
+			plus_assign(X, m_lhs, alpha);
+		}else{
+			assign(X, m_lhs, alpha);
+		}
+		plus_assign(X, m_rhs, alpha);
 	}
 	template<class MatX>
 	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
@@ -496,14 +502,19 @@ public:
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const {
 		assign(X,m_expression);
-		kernels::apply(X,m_functor);
-		noalias(X) *= alpha;
+		//merge the multiplication with the functor to run only one kernel.
+		typedef typename device_traits<device_type>::template multiply_scalar<value_type> Multiply;
+		typedef typename device_traits<device_type>::template compose<F, Multiply> Composed;
+		kernels::apply(X,Composed(m_functor,Multiply(alpha)));
 	}
 	template<class MatX>
 	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const {
-		auto evalExp = eval_block(m_expression);
-		matrix_unary<decltype(evalExp), F> e(evalExp, m_functor);
-		plus_assign(X,e,alpha);
+		auto eval_rhs = eval_block(m_expression);
+		//merge the multiplication with the functor to run only one kernel.
+		//also make use of that we can now run the assignment kernel directly with that functor
+		typedef typename device_traits<device_type>::template multiply_and_add<value_type> MultAdd;
+		typedef typename device_traits<device_type>::template compose_right<F, MultAdd> Composed;
+		kernels::assign(X,eval_rhs,Composed(m_functor,MultAdd(alpha)));
 	}
 
 	// Element access
@@ -601,17 +612,19 @@ public:
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha )const{
 		assign(X,m_lhs);
-		kernels::assign(X, eval_block(m_rhs), m_functor);
-		noalias(X) *= alpha;
+		auto eval_rhs = eval_block(m_rhs);
+		typedef typename device_traits<device_type>::template multiply_scalar<value_type> Multiply;
+		typedef typename device_traits<device_type>::template compose<F, Multiply> Composed;
+		kernels::assign(X,eval_rhs,Composed(m_functor,Multiply(alpha)));
 	}
 	template<class MatX>
 	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
 		auto eval_lhs = eval_block(m_lhs);
-		auto eval_rhs = eval_block(m_lhs);
-		matrix_binary<decltype(eval_lhs),decltype(eval_rhs),F> e(lhs(),rhs(), m_functor);
+		auto eval_rhs = eval_block(m_rhs);
+		matrix_binary<decltype(eval_lhs),decltype(eval_rhs),F> e(eval_lhs,eval_rhs, m_functor);
 		plus_assign(X,e,alpha);		
 	}
-
+	
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
 		typename E1::const_row_iterator,typename E2::const_row_iterator,functor_type
 	>::type const_row_iterator;
@@ -707,19 +720,19 @@ public:
 	}
 	
 	
-	template<class VecX>
-	void assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha )const{
-		auto const& lhs_eval = eval_block(m_lhs);
-		auto const& rhs_eval = eval_block(m_rhs);
+	template<class MatX>
+	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha )const{
+		auto lhs_eval = eval_block(m_lhs);
+		auto rhs_eval = eval_block(m_rhs);
 		outer_product<decltype(lhs_eval), decltype(rhs_eval)> e(lhs_eval,rhs_eval); 
-		e.assign_to(alpha, x);
+		assign(X, e, alpha);
 	}
-	template<class VecX>
-	void plus_assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
-		auto const& lhs_eval = eval_block(m_lhs);
-		auto const& rhs_eval = eval_block(m_rhs);
+	template<class MatX>
+	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha )const{
+		auto lhs_eval = eval_block(m_lhs);
+		auto rhs_eval = eval_block(m_rhs);
 		outer_product<decltype(lhs_eval), decltype(rhs_eval)> e(lhs_eval,rhs_eval); 
-		e.plus_assign_to(alpha, x);
+		plus_assign(X, e, alpha);
 	}
 
 	typedef typename device_traits<device_type>:: template transform_iterator<typename E2::const_iterator,functor_type>::type const_row_iterator;

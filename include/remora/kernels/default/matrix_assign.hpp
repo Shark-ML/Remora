@@ -187,7 +187,6 @@ void matrix_assign(
 	std::vector<Element> elements;
 
 	size_type size2 = m().size2();
-	size_type size1 = m().size1();
 	for(size_type j = 0; j != size2; ++j){
 		typename E::const_column_iterator pos_e = e().column_begin(j);
 		typename E::const_column_iterator end_e = e().column_end(j);

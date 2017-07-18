@@ -44,25 +44,26 @@ namespace remora{namespace bindings{
 template<class F, class M, class Orientation>
 void matrix_apply(
 	matrix_expression<M, gpu_tag>& m, 
-	F const& f,
+	F const& f_unreg,
 	Orientation
 ){
 	static_assert(std::is_base_of<dense_tag, typename M::storage_type::storage_tag>::value, "target must have dense storage for assignment");
 	
-	auto storage = m.raw_storage();
+	auto storage = m().raw_storage();
 	typedef typename M::value_type value_type;
-	boost::compute::detail::meta_kernel k("blas_matrix_apply_dense");
+	gpu::detail::meta_kernel k("blas_matrix_apply_dense");
 	std::string buffer = k.get_buffer_identifier<value_type>(storage.buffer);
 	std::size_t lda_index = k.add_arg<std::size_t>("lda");
 	std::size_t offset_index = k.add_arg<std::size_t>("offset");
+	auto f = k.register_args(f_unreg);
 	
 	//create source
 	if(std::is_same<Orientation, row_major>::value){
 		auto elem=k.expr<value_type>(buffer+"[lda * get_global_id(0) + get_global_id(1) +offset]");
-		k<<elem<<" = " << F()(elem)<<";";
+		k<<elem<<" = " << f(elem)<<";";
 	}else{
 		auto elem=k.expr<value_type>(buffer+"[lda * get_global_id(1) + get_global_id(0) +offset]");
-		k<<elem<<" = " << F()(elem)<<";";
+		k<<elem<<" = " << f(elem)<<";";
 	}
 	boost::compute::kernel kernel = k.compile(m().queue().get_context());
 	//enqueue kernel
@@ -81,33 +82,12 @@ template<class F, class M, class Orientation>
 void matrix_assign(
 	matrix_expression<M, gpu_tag>& m, 
 	typename M::value_type t, 
-	Orientation
+	Orientation o
 ){
 	static_assert(std::is_base_of<dense_tag, typename M::storage_type::storage_tag>::value, "target must have dense storage for assignment");
-	
-	auto storage = m().raw_storage();
 	typedef typename M::value_type value_type;
-	boost::compute::detail::meta_kernel k("blas_matrix_assign_constant_dense");
-	std::size_t t_index = k.add_arg<value_type>("t");
-	std::string buffer = k.get_buffer_identifier<value_type>(storage.buffer);
-	std::size_t lda_index = k.add_arg<std::size_t>("lda");
-	std::size_t offset_index = k.add_arg<std::size_t>("offset");
-	
-	//create source
-	if(std::is_same<Orientation, row_major>::value){
-		auto elem=k.expr<value_type>(buffer+"[lda * get_global_id(0) + get_global_id(1) +offset]");
-		k<<elem<<" = " << F()(elem,k.var<value_type>("t"))<<";";
-	}else{
-		auto elem=k.expr<value_type>(buffer+"[lda * get_global_id(1) + get_global_id(0) +offset]");
-		k<<elem<<" = " << F()(elem,k.var<value_type>("t"))<<";";
-	}
-	boost::compute::kernel kernel = k.compile(m().queue().get_context());
-	//enqueue kernel
-	kernel.set_arg(t_index, t);
-	kernel.set_arg(lda_index, storage.leading_dimension);
-	kernel.set_arg(offset_index, storage.offset);
-	std::size_t global_work_size[2] = {m().size1(), m().size2()};
-	m().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, nullptr);
+	gpu::detail::bind_second<F,value_type> f(F(),t);
+	matrix_apply(m,f,o);
 }
 
 
@@ -119,16 +99,17 @@ template<class F, class M, class E>
 void matrix_assign_functor_gpu_impl(
 	matrix_expression<M, gpu_tag>& m, 
 	matrix_expression<E, gpu_tag> const& e,
-	F f,
+	F f_unreg,
 	row_major, dense_tag
 ){
 	auto storageM = m().raw_storage();
 	auto storageE = e().raw_storage();
 	typedef typename M::value_type value_type;
-	boost::compute::detail::meta_kernel k("blas_matrix_assign_dense");
+	gpu::detail::meta_kernel k("blas_matrix_assign_dense");
 	std::string bufferM = k.get_buffer_identifier<value_type>(storageM.buffer);
 	std::size_t ldM_index = k.add_arg<std::size_t>("ldM");
 	std::size_t offsetM_index = k.add_arg<std::size_t>("offsetM");
+	auto f = k.register_args(f_unreg);
 	
 	std::string bufferE = k.get_buffer_identifier<value_type>(storageE.buffer);
 	std::size_t ldE_index = k.add_arg<std::size_t>("ldE");
@@ -152,16 +133,17 @@ template<class F, class M, class E>
 void matrix_assign_functor_gpu_impl(
 	matrix_expression<M, gpu_tag>& m, 
 	matrix_expression<E, gpu_tag> const& e,
-	F f,
+	F f_unreg,
 	row_major, unknown_tag
 ){
 	//create source
 	auto storageM = m().raw_storage();
 	typedef typename M::value_type value_type;
-	boost::compute::detail::meta_kernel k("blas_matrix_assign");
+	gpu::detail::meta_kernel k("blas_matrix_assign");
 	std::string bufferM = k.get_buffer_identifier<value_type>(storageM.buffer);
 	std::size_t ldM_index = k.add_arg<std::size_t>("ldM");
 	std::size_t offsetM_index = k.add_arg<std::size_t>("offsetM");
+	auto f = k.register_args(f_unreg);
 	
 	auto exprRow=k.expr<cl_uint>("get_global_id(0)");
 	auto exprCol=k.expr<cl_uint>("get_global_id(1)");
@@ -181,7 +163,7 @@ template<class F,class M, class E>
 void matrix_assign_functor_gpu_impl(
 	matrix_expression<M, gpu_tag> &m, 
 	matrix_expression<E, gpu_tag> const& e,
-	F f,
+	F f_unreg,
 	column_major,dense_tag
 ) {
 	//Kernel is based on boost/compute/examples/matrix_transpose.cpp
@@ -197,10 +179,11 @@ void matrix_assign_functor_gpu_impl(
 	std::size_t BLOCK_COLS = 8; 
 	
 	//create source
-	boost::compute::detail::meta_kernel k("blas_matrix_assign_row_col_dense");
+	gpu::detail::meta_kernel k("blas_matrix_assign_row_col_dense");
 	std::string bufferM = k.get_buffer_identifier<value_type>(storageM.buffer);
 	std::size_t ldM_index = k.add_arg<std::size_t>("ldM");
 	std::size_t offsetM_index = k.add_arg<std::size_t>("offsetM");
+	auto f = k.register_args(f_unreg);
 	
 	std::string bufferE = k.get_buffer_identifier<value_type>(storageE.buffer);
 	std::size_t ldE_index = k.add_arg<std::size_t>("ldE");
@@ -254,7 +237,7 @@ template<class F,class M, class E>
 void matrix_assign_functor_gpu_impl(
 	matrix_expression<M, gpu_tag> &m, 
 	matrix_expression<E, gpu_tag> const& e,
-	F f,
+	F f_unreg,
 	column_major,unknown_tag
 ) {
 	//Kernel is based on boost/compute/examples/matrix_transpose.cpp
@@ -270,7 +253,8 @@ void matrix_assign_functor_gpu_impl(
 	
 	
 	//create source
-	boost::compute::detail::meta_kernel k("blas_matrix_assign_row_col");
+	gpu::detail::meta_kernel k("blas_matrix_assign_row_col");
+	auto f = k.register_args(f_unreg);
 	//create local memory. we first copy a tile in local
 	// memory which gets the orientation right. Then we copy the tile
 	//to the target

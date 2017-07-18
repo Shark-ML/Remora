@@ -363,6 +363,40 @@ struct device_traits<cpu_tag>{
 			return x1 !=  x2;
 		}
 	};
+	
+	//functional
+	template<class F, class G>
+	struct compose{
+		typedef typename F::result_type result_type;
+		compose(F const& f, G const& g): m_f(f), m_g(g){ }
+		
+		template<class Arg1>
+		result_type operator()(Arg1 const& x) const{
+			return m_g(m_f(x));
+		}
+		
+		template<class Arg1, class Arg2>
+		result_type operator()(Arg1 const& x, Arg2 const& y) const{
+			return m_g(m_f(x,y));
+		}
+		
+		F m_f;
+		G m_g;
+	};
+	
+	template<class F, class G>
+	struct compose_right{
+		typedef typename F::result_type result_type;
+		compose_right(F const& f, G const& g): m_f(f), m_g(g){ }
+		
+		template<class Arg1, class Arg2>
+		result_type operator()(Arg1 const& x, Arg2 const& y) const{
+			return m_g(x,m_f(y));
+		}
+		
+		F m_f;
+		G m_g;
+	};
 };
 
 }

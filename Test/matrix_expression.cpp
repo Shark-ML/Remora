@@ -11,6 +11,38 @@ using namespace remora;
 
 
 template<class Operation, class Result>
+void checkDenseBlockAssign(
+	vector_expression<Operation, cpu_tag> const& op, Result const& result
+){
+	remora::vector<typename Result::value_type> res1(result.size(),1.0);
+	remora::vector<typename Result::value_type> res2(result.size(),1.0);
+	op().assign_to(res1,2);
+	op().plus_assign_to(res2,2);
+	
+	for(std::size_t i = 0; i != op().size(); ++i){
+		BOOST_CHECK_SMALL(res1(i) - 2*result(i),typename Result::value_type(1.e-7));
+		BOOST_CHECK_SMALL(res2(i) - 2*result(i) - 1,typename Result::value_type(1.e-7));
+	}
+}
+
+template<class Operation, class Result>
+void checkDenseBlockAssign(
+	matrix_expression<Operation, cpu_tag> const& op, Result const& result
+){
+	remora::matrix<typename Result::value_type> res1(result.size1(),result.size2(),1.0);
+	remora::matrix<typename Result::value_type> res2(result.size1(),result.size2(),1.0);
+	op().assign_to(res1,2);
+	op().plus_assign_to(res2,2);
+	
+	for(std::size_t i = 0; i != op().size1(); ++i){
+		for(std::size_t j = 0; j != op().size2(); ++j){
+			BOOST_CHECK_SMALL(res1(i,j) - 2*result(i,j),typename Result::value_type(1.e-7));
+			BOOST_CHECK_SMALL(res2(i,j) - 2*result(i,j) - 1,typename Result::value_type(1.e-7));
+		}
+	}
+}
+
+template<class Operation, class Result>
 void checkDenseExpressionEquality(
 	matrix_expression<Operation, cpu_tag> const& op, Result const& result
 ){
@@ -40,6 +72,8 @@ void checkDenseExpressionEquality(
 			BOOST_CHECK_CLOSE(result(i,j), *pos,1.e-5);
 		}
 	}
+	
+	checkDenseBlockAssign(op,result);
 }
 
 
@@ -47,9 +81,19 @@ template<class Operation, class Result>
 void checkDenseExpressionEquality(
 	vector_expression<Operation, cpu_tag> const& op, Result const& result
 ){
-	for(std::size_t i = 0; i != op().size(); ++i){
-		BOOST_CHECK_CLOSE(result(i), op()(i),1.e-5);
+	BOOST_REQUIRE_EQUAL(op().size(), result.size());
+	
+	typename Operation::const_iterator pos = op().begin();
+	for(std::size_t i = 0; i != op().size(); ++i,++pos){
+		BOOST_REQUIRE(pos != op().end());
+		BOOST_CHECK_EQUAL(pos.index(), i);
+		BOOST_CHECK_SMALL(result(i) - op()(i),typename Result::value_type(1.e-10));
+		BOOST_CHECK_SMALL(*pos - op()(i),typename Result::value_type(1.e-10));
 	}
+	BOOST_REQUIRE(pos == op().end());
+
+	checkDenseBlockAssign(op,result);
+	
 }
 
 template<class M, class D>
@@ -141,9 +185,10 @@ BOOST_AUTO_TEST_CASE( Remora_Identity_Matrix ){
 /////////////////////////////////////////////////////////////
 //////UNARY TRANSFORMATIONS///////
 ////////////////////////////////////////////////////////////
-BOOST_AUTO_TEST_CASE( Remora_matrix_Unary_Minus )
+typedef boost::mpl::list<row_major,column_major> result_orientations;
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Unary_Minus, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -154,9 +199,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Unary_Minus )
 	}
 	checkDenseExpressionEquality(-x,result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Multiply )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Scalar_Multiply, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -168,9 +213,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Multiply )
 	checkDenseExpressionEquality(5.0*x,result);
 	checkDenseExpressionEquality(x*5.0,result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Add )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Scalar_Add, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -182,9 +227,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Add )
 	checkDenseExpressionEquality(5.0+x,result);
 	checkDenseExpressionEquality(x+5.0,result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Subtract )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Scalar_Subtract, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result1(Dimension1, Dimension2);
 	matrix<double> result2(Dimension1, Dimension2);
 	
@@ -198,9 +243,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Subtract )
 	checkDenseExpressionEquality(5.0- x,result1);
 	checkDenseExpressionEquality(x - 5.0,result2);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Div )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Scalar_Div, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -211,9 +256,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_Div )
 	}
 	checkDenseExpressionEquality(x/5.0f,result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_elem_inv)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Scalar_elem_inv, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -224,9 +269,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Scalar_elem_inv)
 	}
 	checkDenseExpressionEquality(elem_inv(x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Abs )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Abs, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -237,9 +282,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Abs )
 	}
 	checkDenseExpressionEquality(abs(x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Sqr )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Sqr, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
@@ -249,9 +294,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Sqr )
 	}
 	checkDenseExpressionEquality(sqr(x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Sqrt )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Sqrt, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -262,9 +307,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Sqrt )
 	}
 	checkDenseExpressionEquality(sqrt(x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Cbrt )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Cbrt, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -275,23 +320,22 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Cbrt )
 	}
 	checkDenseExpressionEquality(cbrt(x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Exp )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Exp, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
-			x(i,j) = i-3.0-double(j);
+			x(i,j) = 0.01*(i-3.0-double(j));
 			result(i,j)= std::exp(x(i,j));
 		}
 	}
 	checkDenseExpressionEquality(exp(x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Log )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Log, Orientation, result_orientations )
 {
-
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -302,9 +346,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Log )
 	}
 	checkDenseExpressionEquality(log(x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_sin )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_sin, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -316,9 +360,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_sin )
 	checkDenseExpressionEquality(sin(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_cos )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_cos, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -330,9 +374,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_cos )
 	checkDenseExpressionEquality(cos(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_tan )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_tan, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -344,9 +388,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_tan )
 	checkDenseExpressionEquality(tan(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_asin )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_asin, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -358,9 +402,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_asin )
 	checkDenseExpressionEquality(asin(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_acos )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_acos, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -372,9 +416,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_acos )
 	checkDenseExpressionEquality(acos(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_atan )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_atan, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -386,9 +430,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_atan )
 	checkDenseExpressionEquality(atan(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_erf )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_erf, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -400,9 +444,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_erf )
 	checkDenseExpressionEquality(erf(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_erfc )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_erfc, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -414,9 +458,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_erfc )
 	checkDenseExpressionEquality(erfc(x),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_Tanh )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Tanh, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -427,9 +471,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Tanh )
 	}
 	checkDenseExpressionEquality(tanh(x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Sigmoid )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Sigmoid, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -440,9 +484,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Sigmoid )
 	}
 	checkDenseExpressionEquality(sigmoid(x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_SoftPlus )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_SoftPlus, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -453,9 +497,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_SoftPlus )
 	}
 	checkDenseExpressionEquality(softPlus(x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Pow )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Pow, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -467,9 +511,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Pow )
 	checkDenseExpressionEquality(pow(x,3.2),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_Unary_Min)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Unary_Min, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -481,9 +525,9 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Unary_Min)
 	checkDenseExpressionEquality(min(x,5.0),result);
 	checkDenseExpressionEquality(min(5.0,x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Unary_Max)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Unary_Max, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -515,10 +559,10 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Plus)
 	}
 	checkDenseExpressionEquality(x+y,result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Minus)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Binary_Minus, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
-	matrix<double> y(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> y(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -531,10 +575,10 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Minus)
 	checkDenseExpressionEquality(x-y,result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Multiply)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Binary_Multiply, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
-	matrix<double> y(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> y(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -548,10 +592,10 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Multiply)
 	checkDenseExpressionEquality(element_prod(x,y),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Div)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Binary_Div, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
-	matrix<double> y(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> y(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -565,10 +609,10 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Div)
 	checkDenseExpressionEquality(element_div(x,y),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_Safe_Div )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Safe_Div, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
-	matrix<double> y(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> y(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
@@ -580,10 +624,10 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Safe_Div )
 	checkDenseExpressionEquality(safe_div(x,y,2.0),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Pow)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Binary_Pow, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
-	matrix<double> y(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> y(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -596,10 +640,10 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Pow)
 	checkDenseExpressionEquality(pow(x,y),result);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Max)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Binary_Max, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
-	matrix<double> y(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> y(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -611,10 +655,10 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Max)
 	}
 	checkDenseExpressionEquality(max(x,y),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Min)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_matrix_Binary_Min, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
-	matrix<double> y(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> y(Dimension1, Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -632,11 +676,12 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Min)
 //////MATRIX CONCATENATION
 /////////////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Matrix_Right)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Matrix_Right, Orientation, result_orientations )
 {
 	matrix<double> x(Dimension1, Dimension2); 
-	matrix<double> y(Dimension1,2 * Dimension2); 
+	matrix<double, Orientation> y(Dimension1,2 * Dimension2); 
 	matrix<double> result(Dimension1, 3 * Dimension2);
+	matrix<double> result2(Dimension1, 3 * Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
@@ -646,20 +691,22 @@ BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Matrix_Right)
 			result(i,j)= x(i,j);
 			result(i,j+Dimension2)= y(i,j);
 			result(i,j+2*Dimension2)= y(i,j+Dimension2);
+			result2(i,j+2*Dimension2)= x(i,j);
+			result2(i,j)= y(i,j);
+			result2(i,j+Dimension2)= y(i,j+Dimension2);
 		}
 	}
-	matrix<double> test_assign = x|y;
-	matrix<double> test_plus_assign(Dimension1, 3 * Dimension2,1.0); 
-	noalias(test_plus_assign) += x|y;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+	
+	checkDenseBlockAssign(x|y,result);
+	checkDenseBlockAssign(y|x,result2);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Matrix_Bottom)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Matrix_Bottom, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	matrix<double> y(2 * Dimension1,Dimension2); 
 	matrix<double> result(3 *Dimension1, Dimension2);
+	matrix<double> result2(3 *Dimension1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
@@ -669,333 +716,241 @@ BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Matrix_Bottom)
 			result(i,j)= x(i,j);
 			result(i + Dimension1, j)= y(i,j);
 			result(i + 2 * Dimension1, j)= y(i + Dimension1,j);
+			result2(i  + 2 * Dimension1,j)= x(i,j);
+			result2(i, j)= y(i,j);
+			result2(i + Dimension1, j)= y(i + Dimension1,j);
 		}
 	}
-	matrix<double> test_assign = x & y;
-	matrix<double> test_plus_assign(3 * Dimension1, Dimension2,1.0); 
-	noalias(test_plus_assign) += x & y;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+	checkDenseBlockAssign(x & y,result);
+	checkDenseBlockAssign(y & x,result2);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Vector_Right)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Vector_Right, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	vector<double> y(Dimension1); 
 	matrix<double> result(Dimension1, Dimension2+1);
+	matrix<double> result2(Dimension1, Dimension2+1);
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
 			x(i,j) = 50.0+i-j;
 			result(i,j)= x(i,j);
+			result2(i,j+1)= x(i,j);
 		}
 		y(i) = i;
 		result(i,Dimension2) = y(i);
+		result2(i,0) = y(i);
 	}
-	matrix<double> test_assign = x|y;
-	matrix<double> test_plus_assign(Dimension1, Dimension2 +1 ,1.0); 
-	noalias(test_plus_assign) += x|y;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+	checkDenseBlockAssign(x | y,result);
+	checkDenseBlockAssign(y | x,result2);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Vector_Left)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Vector_Bottom, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
-	vector<double> y(Dimension1); 
-	matrix<double> result(Dimension1, Dimension2+1);
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x(i,j) = 50.0+i-j;
-			result(i,j + 1)= x(i,j);
-		}
-		y(i) = i;
-		result(i,0) = y(i);
-	}
-	matrix<double> test_assign = y|x;
-	matrix<double> test_plus_assign(Dimension1, Dimension2 +1 ,1.0); 
-	noalias(test_plus_assign) += y|x;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
-}
-
-BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Vector_Bottom)
-{
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	vector<double> y(Dimension2); 
 	matrix<double> result(Dimension1 + 1, Dimension2);
+	matrix<double> result2(Dimension1 + 1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
 			x(i,j) = 50.0+i-j;
 			result(i,j)= x(i,j);
+			result2(i+1,j)= x(i,j);
 		}
 	}
 	for (size_t i = 0; i < Dimension2; i++){
 		y(i) = i;
 		result(Dimension1,i) = y(i);
+		result2(0,i) = y(i);
 	}
-	matrix<double> test_assign = x&y;
-	matrix<double> test_plus_assign(Dimension1 + 1, Dimension2 ,1.0); 
-	noalias(test_plus_assign) += x&y;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+	checkDenseBlockAssign(x & y,result);
+	checkDenseBlockAssign(y & x,result2);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Vector_Top)
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Scalar_Left, Orientation, result_orientations )
 {
-	matrix<double> x(Dimension1, Dimension2); 
-	vector<double> y(Dimension2); 
-	matrix<double> result(Dimension1 + 1, Dimension2);
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x(i,j) = 50.0+i-j;
-			result(i + 1,j)= x(i,j);
-		}
-	}
-	for (size_t i = 0; i < Dimension2; i++){
-		y(i) = i;
-		result(0,i) = y(i);
-	}
-	matrix<double> test_assign = y&x;
-	matrix<double> test_plus_assign(Dimension1 + 1, Dimension2 ,1.0); 
-	noalias(test_plus_assign) += y&x;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
-}
-
-BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Scalar_Left){
-	matrix<double> x(Dimension1, Dimension2); 
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	double t = 2.0;
 	matrix<double> result(Dimension1, Dimension2 + 1);
+	matrix<double> result2(Dimension1, Dimension2 + 1);
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
 			x(i,j) = 50.0+i-j;
 			result(i,j+1)= x(i,j);
+			result2(i,j)= x(i,j);
 			result(i,0) = t;
+			result2(i,Dimension2) = t;
 		}
 	}
-	matrix<double> test_assign = t | x;
-	matrix<double> test_plus_assign(Dimension1, Dimension2 + 1,1.0); 
-	noalias(test_plus_assign) += t | x;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+	checkDenseBlockAssign(t | x,result);
+	checkDenseBlockAssign(x | t,result2);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Scalar_Right){
-	matrix<double> x(Dimension1, Dimension2); 
-	double t = 2.0;
-	matrix<double> result(Dimension1, Dimension2 + 1);
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x(i,j) = 50.0+i-j;
-			result(i,j)= x(i,j);
-			result(i,Dimension2) = t;
-		}
-	}
-	matrix<double> test_assign = x | t;
-	matrix<double> test_plus_assign(Dimension1, Dimension2 + 1,1.0); 
-	noalias(test_plus_assign) += x | t;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
-}
-
-BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Scalar_Bottom){
-	matrix<double> x(Dimension1, Dimension2); 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Scalar_Top, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	double t = 2.0;
 	matrix<double> result(Dimension1 + 1, Dimension2);
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x(i,j) = 50.0+i-j;
-			result(i,j)= x(i,j);
-			result(Dimension1, j) = t;
-		}
-	}
-	matrix<double> test_assign = x & t;
-	matrix<double> test_plus_assign(Dimension1 + 1, Dimension2,1.0); 
-	noalias(test_plus_assign) += x & t;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
-}
-
-BOOST_AUTO_TEST_CASE( Remora_Concat_Matrix_Scalar_Top){
-	matrix<double> x(Dimension1, Dimension2); 
-	double t = 2.0;
-	matrix<double> result(Dimension1 + 1, Dimension2);
+	matrix<double> result2(Dimension1 + 1, Dimension2);
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
 			x(i,j) = 50.0+i-j;
 			result(i + 1,j)= x(i,j);
+			result2(i,j)= x(i,j);
 			result(0, j) = t;
+			result2(Dimension1, j) = t;
 		}
 	}
-	matrix<double> test_assign = t & x;
-	matrix<double> test_plus_assign(Dimension1 + 1, Dimension2,1.0); 
-	noalias(test_plus_assign) += t & x;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+	checkDenseBlockAssign(t & x,result);
+	checkDenseBlockAssign(x & t,result2);
 }
 
 ////////////////////////////////////////////////////////////////////////
 ////////////ROW-WISE REDUCTIONS
 ////////////////////////////////////////////////////////////////////////
-BOOST_AUTO_TEST_CASE( Remora_sum_rows){
-	matrix<double> x_row(Dimension1, Dimension2); 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_sum_rows, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	vector<double> result(Dimension2,0.0);
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
-			x_row(i,j) = i-3.0-j;
-			result(j) += x_row(i,j);
+			x(i,j) = i-3.0-j;
+			result(j) += x(i,j);
 		}
 	}
-	matrix<double, column_major> x_col = x_row;
-	checkDenseExpressionEquality(eval_block(sum_rows(x_row)),result);
-	checkDenseExpressionEquality(eval_block(sum_rows(x_col)),result);
+	
+	checkDenseBlockAssign(sum_rows(x),result);
 }
-BOOST_AUTO_TEST_CASE( Remora_sum_columns){
-	matrix<double> x_row(Dimension1, Dimension2); 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_sum_columns, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
 	vector<double> result(Dimension1,0.0);
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
-			x_row(i,j) = i-3.0-j;
-			result(i) += x_row(i,j);
+			x(i,j) = i-3.0-j;
+			result(i) += x(i,j);
 		}
 	}
-	matrix<double, column_major> x_col = x_row;
-	checkDenseExpressionEquality(eval_block(sum_columns(x_row)),result);
-	checkDenseExpressionEquality(eval_block(sum_columns(x_col)),result);
+	checkDenseBlockAssign(sum_columns(x),result);
 }
 
 ////////////////////////////////////////////////////////////////////////
 ////////////REDUCTIONS
 ////////////////////////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_CASE( Remora_trace){
-	matrix<double> x_row(Dimension1, Dimension1); 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_trace, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension1); 
 	double result = 0.0f;
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
-			x_row(i,j) = 2*i-3.0-j;
+			x(i,j) = 2*i-3.0-j;
 		}
-		result += x_row(i,i);
+		result += x(i,i);
 	}
-	matrix<double,column_major> x_col = x_row;
-	BOOST_CHECK_CLOSE(trace(x_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(trace(x_col),result, 1.e-6);
+	BOOST_CHECK_CLOSE(trace(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_norm_1){
-	matrix<double> x_row(Dimension1, Dimension1); 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_1, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension1); 
 	vector<double> col_sum(Dimension2);
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
-			x_row(i,j) = 2*i-3.0-j;
-			col_sum(j) += std::abs(x_row(i,j));
+			x(i,j) = 2*i-3.0-j;
+			col_sum(j) += std::abs(x(i,j));
 		}
 	}
 	double result = max(col_sum);
-	matrix<double, column_major> x_col = x_row; 
-	BOOST_CHECK_CLOSE(norm_1(x_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(norm_1(x_col),result, 1.e-6);
+	BOOST_CHECK_CLOSE(norm_1(x),result, 1.e-6);
 }
-BOOST_AUTO_TEST_CASE( Remora_norm_inf){
-	matrix<double> x_row(Dimension1, Dimension1); 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_inf, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension1); 
 	vector<double> row_sum(Dimension2);
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
-			x_row(i,j) = 2*i-3.0-j;
-			row_sum(i) += std::abs(x_row(i,j));
+			x(i,j) = 2*i-3.0-j;
+			row_sum(i) += std::abs(x(i,j));
 		}
 	}
 	double result = max(row_sum);
-	matrix<double, column_major> x_col = x_row; 
-	BOOST_CHECK_CLOSE(norm_inf(x_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(norm_inf(x_col),result, 1.e-6);
+	BOOST_CHECK_CLOSE(norm_inf(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_norm_Frobenius){
-	matrix<double> x_row(Dimension1, Dimension1); 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_Frobenius, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension1); 
 	double result = 0;
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
-			x_row(i,j) = 2*i-3.0-j;
-			result += x_row(i,j)*x_row(i,j);
+			x(i,j) = 2*i-3.0-j;
+			result += x(i,j)*x(i,j);
 		}
 	}
 	result = std::sqrt(result);
-	matrix<double,column_major> x_col = x_row;
-	BOOST_CHECK_CLOSE(norm_frobenius(x_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(norm_frobenius(x_col),result, 1.e-6);
+	BOOST_CHECK_CLOSE(norm_frobenius(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_sum){
-	matrix<double> x_row(Dimension1, Dimension1); 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_sum, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension1); 
 	double result = 0;
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
-			x_row(i,j) = 2*i-3.0-j;
-			result +=x_row(i,j);
+			x(i,j) = 2*i-3.0-j;
+			result +=x(i,j);
 		}
 	}
-	
-	matrix<double,column_major> x_col = x_row;
-	BOOST_CHECK_CLOSE(sum(x_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(sum(x_col),result, 1.e-6);
+	BOOST_CHECK_CLOSE(sum(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_max){
-	matrix<double> x_row(Dimension1, Dimension1);
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_max, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension1); 
 	double result = std::numeric_limits<double>::min();
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
-			x_row(i,j) = 2*i-3.0-j;
-			result = std::max(x_row(i,j),result);
+			x(i,j) = 2*i-3.0-j;
+			result = std::max(x(i,j),result);
 		}
 	}
-	matrix<double,column_major> x_col = x_row;
-	BOOST_CHECK_CLOSE(max(x_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(max(x_col),result, 1.e-6);
+	BOOST_CHECK_CLOSE(max(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_min){
-	matrix<double> x_row(Dimension1, Dimension1); 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_min, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension1); 
 	double result = std::numeric_limits<double>::max();
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
-			x_row(i,j) = 2*i-3.0-j;
-			result = std::min(x_row(i,j),result);
+			x(i,j) = 2*i-3.0-j;
+			result = std::min(x(i,j),result);
 		}
 	}
-	matrix<double,column_major> x_col = x_row;
-	BOOST_CHECK_CLOSE(min(x_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(min(x_col),result, 1.e-6);
+	BOOST_CHECK_CLOSE(min(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_frobenius_prod){
-	matrix<double> x_row(Dimension1, Dimension2); 
-	matrix<double> y_row(Dimension1, Dimension2); 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_frobenius_prod, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
+	matrix<double> y(Dimension1, Dimension2); 
 	double result = 0;
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
-			x_row(i,j) = 2*i-3.0-j;
-			y_row(i,j) = i+j+1;
-			result +=x_row(i,j)*y_row(i,j);
+			x(i,j) = 2*i-3.0-j;
+			y(i,j) = i+j+1;
+			result +=x(i,j)*y(i,j);
 		}
 	}
-	matrix<double, column_major> x_col = x_row;
-	matrix<double, column_major> y_col = y_row;
-	BOOST_CHECK_CLOSE(frobenius_prod(x_row,y_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(frobenius_prod(x_row,y_col),result, 1.e-6);
-	BOOST_CHECK_CLOSE(frobenius_prod(x_col,y_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(frobenius_prod(trans(x_col),trans(y_col)),result, 1.e-6);
+	BOOST_CHECK_CLOSE(frobenius_prod(x,y),result, 1.e-6);
+	BOOST_CHECK_CLOSE(frobenius_prod(y,x),result, 1.e-6);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -88,11 +88,11 @@ public:
 	//computation kernels
 	template<class VecX>
 	void assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
-		m_expression.assign_to(x,alpha*m_scalar);
+		assign(x,m_expression, alpha*m_scalar);
 	}
 	template<class VecX>
 	void plus_assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
-		m_expression.plus_assign_to(x,alpha*m_scalar);
+		plus_assign(x,m_expression,alpha*m_scalar);
 	}
 	
 	//iterators
@@ -260,12 +260,19 @@ public:
 	template<class VecX>
 	void assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
 		assign(x,m_expression);
-		kernels::apply(x,m_functor);
-		noalias(x) *= alpha;
+		//merge the multiplication with the functor to run only one kernel.
+		typedef typename device_traits<device_type>::template multiply_scalar<value_type> Multiply;
+		typedef typename device_traits<device_type>::template compose<F, Multiply> Composed;
+		kernels::apply(x,Composed(m_functor,Multiply(alpha)));
 	}
 	template<class VecX>
 	void plus_assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
-		plus_assign_to(x,eval_block(m_expression), alpha);
+		auto eval_rhs = eval_block(m_expression);
+		//merge the multiplication with the functor to run only one kernel.
+		//also make use of that we can now run the assignment kernel directly with that functor
+		typedef typename device_traits<device_type>::template multiply_and_add<value_type> MultAdd;
+		typedef typename device_traits<device_type>::template compose_right<F, MultAdd> Composed;
+		kernels::assign(x,eval_rhs,Composed(m_functor,MultAdd(alpha)));
 	}
 
 	// Element access
@@ -288,15 +295,6 @@ public:
 		return const_iterator(m_expression.end(),m_functor);
 	}
 private:
-	template<class VecX, class VecV>
-	void plus_assign_to(
-		vector_expression<VecX, device_type>& x,
-		vector_expression<VecV, device_type> const& v,
-		typename VecX::value_type alpha
-	)const{
-		kernels::assign(x,v, device_traits<device_type>::make_assignment_functor(m_functor), alpha);
-	}
-
 	expression_closure_type m_expression;
 	F m_functor;
 };
@@ -356,7 +354,13 @@ public:
 	//computation kernels
 	template<class VecX>
 	void assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
-		assign(x,m_lhs, alpha);
+		//working around a bug in non-dense assign
+		if(!std::is_base_of<dense_tag, typename E1::evaluation_category::tag>::value){
+			x().clear();
+			plus_assign(x, m_lhs, alpha);
+		}else{
+			assign(x, m_lhs, alpha);
+		}
 		plus_assign(x,m_rhs, alpha);
 	}
 	template<class VecX>
@@ -447,12 +451,18 @@ public:
 	
 	template<class VecX>
 	void assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
-		x().clear();
-		plus_assign_to(x,eval_block(m_lhs), eval_block(m_rhs), alpha);
+		assign(x,m_lhs);
+		auto eval_rhs = eval_block(m_rhs);
+		typedef typename device_traits<device_type>::template multiply_scalar<value_type> Multiply;
+		typedef typename device_traits<device_type>::template compose<F, Multiply> Composed;
+		kernels::assign(x,eval_rhs,Composed(m_functor,Multiply(alpha)));
 	}
 	template<class VecX>
 	void plus_assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
-		plus_assign_to(x,eval_block(m_lhs), eval_block(m_rhs), alpha);
+		auto eval_lhs = eval_block(m_lhs);
+		auto eval_rhs = eval_block(m_rhs);
+		vector_binary<decltype(eval_lhs),decltype(eval_rhs),F> e(eval_lhs,eval_rhs, m_functor);
+		plus_assign(x,e,alpha);	
 	}
 
 	// Iterator types
@@ -483,18 +493,6 @@ private:
 	lhs_closure_type m_lhs;
 	rhs_closure_type m_rhs;
 	functor_type m_functor;
-
-	template<class VecX, class LHS, class RHS>
-	void plus_assign_to(
-		vector_expression<VecX, device_type>& x,
-		vector_expression<LHS, device_type> const& lhs, vector_expression<RHS, device_type> const& rhs,
-		typename VecX::value_type alpha
-	)const{
-		//we know that lhs and rhs are elementwise expressions so we can now create the elementwise expression and assign it.
-		vector_binary<LHS,RHS, F> e(lhs(),rhs(), m_functor);
-		vector_scalar_multiply<vector_binary<LHS,RHS,F> > e1(e,alpha);
-		plus_assign(x,e);
-	}
 };
 
 

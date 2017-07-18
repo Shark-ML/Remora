@@ -14,18 +14,30 @@ using namespace remora;
 
 template<class Operation, class Result>
 void checkDenseExpressionEquality(
-	Operation op, Result const& result
+	vector_expression<Operation, cpu_tag> const& op, Result const& result
 ){
-	BOOST_REQUIRE_EQUAL(op.size(), result.size());
+	BOOST_REQUIRE_EQUAL(op().size(), result.size());
 	
-	typename Operation::const_iterator pos = op.begin();
-	for(std::size_t i = 0; i != op.size(); ++i,++pos){
-		BOOST_REQUIRE(pos != op.end());
+	typename Operation::const_iterator pos = op().begin();
+	for(std::size_t i = 0; i != op().size(); ++i,++pos){
+		BOOST_REQUIRE(pos != op().end());
 		BOOST_CHECK_EQUAL(pos.index(), i);
-		BOOST_CHECK_SMALL(result(i) - op(i),typename Result::value_type(1.e-10));
-		BOOST_CHECK_SMALL(*pos - op(i),typename Result::value_type(1.e-10));
+		BOOST_CHECK_SMALL(result(i) - op()(i),typename Result::value_type(1.e-10));
+		BOOST_CHECK_SMALL(*pos - op()(i),typename Result::value_type(1.e-10));
 	}
-	BOOST_REQUIRE(pos == op.end());
+	BOOST_REQUIRE(pos == op().end());
+
+	//test block eval
+	remora::vector<typename Result::value_type> res1(result.size(),1.0);
+	remora::vector<typename Result::value_type> res2(result.size(),1.0);
+	op().assign_to(res1,2);
+	op().plus_assign_to(res2,2);
+	
+	for(std::size_t i = 0; i != op().size(); ++i,++pos){
+		BOOST_CHECK_SMALL(res1(i) - 2*op()(i),typename Result::value_type(1.e-7));
+		BOOST_CHECK_SMALL(res2(i) - 2*op()(i) - 1,typename Result::value_type(1.e-7));
+	}
+	
 }
 
 const std::size_t Dimensions = 10;
@@ -79,7 +91,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Abs )
 	
 	for (size_t i = 0; i < Dimensions; i++)
 	{
-		x(i) = -i+3.0;
+		x(i) = 3.0-i;
 		result(i)= std::abs(x(i));
 	}
 	checkDenseExpressionEquality(abs(x),result);
@@ -91,7 +103,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Sqr )
 	
 	for (size_t i = 0; i < Dimensions; i++)
 	{
-		x(i) = -i+3.0;
+		x(i) = 3.0-i;
 		result(i)= x(i)*x(i);
 	}
 	checkDenseExpressionEquality(sqr(x),result);
@@ -393,52 +405,73 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Scalar_Concat )
 	vector<double> x(Dimensions); 
 	double alpha = 2.0;
 	vector<double> result(Dimensions+1);
-	result(Dimensions) = alpha;
+	vector<double> result2(Dimensions+1,1.0);
+	result(Dimensions) = 2*alpha;
+	result2(Dimensions) += 2*alpha;
 	
 	for (size_t i = 0; i < Dimensions; i++){
 		x(i) = exp(-(i-5.0)*(i-5.0));
-		result(i) = x(i);
+		result(i) = 2*x(i);
+		result2(i) += 2*x(i);
 	}
-	vector<double> test_assign = x|alpha;
+	vector<double> test_assign(Dimensions+1,1.0);
 	vector<double> test_plus_assign(Dimensions+1,1.0); 
-	noalias(test_plus_assign) += x|alpha;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+	(x|alpha).assign_to(test_assign,2);
+	(x|alpha).plus_assign_to(test_plus_assign,2);
+	
+	for (size_t i = 0; i < Dimensions; i++){
+		BOOST_CHECK_SMALL(test_assign(i) - result(i),1.e-7);
+		BOOST_CHECK_SMALL(test_plus_assign(i) - result2(i),1.e-7);
+	}
 }
 BOOST_AUTO_TEST_CASE( Remora_Scalar_Vector_Concat )
 {
 	vector<double> x(Dimensions); 
 	double alpha = 2.0;
-	vector<double> result(Dimensions+1);
-	result(0) = alpha;
+	vector<double> result(Dimensions+1,1.0);
+	vector<double> result2(Dimensions+1,1.0);
+	result(0) = 2*alpha;
+	result2(0) += 2*alpha;
 	
 	for (size_t i = 0; i < Dimensions; i++){
 		x(i) = exp(-(i-5.0)*(i-5.0));
-		result(i+1) = x(i);
+		result(i+1) = 2*x(i);
+		result2(i+1) += 2*x(i);
 	}
-	vector<double> test_assign = alpha|x;
+	vector<double> test_assign(Dimensions+1,1.0);
 	vector<double> test_plus_assign(Dimensions+1,1.0); 
-	noalias(test_plus_assign) += alpha|x;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+	(alpha|x).assign_to(test_assign,2);
+	(alpha|x).plus_assign_to(test_plus_assign,2);
+	
+	for (size_t i = 0; i < Dimensions; i++){
+		BOOST_CHECK_SMALL(test_assign(i) - result(i),1.e-7);
+		BOOST_CHECK_SMALL(test_plus_assign(i) - result2(i),1.e-7);
+	}
 }
 BOOST_AUTO_TEST_CASE( Remora_Vector_Vector_Concat )
 {
 	vector<double> x(Dimensions); 
 	vector<double> y(Dimensions); 
-	vector<double> result(Dimensions * 2);
+	vector<double> result(Dimensions * 2,1.0);
+	vector<double> result2(Dimensions * 2,1.0);
 	
 	for (size_t i = 0; i < Dimensions; i++){
 		x(i) = exp(-(i-5.0)*(i-5.0));
 		y(i) = exp(-(i-3.0)*(i-3.0));
-		result(i) = x(i);
-		result(i+Dimensions) = y(i);
+		result(i) = 2*x(i);
+		result(i+Dimensions) = 2*y(i);
+		result2(i) += 2*x(i);
+		result2(i+Dimensions) += 2*y(i);
 	}
-	vector<double> test_assign = x|y;
-	vector<double> test_plus_assign(Dimensions * 2,1.0); 
-	noalias(test_plus_assign) += x|y;
-	checkDenseExpressionEquality(test_assign,result);
-	checkDenseExpressionEquality(test_plus_assign,result+1.0);
+	vector<double> test_assign(Dimensions*2,1.0);
+	vector<double> test_plus_assign(Dimensions*2,1.0); 
+	(x|y).assign_to(test_assign,2);
+	(x|y).plus_assign_to(test_plus_assign,2);
+	
+	for (size_t i = 0; i < Dimensions; i++){
+		BOOST_CHECK_SMALL(test_assign(i) - result(i),1.e-7);
+		BOOST_CHECK_SMALL(test_plus_assign(i) - result2(i),1.e-7);
+	}
 }
 
 /////////////////////////////////////////////////////
@@ -476,7 +509,6 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Arg_Max )
 	for (size_t i = 0; i < Dimensions; i++){
 		x(i) = -abs(5.0-i);//max at i = 5
 	}
-	std::cout<<x<<std::endl;
 	BOOST_CHECK_EQUAL(arg_max(x),result);
 }
 
