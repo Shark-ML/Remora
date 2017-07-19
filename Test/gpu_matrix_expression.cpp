@@ -24,10 +24,44 @@ void checkDenseExpressionEquality(
 			BOOST_CHECK_CLOSE(result(i,j), op(i,j),1.e-4);
 		}
 	}
+	
+	//test block assignment operators
+	{
+		matrix<float, row_major, gpu_tag> res1_gpu(result.size1(),result.size2(),0.1f);
+		matrix<float, row_major, gpu_tag> res2_gpu(result.size1(),result.size2(),0.1f);
+		op_gpu().assign_to(res1_gpu,2.0f);
+		op_gpu().plus_assign_to(res2_gpu,2.0f);
+		matrix<float> res1 = copy_to_cpu(res1_gpu);
+		matrix<float> res2 = copy_to_cpu(res2_gpu);
+		for(std::size_t i = 0; i != op.size1(); ++i){
+			for(std::size_t j = 0; j != op.size2(); ++j){
+				BOOST_CHECK_CLOSE(2.0f * result(i,j), res1(i,j),1.e-3);
+				BOOST_CHECK_CLOSE(2.0f * result(i,j) + 0.1f, res2(i,j),1.e-2);
+			}
+		}
+	}
+	//also test for column major targets
+	{
+		matrix<float, column_major, gpu_tag> res1_gpu(result.size1(),result.size2(),0.1f);
+		matrix<float, column_major, gpu_tag> res2_gpu(result.size1(),result.size2(),0.1f);
+		op_gpu().assign_to(res1_gpu,2.0f);
+		op_gpu().plus_assign_to(res2_gpu,2.0f);
+		matrix<float> res1 = copy_to_cpu(res1_gpu);
+		matrix<float> res2 = copy_to_cpu(res2_gpu);
+		for(std::size_t i = 0; i != op.size1(); ++i){
+			for(std::size_t j = 0; j != op.size2(); ++j){
+				BOOST_CHECK_CLOSE(2.0f * result(i,j), res1(i,j),1.e-3);
+				BOOST_CHECK_CLOSE(2.0f * result(i,j) + 0.1f, res2(i,j),1.e-2);
+			}
+		}
+	}
+	
+	
 	vector<float, gpu_tag> op_row_gpu(op_gpu().size2());
 	vector<float, gpu_tag> op_col_gpu(op_gpu().size1());
 	vector<float> op_row(op_gpu().size2());
 	vector<float> op_col(op_gpu().size2());
+	
 	//~ //check that row iterator work
 	//~ for(std::size_t i = 0; i != op.size1(); ++i){
 		

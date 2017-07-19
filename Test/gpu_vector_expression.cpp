@@ -21,6 +21,20 @@ void checkDenseExpressionEquality(
 		BOOST_CHECK_CLOSE(result(i), op(i),1.e-3);
 	}
 	
+	//test block assignment operators
+	vector<float, gpu_tag> res1_gpu(result.size(),0.1f);
+	vector<float, gpu_tag> res2_gpu(result.size(),0.1f);
+	op_gpu.assign_to(res1_gpu,2.0f);
+	op_gpu.plus_assign_to(res2_gpu,2.0f);
+	vector<float> res1 = copy_to_cpu(res1_gpu);
+	vector<float> res2 = copy_to_cpu(res2_gpu);
+	for(std::size_t i = 0; i != op.size(); ++i){
+		BOOST_CHECK_CLOSE(2.0f * result(i), res1(i),1.e-3);
+		BOOST_CHECK_CLOSE(2.0f * result(i) + 0.1f, res2(i),1.e-2);
+	}
+	
+	
+	
 	//test iterators
 	BOOST_REQUIRE_EQUAL(op_gpu.end() - op_gpu.begin(), op.size());
 	vector<float, gpu_tag> opcopy_gpu(op.size());
