@@ -58,6 +58,12 @@ struct matrix_vector_solve_optimizer;
 template<class M, class Tag>
 struct matrix_inverse_optimizer;
 
+template<class M,  class F>
+struct matrix_unary_optimizer;
+
+template<class M,  class F>
+struct vector_unary_optimizer;
+
 ////////////////////////////////////
 //// Vector Range
 ////////////////////////////////////
@@ -639,6 +645,77 @@ struct matrix_matrix_prod_optimizer<matrix_scalar_multiply<M1>,matrix_scalar_mul
 	
 	static type create(matrix_scalar_multiply<M1> const& A, matrix_scalar_multiply<M2>const& B){
 		return type(opt::create(A.expression(),B.expression()), B.scalar()*A.scalar());
+	}
+};
+
+////////////////////////////////////
+//// Matrix Unary
+////////////////////////////////////
+
+template<class M, class F>
+struct matrix_unary_optimizer{
+	typedef matrix_unary<M,F> type;
+	
+	static type create(typename M::const_closure_type const& m, F const& f){
+		return type(m,f);
+	}
+};
+
+//f(g(x)) = (f o g)(x)
+template<class M, class F1, class F2>
+struct matrix_unary_optimizer<matrix_unary<M,F1>, F2 >{
+	typedef typename device_traits<typename M::device_type>::template compose<F1, F2> composed_type;
+	typedef matrix_unary<M,composed_type> type;
+	
+	static type create(matrix_unary<M,F1> const& m, F2 const& f){
+		return type(m.expression(),composed_type(m.functor(),f));
+	}
+};
+
+//f(g(x,y)) = (f o g)(x,y)
+template<class M1, class M2, class F1, class F2>
+struct matrix_unary_optimizer<matrix_binary<M1,M2, F1>, F2 >{
+	typedef typename device_traits<typename M1::device_type>::template compose<F1, F2> composed_type;
+	typedef matrix_binary<M1, M2,composed_type> type;
+	
+	static type create(matrix_binary<M1, M2, F1> const& m, F2 const& f){
+		return type(m.lhs(), m.rhs(), composed_type(m.functor(),f));
+	}
+};
+
+////////////////////////////////////
+//// Vector Unary
+////////////////////////////////////
+
+template<class V, class F>
+struct vector_unary_optimizer{
+	typedef vector_unary<V,F> type;
+	
+	static type create(typename V::const_closure_type const& v, F const& f){
+		return type(v,f);
+	}
+};
+
+
+//f(g(x)) = (f o g)(x)
+template<class V, class F1, class F2>
+struct vector_unary_optimizer<vector_unary<V,F1>, F2 >{
+	typedef typename device_traits<typename V::device_type>::template compose<F1, F2> composed_type;
+	typedef vector_unary<V,composed_type> type;
+	
+	static type create(vector_unary<V,F1> const& v, F2 const& f){
+		return type(v.expression(),composed_type(v.functor(),f));
+	}
+};
+
+//f(g(x,y)) = (f o g)(x,y)
+template<class V1, class V2, class F1, class F2>
+struct vector_unary_optimizer<vector_binary<V1,V2, F1>, F2 >{
+	typedef typename device_traits<typename V1::device_type>::template compose<F1, F2> composed_type;
+	typedef vector_binary<V1, V2,composed_type> type;
+	
+	static type create(vector_binary<V1, V2, F1> const& v, F2 const& f){
+		return type(v.lhs(), v.rhs(), composed_type(v.functor(),f));
 	}
 };
 

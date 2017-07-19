@@ -403,4 +403,69 @@ BOOST_AUTO_TEST_CASE( Remora_prod_matrix_range_optimize ){
 	}
 }
 
+BOOST_AUTO_TEST_CASE( Remora_prod_matrix_unary_optimize ){
+	typedef matrix<double,row_major> M1;
+	typedef matrix<double,column_major> M2;
+	typedef device_traits<cpu_tag>::sqr<double> Unary1;
+	typedef device_traits<cpu_tag>::cbrt<double> Unary2;
+	typedef device_traits<cpu_tag>::multiply<double> Binary1;
+	typedef device_traits<cpu_tag>::compose<Unary1, Unary2> ComposeUnary;
+	typedef device_traits<cpu_tag>::compose<Binary1, Unary1> ComposeBinary;
+	
+	
+	//simple case
+	{
+		M1 m1 = create_matrix(5,10);
+		matrix_unary<M1, Unary1> e1 = sqr(m1);
+		(void) e1;
+	}
+	
+	//composition of unary functions
+	{
+		M1 m1 = create_matrix(5,10);
+		matrix_unary<M1, ComposeUnary> e1 = cbrt(sqr(m1));
+		BOOST_CHECK_SMALL(norm_inf(e1 - cbrt(matrix<double>(sqr(m1)))), 1.e-10);
+	}
+	//composition of unary with binary function
+	{
+		M1 m1 = create_matrix(5,10);
+		M2 m2 = create_matrix(5,10);
+		matrix_binary<M1, M2, ComposeBinary> e1 = sqr(m1 * m2);
+		BOOST_CHECK_SMALL(norm_inf(e1 - sqr(matrix<double>(m1*m2))), 1.e-10);
+	}
+}
+
+BOOST_AUTO_TEST_CASE( Remora_prod_vector_unary_optimize ){
+	typedef vector<double> V1;
+	typedef vector<double> V2;
+	typedef device_traits<cpu_tag>::sqr<double> Unary1;
+	typedef device_traits<cpu_tag>::cbrt<double> Unary2;
+	typedef device_traits<cpu_tag>::multiply<double> Binary1;
+	typedef device_traits<cpu_tag>::compose<Unary1, Unary2> ComposeUnary;
+	typedef device_traits<cpu_tag>::compose<Binary1, Unary1> ComposeBinary;
+	
+	
+	//simple case
+	{
+		V1 v1 = create_vector(10);
+		vector_unary<V1, Unary1> e1 = sqr(v1);
+		(void) e1;
+	}
+	
+	//composition of unary functions
+	{
+		V1 v1 = create_vector(10);
+		vector_unary<V1, ComposeUnary> e1 = cbrt(sqr(v1));
+		BOOST_CHECK_SMALL(norm_inf(e1 - cbrt(vector<double>(sqr(v1)))), 1.e-10);
+	}
+	//composition of unary with binary function
+	{
+		V1 v1 = create_vector(10);
+		V2 v2 = create_vector(10);
+		vector_binary<V1, V2, ComposeBinary> e1 = sqr(v1 * v2);
+		BOOST_CHECK_SMALL(norm_inf(e1 - sqr(vector<double>(v1*v2))), 1.e-10);
+	}
+}
+
+
 BOOST_AUTO_TEST_SUITE_END()

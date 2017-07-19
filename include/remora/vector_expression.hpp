@@ -69,14 +69,19 @@ typename std::enable_if<std::is_arithmetic<T>::value, scalar_vector<T, cpu_tag> 
 repeat(T scalar, std::size_t elements){
 	return scalar_vector<T, cpu_tag>(elements,scalar);
 }
-
+template<class VecV, class Device>
+typename detail::vector_unary_optimizer<VecV,typename device_traits<Device>:: template abs<typename VecV::value_type> >::type
+name(vector_expression<VecV, Device> const& v){
+	typedef typename device_traits<Device>:: template abs<typename VecV::value_type> functor_type;
+	return detail::vector_unary_optimizer<VecV, functor_type >::create(v(), functor_type());
+}
 
 #define REMORA_UNARY_VECTOR_TRANSFORMATION(name, F)\
 template<class VecV, class Device>\
-vector_unary<VecV,typename device_traits<Device>:: template F<typename VecV::value_type> >\
+typename detail::vector_unary_optimizer<VecV,typename device_traits<Device>:: template F<typename VecV::value_type> >::type \
 name(vector_expression<VecV, Device> const& v){\
 	typedef typename device_traits<Device>:: template F<typename VecV::value_type> functor_type;\
-	return vector_unary<VecV, functor_type >(v(), functor_type());\
+	return detail::vector_unary_optimizer<VecV, functor_type >::create(v(), functor_type());\
 }
 REMORA_UNARY_VECTOR_TRANSFORMATION(abs, abs)
 REMORA_UNARY_VECTOR_TRANSFORMATION(log, log)
