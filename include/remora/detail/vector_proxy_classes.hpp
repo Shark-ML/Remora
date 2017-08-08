@@ -82,12 +82,10 @@ public:
 	// ---------
 	
 	// Element access
-	template <class IndexExpression>
-	auto operator()(IndexExpression const& i) const -> decltype(std::declval<V&>()(i)){
+	reference operator()(std::size_t i) const{
 		return expression()(i);
 	}
-	template <class IndexExpression>
-	auto operator[](IndexExpression const& i) const -> decltype(std::declval<V&>()(i)){
+	reference operator[](std::size_t i) const{
 		return expression()(i);
 	}
 	
@@ -166,6 +164,7 @@ public:
 	typedef typename storage<V>::type storage_type;
 	typedef typename V::const_storage_type const_storage_type;
 	typedef typename V::evaluation_category evaluation_category;
+	typedef typename V::device_type device_type;
 
 	// Construction and destruction
 	vector_range(vector_closure_type const& data, size_type start, size_type end):
@@ -218,13 +217,8 @@ public:
 	// ---------
 
 	// Element access	
-	template <class IndexExpr>
-	auto operator()(IndexExpr const& i) const -> decltype(std::declval<V&>()(
-		device_traits<typename V::device_type>::index_add(std::size_t(),i)
-	)){
-		return m_expression(
-			device_traits<typename V::device_type>::index_add(start(),i)
-		);
+	reference operator()(std::size_t i) const{
+		return m_expression(i + start());
 	}
 
 	// Assignment operators 
@@ -479,6 +473,7 @@ public:
 	//std::container types
 	typedef typename std::remove_const<I>::type size_type;
 	typedef typename std::remove_const<T>::type value_type;
+	typedef value_type result_type;
 	typedef value_type const& const_reference;
 	typedef const_reference reference;
 	
@@ -572,6 +567,28 @@ private:
 	value_type const* m_values;
 
 	std::size_t m_size;
+};
+
+
+
+
+template<class E>
+class ExpressionToFunctor<vector_reference<E> >{
+	static auto transform(vector_reference<E> const& e) -> decltype(to_functor(e.expression())){
+		return to_functor(e.expression());
+	}
+};
+
+template<class E>
+class ExpressionToFunctor<vector_range<E> >{
+	typedef typename E::device_type device_type;
+	static auto transform(vector_range<E> const& e) -> decltype(device_traits<device_type>::make_compose(
+		typename device_traits<device_type>:: template add_scalar<std::size_t>(0),to_functor(e.expression())
+	)){
+		return device_traits<device_type>::make_compose(
+			typename device_traits<device_type>:: template add_scalar<std::size_t>(e.start()),to_functor(e.expression())
+		);
+	}
 };
 
 }

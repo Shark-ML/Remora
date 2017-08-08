@@ -34,43 +34,9 @@
 #include <boost/compute/iterator/buffer_iterator.hpp>
 
 namespace remora{
-	
-namespace detail{
-template<class Arg1, class Arg2, class T>
-struct induced_matrix_adaptor_element{
-	typedef T result_type;
-	Arg1 arg1;
-	Arg2 arg2;
-	gpu::dense_matrix_storage<T, dense_tag> storage;
-};
-
-template<class Arg1, class Arg2,class T>
-boost::compute::detail::meta_kernel& operator<< (
-	boost::compute::detail::meta_kernel& k, 
-	induced_matrix_adaptor_element<Arg1, Arg2, T> const& e
-){
-	return k<< k.get_buffer_identifier<T>(e.storage.buffer, boost::compute::memory_object::global_memory)
-		<<" [ "<<e.storage.offset <<"+("<<e.arg1 <<")*"<<e.storage.leading_dimension<<"+"<< "("<<e.arg2<<")"<<']';
-}
-}
 
 template<class T,class Orientation>
 class dense_matrix_adaptor<T, Orientation, gpu_tag>: public matrix_expression<dense_matrix_adaptor<T,Orientation, gpu_tag>, gpu_tag > {
-	private:
-	template<class IndexExpr1, class IndexExpr2>
-	detail::induced_matrix_adaptor_element<IndexExpr1, IndexExpr2, T> get_element(
-		IndexExpr1 const& expr1,IndexExpr2 const& expr2,
-		row_major
-	)const{
-		return {expr1, expr2,m_storage};
-	}
-	template<class IndexExpr1, class IndexExpr2>
-	detail::induced_matrix_adaptor_element<IndexExpr2, IndexExpr1,T> get_element(
-		IndexExpr1 const& expr1,IndexExpr2 const& expr2,
-		column_major
-	)const{
-		return {expr2, expr1,m_storage};
-	}
 public:
 	typedef std::size_t size_type;
 	typedef typename std::remove_const<T>::type value_type;
@@ -177,9 +143,8 @@ public:
 	}
 	
 	// Element access
-	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<dense_matrix_adaptor const&>().get_element(i,j,orientation())){
-		return this->get_element(i,j,orientation());
+	gpu::detail::dense_matrix_element<value_type> to_functor() const{
+		return {m_storage.buffer, orientation::stride1(m_storage.leading_dimension, 1), orientation::stride2(m_storage.leading_dimension, 1),m_storage.offset}; 
 	}
 	
 	// Iterator types

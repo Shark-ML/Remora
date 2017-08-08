@@ -28,6 +28,7 @@
  #ifndef REMORA_MATRIX_PROXY_CLASSES_HPP
 #define REMORA_MATRIX_PROXY_CLASSES_HPP
 
+#include "traits.hpp"
 #include "../expression_types.hpp"
 #include "../assignment.hpp"
 
@@ -41,6 +42,7 @@ class matrix_reference:public matrix_expression<matrix_reference<M>, typename M:
 public:
 	typedef typename M::size_type size_type;
 	typedef typename M::value_type value_type;
+	typedef value_type result_type;
 	typedef typename M::const_reference const_reference;
 	typedef typename reference<M>::type reference;
 
@@ -84,8 +86,7 @@ public:
 	}
 
 	// Element access
-	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<M&>()(i,j)){
+	reference operator()(std::size_t i, std::size_t j) const{
 		return (*m_expression)(i, j);
 	}
 	
@@ -199,6 +200,7 @@ public:
 	typedef typename M::const_storage_type const_storage_type;
 	typedef typename M::evaluation_category evaluation_category;
 	typedef typename M::orientation::transposed_orientation orientation;
+	typedef typename M::device_type device_type;
 
 	// Construction and destruction
 	explicit matrix_transpose(matrix_closure_type const& m):
@@ -245,15 +247,14 @@ public:
 	// ---------
 
 	// Element access
-	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<M&>()(j,i)){
+	reference operator()(std::size_t i, std::size_t j) const{
 		return expression()(j, i);
 	}
 	
 	void set_element(size_type i, size_type j,value_type t){
 		expression().set_element(j,i,t);
 	}
-
+	
 	typedef typename matrix_closure_type::const_column_iterator const_row_iterator;
 	typedef typename matrix_closure_type::column_iterator row_iterator;
 	typedef typename matrix_closure_type::const_row_iterator const_column_iterator;
@@ -323,7 +324,6 @@ public:
 	}
 	template<class E>
 	matrix_transpose& operator = (matrix_expression<E, typename M::device_type> const& e) {
-		//~ expression() = matrix_transpose<E const>(e());
 		return assign(*this,typename matrix_temporary<M>::type(e));
 	}
 	
@@ -357,6 +357,7 @@ public:
 	typedef typename storage<M>::type::template row_storage<typename M::orientation>::type storage_type;
 	typedef typename M::const_storage_type::template row_storage<typename M::orientation>::type const_storage_type;
 	typedef typename M::evaluation_category evaluation_category;
+	typedef typename M::device_type device_type;
 
 	// Construction and destruction
 	matrix_row(matrix_closure_type const& expression, size_type i):m_expression(expression), m_i(i) {
@@ -397,12 +398,10 @@ public:
 	// ---------
 	
 	// Element access
-	template <class IndexExpr>
-	auto operator()(IndexExpr const& j) const -> decltype(std::declval<M&>()(std::size_t(),j)){
+	reference operator()(std::size_t j) const{
 		return expression()(index(), j);
 	}
-	template <class IndexExpr>
-	auto operator[](IndexExpr const& j) const -> decltype(std::declval<M&>()(std::size_t(),j)){
+	reference operator[](std::size_t j) const{
 		return (*this)(j);
 	}
 	
@@ -505,6 +504,7 @@ public:
 	typedef typename storage<M>::type::diag_storage storage_type;
 	typedef typename M::const_storage_type const_storage_type;
 	typedef typename M::evaluation_category evaluation_category;
+	typedef typename M::device_type device_type;
 
 	// Construction and destruction
 	matrix_vector_range(matrix_closure_type expression, size_type start1, size_type end1, size_type start2, size_type end2)
@@ -556,15 +556,8 @@ public:
 	// ---------
 
 	// Element access
-	template <class IndexExpr>
-	auto operator()(IndexExpr const& i) const -> decltype(std::declval<M&>()(
-		device_traits<typename M::device_type>::index_add(std::size_t(),i),
-		device_traits<typename M::device_type>::index_add(std::size_t(),i)
-	)){
-		return m_expression(
-			device_traits<typename M::device_type>::index_add(start1(),i),
-			device_traits<typename M::device_type>::index_add(start2(),i)
-		);
+	reference operator()(std::size_t i) const{
+		return m_expression(start1()+i,start2()+i);
 	}
 	reference operator [](size_type i) const {
 		return (*this)(i);
@@ -573,7 +566,6 @@ public:
 	void set_element(size_type i,value_type t){
 		expression().set_element(start1()+i,start2()+i,t);
 	}
-
 	// Assignment
 	
 	template<class E>
@@ -637,6 +629,7 @@ public:
 	typedef unknown_storage storage_type;
 	typedef storage_type const_storage_type;
 	typedef typename M::evaluation_category evaluation_category;
+	typedef typename M::device_type device_type;
 
 	// Construction and destruction
 	linearized_matrix(matrix_closure_type expression)
@@ -719,6 +712,7 @@ private:
 	typedef typename closure<M>::type matrix_closure_type;
 public:
 	typedef typename M::value_type value_type;
+	typedef value_type result_type;
 	typedef typename M::const_reference const_reference;
 	typedef typename reference<M>::type reference;
 	typedef typename M::size_type size_type;
@@ -729,6 +723,7 @@ public:
 	typedef typename M::const_storage_type::sub_region_storage const_storage_type;
 	typedef typename M::orientation orientation;
 	typedef typename M::evaluation_category evaluation_category;
+	typedef typename M::device_type device_type;
 
 	// Construction and destruction
 
@@ -792,17 +787,10 @@ public:
 	
 
 	// Element access
-	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<matrix_closure_type>()(
-		device_traits<typename M::device_type>::index_add(std::size_t(),i),
-		device_traits<typename M::device_type>::index_add(std::size_t(),j)
-	)){
-		return m_expression(
-			device_traits<typename M::device_type>::index_add(start1(),i),
-			device_traits<typename M::device_type>::index_add(start2(),j)
-		);
+	reference operator()(std::size_t i, std::size_t j) const{
+		return m_expression(start1() + i,start2() + j);
 	}
-
+	
 	// Assignment
 	
 	matrix_range& operator = (matrix_range const& e) {
@@ -916,6 +904,7 @@ class dense_matrix_adaptor: public matrix_expression<dense_matrix_adaptor<T,Orie
 public:
 	typedef std::size_t size_type;
 	typedef typename std::remove_const<T>::type value_type;
+	typedef value_type result_type;
 	typedef value_type const& const_reference;
 	typedef T& reference;
 
@@ -1152,6 +1141,74 @@ private:
 	size_type m_stride1;
 	size_type m_stride2;
 };
+
+template<class E>
+class ExpressionToFunctor<matrix_reference<E> >{
+	static auto transform(matrix_reference<E> const& e) -> decltype(to_functor(e.expression())){
+		return to_functor(e.expression());
+	}
+};
+
+template<class E>
+class ExpressionToFunctor<matrix_transpose<E> >{
+	typedef typename E::device_type device_type;
+	auto transform(matrix_transpose<E> const& e) const -> decltype(device_traits<device_type>::make_transform_arguments(
+		typename device_traits<device_type>::template right_arg<std::size_t>(),
+		typename device_traits<device_type>::template left_arg<std::size_t>(),
+		to_functor(e.expression())
+	)){
+		return device_traits<device_type>::make_transform_arguments(
+			typename device_traits<device_type>::template right_arg<std::size_t>(),
+			typename device_traits<device_type>::template left_arg<std::size_t>(),
+			to_functor(e.expression())
+		);
+	}
+};
+
+template<class E>
+class ExpressionToFunctor<matrix_row<E> >{
+	typedef typename E::device_type device_type;
+	auto transform(matrix_row<E> const& e) const -> decltype(device_traits<device_type>::make_bind_second(
+		to_functor(e.expression()), std::size_t()
+	)){
+		return device_traits<device_type>::make_bind_second(to_functor(e.expression()), e.index());
+	}
+};
+
+template<class E>
+class ExpressionToFunctor<matrix_vector_range<E> >{
+	typedef typename E::device_type device_type;
+	auto transform(matrix_vector_range<E> const& e) const -> decltype(device_traits<device_type>::make_compose_binary(
+		typename device_traits<device_type>::template add_scalar<std::size_t>(0),
+		typename device_traits<device_type>::template add_scalar<std::size_t>(0),
+		to_functor(e.expression())
+	)){
+		return device_traits<device_type>::make_compose_binary(
+			typename device_traits<device_type>::template add_scalar<std::size_t>(e.start1()),
+			typename device_traits<device_type>::template add_scalar<std::size_t>(e.start2()),
+			to_functor(e.expression())
+		);
+	}
+};
+
+
+template<class E>
+class ExpressionToFunctor<matrix_range<E> >{
+	typedef typename E::device_type device_type;
+	
+	static auto transform(matrix_range<E> const& e) -> decltype(device_traits<device_type>::make_transform_arguments(
+		typename device_traits<device_type>::template add_scalar<std::size_t>(0),
+		typename device_traits<device_type>::template add_scalar<std::size_t>(0),
+		to_functor(e.expression())
+	)){
+		return device_traits<device_type>::make_transform_arguments(
+			typename device_traits<device_type>::template add_scalar<std::size_t>(e.start1()),
+			typename device_traits<device_type>::template add_scalar<std::size_t>(e.start2()),
+			to_functor(e.expression())
+		);
+	}
+};
+
 
 }
 

@@ -35,24 +35,6 @@
 
 namespace remora{
 	
-namespace detail{
-template<class Arg, class T>
-struct induced_vector_adaptor_element{
-	typedef T result_type;
-	Arg arg;
-	gpu::dense_vector_storage<T> storage;
-};
-
-template<class Arg1, class Arg2,class T>
-boost::compute::detail::meta_kernel& operator<< (
-	boost::compute::detail::meta_kernel& k, 
-	induced_vector_adaptor_element<Arg1, Arg2, T> const& e
-){
-	return k<< k.get_buffer_identifier<T>(e.storage.buffer, boost::compute::memory_object::global_memory)
-		<<" [ "<<e.storage.offset <<"+("<<e.arg <<")*"<<e.storage.stride<<']';
-}
-}
-	
 template<class T>
 class dense_vector_adaptor<T,gpu_tag>: public vector_expression<dense_vector_adaptor<T, gpu_tag>, gpu_tag > {
 public:
@@ -132,12 +114,9 @@ public:
 	// --------------
 	// Element access
 	// --------------
-
-	/// \brief Return a const reference to the element \f$i\f$
-	/// \param i index of the element
-	template <class IndexExpr>
-	induced_vector_adaptor_element<IndexExpr,T> operator()(IndexExpr const& i){
-		return {i, m_storage};
+	
+	gpu::detail::dense_vector_element<value_type> to_functor() const{
+		return {m_storage.buffer, m_storage.stride, m_storage.offset}; 
 	}
 	
 	// --------------

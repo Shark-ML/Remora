@@ -6,6 +6,7 @@
 #include <remora/matrix_expression.hpp>
 #include <remora/matrix.hpp>
 #include <remora/vector.hpp>
+#include <boost/mpl/list.hpp>
 
 using namespace remora;
 

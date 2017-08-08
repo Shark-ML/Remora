@@ -43,12 +43,12 @@ namespace remora{ namespace kernels{
 // C <- alpha * A * B + beta * C
 template <bool Upper, typename MatA, typename MatC>
 void syrk(
-	matrix_expression<MatA, gpu_tag> const& A,
-	matrix_expression<MatC, gpu_tag>& C, 
+	matrix_expression<MatA, gpu_tag> const& A_unreg,
+	matrix_expression<MatC, gpu_tag>& C_unreg, 
 	typename MatC::value_type const& alpha
 ) {
-	REMORA_SIZE_CHECK(A().size1() == C().size1());
-	REMORA_SIZE_CHECK(C().size1()== C().size2());
+	REMORA_SIZE_CHECK(A_unreg().size1() == C_unreg().size1());
+	REMORA_SIZE_CHECK(C_unreg().size1()== C_unreg().size2());
 	
 	// TUNING VARIABLES:
 	// TILE_SIZE: width and height of a tile computed in C
@@ -65,11 +65,13 @@ void syrk(
 	char const* options ="-DTILE_SIZE=32ul -DBLOCK_SIZE=4ul -DTILE_SIZE_K=16ul";
 	typedef typename MatC::value_type value_type;
 	
-	boost::compute::detail::meta_kernel k("blas_syrk");
+	gpu::detail::meta_kernel k("blas_syrk");
 	std::size_t N_index = k.add_arg<std::size_t>("N");
 	std::size_t K_index = k.add_arg<std::size_t>("K");
 	std::size_t upper_index = k.add_arg<std::size_t>("upper");
 	std::size_t alpha_index = k.add_arg<value_type>("alpha");
+	auto A = k.register_args(A_unreg.to_functor());
+	auto C = k.register_args(C_unreg.to_functor());
 	//check whether we are in a block that is not touched by syrk
 	k <<"if((upper && get_group_id(1) < get_group_id(0))) return;\n"; 
 	k <<"if((!upper && get_group_id(1) > get_group_id(0))) return;\n"; 
@@ -106,8 +108,8 @@ void syrk(
 	k << "	for(ulong i = get_local_id(0); i < TILE_SIZE; i += numWorkers){\n";
 	k << "		for(ulong k = get_local_id(1); k < curTileK; k += numWorkers){\n";
 	k << "			ulong ktile = t * TILE_SIZE_K + k;\n";
-	k << "			Asub[k][i] ="<< A()(k.expr<cl_ulong>("min(N-1,TILE_SIZE * get_group_id(0)+i)"), k.expr<cl_ulong>("ktile"))<<";\n";
-	k << "			Bsub[k][i] ="<< A()(k.expr<cl_ulong>("min(N-1,TILE_SIZE * get_group_id(1)+i)"), k.expr<cl_ulong>("ktile"))<<";\n";
+	k << "			Asub[k][i] ="<< A(k.expr<cl_ulong>("min(N-1,TILE_SIZE * get_group_id(0)+i)"), k.expr<cl_ulong>("ktile"))<<";\n";
+	k << "			Bsub[k][i] ="<< A(k.expr<cl_ulong>("min(N-1,TILE_SIZE * get_group_id(1)+i)"), k.expr<cl_ulong>("ktile"))<<";\n";
 	k << "		}\n";
 	k << "	}\n";
 
@@ -146,16 +148,16 @@ void syrk(
 	k << "	ulong wn = 0;\n";
 	k << "	for (ulong j =get_local_id(1); j < maxCj; j += numWorkers, wn++){\n";
 	k << "		if(get_group_id(1) != get_group_id(0) || (upper && j >= i) || (!upper && j <= i) ){\n";
-	k <<			C()(k.expr<cl_ulong>("(offTileCi + i)"), k.expr<cl_ulong>("(offTileCj + j)")) << "+= alpha * acc[wm][wn];\n";
+	k <<			C(k.expr<cl_ulong>("(offTileCi + i)"), k.expr<cl_ulong>("(offTileCj + j)")) << "+= alpha * acc[wm][wn];\n";
 	k << "		}\n";
 	k << "	}\n";
 	k << "}\n";
 	
-	boost::compute::kernel kernel = k.compile(C().queue().get_context(), options);
+	boost::compute::kernel kernel = k.compile(C_unreg().queue().get_context(), options);
 	
 	//enqueue kernel with kernel args
-	kernel.set_arg(N_index, C().size1());
-	kernel.set_arg(K_index, A().size2());
+	kernel.set_arg(N_index, C_unreg().size1());
+	kernel.set_arg(K_index, A_unreg().size2());
 	kernel.set_arg(alpha_index, alpha);
 	kernel.set_arg(upper_index, (std::size_t)Upper);
 	
@@ -164,7 +166,7 @@ void syrk(
 		(C().size2()+TILE_SIZE-1)/ TILE_SIZE * NUM_WORKERS
 	};
 	std::size_t local_work_size[2] = {NUM_WORKERS, NUM_WORKERS};
-	C().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, local_work_size);
+	C_unreg().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, local_work_size);
 }
 
 }}

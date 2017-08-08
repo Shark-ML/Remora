@@ -96,6 +96,24 @@ struct device_traits<cpu_tag>{
 	};
 	
 	//functors
+	
+	template<class T>
+	struct constant{
+		typedef T result_type;
+		constant(T const& value): m_value(value){}
+		
+		template<class Arg>
+		T operator()(Arg const&) const{
+			return m_value;
+		}
+		template<class Arg1, class Arg2>
+		T operator()(Arg1 const&, Arg2 const&) const{
+			return {m_value};
+		}
+		
+		T m_value;
+	};
+	
 	template<class T>
 	struct add {
 		static const bool left_zero_remains =  false;
@@ -192,6 +210,19 @@ struct device_traits<cpu_tag>{
 	private:
 		T m_scalar;
 	};
+	
+	template<class T>
+	struct add_scalar{
+		static const bool zero_identity = false;
+		typedef T result_type;
+		add_scalar(T scalar):m_scalar(scalar){}
+		T operator()(T x) const{
+			return x + m_scalar;
+		}
+	private:
+		T m_scalar;
+	};
+	
 	template<class T>
 	struct safe_divide {
 		static const bool left_zero_remains =  true;
@@ -203,6 +234,34 @@ struct device_traits<cpu_tag>{
 		}
 	private:
 		T m_defaultValue;
+	};
+	
+	template<class T>
+	struct identity{
+		typedef T result_type;
+		
+		T operator()(T arg) const{
+			return arg;
+		}
+	};
+	
+	template<class T>
+	struct left_arg{
+		typedef T result_type;
+		static const bool left_zero_remains =  true;
+		static const bool right_zero_remains =  false;
+		T operator()(T arg1, T) const{
+			return arg1;
+		}
+	};
+	template<class T>
+	struct right_arg{
+		typedef T result_type;
+		static const bool left_zero_remains =  false;
+		static const bool right_zero_remains =  true;
+		T operator()(T, T arg2) const{
+			return arg2;
+		}
 	};
 	
 	//math unary functions
@@ -367,7 +426,7 @@ struct device_traits<cpu_tag>{
 	//functional
 	template<class F, class G>
 	struct compose{
-		typedef typename F::result_type result_type;
+		typedef typename G::result_type result_type;
 		compose(F const& f, G const& g): m_f(f), m_g(g){ }
 		
 		template<class Arg1>
@@ -384,19 +443,78 @@ struct device_traits<cpu_tag>{
 		G m_g;
 	};
 	
-	template<class F, class G>
-	struct compose_right{
-		typedef typename F::result_type result_type;
-		compose_right(F const& f, G const& g): m_f(f), m_g(g){ }
+	//G(F1(args),F2(args))
+	template<class F1, class F2, class G>
+	struct compose_binary{
+		typedef typename G::result_type result_type;
+		compose_binary(F1 const& f1, F2 const& f2, G const& g): m_f1(f1), m_f2(f2), m_g(g){ }
 		
+		template<class Arg1>
+		result_type operator()( Arg1 const& x) const{
+			return m_g(m_f1(x), m_f2(x));
+		}
 		template<class Arg1, class Arg2>
-		result_type operator()(Arg1 const& x, Arg2 const& y) const{
-			return m_g(x,m_f(y));
+		result_type operator()( Arg1 const& x, Arg2 const& y) const{
+			return m_g(m_f1(x,y), m_f2(x,y));
 		}
 		
-		F m_f;
+		F1 m_f1;
+		F2 m_f2;
 		G m_g;
 	};
+	
+	//G(F1(arg1),F2(arg2))
+	template<class F1, class F2, class G>
+	struct transform_arguments{
+		typedef typename G::result_type result_type;
+		transform_arguments(F1 const& f1, F2 const& f2, G const& g): m_f1(f1), m_f2(f2), m_g(g){ }
+		
+		template<class Arg1, class Arg2>
+		result_type operator()( Arg1 const& x, Arg2 const& y) const{
+			return m_g(m_f1(x),m_f2(y));
+		}
+		
+		F1 m_f1;
+		F2 m_f2;
+		G m_g;
+	};
+
+	template<class F, class Arg2>
+	struct bind_second{
+		typedef typename F::result_type result_type;
+		bind_second(F const& f, Arg2 const& arg2) : m_function(f), m_arg2(arg2){ }
+		
+		template<class Arg1>
+		result_type operator()(Arg1 const& arg1) const{
+			return m_function(arg1, m_arg2);
+		}
+		
+		F m_function;
+		Arg2 m_arg2;
+		
+	};
+	
+	//helper functions
+	template<class F, class G>
+	static compose<F,G> make_compose(F const& f, G const&g){
+		return compose<F,G>(f,g);
+	}
+	
+	template<class F1, class F2, class G>
+	static compose_binary<F1, F2, G> make_compose_binary(F1 const& f1, F2 const& f2, G const&g){
+		return compose_binary<F1, F2, G>(f1, f2, g);
+	}
+	
+	template<class F1, class F2, class G>
+	static transform_arguments<F1, F2, G> make_transform_arguments(F1 const& f1, F2 const& f2, G const& g){
+		return transform_arguments<F1, F2, G>(f1, f2, g);
+	}
+	
+	template<class F, class Arg2>
+	static bind_second<F,Arg2> make_bind_second(F const& f, Arg2 const& arg2){
+		return bind_second<F,Arg2>(f,arg2);
+	}
+	
 };
 
 }

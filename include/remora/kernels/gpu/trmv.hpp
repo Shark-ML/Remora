@@ -52,19 +52,21 @@ struct trmv_kernel{
 //Lower triangular - matrix(row-major)
 template<class MatA, class VecV>
 trmv_kernel createTRMVBlockKernel(
-	matrix_expression<MatA, gpu_tag> const& A,
-	vector_expression<VecV, gpu_tag> &v,
+	matrix_expression<MatA, gpu_tag> const& A_unreg,
+	vector_expression<VecV, gpu_tag>& v_unreg,
 	char const* options
 ){
 	typedef typename MatA::value_type value_typeA;
 	typedef typename VecV::value_type value_typeV;
 	boost::compute::multiplies<value_typeV> prod;
 	
-	boost::compute::detail::meta_kernel k("blas_trmv");
+	gpu::detail::meta_kernel k("blas_trmv");
 	std::size_t start_index = k.add_arg<std::size_t>("start");//start of block of A
 	std::size_t end_index = k.add_arg<std::size_t>("end");//end of Block of A
 	std::size_t unit_index = k.add_arg<std::size_t>("unit");//whether A is unit triangular
 	std::size_t upper_index = k.add_arg<std::size_t>("upper");//whether A is unit triangular
+	auto A = k.register_args(A_unreg.to_functor());
+	auto v = k.register_args(v_unreg.to_functor());
 	// Local memory to fit a tile of A and B
 	// we store B as column major in local memory
 	// we also allocate memory to store results of B
@@ -77,14 +79,14 @@ trmv_kernel createTRMVBlockKernel(
 	k << "const ulong curTileA =  end-start;\n";
 	k << "for(ulong i = 0; i < curTileA; ++i){\n";
 	k << "	for(ulong j = get_local_id(0); j < curTileA; j += numWorkers){\n";
-	k << "		Asub[i][j] ="<< A()(k.expr<cl_ulong>("(i+start)"),k.expr<cl_ulong>("(j+start)"))<<";\n";
+	k << "		Asub[i][j] ="<< A(k.expr<cl_ulong>("(i+start)"),k.expr<cl_ulong>("(j+start)"))<<";\n";
 	k << "	}\n";
 	k << "}\n";
 		
 	//ensure we are not reading out of bounds
 	// Load Tile of B into local memory, store columns of B as rows
 	k << "for(ulong i = get_local_id(0); i < curTileA; i += numWorkers){\n";
-	k << "	Bsub[i] = "<< v()(k.expr<cl_ulong>("(start+i)"))<<";\n";
+	k << "	Bsub[i] = "<< v(k.expr<cl_ulong>("(start+i)"))<<";\n";
 	k << "}\n";
 	// Synchronise to make sure the tile is loaded
 	k << "barrier(CLK_LOCAL_MEM_FENCE);\n";
@@ -114,10 +116,10 @@ trmv_kernel createTRMVBlockKernel(
 	k << "barrier(CLK_LOCAL_MEM_FENCE);\n";
 	// Store the final results back in B
 	k << "for(ulong i = 0; i < curTileA; ++i){\n";
-	k << v()(k.expr<cl_ulong>("(start+i)"))<<" =  BResult[i];\n";
+	k << v(k.expr<cl_ulong>("(start+i)"))<<" =  BResult[i];\n";
 	k << "}\n";
 	
-	boost::compute::kernel kernel = k.compile(v().queue().get_context(), options);
+	boost::compute::kernel kernel = k.compile(v_unreg().queue().get_context(), options);
 	return {kernel,start_index,end_index,unit_index,upper_index};
 }
 

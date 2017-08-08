@@ -35,26 +35,6 @@
 #include <boost/compute/iterator/strided_iterator.hpp>
 
 namespace remora{
-	
-namespace detail{
-template<class Arg1, class Arg2, class T>
-struct induced_matrix_element{
-	typedef T result_type;
-	Arg1 arg1;
-	Arg2 arg2;
-	std::size_t leading_dimension;
-	boost::compute::buffer const& buffer;
-};
-
-template<class Arg1, class Arg2,class T>
-boost::compute::detail::meta_kernel& operator<< (
-	boost::compute::detail::meta_kernel& k, 
-	induced_matrix_element<Arg1, Arg2, T> const& e
-){
-	return k<< k.get_buffer_identifier<T>(e.buffer, boost::compute::memory_object::global_memory)
-		<<'['<<e.arg1 <<'*'<<e.leading_dimension<<'+'<< e.arg2<<']';
-}
-}
 
 /// \brief A dense matrix of values of type \c T stored on the gpu
 ///
@@ -69,21 +49,6 @@ boost::compute::detail::meta_kernel& operator<< (
 /// \tparam L the storage organization. It can be either \c row_major or \c column_major. Default is \c row_major
 template<class T, class L>
 class matrix<T,L, gpu_tag> : public matrix_container<matrix<T,L, gpu_tag>, gpu_tag > {
-private:
-	template<class IndexExpr1, class IndexExpr2>
-	detail::induced_matrix_element<IndexExpr1, IndexExpr2, T> get_element(
-		IndexExpr1 const& expr1,IndexExpr2 const& expr2,
-		row_major
-	)const{
-		return {expr1, expr2,orientation::index_m(m_size1,m_size2), m_storage.get_buffer()};
-	}
-	template<class IndexExpr1, class IndexExpr2>
-	detail::induced_matrix_element<IndexExpr2, IndexExpr1,T> get_element(
-		IndexExpr1 const& expr1,IndexExpr2 const& expr2,
-		column_major
-	)const{
-		return {expr2, expr1,orientation::index_m(m_size1,m_size2), m_storage.get_buffer()};
-	}
 public:
 	typedef T value_type;
 	typedef value_type const_reference;
@@ -228,9 +193,8 @@ public:
 	}
 	
 	// Element access
-	template <class IndexExpr1, class IndexExpr2>
-	detail::induced_matrix_element<IndexExpr1,IndexExpr2,T> operator()(IndexExpr1 const& i, IndexExpr2 const& j) const{
-		return this->get_element(i,j,orientation());
+	gpu::detail::dense_matrix_element<value_type> to_functor() const{
+		return {m_storage.get_buffer(), stride1(), stride2(),0}; 
 	}
 	
 	

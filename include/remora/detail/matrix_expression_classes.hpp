@@ -28,6 +28,7 @@
  #ifndef REMORA_MATRIX_EXPRESSION_CLASSES_HPP
 #define REMORA_MATRIX_EXPRESSION_CLASSES_HPP
 
+#include "traits.hpp"
 #include "../kernels/gemv.hpp"
 #include "../kernels/tpmv.hpp"
 #include "../kernels/trmv.hpp"
@@ -42,7 +43,7 @@ namespace remora {
 template<class E>
 class matrix_scalar_multiply:public matrix_expression<matrix_scalar_multiply<E>, typename E::device_type > {
 private:
-	typedef typename device_traits<typename E::device_type>:: template multiply_scalar<typename E::value_type> functor_type;
+	typedef typename device_traits<typename E::device_type>::template multiply_scalar<typename E::value_type> functor_type;
 public:
 	typedef typename E::const_closure_type expression_closure_type;
 	typedef typename E::size_type size_type;
@@ -59,19 +60,14 @@ public:
 	typedef typename E::device_type device_type;
 
 	// Construction and destruction
-	explicit matrix_scalar_multiply(expression_closure_type const& e, value_type scalar):
-		m_expression(e), m_scalar(scalar){}
+	explicit matrix_scalar_multiply(expression_closure_type const& e, value_type scalar)
+	:m_expression(e), m_scalar(scalar){}
 
-	// Accessors
 	size_type size1() const {
 		return m_expression.size1();
 	}
 	size_type size2() const {
 		return m_expression.size2();
-	}
-
-	functor_type functor()const{
-		return functor_type(m_scalar);
 	}
 	
 	value_type scalar()const{
@@ -85,9 +81,8 @@ public:
 	}
 
 	// Element access
-	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<functor_type>()(std::declval<E const&>()(i,j))){
-		return functor()(m_expression(i,j));
+	const_reference operator()(std::size_t i, std::size_t j) const {
+		return m_scalar * m_expression(i,j);
 	}
 	
 	//computation kernels
@@ -166,12 +161,11 @@ public:
 		rhs_closure_type const& e2
 	): m_lhs (e1), m_rhs (e2){}
 
-        // Accessors
         size_type size1 () const {
-		return m_lhs.size1 ();
+		return m_lhs.size1();
         }
         size_type size2 () const {
-		return m_lhs.size2 ();
+		return m_lhs.size2();
         }
 	
 	lhs_closure_type const& lhs()const{
@@ -186,11 +180,10 @@ public:
 	}
 
         // Element access
-	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<functor_type>()(std::declval<E1 const&>()(i,j),std::declval<E2 const&>()(i,j))){
-		return functor_type()(lhs()(i,j),rhs()(i,j));
+	const_reference operator()(std::size_t i, std::size_t j) const {
+		return lhs()(i,j) + rhs()(i,j);
 	}
-	
+
 	//computation kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
@@ -257,13 +250,6 @@ private:
 
 template<class V, class Orientation=row_major>
 class vector_repeater:public matrix_expression<vector_repeater<V, Orientation>, typename V::device_type > {
-private:
-	template<class IndexExpr1, class IndexExpr2>
-	struct OperatorReturn{//workaround for gcc 4.6 which would not like the type below inside a function signature.
-		typedef decltype(std::declval<V const&>()(
-			Orientation::index_m(std::declval<IndexExpr1&>(),std::declval<IndexExpr2&>()))
-		) type;
-	};
 public:
 	typedef typename V::const_closure_type expression_closure_type;
 	typedef typename V::size_type size_type;
@@ -283,7 +269,6 @@ public:
 	explicit vector_repeater (expression_closure_type const& e, size_type elements):
 	m_vector(e), m_elements(elements) {}
 
-	// Accessors
 	size_type size1() const {
 		return orientation::index_M(m_elements,m_vector.size());
 	}
@@ -291,7 +276,6 @@ public:
 		return orientation::index_m(m_elements,m_vector.size());
 	}
 
-	// Expression accessors
 	const expression_closure_type& expression() const {
 		return m_vector;
 	}
@@ -300,6 +284,11 @@ public:
 		return m_elements;
 	}
 	
+	// Element access
+	const_reference operator()(std::size_t i, std::size_t j) const{
+		return m_vector(orientation::index_m(i,j));
+	}
+
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const {
 		X().clear();
@@ -308,12 +297,6 @@ public:
 	template<class MatX>
 	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const {
 		plus_assign_to(X,eval_block(m_vector), alpha);
-	}
-
-	// Element access
-	template <class IndexExpr1, class IndexExpr2>
-	typename OperatorReturn<IndexExpr1, IndexExpr2>::type operator()(IndexExpr1 const& i, IndexExpr2 const& j) const{
-		return m_vector(Orientation::index_m(i,j));
 	}
 	
 	typename device_traits<typename V::device_type>::queue_type& queue()const{
@@ -405,7 +388,6 @@ public:
 	scalar_matrix(const scalar_matrix& m):
 		m_size1(m.m_size1), m_size2(m.m_size2), m_value(m.m_value) {}
 
-	// Accessors
 	size_type size1() const {
 		return m_size1;
 	}
@@ -418,8 +400,7 @@ public:
 	}
 
 	// Element access
-	template <class IndexExpr1, class IndexExpr2>
-	value_type operator()(IndexExpr1 const&, IndexExpr2 const&) const{
+	const_reference operator()(std::size_t i, std::size_t j) const {
 		return m_value;
 	}
 	
@@ -478,7 +459,6 @@ public:
 	explicit matrix_unary(expression_closure_type const& e, functor_type const& functor):
 		m_expression(e), m_functor(functor) {}
 
-	// Accessors
 	size_type size1() const {
 		return m_expression.size1();
 	}
@@ -498,6 +478,11 @@ public:
 		return m_expression.queue();
 	}
 	
+	// Element access
+	const_reference operator()(std::size_t i, std::size_t j) const {
+		return m_functor(m_expression(i,j));
+	}
+	
 	//computation kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const {
@@ -512,15 +497,10 @@ public:
 		auto eval_rhs = eval_block(m_expression);
 		//merge the multiplication with the functor to run only one kernel.
 		//also make use of that we can now run the assignment kernel directly with that functor
-		typedef typename device_traits<device_type>::template multiply_and_add<value_type> MultAdd;
-		typedef typename device_traits<device_type>::template compose_right<F, MultAdd> Composed;
-		kernels::assign(X,eval_rhs,Composed(m_functor,MultAdd(alpha)));
-	}
-
-	// Element access
-	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<functor_type>()(std::declval<E const&>()(i,j))){
-		return functor()(m_expression(i,j));
+		typedef typename device_traits<device_type>::template multiply_and_add<typename MatX::value_type> MultAdd;
+		typedef typename device_traits<device_type>::template identity<typename MatX::value_type> Identity;
+		typedef typename device_traits<device_type>::template transform_arguments< Identity, F, MultAdd> Composed;
+		kernels::assign(X,eval_rhs,Composed(Identity(), m_functor,MultAdd(alpha)));
 	}
 
 	// Iterator types
@@ -581,7 +561,6 @@ public:
 		lhs_closure_type const& e1,  rhs_closure_type const& e2, functor_type functor 
 	): m_lhs (e1), m_rhs (e2),m_functor(functor) {}
 
-        // Accessors
         size_type size1 () const {
 		return m_lhs.size1 ();
         }
@@ -604,11 +583,10 @@ public:
 	}
 
 	// Element access
-	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(std::declval<functor_type>()(std::declval<E1 const&>()(i,j),std::declval<E2 const&>()(i,j))){
-		return functor()(lhs()(i,j),rhs()(i,j));
+	const_reference operator()(std::size_t i, std::size_t j) const {
+		return m_functor(m_lhs(i,j), m_rhs(i,j));
 	}
-	
+
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha )const{
 		assign(X,m_lhs);
@@ -693,7 +671,6 @@ public:
 	explicit outer_product(lhs_closure_type const& e1, rhs_closure_type const& e2)
 	:m_lhs(e1), m_rhs(e2){}
 
-	// Accessors
 	size_type size1() const {
 		return m_lhs.size();
 	}
@@ -701,7 +678,6 @@ public:
 		return m_rhs.size();
 	}
 
-	// Expression accessors
 	lhs_closure_type const& lhs() const {
 		return m_lhs;
 	}
@@ -714,9 +690,8 @@ public:
 	}
 
 	// Element access
-	template <class IndexExpr1, class IndexExpr2>
-	auto operator()(IndexExpr1 const& i, IndexExpr2 const& j) const -> decltype(functor_type_op()(std::declval<E1 const&>()(i),std::declval<E2 const&>()(j))){
-		return functor_type_op()(lhs()(i),rhs()(j));
+	const_reference operator()(std::size_t i, std::size_t j) const {
+		return m_lhs(i) * m_rhs(j);
 	}
 	
 	
@@ -945,7 +920,6 @@ public:
 		REMORA_SIZE_CHECK(m.size1() == m.size2());
 	}
 
-	// Expression accessors
 	matrix_closure_type const& expression() const{
 		return m_expression;
 	}
@@ -1094,7 +1068,6 @@ public:
 	// Construction and destruction
 	diagonal_matrix(vector_closure_type const& diagonal):m_diagonal(diagonal){}
 
-	// Accessors
 	size_type size1() const {
 		return m_diagonal.size();
 	}
@@ -1231,6 +1204,72 @@ public:
 private:
 	matrix_closure_typeA m_lhs;
 	matrix_closure_typeB m_rhs;
+};
+
+
+//traits for transforming an expression into a functor for gpu usage
+
+template<class E>
+class ExpressionToFunctor<matrix_scalar_multiply<E> >{
+	typedef typename E::device_type device_type;
+	typedef typename device_traits<device_type>::template multiply_scalar<typename E::value_type> functor_type;
+	static auto transform(matrix_scalar_multiply<E> const& e) -> decltype(device_traits<device_type>::make_compose(to_functor(e.expression()),e.functor())){
+		return device_traits<device_type>::make_compose(to_functor(e.expression()), e.functor());
+	}
+};
+template<class E1, class E2>
+class ExpressionToFunctor<matrix_addition<E1, E2> >{
+	typedef typename E1::device_type device_type;
+	typedef typename device_traits<device_type>::template add<typename matrix_addition<E1, E2>::value_type> functor_type;
+	static auto transform(matrix_addition<E1, E2> const& e) -> decltype(device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()),functor_type())){
+		return device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()),functor_type());
+	}
+};
+
+template<class E, class F>
+class ExpressionToFunctor<matrix_unary<E, F> >{
+	typedef typename E::device_type device_type;
+	static auto transform(matrix_unary<E, F> const& e) -> decltype(device_traits<device_type>::make_compose(to_functor(e.expression()),e.functor())){
+		return device_traits<device_type>::make_compose(to_functor(e.expression()),e.functor());
+	}
+};
+
+template<class E1, class E2, class F>
+class ExpressionToFunctor<matrix_binary<E1, E2, F> >{
+	typedef typename E1::device_type device_type;
+	static auto transform(matrix_binary<E1, E2, F> const& e) -> decltype(device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor())){
+		return device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor());
+	}
+};
+
+template<class T, class Device>
+class ExpressionToFunctor<scalar_matrix<T, Device> >{
+	static typename device_traits<Device>::template constant<T> transform(scalar_matrix<T, Device> const& e){
+		return device_traits<Device>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor());
+	}
+};
+
+template<class V, class Orientation>
+class ExpressionToFunctor<vector_repeater<V, Orientation> >{
+	typedef typename V::device_type device_type;
+	typedef typename std::conditional<
+		std::is_same<Orientation, row_major>::value,
+		typename device_traits<device_type>::template right_arg<std::size_t>,
+		typename device_traits<device_type>::template left_arg<std::size_t>
+	>::type argument_functor;
+	static auto transform(vector_repeater<V, Orientation> const& e) 
+	-> decltype(device_traits<device_type>::make_compose(argument_functor(), to_functor(e.expression()))){
+		return device_traits<device_type>::make_compose(argument_functor(), to_functor(e.expression()));
+	}
+};
+
+template<class E1, class E2>
+class ExpressionToFunctor<outer_product<E1, E2> >{
+	typedef typename E1::device_type device_type;
+	typedef typename device_traits<device_type>::template multiply<typename outer_product<E1, E2>::value_type> functor_type;
+	static auto transform(outer_product<E1, E2> const& e) -> decltype(device_traits<device_type>::make_transform_arguments(to_functor(e.lhs()),to_functor(e.rhs()),functor_type())){
+		return device_traits<device_type>::make_transform_arguments(to_functor(e.lhs()),to_functor(e.rhs()),functor_type());
+	}
 };
 
 }
