@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_To_Vector_Row_Major){
 	matrix<float, row_major, gpu_tag> new_data_full(offset1 + Dimensions1, Dimensions2,1.0);
 	auto new_data = subrange(new_data_full,2*offset1,offset1+Dimensions1,0, Dimensions2);
 	noalias(to_vector(new_data)) = vec_result; 
-	//~ //check that the assignment has been carried out correctly
+	//check that the assignment has been carried out correctly
 	checkDenseVectorEquality(to_vector(new_data),vec_result_cpu);
 }
 

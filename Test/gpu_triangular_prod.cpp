@@ -44,244 +44,244 @@ void checkMatrixMatrixMultiply(M1 const& arg1, M2 const& arg2_gpu, Result const&
 
 BOOST_AUTO_TEST_SUITE(Remora_gpu_triangular_prod)
 
-//~ BOOST_AUTO_TEST_CASE(Remora_gpu_triangular_prod_matrix_vector) {
-	//~ std::size_t dims = 231;//chosen as not to be a multiple of the block size
-	//~ //initialize the arguments in both row and column major, lower and upper, unit and non-unit diagonal
-	//~ //we add one on the remaining elements to ensure, that triangular_prod does not tuch these elements
-	//~ matrix<float,row_major> arg1lowerrm_cpu(dims,dims,1.0);
-	//~ matrix<float,column_major> arg1lowercm_cpu(dims,dims,1.0);
-	//~ matrix<float,row_major> arg1upperrm_cpu(dims,dims,1.0);
-	//~ matrix<float,column_major> arg1uppercm_cpu(dims,dims,1.0);
+BOOST_AUTO_TEST_CASE(Remora_gpu_triangular_prod_matrix_vector) {
+	std::size_t dims = 231;//chosen as not to be a multiple of the block size
+	//initialize the arguments in both row and column major, lower and upper, unit and non-unit diagonal
+	//we add one on the remaining elements to ensure, that triangular_prod does not tuch these elements
+	matrix<float,row_major> arg1lowerrm_cpu(dims,dims,1.0);
+	matrix<float,column_major> arg1lowercm_cpu(dims,dims,1.0);
+	matrix<float,row_major> arg1upperrm_cpu(dims,dims,1.0);
+	matrix<float,column_major> arg1uppercm_cpu(dims,dims,1.0);
 	
-	//~ //inputs to compare to with the standard prod
-	//~ matrix<float,row_major> arg1lowertest(dims,dims,0.0);
-	//~ matrix<float,row_major> arg1uppertest(dims,dims,0.0);
-	//~ for(std::size_t i = 0; i != dims; ++i){
-		//~ for(std::size_t j = 0; j <=i; ++j){
-			//~ arg1lowerrm_cpu(i,j) = arg1lowercm_cpu(i,j) = i*dims+0.2*j+1;
-			//~ arg1lowertest(i,j) = i*dims+0.2*j+1;
-			//~ arg1upperrm_cpu(j,i) = arg1uppercm_cpu(j,i) = i*dims+0.2*j+1;
-			//~ arg1uppertest(j,i) = i*dims+0.2*j+1;
-		//~ }
-	//~ }
+	//inputs to compare to with the standard prod
+	matrix<float,row_major> arg1lowertest(dims,dims,0.0);
+	matrix<float,row_major> arg1uppertest(dims,dims,0.0);
+	for(std::size_t i = 0; i != dims; ++i){
+		for(std::size_t j = 0; j <=i; ++j){
+			arg1lowerrm_cpu(i,j) = arg1lowercm_cpu(i,j) = i*dims+0.2*j+1;
+			arg1lowertest(i,j) = i*dims+0.2*j+1;
+			arg1upperrm_cpu(j,i) = arg1uppercm_cpu(j,i) = i*dims+0.2*j+1;
+			arg1uppertest(j,i) = i*dims+0.2*j+1;
+		}
+	}
 	
 	
-	//~ vector<float> arg2_cpu(dims);
-	//~ for(std::size_t j = 0; j != dims; ++j){
-		//~ arg2_cpu(j)  = 1.5*j+2;
-	//~ }
+	vector<float> arg2_cpu(dims);
+	for(std::size_t j = 0; j != dims; ++j){
+		arg2_cpu(j)  = 1.5*j+2;
+	}
 	
-	//~ matrix<float, row_major, gpu_tag> arg1lowerrm = copy_to_gpu(arg1lowerrm_cpu);
-	//~ matrix<float, column_major, gpu_tag> arg1lowercm = copy_to_gpu(arg1lowercm_cpu);
-	//~ matrix<float, row_major, gpu_tag> arg1upperrm = copy_to_gpu(arg1upperrm_cpu);
-	//~ matrix<float, row_major, gpu_tag> arg1uppercm = copy_to_gpu(arg1uppercm_cpu);
-	//~ vector<float, gpu_tag> arg2 = copy_to_gpu(arg2_cpu);
+	matrix<float, row_major, gpu_tag> arg1lowerrm = copy_to_gpu(arg1lowerrm_cpu);
+	matrix<float, column_major, gpu_tag> arg1lowercm = copy_to_gpu(arg1lowercm_cpu);
+	matrix<float, row_major, gpu_tag> arg1upperrm = copy_to_gpu(arg1upperrm_cpu);
+	matrix<float, row_major, gpu_tag> arg1uppercm = copy_to_gpu(arg1uppercm_cpu);
+	vector<float, gpu_tag> arg2 = copy_to_gpu(arg2_cpu);
 
-	//~ std::cout<<"\nchecking matrix-vector prod v=Ax non-unit"<<std::endl;
-	//~ {
-		//~ std::cout<<"row major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = triangular_prod<lower>(arg1lowerrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,1);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = triangular_prod<lower>(arg1lowercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,1);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = triangular_prod<upper>(arg1upperrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,1);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = triangular_prod<upper>(arg1uppercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,1);
-	//~ }
-	//~ //with prefactor
-	//~ {
-		//~ std::cout<<"row major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = -2 * triangular_prod<lower>(arg1lowerrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = -2 * triangular_prod<lower>(arg1lowercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = -2 * triangular_prod<upper>(arg1upperrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = -2 * triangular_prod<upper>(arg1uppercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,-2);
-	//~ }
-	//~ std::cout<<"\nchecking matrix-vector prod v+=Ax non-unit"<<std::endl;
-	//~ {
-		//~ std::cout<<"row major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) += -2 * triangular_prod<lower>(arg1lowerrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) += -2 * triangular_prod<lower>(arg1lowercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) += -2 * triangular_prod<upper>(arg1upperrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) += -2 * triangular_prod<upper>(arg1uppercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ std::cout<<"\nchecking matrix-vector prod v-=Ax non-unit"<<std::endl;
-	//~ {
-		//~ std::cout<<"row major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) -= 2 * triangular_prod<lower>(arg1lowerrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) -= 2 * triangular_prod<lower>(arg1lowercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) -= 2 * triangular_prod<upper>(arg1upperrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) -= 2 * triangular_prod<upper>(arg1uppercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
+	std::cout<<"\nchecking matrix-vector prod v=Ax non-unit"<<std::endl;
+	{
+		std::cout<<"row major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = triangular_prod<lower>(arg1lowerrm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,1);
+	}
+	{
+		std::cout<<"column major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = triangular_prod<lower>(arg1lowercm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,1);
+	}
+	{
+		std::cout<<"row major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = triangular_prod<upper>(arg1upperrm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,1);
+	}
+	{
+		std::cout<<"column major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = triangular_prod<upper>(arg1uppercm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,1);
+	}
+	//with prefactor
+	{
+		std::cout<<"row major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = -2 * triangular_prod<lower>(arg1lowerrm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"column major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = -2 * triangular_prod<lower>(arg1lowercm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"row major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = -2 * triangular_prod<upper>(arg1upperrm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"column major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = -2 * triangular_prod<upper>(arg1uppercm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,-2);
+	}
+	std::cout<<"\nchecking matrix-vector prod v+=Ax non-unit"<<std::endl;
+	{
+		std::cout<<"row major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) += -2 * triangular_prod<lower>(arg1lowerrm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) += -2 * triangular_prod<lower>(arg1lowercm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"row major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) += -2 * triangular_prod<upper>(arg1upperrm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) += -2 * triangular_prod<upper>(arg1uppercm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	std::cout<<"\nchecking matrix-vector prod v-=Ax non-unit"<<std::endl;
+	{
+		std::cout<<"row major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) -= 2 * triangular_prod<lower>(arg1lowerrm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) -= 2 * triangular_prod<lower>(arg1lowercm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"row major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) -= 2 * triangular_prod<upper>(arg1upperrm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) -= 2 * triangular_prod<upper>(arg1uppercm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
 	
 	
-	//~ diag(arg1lowertest) = repeat(1.0,dims);
-	//~ diag(arg1uppertest) = repeat(1.0,dims);
-	//~ std::cout<<"\nchecking matrix-vector prod v=Ax unit"<<std::endl;
-	//~ {
-		//~ std::cout<<"row major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = triangular_prod<unit_lower>(arg1lowerrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,1);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = triangular_prod<unit_lower>(arg1lowercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,1);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = triangular_prod<unit_upper>(arg1upperrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,1);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = triangular_prod<unit_upper>(arg1uppercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,1);
-	//~ }
-	//~ //with prefactor
-	//~ {
-		//~ std::cout<<"row major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = -2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = -2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = -2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) = -2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,-2);
-	//~ }
-	//~ std::cout<<"\nchecking matrix-vector prod v+=Ax unit"<<std::endl;
-	//~ {
-		//~ std::cout<<"row major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) += -2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) += -2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) += -2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) += -2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ std::cout<<"\nchecking matrix-vector prod v-=Ax unit"<<std::endl;
-	//~ {
-		//~ std::cout<<"row major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) -= 2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) -= 2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) -= 2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper Ax"<<std::endl;
-		//~ vector<float, gpu_tag> result(dims,3.0);
-		//~ noalias(result) -= 2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
-		//~ checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-//~ }
+	diag(arg1lowertest) = repeat(1.0,dims);
+	diag(arg1uppertest) = repeat(1.0,dims);
+	std::cout<<"\nchecking matrix-vector prod v=Ax unit"<<std::endl;
+	{
+		std::cout<<"row major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = triangular_prod<unit_lower>(arg1lowerrm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,1);
+	}
+	{
+		std::cout<<"column major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = triangular_prod<unit_lower>(arg1lowercm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,1);
+	}
+	{
+		std::cout<<"row major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = triangular_prod<unit_upper>(arg1upperrm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,1);
+	}
+	{
+		std::cout<<"column major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = triangular_prod<unit_upper>(arg1uppercm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,1);
+	}
+	//with prefactor
+	{
+		std::cout<<"row major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = -2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"column major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = -2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"row major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = -2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"column major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) = -2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,0.0,-2);
+	}
+	std::cout<<"\nchecking matrix-vector prod v+=Ax unit"<<std::endl;
+	{
+		std::cout<<"row major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) += -2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) += -2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"row major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) += -2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) += -2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	std::cout<<"\nchecking matrix-vector prod v-=Ax unit"<<std::endl;
+	{
+		std::cout<<"row major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) -= 2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major lower Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) -= 2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
+		checkMatrixVectorMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"row major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) -= 2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major upper Ax"<<std::endl;
+		vector<float, gpu_tag> result(dims,3.0);
+		noalias(result) -= 2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
+		checkMatrixVectorMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+}
 
 
 
@@ -327,203 +327,203 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(Remora_triangular_prod_matrix_matrix, Orientation,
 		noalias(result) = triangular_prod<lower>(arg1lowerrm,arg2);
 		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,1);
 	}
-	//~ {
-		//~ std::cout<<"column major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = triangular_prod<lower>(arg1lowercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,1);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = triangular_prod<upper>(arg1upperrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,1);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = triangular_prod<upper>(arg1uppercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,1);
-	//~ }
-	//~ //with prefactor
-	//~ {
-		//~ std::cout<<"row major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = -2 * triangular_prod<lower>(arg1lowerrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = -2 * triangular_prod<lower>(arg1lowercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = -2 * triangular_prod<upper>(arg1upperrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = -2 * triangular_prod<upper>(arg1uppercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,-2);
-	//~ }
-	//~ std::cout << "\nchecking matrix-matrix prod V+=AX non-unit" << std::endl;
-	//~ {
-		//~ std::cout<<"row major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) += -2 * triangular_prod<lower>(arg1lowerrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) += -2 * triangular_prod<lower>(arg1lowercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) += -2 * triangular_prod<upper>(arg1upperrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) += -2 * triangular_prod<upper>(arg1uppercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ std::cout << "\nchecking matrix-matrix prod V-=AX non-unit" << std::endl;
-	//~ {
-		//~ std::cout<<"row major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) -= 2 * triangular_prod<lower>(arg1lowerrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) -= 2 * triangular_prod<lower>(arg1lowercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) -= 2 * triangular_prod<upper>(arg1upperrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) -= 2 * triangular_prod<upper>(arg1uppercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
+	{
+		std::cout<<"column major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = triangular_prod<lower>(arg1lowercm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,1);
+	}
+	{
+		std::cout<<"row major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = triangular_prod<upper>(arg1upperrm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,1);
+	}
+	{
+		std::cout<<"column major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = triangular_prod<upper>(arg1uppercm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,1);
+	}
+	//with prefactor
+	{
+		std::cout<<"row major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = -2 * triangular_prod<lower>(arg1lowerrm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"column major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = -2 * triangular_prod<lower>(arg1lowercm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"row major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = -2 * triangular_prod<upper>(arg1upperrm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"column major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = -2 * triangular_prod<upper>(arg1uppercm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,-2);
+	}
+	std::cout << "\nchecking matrix-matrix prod V+=AX non-unit" << std::endl;
+	{
+		std::cout<<"row major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) += -2 * triangular_prod<lower>(arg1lowerrm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) += -2 * triangular_prod<lower>(arg1lowercm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"row major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) += -2 * triangular_prod<upper>(arg1upperrm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) += -2 * triangular_prod<upper>(arg1uppercm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	std::cout << "\nchecking matrix-matrix prod V-=AX non-unit" << std::endl;
+	{
+		std::cout<<"row major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) -= 2 * triangular_prod<lower>(arg1lowerrm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) -= 2 * triangular_prod<lower>(arg1lowercm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"row major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) -= 2 * triangular_prod<upper>(arg1upperrm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) -= 2 * triangular_prod<upper>(arg1uppercm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
 	
 
-	//~ diag(arg1lowertest) = repeat(1.0, dims);
-	//~ diag(arg1uppertest) = repeat(1.0, dims);
-	//~ std::cout << "\nchecking matrix-matrix prod V=AX unit" << std::endl;
-	//~ {
-		//~ std::cout<<"row major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = triangular_prod<unit_lower>(arg1lowerrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,1);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = triangular_prod<unit_lower>(arg1lowercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,1);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = triangular_prod<unit_upper>(arg1upperrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,1);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = triangular_prod<unit_upper>(arg1uppercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,1);
-	//~ }
-	//~ //with prefactor
-	//~ {
-		//~ std::cout<<"row major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = -2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = -2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = -2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) = -2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,-2);
-	//~ }
-	//~ std::cout << "\nchecking matrix-matrix prod V+=AX unit" << std::endl;
-	//~ {
-		//~ std::cout<<"row major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) += -2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) += -2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) += -2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) += -2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ std::cout << "\nchecking matrix-matrix prod V-=AX unit" << std::endl;
-	//~ {
-		//~ std::cout<<"row major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) -= 2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major lower AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) -= 2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"row major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) -= 2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
-	//~ {
-		//~ std::cout<<"column major upper AX"<<std::endl;
-		//~ matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
-		//~ noalias(result) -= 2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
-		//~ checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
-	//~ }
+	diag(arg1lowertest) = repeat(1.0, dims);
+	diag(arg1uppertest) = repeat(1.0, dims);
+	std::cout << "\nchecking matrix-matrix prod V=AX unit" << std::endl;
+	{
+		std::cout<<"row major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = triangular_prod<unit_lower>(arg1lowerrm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,1);
+	}
+	{
+		std::cout<<"column major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = triangular_prod<unit_lower>(arg1lowercm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,1);
+	}
+	{
+		std::cout<<"row major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = triangular_prod<unit_upper>(arg1upperrm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,1);
+	}
+	{
+		std::cout<<"column major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = triangular_prod<unit_upper>(arg1uppercm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,1);
+	}
+	//with prefactor
+	{
+		std::cout<<"row major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = -2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"column major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = -2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"row major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = -2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,-2);
+	}
+	{
+		std::cout<<"column major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) = -2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,0.0,-2);
+	}
+	std::cout << "\nchecking matrix-matrix prod V+=AX unit" << std::endl;
+	{
+		std::cout<<"row major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) += -2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) += -2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"row major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) += -2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) += -2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	std::cout << "\nchecking matrix-matrix prod V-=AX unit" << std::endl;
+	{
+		std::cout<<"row major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) -= 2 * triangular_prod<unit_lower>(arg1lowerrm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major lower AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) -= 2 * triangular_prod<unit_lower>(arg1lowercm,arg2);
+		checkMatrixMatrixMultiply(arg1lowertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"row major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) -= 2 * triangular_prod<unit_upper>(arg1upperrm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
+	{
+		std::cout<<"column major upper AX"<<std::endl;
+		matrix<float, Orientation, gpu_tag> result(dims, N, 3.0);
+		noalias(result) -= 2 * triangular_prod<unit_upper>(arg1uppercm,arg2);
+		checkMatrixMatrixMultiply(arg1uppertest,arg2,result,3.0,-2);
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END()
