@@ -43,7 +43,7 @@ void matrix_fold(matrix_expression<MatA, gpu_tag> const& A_unreg, typename F::re
 	gpu::detail::meta_kernel k("blas_matrix_fold");
 	std::size_t size1_index = k.add_arg<std::size_t>("size1");
 	std::size_t size2_index = k.add_arg<std::size_t>("size2");
-	auto A = k.register_args(A_unreg.to_functor());
+	auto A = k.register_args(to_functor(A_unreg));
 	auto f = k.register_args(F());
 	boost::compute::array<value_type,1> device_result;
 	boost::compute::copy_n(&value, 1, device_result.begin(), queue);

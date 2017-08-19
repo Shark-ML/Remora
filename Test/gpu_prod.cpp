@@ -54,6 +54,9 @@ BOOST_AUTO_TEST_CASE( Remora_gpu_prod_vector_dense ){
 	matrix<float,column_major, gpu_tag> arg1cmt = copy_to_gpu(arg1cmt_cpu);
 	vector<float, gpu_tag> arg2 = copy_to_gpu(arg2_cpu);
 	std::cout<<"\nchecking dense matrix-vector plusassign multiply"<<std::endl;
+    
+    matrix_transpose<matrix<float,row_major, gpu_tag> > t = trans(arg1rm);
+    ExpressionToFunctor<decltype(t)>::transform(t);
 	//test first expressions of the form A += alpha*B*C 
 	{
 		std::cout<<"row major Ax"<<std::endl;
@@ -123,7 +126,7 @@ void checkMatrixMatrixMultiply(Arg1 const& arg1_gpu, Arg2 const& arg2_gpu, Resul
 			for(std::size_t k = 0; k != arg1.size2(); ++k){
 				 test_result += factor * arg1(i,k)*arg2(k,j);
 			}
-			BOOST_CHECK_CLOSE(result(i,j), test_result,1.e-10);
+			BOOST_CHECK_CLOSE(result(i,j), test_result,1.e-4);
 		}
 	}
 }

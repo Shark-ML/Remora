@@ -710,49 +710,49 @@ BOOST_AUTO_TEST_CASE( Remora_sum_columns){
 ////////////REDUCTIONS
 ////////////////////////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_CASE( Remora_trace){
-	matrix<float> x_cpu(Dimension1, Dimension1); 
-	float result = 0.0f;
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension1; j++){
-			x_cpu(i,j) = -3.0+2.0*i-j;
-		}
-		result += x_cpu(i,i);
-	}
-	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
-	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
-	BOOST_CHECK_CLOSE(trace(x_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(trace(x_col),result, 1.e-6);
-}
+//~ BOOST_AUTO_TEST_CASE( Remora_trace){
+	//~ matrix<float> x_cpu(Dimension1, Dimension1); 
+	//~ float result = 0.0f;
+	//~ for (size_t i = 0; i < Dimension1; i++){
+		//~ for (size_t j = 0; j < Dimension1; j++){
+			//~ x_cpu(i,j) = -3.0+2.0*i-j;
+		//~ }
+		//~ result += x_cpu(i,i);
+	//~ }
+	//~ matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	//~ matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
+	//~ BOOST_CHECK_CLOSE(trace(x_row),result, 1.e-6);
+	//~ BOOST_CHECK_CLOSE(trace(x_col),result, 1.e-6);
+//~ }
 
-BOOST_AUTO_TEST_CASE( Remora_norm_1){
-	matrix<float> x_cpu(Dimension1, Dimension1); 
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension1; j++){
-			x_cpu(i,j) = -3.0+2.0*i-j;
-		}
-	}
-	float result = norm_1(x_cpu);
+//~ BOOST_AUTO_TEST_CASE( Remora_norm_1){
+	//~ matrix<float> x_cpu(Dimension1, Dimension1); 
+	//~ for (size_t i = 0; i < Dimension1; i++){
+		//~ for (size_t j = 0; j < Dimension1; j++){
+			//~ x_cpu(i,j) = -3.0+2.0*i-j;
+		//~ }
+	//~ }
+	//~ float result = norm_1(x_cpu);
 	
-	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
-	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
-	BOOST_CHECK_CLOSE(norm_1(x_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(norm_1(x_col),result, 1.e-6);
-}
-BOOST_AUTO_TEST_CASE( Remora_norm_inf){
-	matrix<float> x_cpu(Dimension1, Dimension1); 
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension1; j++){
-			x_cpu(i,j) = -3.0+2.0*i-j;
-		}
-	}
-	float result = norm_inf(x_cpu);
+	//~ matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	//~ matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
+	//~ BOOST_CHECK_CLOSE(norm_1(x_row),result, 1.e-6);
+	//~ BOOST_CHECK_CLOSE(norm_1(x_col),result, 1.e-6);
+//~ }
+//~ BOOST_AUTO_TEST_CASE( Remora_norm_inf){
+	//~ matrix<float> x_cpu(Dimension1, Dimension1); 
+	//~ for (size_t i = 0; i < Dimension1; i++){
+		//~ for (size_t j = 0; j < Dimension1; j++){
+			//~ x_cpu(i,j) = -3.0+2.0*i-j;
+		//~ }
+	//~ }
+	//~ float result = norm_inf(x_cpu);
 	
-	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
-	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
-	BOOST_CHECK_CLOSE(norm_inf(x_row),result, 1.e-6);
-	BOOST_CHECK_CLOSE(norm_inf(x_col),result, 1.e-6);
-}
+	//~ matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	//~ matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
+	//~ BOOST_CHECK_CLOSE(norm_inf(x_row),result, 1.e-6);
+	//~ BOOST_CHECK_CLOSE(norm_inf(x_col),result, 1.e-6);
+//~ }
 
 BOOST_AUTO_TEST_CASE( Remora_norm_Frobenius){
 	matrix<float> x_cpu(Dimension1, Dimension1); 

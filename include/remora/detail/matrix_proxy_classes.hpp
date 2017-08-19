@@ -912,7 +912,7 @@ public:
 	typedef dense_matrix_adaptor<value_type const,Orientation,Tag> const_closure_type;
 	typedef dense_matrix_storage<T,dense_tag> storage_type;
 	typedef dense_matrix_storage<value_type const,dense_tag> const_storage_type;
-        typedef Orientation orientation;
+		typedef Orientation orientation;
 	typedef elementwise<dense_tag> evaluation_category;
 
 	template<class,class,class> friend class dense_matrix_adaptor;
@@ -931,7 +931,7 @@ public:
 	///
 	/// Be aware that the expression must live longer than the proxy!
 	/// \param expression Expression from which to construct the Proxy
- 	template<class E>
+	template<class E>
 	dense_matrix_adaptor(matrix_expression<E, cpu_tag> const& expression)
 	: m_size1(expression().size1())
 	, m_size2(expression().size2())
@@ -947,7 +947,7 @@ public:
 	///
 	/// Be aware that the expression must live longer than the proxy!
 	/// \param expression Expression from which to construct the Proxy
- 	template<class E>
+	template<class E>
 	dense_matrix_adaptor(matrix_expression<E, cpu_tag>& expression)
 	: m_size1(expression().size1())
 	, m_size2(expression().size2())
@@ -963,8 +963,8 @@ public:
 	/// \param values the block of memory used
 	/// \param size1 size in 1st direction
 	/// \param size2 size in 2nd direction
- 	/// \param stride1 distance in 1st direction between elements of the self_type in memory
- 	/// \param stride2 distance in 2nd direction between elements of the self_type in memory
+	/// \param stride1 distance in 1st direction between elements of the self_type in memory
+	/// \param stride2 distance in 2nd direction between elements of the self_type in memory
 	dense_matrix_adaptor(
 		T* values, 
 		size_type size1, size_type size2,
@@ -1054,7 +1054,7 @@ public:
 		REMORA_SIZE_CHECK( i < m_size1);
 		REMORA_SIZE_CHECK( j < m_size2);
 		return m_values[i*m_stride1+j*m_stride2];
-        }
+		}
 	void set_element(size_type i, size_type j,value_type t){
 		REMORA_SIZE_CHECK( i < m_size1);
 		REMORA_SIZE_CHECK( j < m_size2);
@@ -1143,21 +1143,22 @@ private:
 };
 
 template<class E>
-class ExpressionToFunctor<matrix_reference<E> >{
+struct ExpressionToFunctor<matrix_reference<E> >{
 	static auto transform(matrix_reference<E> const& e) -> decltype(to_functor(e.expression())){
 		return to_functor(e.expression());
 	}
 };
 
+
 template<class E>
-class ExpressionToFunctor<matrix_transpose<E> >{
+struct ExpressionToFunctor<matrix_transpose<E> >{
 	typedef typename E::device_type device_type;
-	auto transform(matrix_transpose<E> const& e) const -> decltype(device_traits<device_type>::make_transform_arguments(
+	static auto transform(matrix_transpose<E> const& e) -> decltype(device_traits<device_type>::make_compose_binary(
 		typename device_traits<device_type>::template right_arg<std::size_t>(),
 		typename device_traits<device_type>::template left_arg<std::size_t>(),
 		to_functor(e.expression())
 	)){
-		return device_traits<device_type>::make_transform_arguments(
+		return device_traits<device_type>::make_compose_binary(
 			typename device_traits<device_type>::template right_arg<std::size_t>(),
 			typename device_traits<device_type>::template left_arg<std::size_t>(),
 			to_functor(e.expression())
@@ -1166,9 +1167,9 @@ class ExpressionToFunctor<matrix_transpose<E> >{
 };
 
 template<class E>
-class ExpressionToFunctor<matrix_row<E> >{
+struct ExpressionToFunctor<matrix_row<E> >{
 	typedef typename E::device_type device_type;
-	auto transform(matrix_row<E> const& e) const -> decltype(device_traits<device_type>::make_bind_second(
+	static auto transform(matrix_row<E> const& e) -> decltype(device_traits<device_type>::make_bind_second(
 		to_functor(e.expression()), std::size_t()
 	)){
 		return device_traits<device_type>::make_bind_second(to_functor(e.expression()), e.index());
@@ -1176,9 +1177,9 @@ class ExpressionToFunctor<matrix_row<E> >{
 };
 
 template<class E>
-class ExpressionToFunctor<matrix_vector_range<E> >{
+struct ExpressionToFunctor<matrix_vector_range<E> >{
 	typedef typename E::device_type device_type;
-	auto transform(matrix_vector_range<E> const& e) const -> decltype(device_traits<device_type>::make_compose_binary(
+	static auto transform(matrix_vector_range<E> const& e) -> decltype(device_traits<device_type>::make_compose_binary(
 		typename device_traits<device_type>::template add_scalar<std::size_t>(0),
 		typename device_traits<device_type>::template add_scalar<std::size_t>(0),
 		to_functor(e.expression())
@@ -1193,7 +1194,7 @@ class ExpressionToFunctor<matrix_vector_range<E> >{
 
 
 template<class E>
-class ExpressionToFunctor<matrix_range<E> >{
+struct ExpressionToFunctor<matrix_range<E> >{
 	typedef typename E::device_type device_type;
 	
 	static auto transform(matrix_range<E> const& e) -> decltype(device_traits<device_type>::make_transform_arguments(
@@ -1206,6 +1207,41 @@ class ExpressionToFunctor<matrix_range<E> >{
 			typename device_traits<device_type>::template add_scalar<std::size_t>(e.start2()),
 			to_functor(e.expression())
 		);
+	}
+};
+
+
+template<class E>
+struct ExpressionToFunctor<linearized_matrix<E> >{
+private:
+	typedef device_traits<typename E::device_type> traits;
+    template<class C>
+    static auto functor(C const& e, row_major) -> decltype(traits::make_compose_binary(
+		typename traits::template divide_scalar<std::size_t>(e.size2()),
+		typename traits::template modulo_scalar<std::size_t>(e.size2()),
+		to_functor(std::declval<C const&>())
+	)){
+		return traits::make_compose_binary(
+			typename traits::template divide_scalar<std::size_t>(e.size2()),
+			typename traits::template modulo_scalar<std::size_t>(e.size2()),
+			to_functor(e)
+		);
+	}
+    template<class C>
+	static auto functor(C const& e, column_major) -> decltype(traits::make_compose_binary(
+		typename traits::template modulo_scalar<std::size_t>(e.size1()),
+		typename traits::template divide_scalar<std::size_t>(e.size1()),
+		to_functor(std::declval<C const&>())
+	)){
+		return traits::make_compose_binary(
+			typename traits::template modulo_scalar<std::size_t>(e.size1()),
+			typename traits::template divide_scalar<std::size_t>(e.size1()),
+			to_functor(e)
+		);
+	}
+public:
+	static auto transform(linearized_matrix<E> const& e) -> decltype(functor(std::declval<E const&>(), typename E::orientation())){
+		return functor(e.expression(), typename E::orientation());
 	}
 };
 

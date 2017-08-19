@@ -203,6 +203,17 @@ private:
 	size_type m_size2;
 };
 
+template<class T, class Orientation>
+struct ExpressionToFunctor<dense_matrix_adaptor<T, Orientation, gpu_tag> >{
+	static gpu::detail::dense_matrix_element<T> transform(dense_matrix_adaptor<T, Orientation, gpu_tag> const& e){
+        auto const& storage = e().raw_storage(); 
+        std::size_t stride1 = Orientation::stride1(std::size_t(1), storage.leading_dimension);
+        std::size_t stride2 = Orientation::stride2(std::size_t(1), storage.leading_dimension);
+		return {storage.buffer, stride1, stride2, storage.offset}; 
+	}
+};
+
+
 }
 
 #endif

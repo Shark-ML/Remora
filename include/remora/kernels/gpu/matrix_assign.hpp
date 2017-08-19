@@ -47,20 +47,17 @@ void matrix_apply(
 	F const& f_unreg,
 	Orientation
 ){
-	typedef typename M::value_type value_type;
 	gpu::detail::meta_kernel k("blas_matrix_apply_dense");
 	
-	auto m = k.register_args(m_unreg().to_functor());
+	auto m = k.register_args(to_functor(m_unreg));
 	auto f = k.register_args(f_unreg);
 	
 	//create source
-	k<<m(k.get_global_id(0),k.get_global_id(1))<<" = " << f(k.get_global_id(0),k.get_global_id(1))<<";";
-	boost::compute::kernel kernel = k.compile(m().queue().get_context());
+	k<<m(k.get_global_id(0),k.get_global_id(1))<<" = " << f(m(k.get_global_id(0),k.get_global_id(1)))<<";";
+	boost::compute::kernel kernel = k.compile(m_unreg().queue().get_context());
 	//enqueue kernel
-	kernel.set_arg(lda_index, storage.leading_dimension);
-	kernel.set_arg(offset_index, storage.offset);
-	std::size_t global_work_size[2] = {m().size1(), m().size2()};
-	m().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, nullptr);
+	std::size_t global_work_size[2] = {m_unreg().size1(), m_unreg().size2()};
+	m_unreg().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, nullptr);
 }
 	
 //////////////////////////////////////////////////////
@@ -75,8 +72,7 @@ void matrix_assign(
 	Orientation o
 ){
 	static_assert(std::is_base_of<dense_tag, typename M::storage_type::storage_tag>::value, "target must have dense storage for assignment");
-	typedef typename M::value_type value_type;
-	gpu::detail::bind_second<F,value_type> f(F(),t);
+    auto f = device_traits<gpu_tag>::make_bind_second(F(), t);
 	matrix_apply(m,f,o);
 }
 
@@ -94,18 +90,17 @@ void matrix_assign_functor(
 ){
 	//create source
 	gpu::detail::meta_kernel k("blas_matrix_assign");
-	auto m = k.register_args(m_unreg.to_functor());
-	auto e = k.register_args(e_unreg.to_functor());
+	auto m = k.register_args(to_functor(m_unreg));
+	auto e = k.register_args(to_functor(e_unreg));
 	auto f = k.register_args(f_unreg);
 
-	auto elemM=m(k.get_global_id(0),k.get_global_id(1));
-	k<< elemM << "=" << f(elemM,e(k.get_global_id(0),k.get_global_id(1)))<<";\n";
+    auto id0 = k.expr<cl_uint>("get_global_id(0)");
+    auto id1 = k.expr<cl_uint>("get_global_id(1)");
+	k<< m(id0,id1) << "=" << f(m(id0,id1),e(id0,id1))<<";\n";
 	//enqueue kernel
-	boost::compute::kernel kernel = k.compile(m().queue().get_context());
-	kernel.set_arg(ldM_index, storageM.leading_dimension);
-	kernel.set_arg(offsetM_index, storageM.offset);
-	std::size_t global_work_size[2] = {m().size1(), m().size2()};
-	m().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, nullptr);
+	boost::compute::kernel kernel = k.compile(m_unreg().queue().get_context());
+	std::size_t global_work_size[2] = {m_unreg().size1(), m_unreg().size2()};
+	m_unreg().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, nullptr);
 }
 
 //dense-dense case row-major, column-major
@@ -116,7 +111,7 @@ void matrix_assign_functor(
 	F f_unreg,
 	row_major, column_major ,dense_tag, dense_tag
 ) {
-
+    typedef typename M::value_type value_type;
 	std::size_t TILE_DIM = 32;
 	char const* options ="-DTILE_DIM=32ul";
 	//There are usually not enough parallel worker threads in a local group
@@ -128,8 +123,8 @@ void matrix_assign_functor(
 	
 	//create source
 	gpu::detail::meta_kernel k("blas_matrix_assign_row_col");
-	auto m = k.register_args(m_unreg.to_functor());
-	auto e = k.register_args(e_unreg.to_functor());
+	auto m = k.register_args(to_functor(m_unreg));
+	auto e = k.register_args(to_functor(e_unreg));
 	auto f = k.register_args(f_unreg);
 	//create local memory. we first copy a tile in local
 	// memory which gets the orientation right. Then we copy the tile
@@ -160,30 +155,19 @@ void matrix_assign_functor(
 	
 	//compile kernel
 	
-	boost::compute::kernel kernel = k.compile(m().queue().get_context(), options);
+	boost::compute::kernel kernel = k.compile(m_unreg().queue().get_context(), options);
 	
 	//enqueue kernel
-	kernel.set_arg(size1_index, m().size1());
-	kernel.set_arg(size2_index, m().size2());
-	std::size_t global_work_size[2] = {(m().size1()+TILE_DIM-1) / TILE_DIM * TILE_DIM, (m().size2()+TILE_DIM-1) / TILE_DIM * BLOCK_COLS };
+	kernel.set_arg(size1_index, m_unreg().size1());
+	kernel.set_arg(size2_index, m_unreg().size2());
+	std::size_t global_work_size[2] = {(m_unreg().size1()+TILE_DIM-1) / TILE_DIM * TILE_DIM, (m_unreg().size2()+TILE_DIM-1) / TILE_DIM * BLOCK_COLS };
 	std::size_t local_work_size[2] = {TILE_DIM, BLOCK_COLS};
-	m().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, local_work_size);
+	m_unreg().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, local_work_size);
 }
 
 /////////////////////////////////////////////////////////////////
 //////Matrix Assignment implementing op=
 ////////////////////////////////////////////////////////////////
-
-//implement by using the assigner function below and call the functions above
-
-namespace detail {
-struct assigner{
-	template<class Arg1, class Arg2>
-	Arg2 operator()(Arg1 const&, Arg2 const& y) const{
-		return y;
-	}
-};
-}
 
 template<class M, class E>
 void matrix_assign(
@@ -191,7 +175,7 @@ void matrix_assign(
 	matrix_expression<E, gpu_tag> const& e,
 	row_major o, row_major,dense_tag t, dense_tag
 ) {
-	matrix_assign_functor(m, e, detail::assigner(), o, o, t, t);
+	matrix_assign_functor(m, e, device_traits<gpu_tag>::right_arg<typename E::value_type>(), o, o, t, t);
 }
 
 //dense-dense case
@@ -201,7 +185,7 @@ void matrix_assign(
 	matrix_expression<E, gpu_tag> const& e,
 	row_major o1, column_major o2,dense_tag t, dense_tag
 ) {
-	matrix_assign_functor(m, e, detail::assigner(), o1, o2, t, t);
+	matrix_assign_functor(m, e, device_traits<gpu_tag>::right_arg<typename E::value_type>(), o1, o2, t, t);
 }
 
 

@@ -66,8 +66,8 @@ trmm_kernel createTRMMBlockKernel(
 	std::size_t end_index = k.add_arg<std::size_t>("end");//end of Block of A
 	std::size_t unit_index = k.add_arg<std::size_t>("unit");//whether A is unit triangular
 	std::size_t upper_index = k.add_arg<std::size_t>("upper");//whether A is unit triangular
-	auto A = k.register_args(A_unreg.to_functor());
-	auto B = k.register_args(B_unreg.to_functor());
+	auto A = k.register_args(to_functor(A_unreg));
+	auto B = k.register_args(to_functor(B_unreg));
 	// Local memory to fit a tile of A and B
 	// we store B as column major in local memory
 	// we also allocate memory to store results of B

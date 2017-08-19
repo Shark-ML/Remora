@@ -233,14 +233,15 @@ struct common_value_type
 >{};
 
 template<class E>
-struct ExpressionToFunctor{
-	static typename E::closure transform(E const& e){
-		return e;
-	}
-};
+struct ExpressionToFunctor;
 
 template<class E, class Device>
 auto to_functor(matrix_expression<E, Device> const& e) -> decltype(ExpressionToFunctor<E>::transform(e())){
+	return ExpressionToFunctor<E>::transform(e());
+}
+
+template<class E, class Device>
+auto to_functor(vector_expression<E, Device> const& e) -> decltype(ExpressionToFunctor<E>::transform(e())){
 	return ExpressionToFunctor<E>::transform(e());
 }
 

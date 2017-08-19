@@ -25,10 +25,10 @@ void checkSyrk(M const& arg_gpu, Result const& result_gpu,double init, double al
 		for(std::size_t i = 0; i != result.size1(); ++i) {
 			for(std::size_t j = 0; j != result.size2(); ++j) {
 				if(j < i){
-					BOOST_CHECK_CLOSE(result(i,j),init, 1.e-5);
+					BOOST_CHECK_CLOSE(result(i,j),init, 1.e-4);
 				}else{
 					double test_result = alpha*inner_prod(row(arg,i),row(arg,j))+init;
-					BOOST_CHECK_CLOSE(result(i,j), test_result, 1.e-5);
+					BOOST_CHECK_CLOSE(result(i,j), test_result, 1.e-4);
 				}
 			}
 		}
@@ -36,10 +36,10 @@ void checkSyrk(M const& arg_gpu, Result const& result_gpu,double init, double al
 		for(std::size_t i = 0; i != result.size1(); ++i) {
 			for(std::size_t j = 0; j != result.size2(); ++j) {
 				if(j > i){
-					BOOST_CHECK_CLOSE(result(i,j),init, 1.e-5);
+					BOOST_CHECK_CLOSE(result(i,j),init, 1.e-4);
 				}else{
 					double test_result = alpha*inner_prod(row(arg,i),row(arg,j))+init;
-					BOOST_CHECK_CLOSE(result(i,j), test_result, 1.e-5);
+					BOOST_CHECK_CLOSE(result(i,j), test_result, 1.e-4);
 				}
 			}
 		}

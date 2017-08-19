@@ -568,7 +568,7 @@ private:
 //traits for transforming an expression into a functor for gpu usage
 
 template<class E>
-class ExpressionToFunctor<vector_scalar_multiply<E> >{
+struct ExpressionToFunctor<vector_scalar_multiply<E> >{
 	typedef typename E::device_type device_type;
 	typedef typename device_traits<device_type>::template multiply_scalar<typename E::value_type> functor_type;
 	static auto transform(vector_scalar_multiply<E> const& e) -> decltype(device_traits<device_type>::make_compose(to_functor(e.expression()),e.functor())){
@@ -576,7 +576,7 @@ class ExpressionToFunctor<vector_scalar_multiply<E> >{
 	}
 };
 template<class E1, class E2>
-class ExpressionToFunctor<vector_addition<E1, E2> >{
+struct ExpressionToFunctor<vector_addition<E1, E2> >{
 	typedef typename E1::device_type device_type;
 	typedef typename device_traits<device_type>::template add<typename vector_addition<E1, E2>::value_type> functor_type;
 	static auto transform(vector_addition<E1, E2> const& e) -> decltype(device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()),functor_type())){
@@ -585,7 +585,7 @@ class ExpressionToFunctor<vector_addition<E1, E2> >{
 };
 
 template<class E, class F>
-class ExpressionToFunctor<vector_unary<E, F> >{
+struct ExpressionToFunctor<vector_unary<E, F> >{
 	typedef typename E::device_type device_type;
 	static auto transform(vector_unary<E, F> const& e) -> decltype(device_traits<device_type>::make_compose(to_functor(e.expression()),e.functor())){
 		return device_traits<device_type>::make_compose(to_functor(e.expression()),e.functor());
@@ -593,7 +593,7 @@ class ExpressionToFunctor<vector_unary<E, F> >{
 };
 
 template<class E1, class E2, class F>
-class ExpressionToFunctor<vector_binary<E1, E2, F> >{
+struct ExpressionToFunctor<vector_binary<E1, E2, F> >{
 	typedef typename E1::device_type device_type;
 	static auto transform(vector_binary<E1, E2, F> const& e) -> decltype(device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor())){
 		return device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor());
@@ -601,7 +601,7 @@ class ExpressionToFunctor<vector_binary<E1, E2, F> >{
 };
 
 template<class T, class Device>
-class ExpressionToFunctor<scalar_vector<T, Device> >{
+struct ExpressionToFunctor<scalar_vector<T, Device> >{
 	static typename device_traits<Device>::template constant<T> transform(scalar_vector<T, Device> const& e){
 		return device_traits<Device>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor());
 	}

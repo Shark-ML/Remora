@@ -57,12 +57,13 @@ macro( REMORA_ADD_BENCHMARK SRC NAME)
 endmacro()
 
 REMORA_ADD_EXAMPLE(linear_regression LinearRegression)
+
 REMORA_ADD_BENCHMARK(conv2d Benchmark_Conv2D)
 REMORA_ADD_BENCHMARK(gemm Benchmark_Gemm)
 REMORA_ADD_BENCHMARK(trmm Benchmark_Trmm)
 REMORA_ADD_BENCHMARK(syrk Benchmark_Syrk)
 REMORA_ADD_BENCHMARK(potrf Benchmark_Potrf)
 
-if(ENABLE_GPU)
+if(ENABLE_CLBLAST)
 REMORA_ADD_BENCHMARK(gpu_conv2d Benchmark_GPU_Conv2D)
 endif()

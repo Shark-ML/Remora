@@ -256,6 +256,14 @@ private:
 	boost::compute::vector<T> m_storage;
 	boost::compute::command_queue* m_queue;
 };
+
+template<class T>
+struct ExpressionToFunctor<vector<T, gpu_tag> >{
+	static gpu::detail::dense_vector_element<T> transform(vector<T, gpu_tag> const& e){
+		return {e().raw_storage().buffer, 1, 0}; 
+	}
+};
+
 }
 
 #endif

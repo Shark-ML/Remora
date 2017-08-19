@@ -58,9 +58,9 @@ void gemv(
 	std::size_t alpha_index = k.add_arg<value_type>("alpha");
 	std::size_t size1_index = k.add_arg<std::size_t>("size1");
 	std::size_t size2_index = k.add_arg<std::size_t>("size2");
-	auto A = k.register_args(A_unreg.to_functor());
-	auto x = k.register_args(x_unreg.to_functor());
-	auto v = k.register_args(v_unreg.to_functor());
+	auto A = k.register_args(to_functor(A_unreg));
+	auto x = k.register_args(to_functor(x_unreg));
+	auto v = k.register_args(to_functor(v_unreg));
 	//read all tiles in the assigned rows and compute the inner product
 	k << "__local " <<k.decl<value_type>("results")<< "[TILE_DIM][TILE_DIM+2];";
 	k << "uint rowid = get_global_id(0);";
@@ -89,7 +89,7 @@ void gemv(
 	kernel.set_arg(size2_index, A_unreg().size2());
 	
 	std::size_t global_work_size[2] = {
-		((A().size1()+TILE_DIM-1)/TILE_DIM) * TILE_DIM,
+		((A_unreg().size1()+TILE_DIM-1)/TILE_DIM) * TILE_DIM,
 		TILE_DIM
 	};
 	std::size_t local_work_size[2] = {TILE_DIM,TILE_DIM};

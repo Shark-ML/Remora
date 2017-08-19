@@ -68,5 +68,9 @@ remora_add_test( gpu_prod.cpp GPU_Prod)
 remora_add_test( gpu_syrk.cpp GPU_Syrk)
 remora_add_test( gpu_triangular_prod.cpp GPU_Triangular_Prod)
 remora_add_test( gpu_triangular_solve.cpp GPU_Triangular_Solve)
-remora_add_test( gpu_conv2d.cpp GPU_Conv2D)
+endif()
+
+
+if(ENABLE_CLBLAST)
+    remora_add_test( gpu_conv2d.cpp GPU_Conv2D)
 endif()

@@ -61,13 +61,13 @@ trsv_kernel createTRSVDiagBlockKernel(
 	typedef typename VecB::value_type value_typeB;
 	boost::compute::multiplies<value_typeB> prod;
 	
-	gpu:detail::meta_kernel k("blas_trsv");
+	gpu::detail::meta_kernel k("blas_trsv");
 	std::size_t start_index = k.add_arg<std::size_t>("start");//start of block of A
 	std::size_t end_index = k.add_arg<std::size_t>("end");//end of Block of A
 	std::size_t unit_index = k.add_arg<std::size_t>("unit");//whether A is unit triangular
 	std::size_t upper_index = k.add_arg<std::size_t>("upper");//whether A is upper triangular
-	auto A = k.register_args(A_unreg.to_functor());
-	auto b = k.register_args(b_unreg.to_functor());
+	auto A = k.register_args(to_functor(A_unreg));
+	auto b = k.register_args(to_functor(b_unreg));
 	// Local memory to fit a tile of A and the vector B
 	k << "__local " <<k.decl<value_typeA>("Asub")<< "[TILE_SIZE][TILE_SIZE+2];\n";//+2 to avoid bank conflicts
 	k << "__local " <<k.decl<value_typeB>("Bsub")<< "[TILE_SIZE];\n";

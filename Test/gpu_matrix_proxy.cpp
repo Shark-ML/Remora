@@ -91,57 +91,57 @@ struct MatrixProxyFixture
 
 BOOST_FIXTURE_TEST_SUITE (Remora_matrix_proxy, MatrixProxyFixture);
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Dense_Subrange ){
-	//~ //all possible combinations of ranges on the data matrix
-	//~ for(std::size_t rowEnd=0;rowEnd!= Dimensions1;++rowEnd){
-		//~ for(std::size_t rowBegin =0;rowBegin <= rowEnd;++rowBegin){//<= for 0 range
-			//~ for(std::size_t colEnd=0;colEnd!=Dimensions2;++colEnd){
-				//~ for(std::size_t colBegin=0;colBegin != colEnd;++colBegin){
-					//~ //obtain ground truth
-					//~ std::size_t size1= rowEnd-rowBegin;
-					//~ std::size_t size2= colEnd-colBegin;
-					//~ matrix<float> mTest(size1,size2);
-					//~ for(std::size_t i = 0; i != size1; ++i){
-						//~ for(std::size_t j = 0; j != size2; ++j){
-							//~ mTest(i,j) = denseData_cpu(i+rowBegin,j+colBegin);
-						//~ }
-					//~ }
-					//~ //check whether the subrange has the right values
-					//~ checkDenseMatrixEquality(subrange(denseData,rowBegin,rowEnd,colBegin,colEnd),mTest);
-					//~ checkDenseMatrixEquality(subrange(denseDataColMajor,rowBegin,rowEnd,colBegin,colEnd),mTest);
+BOOST_AUTO_TEST_CASE( Remora_Dense_Subrange ){
+	//all possible combinations of ranges on the data matrix
+	for(std::size_t rowEnd=0;rowEnd!= Dimensions1/2;++rowEnd){
+		for(std::size_t rowBegin =0;rowBegin <= rowEnd/2;++rowBegin){//<= for 0 range
+			for(std::size_t colEnd=0;colEnd!=Dimensions2/2;++colEnd){
+				for(std::size_t colBegin=0;colBegin != colEnd/2;++colBegin){
+					//obtain ground truth
+					std::size_t size1= rowEnd-rowBegin;
+					std::size_t size2= colEnd-colBegin;
+					matrix<float> mTest(size1,size2);
+					for(std::size_t i = 0; i != size1; ++i){
+						for(std::size_t j = 0; j != size2; ++j){
+							mTest(i,j) = denseData_cpu(i+rowBegin,j+colBegin);
+						}
+					}
+					//check whether the subrange has the right values
+					checkDenseMatrixEquality(subrange(denseData,rowBegin,rowEnd,colBegin,colEnd),mTest);
+					checkDenseMatrixEquality(subrange(denseDataColMajor,rowBegin,rowEnd,colBegin,colEnd),mTest);
 
-					//~ //now test whether we can assign to a range like this.
-					//~ matrix<float, row_major, gpu_tag> newData(Dimensions1,Dimensions2,1.0);
-					//~ matrix<float, column_major, gpu_tag> newDataColMajor(Dimensions1,Dimensions2,1.0);
-					//~ auto rangeTest = subrange(newData,rowBegin,rowEnd,colBegin,colEnd);
-					//~ auto rangeTestColMajor = subrange(newDataColMajor,rowBegin,rowEnd,colBegin,colEnd);
-					//~ noalias(rangeTest) = subrange(denseData,rowBegin,rowEnd,colBegin,colEnd);
-					//~ noalias(rangeTestColMajor) = subrange(denseDataColMajor,rowBegin,rowEnd,colBegin,colEnd);
-					//~ //check that the assignment has been carried out correctly
-					//~ checkDenseMatrixEquality(rangeTest,mTest);
-					//~ checkDenseMatrixEquality(rangeTestColMajor,mTest);
+					//now test whether we can assign to a range like this.
+					matrix<float, row_major, gpu_tag> newData(Dimensions1,Dimensions2,1.0);
+					matrix<float, column_major, gpu_tag> newDataColMajor(Dimensions1,Dimensions2,1.0);
+					auto rangeTest = subrange(newData,rowBegin,rowEnd,colBegin,colEnd);
+					auto rangeTestColMajor = subrange(newDataColMajor,rowBegin,rowEnd,colBegin,colEnd);
+					noalias(rangeTest) = subrange(denseData,rowBegin,rowEnd,colBegin,colEnd);
+					noalias(rangeTestColMajor) = subrange(denseDataColMajor,rowBegin,rowEnd,colBegin,colEnd);
+					//check that the assignment has been carried out correctly
+					checkDenseMatrixEquality(rangeTest,mTest);
+					checkDenseMatrixEquality(rangeTestColMajor,mTest);
 
-					//~ //check that after assignment all elements outside the range are still intact
-					//~ //generate ground truth
-					//~ matrix<float> truth(Dimensions1,Dimensions2,1.0);
-					//~ for(std::size_t i = 0; i != size1; ++i){
-						//~ for(std::size_t j = 0; j != size2; ++j){
-							//~ truth(i+rowBegin,j+colBegin) = denseData_cpu(i+rowBegin,j+colBegin);
-						//~ }
-					//~ }	
-					//~ matrix<float> data = copy_to_cpu(newData);
-					//~ matrix<float> dataColMajor = copy_to_cpu(newDataColMajor);
-					//~ for(std::size_t i = 0; i != Dimensions1; ++i){
-						//~ for(std::size_t j = 0; j != Dimensions2; ++j){
-							//~ BOOST_CHECK_EQUAL(data(i,j),truth(i,j));
-							//~ BOOST_CHECK_EQUAL(dataColMajor(i,j),truth(i,j));
-						//~ }
-					//~ }
-				//~ }
-			//~ }
-		//~ }
-	//~ }
-//~ }
+					//check that after assignment all elements outside the range are still intact
+					//generate ground truth
+					matrix<float> truth(Dimensions1,Dimensions2,1.0);
+					for(std::size_t i = 0; i != size1; ++i){
+						for(std::size_t j = 0; j != size2; ++j){
+							truth(i+rowBegin,j+colBegin) = denseData_cpu(i+rowBegin,j+colBegin);
+						}
+					}	
+					matrix<float> data = copy_to_cpu(newData);
+					matrix<float> dataColMajor = copy_to_cpu(newDataColMajor);
+					for(std::size_t i = 0; i != Dimensions1; ++i){
+						for(std::size_t j = 0; j != Dimensions2; ++j){
+							BOOST_CHECK_EQUAL(data(i,j),truth(i,j));
+							BOOST_CHECK_EQUAL(dataColMajor(i,j),truth(i,j));
+						}
+					}
+				}
+			}
+		}
+	}
+}
 
 BOOST_AUTO_TEST_CASE( Remora_Dense_row){
 	for(std::size_t r = 0;r != Dimensions1;++r){
@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_To_Vector_Row_Major){
 	matrix<float, row_major, gpu_tag> new_data_full(offset1 + Dimensions1, Dimensions2,1.0);
 	auto new_data = subrange(new_data_full,2*offset1,offset1+Dimensions1,0, Dimensions2);
 	noalias(to_vector(new_data)) = vec_result; 
-	//check that the assignment has been carried out correctly
+	//~ //check that the assignment has been carried out correctly
 	checkDenseVectorEquality(to_vector(new_data),vec_result_cpu);
 }
 

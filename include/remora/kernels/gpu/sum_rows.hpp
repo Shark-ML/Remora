@@ -51,8 +51,8 @@ void sum_rows(
 	std::size_t alpha_index = k.add_arg<value_type>("alpha");
 	std::size_t size1_index = k.add_arg<std::size_t>("size1");
 	std::size_t size2_index = k.add_arg<std::size_t>("size2");
-	auto A = k.register_args(A_unreg.to_functor());
-	auto v = k.register_args(v_unreg.to_functor());
+	auto A = k.register_args(to_functor(A_unreg));
+	auto v = k.register_args(to_functor(v_unreg));
 	//read all tiles in the assigned rows and sum them up
 	k << "__local " <<k.decl<value_type>("sums")<< "[TILE_DIM][TILE_DIM+1];\n";
 	k << "uint colid = get_global_id(1);\n";
@@ -82,7 +82,7 @@ void sum_rows(
 	
 	std::size_t global_work_size[2] = {
 		TILE_DIM,
-		((A().size2()+TILE_DIM-1)/TILE_DIM) * TILE_DIM
+		((A_unreg().size2()+TILE_DIM-1)/TILE_DIM) * TILE_DIM
 	};
 	std::size_t local_work_size[2] = {TILE_DIM, TILE_DIM};
 	v_unreg().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, local_work_size);

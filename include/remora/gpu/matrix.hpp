@@ -192,11 +192,6 @@ public:
 		return {m_storage.get_buffer(),0,orientation::index_m(m_size1,m_size2)};
 	}
 	
-	// Element access
-	gpu::detail::dense_matrix_element<value_type> to_functor() const{
-		return {m_storage.get_buffer(), stride1(), stride2(),0}; 
-	}
-	
 	
 	/// \brief Resize the matrix
 	///
@@ -289,6 +284,13 @@ private:
 	boost::compute::command_queue* m_queue;
 	size_type m_size1;
 	size_type m_size2;
+};
+
+template<class T, class Orientation>
+struct ExpressionToFunctor<matrix<T, Orientation, gpu_tag> >{
+	static gpu::detail::dense_matrix_element<T> transform(matrix<T, Orientation, gpu_tag> const& e){
+		return {e().raw_storage().buffer, Orientation::stride1(e.size1(), e.size2()), Orientation::stride2(e.size1(), e.size2()),0}; 
+	}
 };
 
 }

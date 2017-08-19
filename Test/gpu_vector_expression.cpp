@@ -595,7 +595,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_norm_sqr )
 	float result = 0;
 	
 	for (size_t i = 0; i < Dimensions; i++){
-		x_cpu(i) = 0.1*(2*i-5.0);
+		x_cpu(i) = 0.1*(1.2*i-5.0);
 		result +=x_cpu(i)*x_cpu(i);
 	}
 	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
@@ -606,7 +606,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_norm_2 )
 	vector<float> x_cpu(Dimensions); 
 	float result = 0;
 	for (size_t i = 0; i < Dimensions; i++){
-		x_cpu(i) = 0.1*(2*i-5.0);
+		x_cpu(i) = 0.1*(1.2*i-5.0);
 		result += x_cpu(i)*x_cpu(i);
 	}
 	result = std::sqrt(result);

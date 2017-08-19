@@ -33,6 +33,7 @@
 #ifndef REMORA_GPU_ITERATORS_HPP
 #define REMORA_GPU_ITERATORS_HPP
 
+#include <boost/compute/core.hpp>
 #include <boost/compute/functional/detail/unpack.hpp>
 #include <boost/compute/iterator/zip_iterator.hpp>
 #include <boost/compute/iterator/constant_iterator.hpp>
@@ -90,8 +91,8 @@ public:
 
 	/// \internal_
 	template<class Expr>
-	auto operator[](Expr const& expr) const-> decltype(std::declval<Closure>()(expr)){
-		return m_closure(expr);
+	auto operator[](Expr const& expr) const-> decltype(to_functor(std::declval<Closure const&>())(expr)){
+		return to_functor(m_closure)(expr);
 	}
 
 private:

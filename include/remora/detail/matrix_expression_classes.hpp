@@ -403,6 +403,10 @@ public:
 	const_reference operator()(std::size_t i, std::size_t j) const {
 		return m_value;
 	}
+    
+    T scalar() const{
+        return m_value;
+    }
 	
 	//Iterators
 	typedef typename device_traits<Device>:: template constant_iterator<value_type>::type const_row_iterator;
@@ -1210,15 +1214,15 @@ private:
 //traits for transforming an expression into a functor for gpu usage
 
 template<class E>
-class ExpressionToFunctor<matrix_scalar_multiply<E> >{
+struct ExpressionToFunctor<matrix_scalar_multiply<E> >{
 	typedef typename E::device_type device_type;
 	typedef typename device_traits<device_type>::template multiply_scalar<typename E::value_type> functor_type;
-	static auto transform(matrix_scalar_multiply<E> const& e) -> decltype(device_traits<device_type>::make_compose(to_functor(e.expression()),e.functor())){
-		return device_traits<device_type>::make_compose(to_functor(e.expression()), e.functor());
+	static auto transform(matrix_scalar_multiply<E> const& e) -> decltype(device_traits<device_type>::make_compose(to_functor(e.expression()),functor_type(e.scalar()))){
+		return device_traits<device_type>::make_compose(to_functor(e.expression()), functor_type(e.scalar()));
 	}
 };
 template<class E1, class E2>
-class ExpressionToFunctor<matrix_addition<E1, E2> >{
+struct ExpressionToFunctor<matrix_addition<E1, E2> >{
 	typedef typename E1::device_type device_type;
 	typedef typename device_traits<device_type>::template add<typename matrix_addition<E1, E2>::value_type> functor_type;
 	static auto transform(matrix_addition<E1, E2> const& e) -> decltype(device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()),functor_type())){
@@ -1227,7 +1231,7 @@ class ExpressionToFunctor<matrix_addition<E1, E2> >{
 };
 
 template<class E, class F>
-class ExpressionToFunctor<matrix_unary<E, F> >{
+struct ExpressionToFunctor<matrix_unary<E, F> >{
 	typedef typename E::device_type device_type;
 	static auto transform(matrix_unary<E, F> const& e) -> decltype(device_traits<device_type>::make_compose(to_functor(e.expression()),e.functor())){
 		return device_traits<device_type>::make_compose(to_functor(e.expression()),e.functor());
@@ -1235,7 +1239,7 @@ class ExpressionToFunctor<matrix_unary<E, F> >{
 };
 
 template<class E1, class E2, class F>
-class ExpressionToFunctor<matrix_binary<E1, E2, F> >{
+struct ExpressionToFunctor<matrix_binary<E1, E2, F> >{
 	typedef typename E1::device_type device_type;
 	static auto transform(matrix_binary<E1, E2, F> const& e) -> decltype(device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor())){
 		return device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor());
@@ -1243,14 +1247,14 @@ class ExpressionToFunctor<matrix_binary<E1, E2, F> >{
 };
 
 template<class T, class Device>
-class ExpressionToFunctor<scalar_matrix<T, Device> >{
+struct ExpressionToFunctor<scalar_matrix<T, Device> >{
 	static typename device_traits<Device>::template constant<T> transform(scalar_matrix<T, Device> const& e){
-		return device_traits<Device>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor());
+		return typename device_traits<Device>::template constant<T>(e.scalar());
 	}
 };
 
 template<class V, class Orientation>
-class ExpressionToFunctor<vector_repeater<V, Orientation> >{
+struct ExpressionToFunctor<vector_repeater<V, Orientation> >{
 	typedef typename V::device_type device_type;
 	typedef typename std::conditional<
 		std::is_same<Orientation, row_major>::value,
@@ -1264,7 +1268,7 @@ class ExpressionToFunctor<vector_repeater<V, Orientation> >{
 };
 
 template<class E1, class E2>
-class ExpressionToFunctor<outer_product<E1, E2> >{
+struct ExpressionToFunctor<outer_product<E1, E2> >{
 	typedef typename E1::device_type device_type;
 	typedef typename device_traits<device_type>::template multiply<typename outer_product<E1, E2>::value_type> functor_type;
 	static auto transform(outer_product<E1, E2> const& e) -> decltype(device_traits<device_type>::make_transform_arguments(to_functor(e.lhs()),to_functor(e.rhs()),functor_type())){

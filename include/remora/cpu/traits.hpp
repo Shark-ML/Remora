@@ -224,6 +224,32 @@ struct device_traits<cpu_tag>{
 	};
 	
 	template<class T>
+	struct divide_scalar{
+		static const bool zero_identity = true;
+		typedef T result_type;
+		divide_scalar(T scalar):m_scalar(scalar){}
+		T operator()(T x) const{
+			return x / m_scalar;
+		}
+	private:
+		T m_scalar;
+	};
+	
+	template<class T>
+	struct modulo_scalar{
+		static const bool zero_identity = true;
+		typedef T result_type;
+		modulo_scalar(T scalar):m_scalar(scalar){}
+		T operator()(T x) const{
+			return x % m_scalar;
+		}
+	private:
+		T m_scalar;
+	};
+	
+	
+	
+	template<class T>
 	struct safe_divide {
 		static const bool left_zero_remains =  true;
 		static const bool right_zero_remains =  false;

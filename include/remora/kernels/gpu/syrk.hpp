@@ -70,8 +70,8 @@ void syrk(
 	std::size_t K_index = k.add_arg<std::size_t>("K");
 	std::size_t upper_index = k.add_arg<std::size_t>("upper");
 	std::size_t alpha_index = k.add_arg<value_type>("alpha");
-	auto A = k.register_args(A_unreg.to_functor());
-	auto C = k.register_args(C_unreg.to_functor());
+	auto A = k.register_args(to_functor(A_unreg));
+	auto C = k.register_args(to_functor(C_unreg));
 	//check whether we are in a block that is not touched by syrk
 	k <<"if((upper && get_group_id(1) < get_group_id(0))) return;\n"; 
 	k <<"if((!upper && get_group_id(1) > get_group_id(0))) return;\n"; 
@@ -162,8 +162,8 @@ void syrk(
 	kernel.set_arg(upper_index, (std::size_t)Upper);
 	
 	std::size_t global_work_size[2] = {
-		(C().size1()+TILE_SIZE-1)/ TILE_SIZE * NUM_WORKERS,
-		(C().size2()+TILE_SIZE-1)/ TILE_SIZE * NUM_WORKERS
+		(C_unreg().size1()+TILE_SIZE-1)/ TILE_SIZE * NUM_WORKERS,
+		(C_unreg().size2()+TILE_SIZE-1)/ TILE_SIZE * NUM_WORKERS
 	};
 	std::size_t local_work_size[2] = {NUM_WORKERS, NUM_WORKERS};
 	C_unreg().queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, local_work_size);

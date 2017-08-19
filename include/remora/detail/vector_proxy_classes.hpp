@@ -573,14 +573,14 @@ private:
 
 
 template<class E>
-class ExpressionToFunctor<vector_reference<E> >{
+struct ExpressionToFunctor<vector_reference<E> >{
 	static auto transform(vector_reference<E> const& e) -> decltype(to_functor(e.expression())){
 		return to_functor(e.expression());
 	}
 };
 
 template<class E>
-class ExpressionToFunctor<vector_range<E> >{
+struct ExpressionToFunctor<vector_range<E> >{
 	typedef typename E::device_type device_type;
 	static auto transform(vector_range<E> const& e) -> decltype(device_traits<device_type>::make_compose(
 		typename device_traits<device_type>:: template add_scalar<std::size_t>(0),to_functor(e.expression())
