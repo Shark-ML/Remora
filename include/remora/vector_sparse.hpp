@@ -131,9 +131,8 @@ public:
 		size_type m_i;
 	};
 
-	typedef vector_reference<self_type const> const_closure_type;
-	typedef vector_reference<self_type> closure_type;
-	typedef sparse_vector_storage<T,I> storage_type;
+	typedef sparse_vector_adaptor<T const,I const> const_closure_type;
+	typedef sparse_vector_adaptor<T, I> closure_type;
 	typedef sparse_vector_storage<value_type const,size_type const> const_storage_type;
 	typedef elementwise<sparse_tag> evaluation_category;
 
@@ -143,8 +142,7 @@ public:
 	:m_size(size), m_nnz(0), m_indices(non_zeros,0), m_values(non_zeros),m_zero(0){}
 	template<class AE>
 	compressed_vector(vector_expression<AE, cpu_tag> const& ae, size_type non_zeros = 0)
-	:m_size(ae().size()), m_nnz(0), m_indices(non_zeros,0), m_values(non_zeros),m_zero(0)
-	{
+	:m_size(ae().size()), m_nnz(0), m_indices(non_zeros,0), m_values(non_zeros),m_zero(0){
 		assign(*this, ae);
 	}
 

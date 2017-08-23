@@ -492,36 +492,6 @@ operator/=(matrix_expression<MatA, Device>& A, T t){
 	return A();
 }
 
-
-
-//////////////////////////////////////////////////////////////////////////////////////
-///// Temporary Proxy Operators
-/////////////////////////////////////////////////////////////////////////////////////
-
-template<class T, class U>
-temporary_proxy<T> operator+=(temporary_proxy<T> x, U const& arg){
-	static_cast<T&>(x) += arg;
-	return x;
-}
-template<class T, class U>
-temporary_proxy<T> operator-=(temporary_proxy<T> x, U const& arg){
-	static_cast<T&>(x) -= arg;
-	return x;
-}
-template<class T, class U>
-temporary_proxy<T> operator*=(temporary_proxy<T> x, U const& arg){
-	static_cast<T&>(x) *= arg;
-	return x;
-}
-template<class T, class U>
-temporary_proxy<T> operator/=(temporary_proxy<T> x, U const& arg){
-	static_cast<T&>(x) /= arg;
-	return x;
-}
-
-
-
-
 // Assignment proxy.
 // Provides temporary free assigment when LHS has no alias on RHS
 template<class C>
@@ -598,10 +568,7 @@ template <class C, class Device>
 noalias_proxy<C> noalias(vector_set_expression<C>& lvalue) {
 	return noalias_proxy<C> (lvalue());
 }
-template <class C>
-noalias_proxy<C> noalias(temporary_proxy<C> lvalue) {
-	return noalias_proxy<C> (static_cast<C&>(lvalue));
-}
+
 
 }
 #endif

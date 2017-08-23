@@ -226,11 +226,6 @@ struct device_traits<gpu_tag>{
 		typedef boost::compute::transform_iterator<Iterator, Functor> type;
 	};
 	
-	template <class Iterator>
-	struct subrange_iterator{
-		typedef gpu::detail::subrange_iterator<Iterator> type;
-	};
-	
 	template <class Iterator1, class Iterator2, class Functor>
 	struct binary_transform_iterator{
 		typedef gpu::detail::binary_transform_iterator<Iterator1,Iterator2, Functor> type;

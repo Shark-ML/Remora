@@ -203,6 +203,16 @@ private:
 	size_type m_size2;
 };
 
+template<class T, class Orientation, class Tag>
+struct matrix_transpose_optimizer<dense_matrix_adaptor<T,Orientation, Tag, gpu_tag> >{
+	typedef dense_matrix_adaptor<T,typename Orientation::transposed_orientation, Tag, gpu_tag> type;
+	
+	static type create(dense_matrix_adaptor<T,Orientation, Tag, cpu_tag> const& m){
+        auto const& storage = m.raw_storage();
+        return type(m.raw_storage(), m.queue(), m.size2(), n.size1());
+	}
+};
+
 template<class T, class Orientation>
 struct ExpressionToFunctor<dense_matrix_adaptor<T, Orientation, gpu_tag> >{
 	static gpu::detail::dense_matrix_element<T> transform(dense_matrix_adaptor<T, Orientation, gpu_tag> const& e){

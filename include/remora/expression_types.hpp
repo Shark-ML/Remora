@@ -136,20 +136,6 @@ struct matrix_container: public matrix_expression<C, Device> {
 	}
 };
 
-template<class P>
-struct temporary_proxy:public P{
-	temporary_proxy(P const& p):P(p){}
-	
-	template<class E>
-	P& operator=(E const& e){
-		return static_cast<P&>(*this) = e;
-	}
-	
-	P& operator=(temporary_proxy<P> const& e){
-		return static_cast<P&>(*this) = e;
-	}
-};
-
 }
 
 #endif

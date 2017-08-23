@@ -135,6 +135,10 @@ public:
 	size_type size() const {
 		return m_size;
 	}
+    
+    T scalar() const {
+		return m_value;
+	}
 
 	// Element access
 	const_reference operator()(std::size_t) const {
@@ -178,21 +182,26 @@ public:
 	
 	// Construction and destruction
 	unit_vector()
-	:m_size(0), m_index(0) {}
-	explicit unit_vector(size_type size, size_type index)
-	:m_size(size), m_index(index) {}
-	unit_vector(unit_vector const& v)
-	:m_size(v.m_size), m_index(v.m_index) {}
+	:m_size(0), m_index(0), m_value(1) {}
+	explicit unit_vector(size_type size, size_type index, value_type value = value_type(1))
+	:m_size(size), m_index(index), m_value(value) {}
 
-	// to_functors
 	size_type size() const {
 		return m_size;
 	}
 
+    value_type scalar() const {
+		return m_value;
+	}
+    
+    size_type index() const {
+		return m_index;
+	}
+    
 	// Element access
 	const_reference operator()(size_type const& i) const {
 		REMORA_SIZE_CHECK(i < m_size);
-		return (i == m_index)? value_type(1) : value_type(0);
+		return (i == m_index)? m_value : value_type();
 	}
 	typename device_traits<Device>::queue_type& queue()const{
 		return device_traits<Device>::default_queue();
@@ -202,15 +211,16 @@ public:
 	typedef const_iterator iterator;
 
 	const_iterator begin() const {
-		return const_iterator(m_index,value_type(1),false);
+		return const_iterator(m_index,m_value,false);
 	}
 	const_iterator end() const {
-		return const_iterator(m_index,value_type(1),true);
+		return const_iterator(m_index,m_value,true);
 	}
 
 private:
 	size_type m_size;
 	size_type m_index;
+    value_type m_value;
 };
 
 ///\brief Class implementing vector transformation expressions.
