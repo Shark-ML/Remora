@@ -204,9 +204,8 @@ void trsm_call(
 	Triangular,
 	right
 ){
-	matrix_transpose<typename const_expression<MatA>::type> transA(A());
-	matrix_transpose<MatB> transB(B());
-	trsm_call(transA,transB,typename Triangular::transposed_orientation(),left());
+	auto transB = trans(B);
+	trsm_call(trans(A),transB,typename Triangular::transposed_orientation(),left());
 }
 
 }

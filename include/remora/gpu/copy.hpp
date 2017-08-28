@@ -29,11 +29,7 @@
 #define REMORA_GPU_COPY_HPP
 
 #include "../detail/traits.hpp"
-//includes required for storage->vector/matrix and for scalar multiplication
-#include "../detail/vector_proxy_classes.hpp"
-#include "../detail/vector_expression_classes.hpp"
-#include "../detail/matrix_proxy_classes.hpp"
-#include "../detail/matrix_expression_classes.hpp"
+#include "../dense.hpp" //required for vector proxy on cpu
 
 namespace remora{
 
@@ -108,8 +104,8 @@ private:
 		);
 		//adapt host memory buffer to vector and assign
 		typedef dense_vector_adaptor<typename VecE::value_type> AdaptE;
-		AdaptE adaptE(p + storageE.offset,size(), storageE.stride);
-		assign(x, vector_scalar_multiply<AdaptE >( adaptE, alpha));
+		AdaptE adaptE = adapt_vector(p + storageE.offset,size(), storageE.stride);
+		assign(x, adaptE, alpha);
 		
 		//unmap memory
 		e().queue().enqueue_unmap_buffer(buffer,p);
@@ -130,7 +126,7 @@ private:
 		typedef dense_vector_adaptor<typename VecE::value_type> AdaptE;
 		AdaptE adaptE(p + storageE.offset,size(), storageE.stride);
 		
-		plus_assign(x,vector_scalar_multiply<AdaptE >( adaptE, alpha));
+		plus_assign(x,adaptE, alpha);
 		
 		//unmap memory
 		e().queue().enqueue_unmap_buffer(buffer,p);
@@ -230,7 +226,7 @@ private:
 		);
 		//adapt host memory buffer to vector and assign
 		dense_vector_adaptor<typename VecX::value_type> adaptX(p + storagex.offset,size(), storagex.stride);
-		assign(adaptX,vector_scalar_multiply<expression_closure_type>(m_expression,alpha));
+		assign(adaptX,m_expression,alpha);
 		
 		//unmap memory
 		x().queue().enqueue_unmap_buffer(buffer,p);
@@ -249,7 +245,7 @@ private:
 		);
 		//adapt host memory buffer to vector and assign
 		dense_vector_adaptor<typename VecX::value_type> adaptX(p,size(), storagex.stride);
-		plus_assign(adaptX,vector_scalar_multiply<expression_closure_type>(m_expression,alpha));
+		plus_assign(adaptX,m_expression,alpha);
 		
 		//unmap memory
 		x().queue().enqueue_unmap_buffer(buffer,p);
@@ -340,7 +336,7 @@ private:
 		typedef dense_matrix_adaptor<typename MatE::value_type, EOrientation> AdaptE;
 		AdaptE adaptE(p + storageE.offset,size1(), size2(), stride1,stride2);
 		
-		assign(X, matrix_scalar_multiply<AdaptE >( adaptE, alpha));
+		assign(X, adaptE, alpha);
 		
 		//unmap memory
 		e().queue().enqueue_unmap_buffer(buffer,p);
@@ -364,7 +360,7 @@ private:
 		typedef dense_matrix_adaptor<typename MatE::value_type, EOrientation> AdaptE;
 		AdaptE adaptE(p + storageE.offset, size1(), size2(), stride1,stride2);
 		
-		plus_assign(X,matrix_scalar_multiply<AdaptE >( adaptE, alpha));
+		plus_assign(X, adaptE, alpha);
 		
 		//unmap memory
 		e().queue().enqueue_unmap_buffer(buffer,p);
@@ -473,7 +469,7 @@ private:
 		std::size_t stride1 = XOrientation::index_M(storageX.leading_dimension, 1);
 		std::size_t stride2 = XOrientation::index_m(storageX.leading_dimension, 1);
 		dense_matrix_adaptor<typename MatX::value_type, XOrientation> adaptX(p, size1(), size2(), stride1, stride2);
-		assign(adaptX,matrix_scalar_multiply<MatE>(e(),alpha));
+		assign(adaptX, e, alpha);
 		
 		//unmap memory
 		X().queue().enqueue_unmap_buffer(buffer,p);
@@ -497,7 +493,7 @@ private:
 		typedef dense_matrix_adaptor<typename MatX::value_type, XOrientation> AdaptX;
 		AdaptX adaptX(p + storageX.offset, size1(), size2(), stride1, stride2);
 		
-		plus_assign(adaptX,matrix_scalar_multiply<MatE >( e(), alpha));
+		plus_assign(adaptX, e, alpha);
 		
 		//unmap memory
 		X().queue().enqueue_unmap_buffer(buffer,p);

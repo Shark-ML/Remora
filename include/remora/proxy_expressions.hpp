@@ -323,47 +323,47 @@ auto to_vector(matrix_expression<M, Device> && m)->decltype(to_vector(m())){
 }
 
 
-////////////////////////////////////
-//// Matrix Adaptor
-////////////////////////////////////
+//~ ////////////////////////////////////
+//~ //// Matrix Adaptor
+//~ ////////////////////////////////////
 
-/// \brief Converts a dense vector to a matrix of a given size
-template <class V, class Device>
-typename std::enable_if<
-	std::is_same<typename V::storage_type::storage_tag,continuous_dense_tag>::value,
-	dense_matrix_adaptor<
-		typename std::remove_reference<typename V::reference>::type,
-		row_major, Device
-	>
->::type
-to_matrix(
-	vector_expression<V, Device>& v,
-	std::size_t size1, std::size_t size2
-){
-	REMORA_SIZE_CHECK(size1 * size2 == v().size());
-	typedef typename std::remove_reference<typename V::reference>::type ElementType;
-	return dense_matrix_adaptor<ElementType, row_major, Device>(v, size1, size2);
-}
+//~ /// \brief Converts a dense vector to a matrix of a given size
+//~ template <class V, class Device>
+//~ typename std::enable_if<
+	//~ std::is_same<typename V::storage_type::storage_tag,continuous_dense_tag>::value,
+	//~ dense_matrix_adaptor<
+		//~ typename std::remove_reference<typename V::reference>::type,
+		//~ row_major, Device
+	//~ >
+//~ >::type
+//~ to_matrix(
+	//~ vector_expression<V, Device>& v,
+	//~ std::size_t size1, std::size_t size2
+//~ ){
+	//~ REMORA_SIZE_CHECK(size1 * size2 == v().size());
+	//~ typedef typename std::remove_reference<typename V::reference>::type ElementType;
+	//~ return dense_matrix_adaptor<ElementType, row_major, Device>(v, size1, size2);
+//~ }
 
-/// \brief Converts a dense vector to a matrix of a given size
-template <class V, class Device>
-typename std::enable_if<
-	std::is_same<typename V::storage_type::storage_tag,continuous_dense_tag>::value,
-	dense_matrix_adaptor<typename V::value_type const,row_major, Device>
->::type 
-to_matrix(
-	vector_expression<V, Device> const& v,
-	std::size_t size1, std::size_t size2
-){
-	REMORA_SIZE_CHECK(size1 * size2 == v().size());
-	return dense_matrix_adaptor<typename V::value_type const, row_major, Device>(v, size1, size2);
-}
+//~ /// \brief Converts a dense vector to a matrix of a given size
+//~ template <class V, class Device>
+//~ typename std::enable_if<
+	//~ std::is_same<typename V::storage_type::storage_tag,continuous_dense_tag>::value,
+	//~ dense_matrix_adaptor<typename V::value_type const,row_major, Device>
+//~ >::type 
+//~ to_matrix(
+	//~ vector_expression<V, Device> const& v,
+	//~ std::size_t size1, std::size_t size2
+//~ ){
+	//~ REMORA_SIZE_CHECK(size1 * size2 == v().size());
+	//~ return dense_matrix_adaptor<typename V::value_type const, row_major, Device>(v, size1, size2);
+//~ }
 
-template<class V>
-auto to_matrix(vector_expression<V,Device>&& v, std::size_t size1, std::size_t size2)->decltype(to_matrix(v(),size1, size2)){
-	static_assert(!std::is_base_of<vector_container<V>,V>::value, "Can not create proxy from temporary container");
-	return to_matrix(v(), size1, size2);
-}
+//~ template<class V>
+//~ auto to_matrix(vector_expression<V,Device>&& v, std::size_t size1, std::size_t size2)->decltype(to_matrix(v(),size1, size2)){
+	//~ static_assert(!std::is_base_of<vector_container<V>,V>::value, "Can not create proxy from temporary container");
+	//~ return to_matrix(v(), size1, size2);
+//~ }
 }
 
 #endif

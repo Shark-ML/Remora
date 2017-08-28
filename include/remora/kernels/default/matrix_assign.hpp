@@ -29,6 +29,7 @@
 #define REMORA_KERNELS_DEFAULT_MATRIX_ASSIGN_HPP
 
 #include "../vector_assign.hpp"
+#include "../../proxy_expressions.hpp"
 #include "../../detail/traits.hpp"
 #include <algorithm>
 #include <vector>

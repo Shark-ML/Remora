@@ -39,13 +39,15 @@
 
 namespace remora{
 
+struct no_queue{};
+
 template<class Device>
 struct device_traits;
 
 template<>
 struct device_traits<cpu_tag>{
 	//queue (not used on cpu)
-	struct queue_type{};
+	typedef no_queue queue_type;
 	
 	static queue_type& default_queue(){
 		static queue_type queue;

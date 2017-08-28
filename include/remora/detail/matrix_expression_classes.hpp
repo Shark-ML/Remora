@@ -36,6 +36,7 @@
 #include "../kernels/trmm.hpp"
 #include "../kernels/sum_rows.hpp"
 #include "../assignment.hpp"
+#include "../proxy_expressions.hpp"
 #include <type_traits>
 
 namespace remora {
@@ -1180,13 +1181,13 @@ public:
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
 		if(add_right){
-			matrix_range<MatX> left(X(),0, X().size1(), 0, m_lhs.size2()); 
-			matrix_range<MatX> right(X(),0, X().size1(), m_lhs.size2(), X().size2()); 
+			auto left = subrange(X,0, X().size1(), 0, m_lhs.size2()); 
+			auto right = subrange(X,0, X().size1(), m_lhs.size2(), X().size2()); 
 			assign(left,m_lhs,alpha);
 			assign(right,m_rhs,alpha);
 		}else{
-			matrix_range<MatX> top(X(),0, m_lhs.size1(), 0, X().size2()); 
-			matrix_range<MatX> bottom(X(),m_lhs.size1(), X().size1(),0, X().size2()); 
+			auto top = subrange(X,0, m_lhs.size1(), 0, X().size2()); 
+			auto bottom = subrange(X,m_lhs.size1(), X().size1(),0, X().size2()); 
 			assign(top,m_lhs,alpha);
 			assign(bottom,m_rhs,alpha);
 		}
@@ -1194,13 +1195,13 @@ public:
 	template<class MatX>
 	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
 		if(add_right){
-			matrix_range<MatX> left(X(),0, X().size1(), 0, m_lhs.size2()); 
-			matrix_range<MatX> right(X(),0, X().size1(), m_lhs.size2(), X().size2()); 
+			auto left = subrange(X,0, X().size1(), 0, m_lhs.size2()); 
+			auto right = subrange(X,0, X().size1(), m_lhs.size2(), X().size2()); 
 			plus_assign(left,m_lhs,alpha);
 			plus_assign(right,m_rhs,alpha);
 		}else{
-			matrix_range<MatX> top(X(),0, m_lhs.size1(), 0, X().size2()); 
-			matrix_range<MatX> bottom(X(),m_lhs.size1(), X().size1(),0, X().size2()); 
+			auto top = subrange(X,0, m_lhs.size1(), 0, X().size2()); 
+			auto bottom = subrange(X,m_lhs.size1(), X().size1(),0, X().size2()); 
 			plus_assign(top,m_lhs,alpha);
 			plus_assign(bottom,m_rhs,alpha);
 		}

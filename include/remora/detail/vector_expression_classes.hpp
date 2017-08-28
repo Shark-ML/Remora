@@ -29,6 +29,7 @@
 #define REMORA_VECTOR_EXPRESSION_CLASSES_HPP
 
 #include "../assignment.hpp"
+#include "../proxy_expressions.hpp"
 #include "traits.hpp"
 
 namespace remora{
@@ -552,15 +553,15 @@ public:
 	//computation kernels
 	template<class VecX>
 	void assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
-		vector_range<VecX> left(x(),0,m_lhs.size()); 
-		vector_range<VecX> right(x(),m_lhs.size(),x().size()); 
+		auto left = subrange(x,0,m_lhs.size()); 
+		auto right = subrange(x,m_lhs.size(),x().size()); 
 		assign(left,m_lhs, alpha);
 		assign(right,m_rhs, alpha);
 	}
 	template<class VecX>
 	void plus_assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
-		vector_range<VecX> left(x(),0,m_lhs.size()); 
-		vector_range<VecX> right(x(),m_lhs.size(),x().size()); 
+		auto left = subrange(x,0,m_lhs.size()); 
+		auto right = subrange(x,m_lhs.size(),x().size()); 
 		plus_assign(left,m_lhs, alpha);
 		plus_assign(right,m_rhs, alpha);
 	}

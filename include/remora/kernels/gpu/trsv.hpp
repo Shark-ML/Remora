@@ -33,8 +33,7 @@
 
 
 #include "../../detail/traits.hpp"
-#include "../../expression_types.hpp"
-#include "../../detail/matrix_proxy_classes.hpp"
+#include "../../proxy_expressions.hpp"
 #include "../gemv.hpp"
 #include <boost/compute/kernel.hpp>
 #include <boost/compute/detail/meta_kernel.hpp>
@@ -148,17 +147,17 @@ void trsv_recursive(
 	}
 	std::size_t numBlocks = (size+tileSize-1)/tileSize;
 	std::size_t split = numBlocks/2 * tileSize;
-	vector_range<VecB> bfront(bfull(),start,start+split);
-	vector_range<VecB> bback(bfull(),start+split,end);
+	auto bfront = subrange(bfull,start,start+split);
+	auto bback = subrange(bfull,start+split,end);
 	
 	//otherwise run the kernel recursively
 	if(Triangular::is_upper){ //Upper triangular case
-		matrix_range<typename const_expression<MatA>::type > Aur(Afull(),start,start+split,start+split,end);
+		auto Aur = subrange(Afull,start,start+split,start+split,end);
 		trsv_recursive(Afull, bfull, kernel, start+split,end, tileSize, numWorkers, t);
 		kernels::gemv(Aur, bback, bfront, -1.0);
 		trsv_recursive(Afull, bfull, kernel, start,start+split, tileSize, numWorkers, t);
 	}else{// Lower triangular caste
-		matrix_range<typename const_expression<MatA>::type> All(Afull(),start+split,end,start,start+split);
+		auto All = subrange(Afull,start+split,end,start,start+split);
 		trsv_recursive(Afull, bfull, kernel, start,start+split, tileSize, numWorkers, t);
 		kernels::gemv(All, bfront, bback, -1.0);
 		trsv_recursive(Afull, bfull, kernel, start+split,end, tileSize, numWorkers, t);
@@ -186,8 +185,7 @@ void trsv_call(
 	Triangular,
 	right
 ){
-	matrix_transpose<typename const_expression<MatA>::type> transA(A());
-	trsv_call(transA,b,typename Triangular::transposed_orientation(),left());
+	trsv_call(trans(A),b,typename Triangular::transposed_orientation(),left());
 }
 }
 namespace kernels{

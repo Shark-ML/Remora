@@ -43,10 +43,6 @@ namespace remora{
 template<class T, class Device = cpu_tag>
 class vector;
 
-template<class T, class Device>
-struct vector_temporary_type<T,dense_tag, Device>{
-	typedef vector<T, Device> type;
-};
 
 /// \brief A dense matrix of values of type \c T.
 ///
@@ -63,8 +59,61 @@ struct vector_temporary_type<T,dense_tag, Device>{
 template<class T, class L=row_major, class Device = cpu_tag>
 class matrix;
 
+template<class T, class Tag = dense_tag, class Device = cpu_tag>
+class dense_vector_adaptor;
+
+template<class T,class Orientation = row_major, class Tag = dense_tag, class Device = cpu_tag>
+class dense_matrix_adaptor;
+
+///////////////////////////////////
+// Adapt memory as vector
+///////////////////////////////////
+
+/// \brief Converts a chunk of memory into a vector of a given size.
+template <class T>
+dense_vector_adaptor<T, continuous_dense_tag, cpu_tag> adapt_vector(std::size_t size, T * v){
+	return dense_vector_adaptor<T, continuous_dense_tag, cpu_tag>(v,size);
+}
+
+/// \brief Converts a C-style array into a vector.
+template <class T, std::size_t N>
+dense_vector_adaptor<T, continuous_dense_tag, cpu_tag> adapt_vector(T (&array)[N]){
+	return dense_vector_adaptor<T, continuous_dense_tag, cpu_tag>(array,N);
+}
+
+/// \brief Converts a chunk of memory into a matrix of given size.
+template <class T>
+dense_matrix_adaptor<T, row_major, continuous_dense_tag, cpu_tag> adapt_matrix(std::size_t size1, std::size_t size2, T* data){
+	return dense_matrix_adaptor<T, row_major, continuous_dense_tag, cpu_tag>(data,size1, size2);
+}
+
+/// \brief Converts a 2D C-style array into a matrix of given size.
+template <class T, std::size_t M, std::size_t N>
+dense_matrix_adaptor<T, row_major, continuous_dense_tag, cpu_tag> adapt_matrix(T (&array)[M][N]){
+	return dense_matrix_adaptor<T, row_major, continuous_dense_tag, cpu_tag>(&(array[0][0]),M,N);
+}
+
+
+///////////////////////////////////
+// Traits
+///////////////////////////////////
+
+template<class T, class Device>
+struct vector_temporary_type<T,dense_tag, Device>{
+	typedef vector<T, Device> type;
+};
+
+template<class T, class Device>
+struct vector_temporary_type<T,continuous_dense_tag, Device>{
+	typedef vector<T, Device> type;
+};
+
 template<class T, class L, class Device>
 struct matrix_temporary_type<T,L,dense_tag, Device>{
+	typedef matrix<T,L, Device> type;
+};
+template<class T, class L, class Device>
+struct matrix_temporary_type<T,L,continuous_dense_tag, Device>{
 	typedef matrix<T,L, Device> type;
 };
 
@@ -73,39 +122,109 @@ struct matrix_temporary_type<T,unknown_orientation,dense_tag, Device>{
 	typedef matrix<T,row_major, Device> type;
 };
 
-template<class T, class Tag = dense_tag, class Device = cpu_tag>
-class dense_vector_adaptor;
+template<class T, class Device>
+struct matrix_temporary_type<T,unknown_orientation,continuous_dense_tag, Device>{
+	typedef matrix<T,row_major, Device> type;
+};
 
-template<class T,class Orientation = row_major, class Tag = dense_tag, class Device = cpu_tag>
-class dense_matrix_adaptor;
+//////////////////////////////////
+//////Expression Traits
+///////////////////////////////////
 
-// ------------------
-// Adapt memory as vector
-// ------------------
 
-/// \brief Converts a chunk of memory into a vector of a given size.
-template <class T>
-dense_vector_adaptor<T> adapt_vector(std::size_t size, T * v){
-	return dense_vector_adaptor<T>(v,size);
-}
+template<class T, class Tag, class Device>
+struct vector_range_optimizer<dense_vector_adaptor<T, Tag, Device> >{
+	typedef dense_vector_adaptor<T, Tag, Device> type;
+	
+	static type create(dense_vector_adaptor<T, Tag, Device> const& m, 
+		std::size_t start, std::size_t end,
+	){
+		auto const& storage = m.raw_storage();
+		return type(storage.sub_region(start), m.queue(), end - start);
+	}
+};
+template<class T, class Device>
+struct vector_range_optimizer<vector<T, Device> >{
+	typedef dense_vector_adaptor<T, continuous_dense_tag, Device> type;
+	
+	static type create(vector<T, Device> const& m, 
+		std::size_t start, std::size_t end,
+	){
+		auto const& storage = m.raw_storage();
+		return type(storage.sub_region(start), m.queue(), end - start);
+	}
+};
 
-/// \brief Converts a C-style array into a vector.
-template <class T, std::size_t N>
-dense_vector_adaptor<T> adapt_vector(T (&array)[N]){
-	return dense_vector_adaptor<T>(array,N);
-}
+template<class T, class Orientation, class Tag, class Device>
+struct matrix_transpose_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device> >{
+	typedef dense_matrix_adaptor<T,typename Orientation::transposed_orientation, Tag, Device> type;
+	
+	static type create(dense_matrix_adaptor<T,Orientation, Tag, Device> const& m){
+		auto const& storage = m.raw_storage();
+		return type(m.raw_storage(), m.queue(), m.size2(), m.size1());
+	}
+};
 
-/// \brief Converts a chunk of memory into a matrix of given size.
-template <class T>
-dense_matrix_adaptor<T> adapt_matrix(std::size_t size1, std::size_t size2, T* data){
-	return dense_matrix_adaptor<T>(data,size1, size2);
-}
+template<class T, class Orientation, class Device>
+struct matrix_transpose_optimizer<matrix<T,Orientation, Device> >{
+	typedef dense_matrix_adaptor<T,typename Orientation::transposed_orientation, continuous_dense_tag, Device> type;
+	
+	static type create(matrix<T,Orientation, Device> const& m){
+		auto const& storage = m.raw_storage();
+		return type(m.raw_storage(), m.queue(), m.size2(), m.size1());
+	}
+};
 
-/// \brief Converts a 2D C-style array into a matrix of given size.
-template <class T, std::size_t M, std::size_t N>
-dense_matrix_adaptor<T> adapt_matrix(T (&array)[M][N]){
-	return dense_matrix_adaptor<T>(&(array[0][0]),M,N);
-}
+template<class T, class Orientation, class Tag, class Device>
+struct matrix_row_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device> >{
+	typedef std::conditional<std::is_same<Orientation, row_major>::value, Tag, dense_tag>::type proxy_tag;
+	typedef dense_vector_adaptor<T, proxy_tag, Device> type;
+	
+	static type create(dense_matrix_adaptor<T,Orientation, Tag, Device> const& m, std::size_t i){
+		auto const& storage = m.raw_storage();
+		return type(storage.row(i, Orientation()), m.queue(), m.size2());
+	}
+};
+
+template<class T, class Orientation, class Device>
+struct matrix_row_optimizer<matrix<T,Orientation, Device> >{
+	typedef typename continuous_dense_tag::storage_type::row_storage<Orientation>::type storage_type; 
+	typedef dense_vector_adaptor<T, storage_type, Device> type;
+	
+	static type create(matrix<T,Orientation, Device> const& m){
+		auto const& storage = m.raw_storage();
+		return type(storage.row(i, Orientation()), m.queue(), m.size2());
+	}
+};
+
+
+template<class T, class Orientation, class Tag, class Device>
+struct matrix_range_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device> >{
+	typedef dense_matrix_adaptor<T, Orientation, dense_tag, Device> type;
+	
+	static type create(dense_matrix_adaptor<T,Orientation, Tag, Device> const& m, 
+		std::size_t start1, std::size_t end1,
+		std::size_t start2, std::size_t end2
+	){
+		auto const& storage = m.raw_storage();
+		return type(storage.sub_region(start1, end1, Orientation()), m.queue(), end1-start1, end2-start2);
+	}
+};
+
+
+
+template<class T, class Orientation, class Device>
+struct matrix_range_optimizer<matrix<T,Orientation, Device> >{
+	typedef dense_matrix_adaptor<T, Orientation, dense_tag, Device> type;
+	
+	static type create(dense_matrix_adaptor<T,Orientation, Tag, Device> const& m, 
+		std::size_t start1, std::size_t end1,
+		std::size_t start2, std::size_t end2
+	){
+		auto const& storage = m.raw_storage();
+		return type(storage.sub_region(start1, start2, Orientation()), m.queue(), end1-start1, end2-start2);
+	}
+};
 
 
 }

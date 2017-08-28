@@ -167,18 +167,18 @@ void trmm_recursive(
 	}
 	//otherwise run the kernel recursively
 	std::size_t split = (size+tileSizeA-1)/tileSizeA/2*tileSizeA;//split at the next multiple of the TileSize
-	matrix_range<MatA> Aul(Afull(),start,start+split,start,start+split);
-	matrix_range<MatB> BFront(Bfull(),start,start+split,0,Bfull().size2());
-	matrix_range<MatB> Bback(Bfull(),start+split,end,0,Bfull().size2());
+	auto Aul = subrange(Afull,start,start+split,start,start+split);
+	auto BFront  = subrange(Bfull,start,start+split,0,Bfull().size2());
+	auto Bback =subrange(Bfull,start+split,end,0,Bfull().size2());
 	
 
 	if(Triangular::is_upper){ //Upper triangular case
-		matrix_range<typename const_expression<MatA>::type> Aur(Afull(),start,start+split,start+split,end);
+		auto Aur = subrange(Afull,start,start+split,start+split,end);
 		trmm_recursive(Afull, Bfull, kernel, start, start+split, tileSizeA, tileSizeB, numWorkers, t);
 		kernels::gemm(Aur, Bback, BFront, 1.0);
 		trmm_recursive(Afull, Bfull, kernel, start+split, end, tileSizeA, tileSizeB, numWorkers, t);
 	}else{// Lower triangular caste
-		matrix_range<typename const_expression<MatA>::type> All(Afull(),start+split,end,start,start+split);
+		auto All = subrange(Afull,start+split,end,start,start+split);
 		trmm_recursive(Afull, Bfull, kernel, start+split, end, tileSizeA, tileSizeB, numWorkers, t);
 		kernels::gemm(All, BFront, Bback, 1.0);
 		trmm_recursive(Afull, Bfull, kernel, start, start+split, tileSizeA, tileSizeB, numWorkers, t);

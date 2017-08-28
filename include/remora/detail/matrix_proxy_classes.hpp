@@ -314,9 +314,4 @@ public:
 
 }
 
-
-#ifdef REMORA_USE_GPU
-#include "../gpu/matrix_proxy_classes.hpp"
-#endif
-
 #endif

@@ -153,16 +153,16 @@ void trmv_recursive(
 	}
 	//otherwise run the kernel recursively
 	std::size_t split = ((size+tileSizeA-1)/tileSizeA)/2 * tileSizeA;//split at the next multiple of the TileSize
-	vector_range<VecV> vfront(vfull(),start,start+split);
-	vector_range<VecV> vback(vfull(),start+split,end);
+	auto vfront = subrange(vfull,start,start+split);
+	auto vback = subrange(vfull,start+split,end);
 	
 	if(Triangular::is_upper){ //Upper triangular case
-		matrix_range<typename const_expression<MatA>::type > Aur(Afull(),start,start+split,start+split,end);
+		auto Aur = subrange(Afull,start,start+split,start+split,end);
 		trmv_recursive(Afull, vfull, kernel, start, start+split, tileSizeA, t);
 		kernels::gemv(Aur, vback, vfront, 1.0);
 		trmv_recursive(Afull, vfull, kernel, start+split, end, tileSizeA, t);
 	}else{// Lower triangular caste
-		matrix_range<typename const_expression<MatA>::type> All(Afull(),start+split,end,start,start+split);
+		auto All = subrange(Afull,start+split,end,start,start+split);
 		trmv_recursive(Afull, vfull, kernel, start+split, end, tileSizeA, t);
 		kernels::gemv(All, vfront, vback, 1.0);
 		trmv_recursive(Afull, vfull, kernel, start, start+split, tileSizeA, t);

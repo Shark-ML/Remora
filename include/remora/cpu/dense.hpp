@@ -92,7 +92,7 @@ public:
 		m_values(values),m_size(size),m_stride(stride){}
 
 	
-	dense_vector_adaptor(storage_type const& storage, size_type size):
+	dense_vector_adaptor(storage_type const& storage, no_queue, size_type size):
 		m_values(storage.values),m_size(size),m_stride(storage.stride){}	
 
 		
@@ -260,7 +260,7 @@ public:
 	{static_assert(!std::is_convertible<TagU,Tag>::value, "Can not convert storage type of argunent to the given Tag");}
 	
 	template<class E>
-	dense_matrix_adaptor(storage_type const& storage, std::size_t size1, std::size_t size2)
+	dense_matrix_adaptor(storage_type const& storage, no_queue, std::size_t size1, std::size_t size2)
 	: m_size1(size1)
 	, m_size2(size2)
 	{
@@ -1095,105 +1095,6 @@ public:
 private:
 	array_type m_storage;
 };
-
-
-//////////////////////////////////
-//////Expression Traits
-///////////////////////////////////
-
-template<class T, class Tag>
-struct vector_range_optimizer<dense_vector_adaptor<T, Tag, cpu_tag> >{
-	typedef dense_vector_adaptor<T, Tag, cpu_tag> type;
-	
-	static type create(dense_vector_adaptor<T, Tag, cpu_tag> const& m, 
-		std::size_t start, std::size_t end,
-	){
-		auto const& storage = m.raw_storage();
-		return type(storage.sub_region(start), end - start);
-	}
-};
-template<class T>
-struct vector_range_optimizer<vector<T, cpu_tag> >{
-	typedef dense_vector_adaptor<T, continuous_dense_tag, cpu_tag> type;
-	
-	static type create(vector<T, cpu_tag> const& m, 
-		std::size_t start, std::size_t end,
-	){
-		auto const& storage = m.raw_storage();
-		return type(storage.sub_region(start), end - start);
-	}
-};
-
-template<class T, class Orientation, class Tag>
-struct matrix_transpose_optimizer<dense_matrix_adaptor<T,Orientation, Tag, cpu_tag> >{
-	typedef dense_matrix_adaptor<T,typename Orientation::transposed_orientation, Tag, cpu_tag> type;
-	
-	static type create(dense_matrix_adaptor<T,Orientation, Tag, cpu_tag> const& m){
-		auto const& storage = m.raw_storage();
-		return type(m.raw_storage(), m.size2(), n.size1());
-	}
-};
-
-template<class T, class Orientation, class Tag>
-struct matrix_row_optimizer<dense_matrix_adaptor<T,Orientation, Tag, cpu_tag> >{
-	typedef std::conditional<std::is_same<Orientation, row_major>::value, Tag, dense_tag>::type proxy_tag;
-	typedef dense_vector_adaptor<T, proxy_tag, cpu_tag> type;
-	
-	static type create(dense_matrix_adaptor<T,Orientation, Tag, cpu_tag> const& m, std::size_t i){
-		auto const& storage = m.raw_storage();
-		return type(storage.row(i, Orientation()), m.size2());
-	}
-};
-
-template<class T, class Orientation, class Tag>
-struct matrix_range_optimizer<dense_matrix_adaptor<T,Orientation, Tag, cpu_tag> >{
-	typedef dense_matrix_adaptor<T, Orientation, dense_tag, cpu_tag> type;
-	
-	static type create(dense_matrix_adaptor<T,Orientation, Tag, cpu_tag> const& m, 
-		std::size_t start1, std::size_t end1,
-		std::size_t start2, std::size_t end2
-	){
-		auto const& storage = m.raw_storage();
-		return type(storage.sub_region(start1, end1, Orientation()), end1-start1, end2-start2);
-	}
-};
-
-template<class T, class Orientation>
-struct matrix_transpose_optimizer<matrix<T,Orientation, cpu_tag> >{
-	typedef dense_matrix_adaptor<T,typename Orientation::transposed_orientation, continuous_dense_tag, cpu_tag> type;
-	
-	static type create(matrix<T,Orientation, cpu_tag> const& m){
-		auto const& storage = m.raw_storage();
-		return type(m.raw_storage(), m.size2(), n.size1());
-	}
-};
-
-template<class T, class Orientation>
-struct matrix_row_optimizer<matrix<T,Orientation, cpu_tag> >{
-	typedef typename continuous_dense_tag::storage_type::row_storage<Orientation>::type storage_type; 
-	typedef dense_vector_adaptor<T, storage_type, cpu_tag> type;
-	
-	static type create(matrix<T,Orientation, cpu_tag> const& m){
-		auto const& storage = m.raw_storage();
-		return type(storage.row(i, Orientation()), m.size2());
-	}
-};
-
-template<class T, class Orientation>
-struct matrix_range_optimizer<matrix<T,Orientation, cpu_tag> >{
-	typedef dense_matrix_adaptor<T, Orientation, dense_tag, cpu_tag> type;
-	
-	static type create(dense_matrix_adaptor<T,Orientation, Tag, cpu_tag> const& m, 
-		std::size_t start1, std::size_t end1,
-		std::size_t start2, std::size_t end2
-	){
-		auto const& storage = m.raw_storage();
-		return type(storage.sub_region(start1, start2, Orientation()), end1-start1, end2-start2);
-	}
-};
-
-
-
 
 
 }
