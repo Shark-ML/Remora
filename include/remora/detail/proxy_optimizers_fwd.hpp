@@ -45,7 +45,7 @@ template<class M>
 struct linearized_matrix_optimizer;
     
 template<class M>
-struct matrix_vector_range_optimizer;
+struct matrix_diagonal_optimizer;
 
 }}
 #endif

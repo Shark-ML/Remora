@@ -169,22 +169,22 @@ auto column(matrix_expression<M, Device> && m, typename M::size_type j) -> declt
 /// the diag operation results in
 /// diag(A) = (1,5,9)
 template<class M, class Device>
-typename detail::matrix_vector_range_optimizer<M>::type
+typename detail::matrix_diagonal_optimizer<M>::type
 diag(matrix_expression<M, Device>& mat){
 	REMORA_SIZE_CHECK(mat().size1() == mat().size2());
-	return detail::matrix_vector_range_optimizer<M>::create(mat(),0,mat().size1(),0,mat().size1());
+	return detail::matrix_diagonal_optimizer<M>::create(mat());
 }
 
 template<class M, class Device>
-typename detail::matrix_vector_range_optimizer<typename const_expression<M>::type>::type
+typename detail::matrix_diagonal_optimizer<typename const_expression<M>::type>::type
 diag(matrix_expression<M, Device> const& mat){
 	REMORA_SIZE_CHECK(mat().size1() == mat().size2());
-	return detail::matrix_vector_range_optimizer<typename const_expression<M>::type>::create(mat(),0,mat().size1(),0,mat().size1());
+	return detail::matrix_diagonal_optimizer<typename const_expression<M>::type>::create(mat());
 }
 
 
 template<class M, class Device>
-typename detail::matrix_vector_range_optimizer<M>::type
+typename detail::matrix_diagonal_optimizer<M>::type
 diag(matrix_expression<M, Device> && m){
 	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return diag(m());

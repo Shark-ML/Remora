@@ -29,6 +29,7 @@
 #define REMORA_EXPRESSION_OPTIMIZERS_HPP
 
 #include "proxy_optimizers_fwd.hpp"
+#include "matrix_proxy_classes.hpp"
 #include "vector_expression_classes.hpp"
 #include "matrix_expression_classes.hpp"
 
@@ -376,8 +377,107 @@ struct matrix_row_optimizer<diagonal_matrix<V> >{
 };
 
 
+////////////////////////////////////
+//// Matrix-Vector Range
+////////////////////////////////////
+
+//range(alpha * M) = alpha * diag(M)
+template<class M>
+struct matrix_diagonal_optimizer<matrix_scalar_multiply<M> >{
+	typedef matrix_diagonal_optimizer<typename M::const_closure_type > opt;
+	typedef vector_scalar_multiply<typename opt::type > type;
+	
+	static type create(matrix_scalar_multiply<M> const& m){
+		return type(opt::create(m.expression()), m.scalar());
+	}
+};
+
+//diag(M1+M2) = diag(M1) + diag(M2)
+template<class M1, class M2>
+struct matrix_diagonal_optimizer<matrix_addition<M1,M2> >{
+	typedef matrix_diagonal_optimizer<typename M1::const_closure_type > left_opt;
+	typedef matrix_diagonal_optimizer<typename M2::const_closure_type > right_opt;
+	typedef vector_addition<typename left_opt::type, typename right_opt::type > type;
+	
+	static type create(matrix_addition<M1,M2> const& m){
+		return type(left_opt::create(m.lhs()),right_opt::create(m.rhs()));
+	}
+};
+
+//diag(constant)  -> constant (vector)
+template<class T, class Device>
+struct matrix_diagonal_optimizer<scalar_matrix<T,Device> >{
+	typedef scalar_vector<T,Device> type;
+	
+	static type create(scalar_matrix<T,Device> const& m){
+		return type(m().size(), m.scalar());
+	}
+};
+
+//diag(repeat(v,j)) -> range(v,0,min(v.size,j))
+template<class V, class Orientation>
+struct matrix_diagonal_optimizer<vector_repeater<V, Orientation> >{
+	typedef vector_range_optimizer<typename V::const_closure_type > opt;
+	typedef typename opt::type type;
+	
+	static type create(vector_repeater<V, Orientation> const& m){
+		return opt::create(m.expression(),0, std::min(m.size1(),m.size2())); 
+
+	}
+};
+
+// diag(f(M)) -> f(diag(M))
+template<class M, class F>
+struct matrix_diagonal_optimizer<matrix_unary<M, F> >{
+	typedef matrix_diagonal_optimizer<typename M::const_closure_type > opt;
+	typedef vector_unary<typename opt::type, F > type;
+	
+	static type create(matrix_unary<M, F> const& m){
+		return type(opt::create(m.expression()), m.functor());
+	}
+};
+// diag(f(M,M2)) -> f(diag(M1),diag(M2))
+template<class M1, class M2, class F>
+struct matrix_diagonal_optimizer<matrix_binary<M1,M2, F> >{
+	typedef matrix_diagonal_optimizer<typename M1::const_closure_type > left_opt;
+	typedef matrix_diagonal_optimizer<typename M2::const_closure_type > right_opt;
+	typedef vector_binary<typename left_opt::type, typename right_opt::type, F > type;
+	
+	static type create(matrix_binary<M1,M2,F> const& m){
+		return type(left_opt::create(m.lhs()),right_opt::create(m.rhs()),m.functor());
+	}
+};
+
+//diag( u v^T) -> range(u,size) range(v,size)^T, where size=min(u.size,v.size)
+template<class V1, class V2>
+struct matrix_diagonal_optimizer<outer_product<V1,V2> >{
+	typedef vector_range_optimizer<typename V1::const_closure_type > left_opt;
+	typedef vector_range_optimizer<typename V2::const_closure_type> right_opt;
+	typedef typename common_value_type<V1,V2>::type value_type;
+	typedef typename device_traits<typename V1::device_type>:: template multiply<value_type> functor;
+	typedef vector_binary<typename left_opt::type, typename right_opt::type, functor> type;
+	
+	static type create(outer_product<V1,V2> const& m){
+		auto size = std::min(m.size1(),m.size2());
+		return type( left_opt::create(m.lhs(),0,size), right_opt::create(m.rhs(),0,size), functor());
+	}
+};
+
+//diag(prod(A,B))_i = dot(row(B,i), column(A,i)) 
+//~ template<class M1, class M2>
+//~ struct matrix_diagonal_optimizer<matrix_matrix_prod<M1,M2> >{
+	//~ static_assert(false, "diagonal of matrix multiplication not implemented yet");
+//~ };
 
 
+//diag(diagonal(v))  -> v
+template<class V>
+struct matrix_diagonal_optimizer<diagonal_matrix<V> >{
+	typedef typename V::const_closure_type type;
+	static type create(diagonal_matrix<V> const& m){
+		return m.expression();
+	}
+};
 
 ////////////////////////////////////
 //// Matrix Range

@@ -275,6 +275,35 @@ struct matrix_range_optimizer<matrix<T,Orientation, Device> const >{
 };
 
 
+////////////////////////MATRIX DIAGONAL//////////////////////
+template<class T, class Orientation, class Tag, class Device>
+struct matrix_diagonal_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device> >{
+	typedef dense_vector_adaptor<T, dense_tag, Device> type;
+	
+	static type create(dense_matrix_adaptor<T,Orientation, Tag, Device> const& m){
+		return type(m.raw_storage().diag(), m.queue(), std::min(m.size1(), m.size2()));
+	}
+};
+
+template<class T, class Orientation, class Device>
+struct matrix_diagonal_optimizer<matrix<T,Orientation, Device> >{
+	typedef dense_vector_adaptor<T, dense_tag, Device> type;
+	
+	static type create(matrix<T,Orientation, Device>& m){
+		return type(m.raw_storage().diag(), m.queue(), std::min(m.size1(), m.size2()));
+	}
+};
+
+template<class T, class Orientation, class Device>
+struct matrix_diagonal_optimizer<matrix<T,Orientation, Device> const >{
+	typedef dense_vector_adaptor<T const, dense_tag, Device> type;
+	
+	static type create(matrix<T,Orientation, Device> const& m){
+		return type(m.raw_storage().diag(), m.queue(), std::min(m.size1(), m.size2()));
+	}
+};
+
+
 }
 
 }

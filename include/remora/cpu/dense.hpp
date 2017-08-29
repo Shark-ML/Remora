@@ -106,11 +106,11 @@ public:
 	}
 	
 	dense_vector_adaptor& operator = (dense_vector_adaptor const& e) {
-		return assign(typename vector_temporary<dense_vector_adaptor>::type(e));
+		return assign(*this, typename vector_temporary<dense_vector_adaptor>::type(e));
 	}
 	template<class E>
 	dense_vector_adaptor& operator = (vector_expression<E, cpu_tag> const& e) {
-		return assign(typename vector_temporary<E>::type(e));
+		return assign(*this, typename vector_temporary<E>::type(e));
 	}
 	
 	/// \brief Return the size of the vector.
