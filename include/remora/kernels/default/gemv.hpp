@@ -31,7 +31,7 @@
 #define REMORA_KERNELS_DEFAULT_GEMatAV_HPP
 
 #include "../../expression_types.hpp" //matrix/vector_expression
-#include "../../detail/proxy_expressions.hpp" //matrix row,, transpose
+#include "../../proxy_expressions.hpp" //matrix row,, transpose
 #include "../../detail/traits.hpp" //matrix orientations
 #include "../dot.hpp" //inner product
 #include "../../assignment.hpp" //plus_assign

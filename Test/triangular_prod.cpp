@@ -4,9 +4,8 @@
 #include <boost/mpl/list.hpp>
 
 #include <remora/matrix_expression.hpp>
-#include <remora/triangular_matrix.hpp>
-#include <remora/matrix.hpp>
-#include <remora/vector.hpp>
+//~ #include <remora/triangular_matrix.hpp>
+#include <remora/dense.hpp>
 
 #include <iostream>
 using namespace remora;

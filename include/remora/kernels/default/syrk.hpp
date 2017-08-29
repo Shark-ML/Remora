@@ -32,7 +32,7 @@
 #define REMORA_KERNELS_DEFAULT_SYRK_HPP
 
 #include "../../expression_types.hpp"//for matrix_expression
-#include "../../proxy_exressions.hpp"//for matrix range/transpose
+#include "../../proxy_expressions.hpp"//for matrix range/transpose
 #include "mgemm.hpp" //block macro kernel for dense syrk
 #include <type_traits> //std::false_type marker for unoptimized, std::common_Type
 
@@ -94,6 +94,7 @@ void syrk_impl(
 				//load block of the right E into memory
 				auto E_rights = subrange(e, j * MC, j * MC + mc2, k*EC, k*EC + kc );
 				auto E_rights_trans = trans(E_rights);
+				//~ auto E_rights_trans = trans(subrange(e, j * MC, j * MC + mc2, k*EC, k*EC + kc ));
 				pack_B_dense(E_rights_trans, E_right, block_size());
 
 				if(i==j){//diagonal block: we have to ensure that we only access elements on the diagonal

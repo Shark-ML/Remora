@@ -30,8 +30,7 @@
 
 #include "detail/expression_optimizers.hpp"
 #include "kernels/matrix_fold.hpp"
-#include "matrix_proxy.hpp"
-#include "vector_proxy.hpp"
+#include "proxy_expressions.hpp"
 #include "vector_expression.hpp"
 
 namespace remora{

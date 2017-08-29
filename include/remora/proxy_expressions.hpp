@@ -60,8 +60,9 @@ subrange(vector_expression<V, Device> const& v, std::size_t start, std::size_t s
 }
 
 template<class V, class Device>
-auto subrange(vector_expression<V,Device>&& v, std::size_t start, std::size_t stop)->decltype(subrange(v(),start,stop)){
-    return subrange(v(),start,stop);
+typename detail::vector_range_optimizer<V>::type
+subrange(vector_expression<V,Device>&& v, std::size_t start, std::size_t stop){
+	return subrange(v(),start,stop);
 }
 	
 	
@@ -93,8 +94,9 @@ trans(matrix_expression<M, Device> const& m){
 }
 
 template<class M, class Device>
-auto trans(matrix_expression<M, Device> && m) ->decltype(trans(m())){
-	static_assert(!std::is_base_of<matrix_container<M>,M>::value, "Can not create proxy from temporary container");
+typename detail::matrix_transpose_optimizer<M>::type
+trans(matrix_expression<M, Device> && m){
+	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return trans(m());
 }
 
@@ -122,10 +124,11 @@ row(matrix_expression<M, Device> const& m, typename M::size_type i){
 	return detail::matrix_row_optimizer<typename const_expression<M>::type>::create(m(), i);
 }
 
-template<class M, class Device>
-auto row(matrix_expression<M, Device> && m) ->decltype(row(m())){
-	static_assert(!std::is_base_of<matrix_container<M>,M>::value, "Can not create proxy from temporary container");
-	return row(m());
+template<class M>
+typename detail::matrix_row_optimizer<M>::type
+row(M && m, typename M::size_type i){
+	static_assert(!std::is_base_of<matrix_container<M, typename M::device_type>,M>::value, "It is unsafe to create a proxy from a temporary container");
+	return row(m,i);
 }
 
 /// \brief Returns a vector-proxy representing the j-th column of the Matrix
@@ -147,8 +150,8 @@ auto column(matrix_expression<M, Device> const& m, typename M::size_type j) -> d
 }
 
 template<class M, class Device>
-auto column(matrix_expression<M, Device> && m) ->decltype(column(m())){
-	static_assert(!std::is_base_of<matrix_container<M>,M>::value, "Can not create proxy from temporary container");
+auto column(matrix_expression<M, Device> && m, typename M::size_type j) -> decltype(row(trans(m),j)){
+	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return column(m());
 }
 
@@ -166,25 +169,24 @@ auto column(matrix_expression<M, Device> && m) ->decltype(column(m())){
 /// the diag operation results in
 /// diag(A) = (1,5,9)
 template<class M, class Device>
-typename matrix_vector_range_optimizer<M>::type
+typename detail::matrix_vector_range_optimizer<M>::type
 diag(matrix_expression<M, Device>& mat){
 	REMORA_SIZE_CHECK(mat().size1() == mat().size2());
-	return matrix_vector_range_optimizer<M>::create(mat(),0,mat().size1(),0,mat().size1());
-	return diagonal;
+	return detail::matrix_vector_range_optimizer<M>::create(mat(),0,mat().size1(),0,mat().size1());
 }
 
 template<class M, class Device>
-typename matrix_vector_range_optimizer<typename const_expression<M>::type>::type
+typename detail::matrix_vector_range_optimizer<typename const_expression<M>::type>::type
 diag(matrix_expression<M, Device> const& mat){
 	REMORA_SIZE_CHECK(mat().size1() == mat().size2());
-	return matrix_vector_range_optimizer<typename const_expression<M>::type>::create(mat(),0,mat().size1(),0,mat().size1());
-	return diagonal;
+	return detail::matrix_vector_range_optimizer<typename const_expression<M>::type>::create(mat(),0,mat().size1(),0,mat().size1());
 }
 
 
 template<class M, class Device>
-auto diag(matrix_expression<M, Device> && m) ->decltype(diag(m())){
-	static_assert(!std::is_base_of<matrix_container<M>,M>::value, "Can not create proxy from temporary container");
+typename detail::matrix_vector_range_optimizer<M>::type
+diag(matrix_expression<M, Device> && m){
+	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return diag(m());
 }
 
@@ -229,12 +231,12 @@ typename detail::matrix_range_optimizer<typename const_expression<M>::type>::typ
 }
 
 template<class M, class Device>
-auto subrange(
+typename detail::matrix_range_optimizer<M>::type subrange(
 	matrix_expression<M, Device> && m, 
 	std::size_t start1, std::size_t stop1,
 	std::size_t start2, std::size_t stop2
-) -> decltype(subrange(m(),start1,stop1,start2,stop2)){
-	static_assert(!std::is_base_of<matrix_container<M>,M>::value, "Can not create proxy from temporary container");
+){
+	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return subrange(m(),start1,stop1,start2,stop2);
 }
 
@@ -258,12 +260,12 @@ auto rows(
 	return subrange(m, start, stop, 0,m().size2());
 }
 
-template<class M>
+template<class M, class Device>
 auto rows(
 	matrix_expression<M, Device> && m, 
 	std::size_t start, std::size_t stop
-) -> decltype( rows(m(),start,stop)){
-	static_assert(!std::is_base_of<matrix_container<M>,M>::value, "Can not create proxy from temporary container");
+) -> decltype(subrange(m, start, stop, 0,m().size2())){
+	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return rows(m(),start,stop);
 }
 
@@ -287,12 +289,12 @@ auto columns(
 	return subrange(m, 0,m().size1(), start, stop);
 }
 
-template<class M>
+template<class M, class Device>
 auto columns(
 	matrix_expression<M, Device> && m, 
 	std::size_t start, std::size_t stop
-) -> decltype(columns(m(),start,stop)){
-	static_assert(!std::is_base_of<matrix_container<M>,M>::value, "Can not create proxy from temporary container");
+) -> decltype(subrange(m, 0,m().size1(), start, stop)){
+	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return columns(m(),start,stop);
 }
 
@@ -316,9 +318,10 @@ to_vector(matrix_expression<M, Device> const& m){
 	return detail::linearized_matrix_optimizer<typename const_expression<M>::type>::create(m());
 }
 
-template<class M>
-auto to_vector(matrix_expression<M, Device> && m)->decltype(to_vector(m())){
-	static_assert(!std::is_base_of<vector_container<M>,M>::value, "Can not create proxy from temporary container")
+template<class M, class Device>
+typename detail::linearized_matrix_optimizer<M>::type
+to_vector(matrix_expression<M, Device> && m){
+	static_assert(!std::is_base_of<vector_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return to_vector(m());
 }
 
@@ -360,8 +363,8 @@ auto to_vector(matrix_expression<M, Device> && m)->decltype(to_vector(m())){
 //~ }
 
 //~ template<class V>
-//~ auto to_matrix(vector_expression<V,Device>&& v, std::size_t size1, std::size_t size2)->decltype(to_matrix(v(),size1, size2)){
-	//~ static_assert(!std::is_base_of<vector_container<V>,V>::value, "Can not create proxy from temporary container");
+//~ auto to_matrix(vector_expression<V,Device>&& v, std::size_t size1, std::size_t size2)->decltype(to_matrix(static_cast<M&>(m()),size1, size2)){
+	//~ static_assert(!std::is_base_of<vector_container<V>,V>::value, "It is unsafe to create a proxy from a temporary container");
 	//~ return to_matrix(v(), size1, size2);
 //~ }
 }

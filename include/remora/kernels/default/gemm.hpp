@@ -33,7 +33,7 @@
 
 #include "../gemv.hpp"//for dispatching to gemv
 #include "../../assignment.hpp"//plus_assign
-#include "../../vector.hpp"//sparse gemm needs temporary vector
+#include "../../dense.hpp"//sparse gemm needs temporary vector
 #include "../../proxy_expressions.hpp"//matrix row,column,transpose,range
 #include <type_traits> //std::false_type marker for unoptimized, std::common_type
 
@@ -182,7 +182,7 @@ void gemm(
 	sparse_tag, sparse_tag
 ) {
 	for (std::size_t j = 0; j != e2().size2(); ++j) {
-		auto column_m = column(tm,j);
+		auto column_m = column(m,j);
 		kernels::gemv(e1,column(e2,j),column_m,alpha);
 	}
 }

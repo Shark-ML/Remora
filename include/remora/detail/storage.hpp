@@ -61,7 +61,7 @@ struct dense_vector_storage{
 	}
 	
 	
-	dense_vector_storage<T,Tag> sub_region(std::size_t offset){
+	dense_vector_storage<T,Tag> sub_region(std::size_t offset) const{
 		return {values+offset*stride, stride};
 	}
 };
@@ -91,18 +91,18 @@ struct dense_matrix_storage{
 	}
 	
 	template<class Orientation>
-	sub_region_storage sub_region(std::size_t offset1, std::size_t offset2, Orientation){
-		std::size_t offset_major = Orientation::index_M(offset1,offset2);
-		std::size_t offset_minor = Orientation::index_m(offset1,offset2);
-		return {values+offset_major*leading_dimension+offset_minor, leading_dimension};
+	sub_region_storage sub_region(std::size_t offset1, std::size_t offset2, Orientation) const{
+		std::size_t stride1 = Orientation::index_M(leading_dimension,(std::size_t)1);
+		std::size_t stride2 = Orientation::index_m(leading_dimension,(std::size_t)1);
+		return {values + offset1 * stride1 + offset2 * stride2, leading_dimension};
 	}
 	
 	template<class Orientation>
-	typename row_storage<Orientation>::type row(std::size_t i, Orientation){
+	typename row_storage<Orientation>::type row(std::size_t i, Orientation) const{
 		return {values + i * Orientation::index_M(leading_dimension,(std::size_t)1), Orientation::index_m(leading_dimension,(std::size_t)1)};
 	}
 	
-	diag_storage diag(){
+	diag_storage diag() const{
 		return {values, leading_dimension+1};
 	}
 };

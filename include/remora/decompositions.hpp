@@ -37,9 +37,8 @@
 #include "assignment.hpp"
 #include "permutation.hpp"
 #include "matrix_expression.hpp"
-#include "vector_proxy.hpp"
+#include "proxy_expressions.hpp"
 #include "vector_expression.hpp"
-#include "io.hpp"
 
 namespace remora{
 template<class D, class Device>
@@ -158,8 +157,7 @@ public:
 			beta_prime += swj2/dj;
 			
 			// Update the terms of L
-			if(j+1 <n)
-			{
+			if(j+1 <n){
 				subrange(column(L,j),j+1,n) *= a;
 				noalias(subrange(temp,j+1,n)) -= (wj/Ljj) * subrange(column(L,j),j+1,n);
 				if(gamma == 0)

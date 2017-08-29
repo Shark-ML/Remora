@@ -61,7 +61,7 @@ struct vector_unary_optimizer;
 // range(Mv)= rows(M) v
 template<class M, class V>
 struct vector_range_optimizer<matrix_vector_prod<M,V> >{
-	typedef matrix_range_optimizer<typename const_expression<M>::type> left_opt;
+	typedef matrix_range_optimizer<typename M::const_closure_type> left_opt;
 	typedef matrix_vector_prod_optimizer<typename left_opt::type,V const> opt;
 	typedef typename opt::type type;
 	
@@ -74,10 +74,10 @@ struct vector_range_optimizer<matrix_vector_prod<M,V> >{
 // range(sum_rows(M),start,end) = sum_rows(columns(m,start,end))
 template<class M>
 struct vector_range_optimizer<sum_matrix_rows<M> >{
-	typedef matrix_range_optimizer<typename const_expression<M>::type> mat_opt;
+	typedef matrix_range_optimizer<typename M::const_closure_type> mat_opt;
 	typedef sum_matrix_rows<typename mat_opt::type> type;
 	
-	static type create(matrix_vector_prod<M,V> const& m, std::size_t start, std::size_t end){
+	static type create(sum_matrix_rows<M> const& m, std::size_t start, std::size_t end){
 		return type(mat_opt::create(m.expression(),0, m.expression().size1(), start, end));
 	}
 };
@@ -85,7 +85,7 @@ struct vector_range_optimizer<sum_matrix_rows<M> >{
 //range(alpha * v) = alpha * range(v)
 template<class V>
 struct vector_range_optimizer<vector_scalar_multiply<V> >{
-	typedef vector_range_optimizer<typename const_expression<V>::type > opt;
+	typedef vector_range_optimizer<typename V::const_closure_type > opt;
 	typedef vector_scalar_multiply<typename opt::type > type;
 	
 	static type create(vector_scalar_multiply<V> const& v, std::size_t start, std::size_t end){
@@ -114,7 +114,7 @@ struct vector_range_optimizer<unit_vector<T,Device> >{
 //range(f(v)) = f(range(v))
 template<class V, class F>
 struct vector_range_optimizer<vector_unary<V, F> >{
-	typedef vector_range_optimizer<typename const_expression<V>::type > opt;
+	typedef vector_range_optimizer<typename V::const_closure_type> opt;
 	typedef vector_unary<typename opt::type, F > type;
 	
 	static type create(vector_unary<V, F> const& v, std::size_t start, std::size_t end){
@@ -125,8 +125,8 @@ struct vector_range_optimizer<vector_unary<V, F> >{
 //range(v1+v2) = range(v1) + range(v2)
 template<class V1, class V2>
 struct vector_range_optimizer<vector_addition<V1,V2> >{
-	typedef vector_range_optimizer<typename const_expression<V1>::type > left_opt;
-	typedef vector_range_optimizer<typename const_expression<V2>::type > right_opt;
+	typedef vector_range_optimizer<typename V1::const_closure_type > left_opt;
+	typedef vector_range_optimizer<typename V2::const_closure_type> right_opt;
 	typedef vector_addition<typename left_opt::type, typename right_opt::type > type;
 	
 	static type create(vector_addition<V1,V2> const& v, std::size_t start, std::size_t end){
@@ -137,8 +137,8 @@ struct vector_range_optimizer<vector_addition<V1,V2> >{
 //range(f(v1,v2)) = f(range(v1),range(v2))
 template<class V1, class V2, class F>
 struct vector_range_optimizer<vector_binary<V1,V2, F> >{
-	typedef vector_range_optimizer<typename const_expression<V1>::type > left_opt;
-	typedef vector_range_optimizer<typename const_expression<V2>::type > right_opt;
+	typedef vector_range_optimizer<typename V1::const_closure_type > left_opt;
+	typedef vector_range_optimizer<typename V2::const_closure_type > right_opt;
 	typedef vector_binary<typename left_opt::type, typename right_opt::type, F > type;
 	
 	static type create(vector_binary<V1,V2,F> const& v, std::size_t start, std::size_t end){
@@ -153,7 +153,7 @@ struct vector_range_optimizer<vector_binary<V1,V2, F> >{
 //(alpha M)^T = alpha M^T
 template<class M>
 struct matrix_transpose_optimizer<matrix_scalar_multiply<M> >{
-	typedef matrix_transpose_optimizer<typename const_expression<M>::type > opt;
+	typedef matrix_transpose_optimizer<typename M::const_closure_type> opt;
 	typedef matrix_scalar_multiply<typename opt::type> type;
 	
 	static type create(matrix_scalar_multiply<M> const& m){
@@ -164,8 +164,8 @@ struct matrix_transpose_optimizer<matrix_scalar_multiply<M> >{
 //(M1+M2)^T=M1^T+M2^T
 template<class M1, class M2>
 struct matrix_transpose_optimizer<matrix_addition<M1,M2> >{
-	typedef matrix_transpose_optimizer<typename const_expression<M1>::type > left_opt;
-	typedef matrix_transpose_optimizer<typename const_expression<M2>::type > right_opt;
+	typedef matrix_transpose_optimizer<typename M1::const_closure_type > left_opt;
+	typedef matrix_transpose_optimizer<typename M2::const_closure_type > right_opt;
 	typedef matrix_addition<typename left_opt::type,typename right_opt::type > type;
 	
 	static type create(matrix_addition<M1,M2> const& m){
@@ -195,7 +195,7 @@ struct matrix_transpose_optimizer<scalar_matrix<T,Device> >{
 //f(M)^T = f(M^T) for f(M)_ij=f(M_ij)
 template<class M, class F>
 struct matrix_transpose_optimizer<matrix_unary<M,F> >{
-	typedef matrix_transpose_optimizer<typename const_expression<M>::type > opt;
+	typedef matrix_transpose_optimizer<typename M::const_closure_type> opt;
 	typedef matrix_unary<typename opt::type, F> type;
 	
 	static type create(matrix_unary<M,F> const& m){
@@ -206,8 +206,8 @@ struct matrix_transpose_optimizer<matrix_unary<M,F> >{
 //f(M1,M2)^T=f(M1^T,M2^T) for f(M)_ij=f(M_ij)
 template<class M1, class M2, class F>
 struct matrix_transpose_optimizer<matrix_binary<M1,M2, F> >{
-	typedef matrix_transpose_optimizer<typename const_expression<M1>::type > left_opt;
-	typedef matrix_transpose_optimizer<typename const_expression<M2>::type > right_opt;
+	typedef matrix_transpose_optimizer<typename M1::const_closure_type> left_opt;
+	typedef matrix_transpose_optimizer<typename M2::const_closure_type> right_opt;
 	typedef matrix_binary<typename left_opt::type,typename right_opt::type, F > type;
 	
 	static type create(matrix_binary<M1,M2,F> const& m){
@@ -228,8 +228,8 @@ struct matrix_transpose_optimizer<outer_product<V1,V2> >{
 //(M1 M2)^T = M2^T M1^T
 template<class M1, class M2>
 struct matrix_transpose_optimizer<matrix_matrix_prod<M1,M2> >{
-	typedef matrix_transpose_optimizer<typename const_expression<M2>::type> left_opt;
-	typedef matrix_transpose_optimizer<typename const_expression<M1>::type> right_opt;
+	typedef matrix_transpose_optimizer<typename M2::const_closure_type> left_opt;
+	typedef matrix_transpose_optimizer<typename M1::const_closure_type> right_opt;
 	typedef matrix_matrix_prod_optimizer<typename left_opt::type,typename right_opt::type> opt;
 	typedef typename opt::type type;
 	
@@ -251,8 +251,8 @@ struct matrix_transpose_optimizer<diagonal_matrix<V> >{
 //(A & B)^T= (A^T | B^T)
 template<class M1, class M2, bool B>
 struct matrix_transpose_optimizer<matrix_concat<M1,M2,B> >{
-	typedef matrix_transpose_optimizer<typename const_expression<M2>::type> right_opt;
-	typedef matrix_transpose_optimizer<typename const_expression<M1>::type> left_opt;
+	typedef matrix_transpose_optimizer<typename M2::const_closure_type> right_opt;
+	typedef matrix_transpose_optimizer<typename M1::const_closure_type> left_opt;
 	typedef matrix_concat<typename left_opt::type,typename right_opt::type,!B > type;
 	
 	static type create(matrix_concat<M1,M2,B> const& m){
@@ -267,7 +267,7 @@ struct matrix_transpose_optimizer<matrix_concat<M1,M2,B> >{
 //row(alpha M,i) = alpha row(M,i)
 template<class M>
 struct matrix_row_optimizer<matrix_scalar_multiply<M> >{
-	typedef matrix_row_optimizer<typename const_expression<M>::type > opt;
+	typedef matrix_row_optimizer<typename M::const_closure_type > opt;
 	typedef vector_scalar_multiply<typename opt::type> type;
 	
 	static type create(matrix_scalar_multiply<M> const& m, std::size_t i){
@@ -278,8 +278,8 @@ struct matrix_row_optimizer<matrix_scalar_multiply<M> >{
 // row(M1+M2,i) = row(M1,i) + row(M2,i)
 template<class M1, class M2>
 struct matrix_row_optimizer<matrix_addition<M1,M2> >{
-	typedef matrix_row_optimizer<typename const_expression<M1>::type > left_opt;
-	typedef matrix_row_optimizer<typename const_expression<M2>::type > right_opt;
+	typedef matrix_row_optimizer<typename M1::const_closure_type > left_opt;
+	typedef matrix_row_optimizer<typename M2::const_closure_type > right_opt;
 	typedef vector_addition<typename left_opt::type,typename right_opt::type > type;
 	
 	static type create(matrix_addition<M1,M2> const& m, std::size_t i){
@@ -288,11 +288,11 @@ struct matrix_row_optimizer<matrix_addition<M1,M2> >{
 };
 
 //row(constant,i) = constant
-template<class M>
-struct matrix_row_optimizer<scalar_matrix<M> >{
-	typedef scalar_vector<M> type;
+template<class T, class Device>
+struct matrix_row_optimizer<scalar_matrix<T, Device> >{
+	typedef scalar_vector<T, Device> type;
 	
-	static type create(scalar_matrix<M> const& m, std::size_t){
+	static type create(scalar_matrix<T, Device> const& m, std::size_t){
 		return type(m.size2(),m.scalar());
 	}
 };
@@ -319,7 +319,7 @@ struct matrix_row_optimizer<vector_repeater<V, column_major> >{
 //row(f(M),i) = f(row(M,i))
 template<class M, class F>
 struct matrix_row_optimizer<matrix_unary<M,F> >{
-	typedef matrix_row_optimizer<typename const_expression<M>::type > opt;
+	typedef matrix_row_optimizer<typename M::const_closure_type > opt;
 	typedef vector_unary<typename opt::type, F> type;
 	
 	static type create(matrix_unary<M,F> const& m, std::size_t i){
@@ -330,8 +330,8 @@ struct matrix_row_optimizer<matrix_unary<M,F> >{
 //row(f(M1,M2),i)=f(row(M1,i),row(M2,i))
 template<class M1, class M2, class F>
 struct matrix_row_optimizer<matrix_binary<M1,M2, F> >{
-	typedef matrix_row_optimizer<typename const_expression<M1>::type > left_opt;
-	typedef matrix_row_optimizer<typename const_expression<M2>::type > right_opt;
+	typedef matrix_row_optimizer<typename M1::const_closure_type > left_opt;
+	typedef matrix_row_optimizer<typename M2::const_closure_type > right_opt;
 	typedef vector_binary<typename left_opt::type,typename right_opt::type, F > type;
 	
 	static type create(matrix_binary<M1,M2,F> const& m, std::size_t i){
@@ -352,8 +352,8 @@ struct matrix_row_optimizer<outer_product<V1,V2> >{
 //row(prod(A,B),i) = prod(row(A),B) = prod(trans(B),row(A)) 
 template<class M1, class M2>
 struct matrix_row_optimizer<matrix_matrix_prod<M1,M2> >{
-	typedef matrix_row_optimizer<typename const_expression<M1>::type> left_opt;
-	typedef matrix_transpose_optimizer<typename const_expression<M2>::type> right_opt;
+	typedef matrix_row_optimizer<typename M1::const_closure_type> left_opt;
+	typedef matrix_transpose_optimizer<typename M2::const_closure_type> right_opt;
 	typedef matrix_vector_prod_optimizer<typename right_opt::type, typename left_opt::type> opt;
 	typedef typename opt::type type;
 	
@@ -368,7 +368,7 @@ struct matrix_row_optimizer<matrix_matrix_prod<M1,M2> >{
 //row(diagonal(V),i)  =  (0,,...,0,v_i,0,...,0)
 template<class V>
 struct matrix_row_optimizer<diagonal_matrix<V> >{
-	typedef unit_vector<typename V::value_type> type;
+	typedef unit_vector<typename V::value_type, typename V::device_type> type;
 	
 	static type create(diagonal_matrix<V> const& m, std::size_t i){
 		return type(m.size2(),i,m.expression()(i));
@@ -386,7 +386,7 @@ struct matrix_row_optimizer<diagonal_matrix<V> >{
 //range(alpha * M) = alpha * range(M)
 template<class M>
 struct matrix_range_optimizer<matrix_scalar_multiply<M> >{
-	typedef matrix_range_optimizer<typename const_expression<M>::type > opt;
+	typedef matrix_range_optimizer<typename M::const_closure_type > opt;
 	typedef matrix_scalar_multiply<typename opt::type > type;
 	
 	static type create(matrix_scalar_multiply<M> const& m,
@@ -399,8 +399,8 @@ struct matrix_range_optimizer<matrix_scalar_multiply<M> >{
 //range(M1+M2) = range(M1) + range(M2)
 template<class M1, class M2>
 struct matrix_range_optimizer<matrix_addition<M1,M2> >{
-	typedef matrix_range_optimizer<typename const_expression<M1>::type > left_opt;
-	typedef matrix_range_optimizer<typename const_expression<M2>::type > right_opt;
+	typedef matrix_range_optimizer<typename M1::const_closure_type > left_opt;
+	typedef matrix_range_optimizer<typename M2::const_closure_type > right_opt;
 	typedef matrix_addition<typename left_opt::type, typename right_opt::type > type;
 	
 	static type create(matrix_addition<M1,M2> const& m,
@@ -427,7 +427,7 @@ struct matrix_range_optimizer<scalar_matrix<T,Device> >{
 //repeater behaves like outer_product
 template<class V, class Orientation>
 struct matrix_range_optimizer<vector_repeater<V, Orientation> >{
-	typedef vector_range_optimizer<typename const_expression<V>::type > vector_opt;
+	typedef vector_range_optimizer<typename V::const_closure_type > vector_opt;
 	typedef vector_repeater<typename vector_opt::type, Orientation> type;
 	
 	static type create(
@@ -444,7 +444,7 @@ struct matrix_range_optimizer<vector_repeater<V, Orientation> >{
 //range(f(M)) = f(range(M))
 template<class M, class F>
 struct matrix_range_optimizer<matrix_unary<M, F> >{
-	typedef matrix_range_optimizer<typename const_expression<M>::type > opt;
+	typedef matrix_range_optimizer<typename M::const_closure_type > opt;
 	typedef matrix_unary<typename opt::type, F > type;
 	
 	static type create(matrix_unary<M, F> const& m,
@@ -457,8 +457,8 @@ struct matrix_range_optimizer<matrix_unary<M, F> >{
 //range(f(M1,M2)) = f(range(M1),range(M2))
 template<class M1, class M2, class F>
 struct matrix_range_optimizer<matrix_binary<M1,M2, F> >{
-	typedef matrix_range_optimizer<typename const_expression<M1>::type > left_opt;
-	typedef matrix_range_optimizer<typename const_expression<M2>::type > right_opt;
+	typedef matrix_range_optimizer<typename M1::const_closure_type > left_opt;
+	typedef matrix_range_optimizer<typename M2::const_closure_type > right_opt;
 	typedef matrix_binary<typename left_opt::type, typename right_opt::type, F > type;
 	
 	static type create(matrix_binary<M1,M2,F> const& m,
@@ -475,8 +475,8 @@ struct matrix_range_optimizer<matrix_binary<M1,M2, F> >{
 //range( u v^T) = range(u) range(v)^T
 template<class V1, class V2>
 struct matrix_range_optimizer<outer_product<V1,V2> >{
-	typedef vector_range_optimizer<typename const_expression<V1>::type > left_opt;
-	typedef vector_range_optimizer<typename const_expression<V2>::type > right_opt;
+	typedef vector_range_optimizer<typename V1::const_closure_type > left_opt;
+	typedef vector_range_optimizer<typename V2::const_closure_type> right_opt;
 	typedef outer_product<typename left_opt::type, typename right_opt::type> type;
 	
 	static type create(outer_product<V1,V2> const& m,
@@ -489,8 +489,8 @@ struct matrix_range_optimizer<outer_product<V1,V2> >{
 //range(prod(A,B),i) = prod(range(B),range(A)) 
 template<class M1, class M2>
 struct matrix_range_optimizer<matrix_matrix_prod<M1,M2> >{
-	typedef matrix_range_optimizer<typename const_expression<M1>::type> left_opt;
-	typedef matrix_range_optimizer<typename const_expression<M2>::type> right_opt;
+	typedef matrix_range_optimizer<typename M1::const_closure_type> left_opt;
+	typedef matrix_range_optimizer<typename M2::const_closure_type> right_opt;
 	typedef matrix_matrix_prod_optimizer<typename left_opt::type, typename right_opt::type> opt;
 	typedef typename opt::type type;
 	
@@ -508,13 +508,13 @@ struct matrix_range_optimizer<matrix_matrix_prod<M1,M2> >{
 //range(diagonal  -> diagonal padded with 0
 template<class V>
 struct matrix_range_optimizer<diagonal_matrix<V> >{
-    typedef vector_range_optimizer<typename const_expression<V>::type > opt;
+    typedef vector_range_optimizer<typename V::const_closure_type > opt;
 	typedef diagonal_matrix<typename opt::type> type;
 	static type create(type const& m,
 		std::size_t start1, std::size_t end1, std::size_t start2, std::size_t end2
 	){
-        REMORA_RANGE_CHECK(start1 == start2, "unimplemented: non-diagonal subranges of diagonal matrix");
-        REMORA_RANGE_CHECK(end1 == end2, "unimplemented: non-diagonal subranges of diagonal matrix");
+        REMORA_RANGE_CHECK(start1 == start2);// "unimplemented: non-diagonal subranges of diagonal matrix"
+        REMORA_RANGE_CHECK(end1 == end2); //"unimplemented: non-diagonal subranges of diagonal matrix"
         std::size_t startV = std::max(start1,start2);
         std::size_t endV = std::min(end1,end2);
 		return type(opt::create(m.expression(),startV, endV));

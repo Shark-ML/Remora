@@ -117,7 +117,8 @@ std::size_t pstrf(
 			Ak(j,j) = std::sqrt(pivotValue);
 			//the last updates of columns k...k+j-1 did not change
 			//this row, so do it now
-			auto curCol = column(Ak,j);
+			//~ auto curCol = column(Ak,j);
+			auto curCol = row(trans(Ak),j);
 			auto colLowerPart = subrange(curCol,j+1,m-k);
 			if(j > 0){
 				//the last updates of columns 0,1,...,j-1 did not change

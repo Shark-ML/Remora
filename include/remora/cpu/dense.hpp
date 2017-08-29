@@ -44,7 +44,6 @@ namespace remora{
 /// This adaptor is read/write if T is non-const and read-only if T is const.
 template<class T, class Tag>
 class dense_vector_adaptor<T, Tag, cpu_tag>: public vector_expression<dense_vector_adaptor<T, Tag, cpu_tag>, cpu_tag > {
-	typedef dense_vector_adaptor<T, Tag> self_type;
 public:
 
 	typedef std::size_t size_type;
@@ -60,7 +59,7 @@ public:
 
 	// Construction and destruction
 
-	/// \brief Constructor of a self_type proxy from a Dense VectorExpression
+	/// \brief Constructor of a vector proxy from a Dense VectorExpression
 	///
 	/// Be aware that the expression must live longer than the proxy!
 	/// \param expression The Expression from which to construct the Proxy
@@ -69,10 +68,10 @@ public:
 	: m_values(expression().raw_storage().values)
 	, m_size(expression().size())
 	, m_stride(expression().raw_storage().stride){
-		static_assert(!std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argunent to the given Tag");
+		static_assert(std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argument to the given Tag");
 	}
 	
-	/// \brief Constructor of a self_type proxy from a Dense VectorExpression
+	/// \brief Constructor of a vector proxy from a Dense VectorExpression
 	///
 	/// Be aware that the expression must live longer than the proxy!
 	/// \param expression The Expression from which to construct the Proxy
@@ -81,13 +80,13 @@ public:
 	: m_values(expression().raw_storage().values)
 	, m_size(expression().size())
 	, m_stride(expression().raw_storage().stride){
-		static_assert(!std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argunent to the given Tag");
+		static_assert(std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argument to the given Tag");
 	}
 		
-	/// \brief Constructor of a self_type proxy from a block of memory
+	/// \brief Constructor of a vector proxy from a block of memory
 	/// \param values the block of memory used
-	/// \param size size of the self_type
-	/// \param stride distance between elements of the self_type in memory
+	/// \param size size of the vector
+	/// \param stride distance between elements of the vector in memory
 	dense_vector_adaptor(T* values, size_type size, size_type stride = 1 ):
 		m_values(values),m_size(size),m_stride(stride){}
 
@@ -96,14 +95,22 @@ public:
 		m_values(storage.values),m_size(size),m_stride(storage.stride){}	
 
 		
-	/// \brief Copy-constructor of a self_type
+	/// \brief Copy-constructor of a vector
 	/// \param v is the proxy to be copied
 	template<class U, class Tag2>
 	dense_vector_adaptor(dense_vector_adaptor<U, Tag2> const& v)
 	: m_values(v.raw_storage().values)
 	, m_size(v.size())
 	, m_stride(v.raw_storage().stride){
-		static_assert(!std::is_convertible<Tag2,Tag>::value, "Can not convert storage type of argunent to the given Tag");
+		static_assert(std::is_convertible<Tag2,Tag>::value, "Can not convert storage type of argument to the given Tag");
+	}
+	
+	dense_vector_adaptor& operator = (dense_vector_adaptor const& e) {
+		return assign(typename vector_temporary<dense_vector_adaptor>::type(e));
+	}
+	template<class E>
+	dense_vector_adaptor& operator = (vector_expression<E, cpu_tag> const& e) {
+		return assign(typename vector_temporary<E>::type(e));
 	}
 	
 	/// \brief Return the size of the vector.
@@ -116,7 +123,7 @@ public:
 		return {m_values,m_stride};
 	}
 	
-	typename device_traits<cpu_tag>::queue_type& queue(){
+	typename device_traits<cpu_tag>::queue_type& queue() const{
 		return device_traits<cpu_tag>::default_queue();
 	}
 	// --------------
@@ -146,83 +153,38 @@ public:
 	reference operator[](size_type i) {
 		return m_values[i*m_stride];
 	}
-
-	// ------------------
-	// Element assignment
-	// ------------------
 	
-	/// \brief Set element \f$i\f$ to the value \c t
-	/// \param i index of the element
-	/// \param t reference to the value to be set
-	reference insert_element(size_type i, const_reference t) {
-		return(*this)[i] = t;
+	void clear(){
+		std::fill(begin(), end(), value_type/*zero*/());
 	}
 
-	/// \brief Set element \f$i\f$ to the \e zero value
-	/// \param i index of the element
-	void erase_element(size_type i) {
-		(*this)[i] = value_type/*zero*/();
-	}
-		
-
-	dense_vector_adaptor& operator = (dense_vector_adaptor const& e) {
-		return assign(typename vector_temporary<self_type>::type(e));
-	}
-	template<class E>
-	dense_vector_adaptor& operator = (vector_expression<E, cpu_tag> const& e) {
-		return assign(typename vector_temporary<E>::type(e));
-	}
-	
 	// --------------
 	// ITERATORS
 	// --------------
-	
 
 	typedef iterators::dense_storage_iterator<T> iterator;
 	typedef iterators::dense_storage_iterator<value_type const> const_iterator;
 
 	/// \brief return an iterator on the first element of the vector
 	const_iterator begin() const {
-		return const_iterator(m_values,0);
+		return const_iterator(m_values, 0, m_stride);
 	}
 
 	/// \brief return an iterator after the last element of the vector
 	const_iterator end() const {
-		return const_iterator(m_values+size()*m_stride,size());
+		return const_iterator(m_values + size() * m_stride, size(), m_stride);
 	}
 
 	/// \brief Return an iterator on the first element of the vector
 	iterator begin(){
-		return iterator(m_values,0);
+		return iterator(m_values, 0, m_stride);
 	}
 
 	/// \brief Return an iterator at the end of the vector
 	iterator end(){
-		return iterator(m_values+size()*m_stride,size());
+		return iterator(m_values + size() * m_stride, size(), m_stride);
 	}
 	
-	//insertion and erasing of elements
-	iterator set_element(iterator pos, size_type index, value_type value) {
-		REMORA_SIZE_CHECK(pos.index() == index);
-		(*this)(index) = value;
-		return pos;
-	}
-
-	iterator clear_element(iterator pos) {
-		REMORA_SIZE_CHECK(pos != end());
-		v(pos.index()) = value_type();
-		
-		//return new iterator to the next element
-		return pos+1;
-	}
-	
-	iterator clear_range(iterator start, iterator end) {
-		REMORA_RANGE_CHECK(start < end);
-		for(; start != end; ++start){
-			*start = value_type/*zero*/();
-		}
-		return end;
-	}
 private:
 	T* m_values;
 	size_type m_size;
@@ -232,7 +194,6 @@ private:
 
 template<class T,class Orientation, class Tag>
 class dense_matrix_adaptor<T,Orientation,Tag, cpu_tag>: public matrix_expression<dense_matrix_adaptor<T,Orientation, Tag, cpu_tag>, cpu_tag > {
-	typedef dense_matrix_adaptor<T,Orientation, cpu_tag> self_type;
 public:
 	typedef std::size_t size_type;
 	typedef typename std::remove_const<T>::type value_type;
@@ -242,12 +203,12 @@ public:
 
 	typedef dense_matrix_adaptor<T,Orientation, Tag, cpu_tag> closure_type;
 	typedef dense_matrix_adaptor<value_type const,Orientation, Tag, cpu_tag> const_closure_type;
-	typedef dense_matrix_storage<T,dense_tag> storage_type;
+	typedef dense_matrix_storage<T,Tag> storage_type;
 	typedef dense_matrix_storage<value_type const,Tag> const_storage_type;
 	typedef Orientation orientation;
 	typedef elementwise<dense_tag> evaluation_category;
 
-	template<class,class,class> friend class dense_matrix_adaptor;
+	template<class,class,class,class> friend class dense_matrix_adaptor;
 
 	// Construction and destruction
 	template<class U, class TagU>
@@ -257,9 +218,8 @@ public:
 	, m_size2(expression.size2())
 	, m_stride1(expression.m_stride1)
 	, m_stride2(expression.m_stride2)
-	{static_assert(!std::is_convertible<TagU,Tag>::value, "Can not convert storage type of argunent to the given Tag");}
+	{static_assert(std::is_convertible<TagU,Tag>::value, "Can not convert storage type of argument to the given Tag");}
 	
-	template<class E>
 	dense_matrix_adaptor(storage_type const& storage, no_queue, std::size_t size1, std::size_t size2)
 	: m_size1(size1)
 	, m_size2(size2)
@@ -283,7 +243,7 @@ public:
 		m_stride1 = Orientation::index_M(storage_type.leading_dimension,1);
 		m_stride2 = Orientation::index_m(storage_type.leading_dimension,1);
 		static_assert(std::is_same<typename E::orientation,orientation>::value, "matrix orientation mismatch");
-		static_assert(!std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argunent to the given Tag");
+		static_assert(std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argument to the given Tag");
 	}
 
 	/// \brief Constructor of a vector proxy from a Dense MatrixExpression
@@ -293,22 +253,21 @@ public:
 	template<class E>
 	dense_matrix_adaptor(matrix_expression<E, cpu_tag>& expression)
 	: m_size1(expression().size1())
-	, m_size2(expression().size2())
-	{
+	, m_size2(expression().size2()){
 		auto storage_type = expression().raw_storage();
 		m_values = storage_type.values;
 		m_stride1 = Orientation::index_M(storage_type.leading_dimension,1);
 		m_stride2 = Orientation::index_m(storage_type.leading_dimension,1);
 		static_assert(std::is_same<typename E::orientation,orientation>::value, "matrix orientation mismatch");
-		static_assert(!std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argunent to the given Tag");
+		static_assert(std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argument to the given Tag");
 	}
 		
 	/// \brief Constructor of a vector proxy from a block of memory
 	/// \param values the block of memory used
 	/// \param size1 size in 1st direction
 	/// \param size2 size in 2nd direction
-	/// \param stride1 distance in 1st direction between elements of the self_type in memory
-	/// \param stride2 distance in 2nd direction between elements of the self_type in memory
+	/// \param stride1 distance in 1st direction between elements of the matrix in memory
+	/// \param stride2 distance in 2nd direction between elements of the matrix in memory
 	dense_matrix_adaptor(
 		T* values, 
 		size_type size1, size_type size2,
@@ -378,16 +337,16 @@ public:
 	// ASSIGNING
 	// -------
 	
-	self_type& operator = (self_type const& e) {
+	dense_matrix_adaptor& operator = (dense_matrix_adaptor const& e) {
 		REMORA_SIZE_CHECK(size1() == e().size1());
 		REMORA_SIZE_CHECK(size2() == e().size2());
-		return assign(*this, typename matrix_temporary<self_type>::type(e));
+		return assign(*this, typename matrix_temporary<dense_matrix_adaptor>::type(e));
 	}
 	template<class E>
-	self_type& operator = (matrix_expression<E, cpu_tag> const& e) {
+	dense_matrix_adaptor& operator = (matrix_expression<E, cpu_tag> const& e) {
 		REMORA_SIZE_CHECK(size1() == e().size1());
 		REMORA_SIZE_CHECK(size2() == e().size2());
-		return assign(*this, typename matrix_temporary<self_type>::type(e));
+		return assign(*this, typename matrix_temporary<dense_matrix_adaptor>::type(e));
 	}
 	
 	// --------------
@@ -440,24 +399,6 @@ public:
 		return column_iterator(m_values+j*m_stride2+size1()*m_stride1,size1(),m_stride1);
 	}
 	
-	typedef typename major_iterator<self_type>::type major_iterator;
-	
-	major_iterator set_element(major_iterator pos, size_type index, value_type value) {
-		REMORA_RANGE_CHECK(pos.index() == index);
-		*pos=value;
-		return pos;
-	}
-	
-	major_iterator clear_element(major_iterator elem) {
-		*elem = value_type();
-		return elem+1;
-	}
-	
-	major_iterator clear_range(major_iterator start, major_iterator end) {
-		std::fill(start,end,value_type());
-		return end;
-	}
-	
 	void swap_rows(size_type i, size_type j){
 		for(std::size_t k = 0; k != size2(); ++k){
 			std::swap((*this)(i,k),(*this)(j,k));
@@ -501,7 +442,6 @@ private:
  */
 template<class T, class L>
 class matrix<T,L,cpu_tag>:public matrix_container<matrix<T, L, cpu_tag>, cpu_tag > {
-	typedef matrix<T, L> self_type;
 	typedef std::vector<T> array_type;
 public:
 	typedef typename array_type::value_type value_type;
@@ -613,7 +553,7 @@ public:
 	/// \param e is a matrix expression
 	template<class E>
 	matrix& operator = (matrix_expression<E, cpu_tag> const& e) {
-		self_type temporary(e);
+		matrix temporary(e);
 		swap(temporary);
 		return *this;
 	}
@@ -636,7 +576,7 @@ public:
 	const_storage_type raw_storage()const{
 		return {m_data.data(), orientation::index_m(m_size1,m_size2)};
 	}
-	typename device_traits<cpu_tag>::queue_type& queue(){
+	typename device_traits<cpu_tag>::queue_type& queue() const{
 		return device_traits<cpu_tag>::default_queue();
 	}
 	
@@ -751,28 +691,7 @@ public:
 		return column_iterator(m_data.data() + j * stride2()+ stride1() * size1(), size1(), stride1());
 	}
 	
-	typedef typename major_iterator<self_type>::type major_iterator;
-	
-	//sparse interface
-	major_iterator set_element(major_iterator pos, size_type index, value_type value) {
-		REMORA_RANGE_CHECK(pos.index() == index);
-		*pos=value;
-		return pos;
-	}
-	
-	major_iterator clear_element(major_iterator elem) {
-		*elem = value_type();
-		return elem+1;
-	}
-	
-	major_iterator clear_range(major_iterator start, major_iterator end) {
-		std::fill(start,end,value_type());
-		return end;
-	}
-	
-	void reserve(size_type non_zeros) {}
-	void reserve_row(std::size_t, std::size_t){}
-	void reserve_column(std::size_t, std::size_t){}
+	typedef typename major_iterator<matrix>::type major_iterator;
 
 	// Serialization
 	template<class Archive>
@@ -808,11 +727,9 @@ private:
 	array_type m_data;
 };
 
-namespace remora{
 template<class T>
 class vector<T,cpu_tag>: public vector_container<vector<T, cpu_tag>, cpu_tag > {
 
-	typedef vector<T> self_type;
 	typedef std::vector<typename std::conditional<std::is_same<T,bool>::value,char,T>::type > array_type;
 public:
 	typedef typename array_type::value_type value_type;
@@ -899,7 +816,7 @@ public:
 	/// \return a reference to the resulting vector
 	template<class E>
 	vector& operator = (vector_expression<E, cpu_tag> const& e) {
-		self_type temporary(e);
+		vector temporary(e);
 		swap(*this,temporary);
 		return *this;
 	}
@@ -922,7 +839,7 @@ public:
 	const_storage_type raw_storage() const{
 		return {m_storage.data(),1};
 	}
-	typename device_traits<cpu_tag>::queue_type& queue(){
+	typename device_traits<cpu_tag>::queue_type& queue() const{
 		return device_traits<cpu_tag>::default_queue();
 	}
 	
@@ -1042,30 +959,6 @@ public:
 	iterator end(){
 		return iterator(m_storage.data()+size(),size());
 	}
-	
-	/////////////////sparse interface///////////////////////////////
-	iterator set_element(iterator pos, size_type index, value_type value) {
-		REMORA_SIZE_CHECK(pos.index() == index);
-		(*this)(index) = value;
-		
-		return pos;
-	}
-
-	iterator clear_element(iterator pos) {
-		REMORA_SIZE_CHECK(pos != end());
-		v(pos.index()) = value_type();
-		
-		//return new iterator to the next element
-		return pos+1;
-	}
-	
-	iterator clear_range(iterator start, iterator end) {
-		REMORA_RANGE_CHECK(start <= end);
-		std::fill(start,end,value_type());
-		return end;
-	}
-	
-	void reserve(size_type) {}
 	
 	/// \brief Swap the content of two vectors
 	/// \param v1 is the first vector. It takes values from v2
