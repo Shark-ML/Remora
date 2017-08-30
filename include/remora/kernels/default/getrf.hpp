@@ -132,7 +132,7 @@ void getrf_recursive(
 	std::size_t start,
 	std::size_t end
 ){
-	std::size_t block_size = 32;
+	std::size_t block_size = 4;
 	std::size_t size = end-start;
 	std::size_t end1=A().size1();
 	

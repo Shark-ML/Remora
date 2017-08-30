@@ -367,7 +367,7 @@ private:
 ///
 /// \tparam T the type of object stored in the matrix (like double, float, complex, etc...)
 template<class T, class Device>
-class scalar_matrix:public matrix_container<scalar_matrix<T, Device>, Device > {
+class scalar_matrix:public matrix_expression<scalar_matrix<T, Device>, Device > {
 public:
 	typedef std::size_t size_type;
 	typedef T value_type;

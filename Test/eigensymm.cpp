@@ -2,11 +2,8 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <iostream>
-
 #include <remora/decompositions.hpp>
-#include <remora/matrix.hpp>
-#include <remora/vector.hpp>
+#include <remora/dense.hpp>
 
 using namespace remora;
 

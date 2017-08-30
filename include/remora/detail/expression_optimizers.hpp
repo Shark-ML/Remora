@@ -610,7 +610,7 @@ template<class V>
 struct matrix_range_optimizer<diagonal_matrix<V> >{
     typedef vector_range_optimizer<typename V::const_closure_type > opt;
 	typedef diagonal_matrix<typename opt::type> type;
-	static type create(type const& m,
+	static type create(diagonal_matrix<V> const& m,
 		std::size_t start1, std::size_t end1, std::size_t start2, std::size_t end2
 	){
         REMORA_RANGE_CHECK(start1 == start2);// "unimplemented: non-diagonal subranges of diagonal matrix"

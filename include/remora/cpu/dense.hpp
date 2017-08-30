@@ -30,6 +30,8 @@
 
 #include "iterator.hpp"
 #include "../detail/proxy_optimizers_fwd.hpp"
+#include "../assignment.hpp"
+
 
 #include <initializer_list>
 #include <boost/serialization/collection_size_type.hpp>
@@ -338,8 +340,8 @@ public:
 	// -------
 	
 	dense_matrix_adaptor& operator = (dense_matrix_adaptor const& e) {
-		REMORA_SIZE_CHECK(size1() == e().size1());
-		REMORA_SIZE_CHECK(size2() == e().size2());
+		REMORA_SIZE_CHECK(size1() == e.size1());
+		REMORA_SIZE_CHECK(size2() == e.size2());
 		return assign(*this, typename matrix_temporary<dense_matrix_adaptor>::type(e));
 	}
 	template<class E>

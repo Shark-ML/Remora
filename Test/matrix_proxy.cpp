@@ -2,9 +2,8 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <remora/matrix_proxy.hpp>
-#include <remora/matrix.hpp>
-#include <remora/vector.hpp>
+#include <remora/proxy_expressions.hpp>
+#include <remora/dense.hpp>
 
 
 using namespace remora;
@@ -187,10 +186,8 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Subrange ){
 					);
 					matrix<double> newData(Dimensions1,Dimensions2,0);
 					matrix<double,column_major> newDataColMaj(Dimensions1,Dimensions2,0);
-					matrix_range<matrix<double> > rangeTest
-					= subrange(newData,rowBegin,rowEnd,colBegin,colEnd);
-					matrix_range<matrix<double,column_major> > rangeTestColMaj
-					= subrange(newDataColMaj,rowBegin,rowEnd,colBegin,colEnd);
+					auto rangeTest = subrange(newData,rowBegin,rowEnd,colBegin,colEnd);
+					auto rangeTestColMaj = subrange(newDataColMaj,rowBegin,rowEnd,colBegin,colEnd);
 					checkDenseMatrixAssignment(rangeTest,mTest);
 					checkDenseMatrixAssignment(rangeTestColMaj,mTest);
 					
@@ -198,8 +195,7 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Subrange ){
 					{
 						rangeTest=mTest;
 						matrix<double> newData2(Dimensions1,Dimensions2,0);
-						matrix_range<matrix<double> > rangeTest2
-						= subrange(newData2,rowBegin,rowEnd,colBegin,colEnd);
+						auto rangeTest2 = subrange(newData2,rowBegin,rowEnd,colBegin,colEnd);
 						rangeTest2=rangeTest;
 						for(std::size_t i = 0; i != size1; ++i){
 							for(std::size_t j = 0; j != size2; ++j){
@@ -239,8 +235,8 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_row){
 		checkDenseVectorEqual(row(denseDataColMajor,r),vecTest);
 		matrix<double> newData(Dimensions1,Dimensions2,0);
 		matrix<double,column_major> newDataColMajor(Dimensions1,Dimensions2,0);
-		matrix_row<matrix<double> > rowTest = row(newData,r);
-		matrix_row<matrix<double,column_major> > rowTestColMajor = row(newDataColMajor,r);
+		auto rowTest = row(newData,r);
+		auto rowTestColMajor = row(newDataColMajor,r);
 		checkDenseVectorAssignment(rowTest,vecTest);
 		checkDenseVectorAssignment(rowTestColMajor,vecTest);
 		
@@ -248,7 +244,7 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_row){
 		{
 			rowTest=vecTest;
 			matrix<double> newData2(Dimensions1,Dimensions2,0);
-			matrix_row<matrix<double> > rowTest2 = row(newData2,r);
+			auto rowTest2 = row(newData2,r);
 			rowTest2=rowTest;
 			for(std::size_t i = 0; i != Dimensions2; ++i){
 				BOOST_CHECK_EQUAL(newData(r,i),vecTest(i));

@@ -3,10 +3,8 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/solve.hpp>
-#include <remora/vector.hpp>
-#include <remora/matrix.hpp>
+#include <remora/dense.hpp>
 #include <remora/matrix_expression.hpp>
-#include <remora/matrix_proxy.hpp>
 #include <remora/vector_expression.hpp>
 
 #include <iostream>
@@ -37,7 +35,7 @@ typedef boost::mpl::list<row_major,column_major> result_orientations;
 BOOST_AUTO_TEST_SUITE (Solve_General)
 
 BOOST_AUTO_TEST_CASE( Solve_Indefinite_Full_Rank_Vector ){
-	std::size_t Dimensions = 128;
+	std::size_t Dimensions = 123;
 	matrix<double> A = createMatrix(Dimensions);
 	vector<double> b(Dimensions);
 	for(std::size_t i = 0; i != Dimensions; ++i){
@@ -64,6 +62,7 @@ BOOST_AUTO_TEST_CASE( Solve_Indefinite_Full_Rank_Vector ){
 	}
 	//xA=b
 	{
+		matrix<double,column_major> t=A;
 		vector<double> x = solve(A,b, indefinite_full_rank(),right());
 		vector<double> xprod = prod(b,inv(A,indefinite_full_rank()));
 		BOOST_CHECK_SMALL(norm_inf(x-xprod),1.e-15);

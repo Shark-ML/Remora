@@ -3,9 +3,9 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/solve.hpp>
-#include <remora/matrix.hpp>
+#include <remora/dense.hpp>
 #include <remora/matrix_expression.hpp>
-#include <remora/matrix_proxy.hpp>
+#include <remora/proxy_expressions.hpp>
 #include <remora/vector_expression.hpp>
 
 #include <iostream>
@@ -150,8 +150,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(Solve_Matrix, Orientation,result_orientations) {
 		matrix<double,Orientation> testResult = solve(A,Bright, lower(), right());
 		matrix<double,Orientation> prodResult = prod(Bright,inv(A,lower()));
 		BOOST_CHECK_SMALL(max(abs(testResult - prodResult)),1.e-15);
-		matrix<double> result = trans(matrix<double>(triangular_prod<upper>(Aupper,trans(testResult))));
-		double error = norm_inf(result-Bright);
+		matrix<double> result = triangular_prod<upper>(Aupper,trans(testResult));
+		double error = norm_inf(trans(result)-Bright);
 		BOOST_CHECK_SMALL(error, 1.e-11);
 	}
 	std::cout<<"left - unit_lower"<<std::endl;
@@ -168,8 +168,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(Solve_Matrix, Orientation,result_orientations) {
 		matrix<double,Orientation> testResult = solve(A,Bright, unit_lower(), right());
 		matrix<double,Orientation> prodResult = prod(Bright,inv(A,unit_lower()));
 		BOOST_CHECK_SMALL(max(abs(testResult - prodResult)),1.e-15);
-		matrix<double,row_major> result = trans(matrix<double>(triangular_prod<unit_upper>(Aupper,trans(testResult))));
-		double error = norm_inf(result-Bright);
+		matrix<double,row_major> result = triangular_prod<unit_upper>(Aupper,trans(testResult));
+		double error = norm_inf(trans(result)-Bright);
 		BOOST_CHECK_SMALL(error, 1.e-11);
 	}
 	
@@ -187,8 +187,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(Solve_Matrix, Orientation,result_orientations) {
 		matrix<double,Orientation> testResult = solve(Aupper,Bright, upper(), right());
 		matrix<double,Orientation> prodResult = prod(Bright,inv(Aupper,upper()));
 		BOOST_CHECK_SMALL(max(abs(testResult - prodResult)),1.e-15);
-		matrix<double> result = trans(matrix<double>(triangular_prod<lower>(A,trans(testResult))));
-		double error = norm_inf(result-Bright);
+		matrix<double> result = triangular_prod<lower>(A,trans(testResult));
+		double error = norm_inf(trans(result)-Bright);
 		BOOST_CHECK_SMALL(error, 1.e-11);
 	}
 	std::cout<<"left - unit_upper"<<std::endl;
@@ -205,8 +205,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(Solve_Matrix, Orientation,result_orientations) {
 		matrix<double,Orientation> testResult = solve(Aupper,Bright, unit_upper(), right());
 		matrix<double,Orientation> prodResult = prod(Bright,inv(Aupper,unit_upper()));
 		BOOST_CHECK_SMALL(max(abs(testResult - prodResult)),1.e-15);
-		matrix<double,row_major> result = trans(matrix<double>(triangular_prod<unit_lower>(A,trans(testResult))));
-		double error = norm_inf(result-Bright);
+		matrix<double,row_major> result = triangular_prod<unit_lower>(A,trans(testResult));
+		double error = norm_inf(trans(result)-Bright);
 		BOOST_CHECK_SMALL(error, 1.e-11);
 	}
 }

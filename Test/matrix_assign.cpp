@@ -4,7 +4,7 @@
 
 #include <remora/kernels/matrix_assign.hpp>
 #include <remora/triangular_matrix.hpp>
-#include <remora/matrix.hpp>
+#include <remora/dense.hpp>
 #include <remora/matrix_sparse.hpp>
 #include <remora/vector_sparse.hpp>
 #include <remora/matrix_proxy.hpp>
@@ -556,11 +556,6 @@ BOOST_AUTO_TEST_CASE( Remora_Sparse_Sparse_Matrix_Assign ){
 	//test all 4 combinations of row/column major
 	{
 		compressed_matrix<unsigned int> target(10,20,0);
-		//~ for(std::size_t i = 0; i != 10; ++i){
-			//~ for(std::size_t j = 1; j < 20; j+=(i+1)){
-				//~ target(i,j) = 4*(20*i+1)+9;
-			//~ }
-		//~ }
 		std::cout<<"testing row-row"<<std::endl;
 		kernels::assign(target,source_row_major);
 		checkMatrixEqual(target,source_row_major);
@@ -568,11 +563,6 @@ BOOST_AUTO_TEST_CASE( Remora_Sparse_Sparse_Matrix_Assign ){
 	
 	{
 		compressed_matrix<unsigned int> target(10,20,0);
-		//~ for(std::size_t i = 0; i != 10; ++i){
-			//~ for(std::size_t j = 1; j < 20; j+=(i+1)){
-				//~ target(i,j) = 4*(20*i+1)+9;
-			//~ }
-		//~ }
 		std::cout<<"testing row-column"<<std::endl;
 		kernels::assign(target,source_column_major);
 		checkMatrixEqual(target,source_column_major);
@@ -581,11 +571,6 @@ BOOST_AUTO_TEST_CASE( Remora_Sparse_Sparse_Matrix_Assign ){
 	{
 		compressed_matrix<unsigned int> target_base(20,10);
 		matrix_transpose<compressed_matrix<unsigned int> > target(target_base);
-		//~ for(std::size_t i = 0; i != 10; ++i){
-			//~ for(std::size_t j = 1; j < 20; j+=(i+1)){
-				//~ target(i,j) = 4*(20*i+1)+9;
-			//~ }
-		//~ }
 		std::cout<<"testing column-row"<<std::endl;
 		kernels::assign(target,source_row_major);
 		checkMatrixEqual(target,source_row_major);

@@ -3,9 +3,9 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/solve.hpp>
-#include <remora/matrix.hpp>
+#include <remora/dense.hpp>
 #include <remora/matrix_expression.hpp>
-#include <remora/matrix_proxy.hpp>
+#include <remora/proxy_expressions.hpp>
 #include <remora/vector_expression.hpp>
 
 #include <iostream>

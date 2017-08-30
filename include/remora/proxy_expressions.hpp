@@ -96,7 +96,7 @@ trans(matrix_expression<M, Device> const& m){
 template<class M, class Device>
 typename detail::matrix_transpose_optimizer<M>::type
 trans(matrix_expression<M, Device> && m){
-	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
+	static_assert(std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return trans(m());
 }
 
