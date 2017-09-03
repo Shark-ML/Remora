@@ -54,16 +54,16 @@ public:
 
 	/// \brief Copy-constructor
 	/// \param v is the proxy to be copied
-	template<class U>
-	dense_vector_adaptor(dense_vector_adaptor<U, Tag, gpu_tag> const& v)
+	template<class U, class Tag2>
+	dense_vector_adaptor(dense_vector_adaptor<U, Tag2, gpu_tag> const& v)
 	: m_storage(v.raw_storage())
 	, m_queue(&v.queue())
-	, m_size(v.size()){}
+	, m_size(v.size()){static_assert(std::is_convertible<Tag2,Tag>::value, "Can not convert storage type of argument to the given Tag");}
 	
 	/// \brief Constructor of a vector proxy from a block of memory
 	/// \param storage the block of memory used
 	/// \param size number of elements
-	dense_matrix_adaptor(
+	dense_vector_adaptor(
 		storage_type storage, 
 		boost::compute::command_queue& queue,
 		size_type size
@@ -71,6 +71,17 @@ public:
 	, m_queue(&queue)
 	, m_size(size){}
 	
+	template<class U>
+	dense_vector_adaptor(vector_expression<U, gpu_tag> const& v)
+	: m_storage(v().raw_storage())
+	, m_queue(&v().queue())
+	, m_size(v().size()){}
+	
+	template<class U>
+	dense_vector_adaptor(vector_expression<U, gpu_tag>& v)
+	: m_storage(v().raw_storage())
+	, m_queue(&v().queue())
+	, m_size(v().size()){}
 	
 	/// \brief Return the size of the vector.
 	size_type size() const {
@@ -82,8 +93,20 @@ public:
 		return m_storage;
 	}
 	
-	boost::compute::command_queue& queue(){
+	boost::compute::command_queue& queue() const{
 		return *m_queue;
+	}
+	
+	void clear(){
+		gpu::detail::meta_kernel k("vector_proxy_clear");
+		auto v = k.register_args(to_functor(*this));
+	
+		//create source
+		k<<v(k.get_global_id(0))<<" = 0;";
+		boost::compute::kernel kernel = k.compile(queue().get_context());
+		//enqueue kernel
+		std::size_t global_work_size[1] = {size()};
+		queue().enqueue_nd_range_kernel(kernel, 1,nullptr, global_work_size, nullptr);
 	}
 	
 	// --------------
@@ -134,20 +157,20 @@ public:
 	typedef T& reference;
 
 	typedef dense_matrix_adaptor closure_type;
-	typedef dense_matrix_adaptor<value_type const, Orientation, Tag> const_closure_type;
+	typedef dense_matrix_adaptor<value_type const, Orientation, Tag, gpu_tag> const_closure_type;
 	typedef gpu::dense_matrix_storage<T, Tag> storage_type;
 	typedef gpu::dense_matrix_storage<value_type const, Tag> const_storage_type;
         typedef Orientation orientation;
 	typedef elementwise<dense_tag> evaluation_category;
 
 	// Construction and destruction
-	
-	dense_matrix_adaptor(dense_matrix_adaptor<value_type, Orientation, Tag> const& expression)
+	template<class U, class Tag2>
+	dense_matrix_adaptor(dense_matrix_adaptor<U, Orientation, Tag2> const& expression)
 	: m_storage(expression.m_storage)
 	, m_queue(expression.m_queue)
 	, m_size1(expression.size1())
 	, m_size2(expression.size2())
-	{}
+	{static_assert(std::is_convertible<Tag2,Tag>::value, "Can not convert storage type of argument to the given Tag");}
 		
 	/// \brief Constructor of a matrix proxy from a block of memory
 	/// \param storage the block of memory used
@@ -161,6 +184,22 @@ public:
 	, m_queue(&queue)
 	, m_size1(size1)
 	, m_size2(size2){}
+	
+	template<class M>
+	dense_matrix_adaptor(
+		matrix_expression<M, gpu_tag> const& m 
+	):m_storage(m().raw_storage())
+	, m_queue(&m().queue())
+	, m_size1(m().size1())
+	, m_size2(m().size2()){}
+	
+	template<class M>
+	dense_matrix_adaptor(
+		matrix_expression<M, gpu_tag>& m 
+	):m_storage(m().raw_storage())
+	, m_queue(&m().queue())
+	, m_size1(m().size1())
+	, m_size2(m().size2()){}
 	
 	// -------------------
 	// Assignment operators
@@ -204,9 +243,16 @@ public:
 		return {m_storage.buffer, m_storage.offset, m_storage.leading_dimension};
 	}
 	
-	// Element access
-	gpu::detail::dense_matrix_element<value_type> to_functor() const{
-		return {m_storage.buffer, orientation::stride1(m_storage.leading_dimension, 1), orientation::stride2(m_storage.leading_dimension, 1),m_storage.offset}; 
+	void clear(){
+		gpu::detail::meta_kernel k("matrix_proxy_clear");
+		auto m = k.register_args(to_functor(*this));
+	
+		//create source
+		k<<m(k.get_global_id(0),k.get_global_id(1))<<" = 0;";
+		boost::compute::kernel kernel = k.compile(queue().get_context());
+		//enqueue kernel
+		std::size_t global_work_size[2] = {size1(), size2()};
+		queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, nullptr);
 	}
 	
 	// Iterator types
@@ -273,8 +319,8 @@ public:
 	typedef value_type reference;
 	typedef std::size_t size_type;
 
-	typedef vector_reference<vector const> const_closure_type;
-	typedef vector_reference<vector> closure_type;
+	typedef dense_vector_adaptor<T const, continuous_dense_tag, gpu_tag> const_closure_type;
+	typedef dense_vector_adaptor<T, continuous_dense_tag, gpu_tag> closure_type;
 	typedef gpu::dense_vector_storage<T,continuous_dense_tag> storage_type;
 	typedef gpu::dense_vector_storage<T,continuous_dense_tag> const_storage_type;
 	typedef elementwise<dense_tag> evaluation_category;
@@ -768,8 +814,45 @@ struct ExpressionToFunctor<dense_matrix_adaptor<T, Orientation, Tag, gpu_tag> >{
 	}
 };
 
+namespace detail{
 
+template<class T, class Orientation>
+struct vector_to_matrix_optimizer<dense_vector_adaptor<T, continuous_dense_tag, gpu_tag>, Orientation >{
+	typedef dense_matrix_adaptor<T, Orientation, continuous_dense_tag, gpu_tag> type;
+	
+	static type create(
+		dense_vector_adaptor<T, continuous_dense_tag, gpu_tag> const& v,
+		std::size_t size1, std::size_t size2
+	){
+		gpu::dense_matrix_storage<T, continuous_dense_tag> storage = {v.raw_storage().buffer, v.raw_storage().offset, Orientation::index_m(size1,size2)};
+		return type(storage, v.queue(), size1, size2);
+	}
+};
 
+template<class T, class Orientation>
+struct vector_to_matrix_optimizer<vector<T, gpu_tag> const, Orientation >{
+	typedef dense_matrix_adaptor<T const, Orientation, continuous_dense_tag, gpu_tag> type;
+	
+	static type create(
+		vector<T, gpu_tag> const& v, std::size_t size1, std::size_t size2
+	){
+		gpu::dense_matrix_storage<T const, continuous_dense_tag> storage = {v.raw_storage().buffer, v.raw_storage().offset, Orientation::index_m(size1,size2)};
+		return type(storage, v.queue(), size1, size2);
+	}
+};
+
+template<class T, class Orientation>
+struct vector_to_matrix_optimizer<vector<T, gpu_tag>, Orientation >{
+	typedef dense_matrix_adaptor<T, Orientation, continuous_dense_tag, gpu_tag> type;
+	
+	static type create(
+		vector<T, gpu_tag>& v, std::size_t size1, std::size_t size2
+	){
+		gpu::dense_matrix_storage<T, continuous_dense_tag> storage = {v.raw_storage().buffer, v.raw_storage().offset, Orientation::index_m(size1,size2)};
+		return type(storage, v.queue(), size1, size2);
+	}
+};
+}
 
 }
 

@@ -59,7 +59,7 @@ struct dense_vector_storage{
 		static_assert(!(std::is_same<Tag,continuous_dense_tag>::value && std::is_same<Tag2,dense_tag>::value), "Trying to assign dense to continuous dense storage");
 	}
 	
-	dense_vector_storage<T,Tag> sub_region(std::size_t offset){
+	dense_vector_storage<T,Tag> sub_region(std::size_t offset) const{
 		return {buffer, this->offset+offset * stride, stride};
 	}
 };
@@ -72,6 +72,12 @@ struct dense_matrix_storage{
 		std::is_same<O,row_major>::value,
 		dense_vector_storage<T, Tag>,
 		dense_vector_storage<T, dense_tag>
+	>{};
+	template<class O>
+	struct rows_storage: public std::conditional<
+		std::is_same<O,row_major>::value,
+		dense_matrix_storage<T, Tag>,
+		dense_matrix_storage<T, dense_tag>
 	>{};
 	
 	typedef dense_vector_storage<T,Tag> diag_storage;
@@ -92,18 +98,29 @@ struct dense_matrix_storage{
 	}
 	
 	template<class Orientation>
-	sub_region_storage sub_region(std::size_t offset1, std::size_t offset2, Orientation){
+	sub_region_storage sub_region(std::size_t offset1, std::size_t offset2, Orientation) const{
 		std::size_t offset_major = Orientation::index_M(offset1,offset2);
 		std::size_t offset_minor = Orientation::index_m(offset1,offset2);
 		return {buffer, offset + offset_major*leading_dimension+offset_minor, leading_dimension};
 	}
 	
 	template<class Orientation>
-	typename row_storage<Orientation>::type row(std::size_t i, Orientation){
+	typename row_storage<Orientation>::type row(std::size_t i, Orientation) const{
 		return {buffer, offset + i * Orientation::index_M(leading_dimension,std::size_t(1)), Orientation::index_m(leading_dimension,std::size_t(1))};
 	}
+	
+	template<class Orientation>
+	typename rows_storage<Orientation>::type sub_rows(std::size_t offset, Orientation) const{
+		std::size_t stride = Orientation::index_M(leading_dimension,(std::size_t)1);
+		return {buffer,offset + offset * stride, leading_dimension};
+	}
+	
 	diag_storage diag(){
 		return {buffer, offset, leading_dimension+1};
+	}
+	
+	dense_vector_storage<T, continuous_dense_tag> linear() const{
+		return {buffer, offset, 1};
 	}
 };
 

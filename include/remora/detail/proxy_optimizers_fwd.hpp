@@ -40,9 +40,15 @@ template<class M>
 struct matrix_row_optimizer;
 template<class M>
 struct matrix_range_optimizer;
+	
+template<class M>
+struct matrix_rows_optimizer;
 
 template<class M>
 struct linearized_matrix_optimizer;
+	
+template<class M, class Orientation>
+struct vector_to_matrix_optimizer;
     
 template<class M>
 struct matrix_diagonal_optimizer;

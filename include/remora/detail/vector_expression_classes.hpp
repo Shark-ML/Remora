@@ -95,7 +95,7 @@ public:
 	}
 	
 	//iterators
-	typedef typename device_traits<device_type>:: template transform_iterator<typename E::const_iterator,functor_type >::type const_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename expression_closure_type::const_iterator,functor_type >::type const_iterator;
 	typedef const_iterator iterator;
 	
 	const_iterator begin() const {
@@ -293,7 +293,7 @@ public:
 
 	
 	typedef typename device_traits<device_type>:: template transform_iterator<
-		typename E::const_iterator,
+		typename expression_closure_type::const_iterator,
 		functor_type
 	>::type const_iterator;
 	typedef const_iterator iterator;
@@ -380,8 +380,8 @@ public:
 
 	// Iterator types
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
-		typename E1::const_iterator,
-		typename E2::const_iterator,
+		typename lhs_closure_type::const_iterator,
+		typename rhs_closure_type::const_iterator,
 		functor_type
 	>::type const_iterator;
 	typedef const_iterator iterator;
@@ -477,8 +477,8 @@ public:
 	// Iterator enhances the iterator of the referenced expressions
 	// with the unary functor.
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
-		typename E1::const_iterator,
-		typename E2::const_iterator,
+		typename lhs_closure_type::const_iterator,
+		typename rhs_closure_type::const_iterator,
 		functor_type
 	>::type const_iterator;
 	typedef const_iterator iterator;

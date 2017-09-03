@@ -96,7 +96,7 @@ trans(matrix_expression<M, Device> const& m){
 template<class M, class Device>
 typename detail::matrix_transpose_optimizer<M>::type
 trans(matrix_expression<M, Device> && m){
-	static_assert(std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
+	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return trans(m());
 }
 
@@ -124,10 +124,10 @@ row(matrix_expression<M, Device> const& m, typename M::size_type i){
 	return detail::matrix_row_optimizer<typename const_expression<M>::type>::create(m(), i);
 }
 
-template<class M>
+template<class M, class Device>
 typename detail::matrix_row_optimizer<M>::type
-row(M && m, typename M::size_type i){
-	static_assert(!std::is_base_of<matrix_container<M, typename M::device_type>,M>::value, "It is unsafe to create a proxy from a temporary container");
+row(matrix_expression<M, Device> && m, typename M::size_type i){
+	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return row(m,i);
 }
 
@@ -241,59 +241,59 @@ typename detail::matrix_range_optimizer<M>::type subrange(
 }
 
 template<class M, class Device>
-auto rows(
+typename detail::matrix_rows_optimizer<M>::type rows(
 	matrix_expression<M, Device>& m, 
 	std::size_t start, std::size_t stop
-) -> decltype(subrange(m, start, stop, 0,m().size2())){
+){
 	REMORA_RANGE_CHECK(start <= stop);
 	REMORA_SIZE_CHECK(stop <= m().size1());
-	return subrange(m, start, stop, 0,m().size2());
+	return detail::matrix_rows_optimizer<M>::create(m(),start,stop);
 }
 
 template<class M, class Device>
-auto rows(
+typename detail::matrix_rows_optimizer<typename const_expression<M>::type >::type rows(
 	matrix_expression<M, Device> const& m, 
 	std::size_t start, std::size_t stop
-) -> decltype(subrange(m, start, stop, 0,m().size2())){
+){
 	REMORA_RANGE_CHECK(start <= stop);
 	REMORA_SIZE_CHECK(stop <= m().size1());
-	return subrange(m, start, stop, 0,m().size2());
+	return detail::matrix_rows_optimizer<typename const_expression<M>::type>::create(m(),start,stop);
 }
 
 template<class M, class Device>
-auto rows(
+typename detail::matrix_rows_optimizer<typename const_expression<M>::type >::type rows(
 	matrix_expression<M, Device> && m, 
 	std::size_t start, std::size_t stop
-) -> decltype(subrange(m, start, stop, 0,m().size2())){
+) {
 	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
-	return rows(m(),start,stop);
+	return  detail::matrix_rows_optimizer<typename const_expression<M>::type>::create(m(),start,stop);
 }
 
 template<class M, class Device>
 auto columns(
 	matrix_expression<M, Device>& m, 
 	typename M::size_type start, typename M::size_type stop
-) -> decltype(subrange(m, 0,m().size1(), start, stop)){
+) -> decltype(trans(rows(trans(m),start,stop))){
 	REMORA_RANGE_CHECK(start <= stop);
 	REMORA_SIZE_CHECK(stop <= m().size2());
-	return subrange(m, 0,m().size1(), start, stop);
+	return trans(rows(trans(m),start,stop));
 }
 
 template<class M, class Device>
 auto columns(
 	matrix_expression<M, Device> const& m, 
 	typename M::size_type start, typename M::size_type stop
-) -> decltype(subrange(m, 0,m().size1(), start, stop)){
+) -> decltype(trans(rows(trans(m),start,stop))){
 	REMORA_RANGE_CHECK(start <= stop);
 	REMORA_SIZE_CHECK(stop <= m().size2());
-	return subrange(m, 0,m().size1(), start, stop);
+	return trans(rows(trans(m),start,stop));
 }
 
 template<class M, class Device>
 auto columns(
 	matrix_expression<M, Device> && m, 
 	std::size_t start, std::size_t stop
-) -> decltype(subrange(m, 0,m().size1(), start, stop)){
+) -> decltype(trans(rows(trans(m),start,stop))){
 	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return columns(m(),start,stop);
 }
@@ -308,7 +308,7 @@ auto columns(
 /// m.g. a row-major matrix is lienarized by concatenating its rows to one large vector.
 template<class M, class Device>
 typename detail::linearized_matrix_optimizer<M>::type
-to_vector(matrix_expression<M, Device> const& m){
+to_vector(matrix_expression<M, Device>& m){
 	return detail::linearized_matrix_optimizer<M>::create(m());
 }
 
@@ -326,47 +326,36 @@ to_vector(matrix_expression<M, Device> && m){
 }
 
 
-//~ ////////////////////////////////////
-//~ //// Matrix Adaptor
-//~ ////////////////////////////////////
+////////////////////////////////////
+//// Matrix Adaptor
+////////////////////////////////////
 
-//~ /// \brief Converts a dense vector to a matrix of a given size
-//~ template <class V, class Device>
-//~ typename std::enable_if<
-	//~ std::is_same<typename V::storage_type::storage_tag,continuous_dense_tag>::value,
-	//~ dense_matrix_adaptor<
-		//~ typename std::remove_reference<typename V::reference>::type,
-		//~ row_major, Device
-	//~ >
-//~ >::type
-//~ to_matrix(
-	//~ vector_expression<V, Device>& v,
-	//~ std::size_t size1, std::size_t size2
-//~ ){
-	//~ REMORA_SIZE_CHECK(size1 * size2 == v().size());
-	//~ typedef typename std::remove_reference<typename V::reference>::type ElementType;
-	//~ return dense_matrix_adaptor<ElementType, row_major, Device>(v, size1, size2);
-//~ }
+/// \brief Converts a dense vector to a matrix of a given size
+template <class V, class Device>
+typename detail::vector_to_matrix_optimizer<typename const_expression<V>::type, row_major >::type to_matrix(
+	vector_expression<V, Device> const& v,std::size_t size1, std::size_t size2
+){
+	REMORA_SIZE_CHECK(size1 * size2 == v().size());
+	return detail::vector_to_matrix_optimizer<typename const_expression<V>::type, row_major >::create(v(), size1, size2);
+}
 
-//~ /// \brief Converts a dense vector to a matrix of a given size
-//~ template <class V, class Device>
-//~ typename std::enable_if<
-	//~ std::is_same<typename V::storage_type::storage_tag,continuous_dense_tag>::value,
-	//~ dense_matrix_adaptor<typename V::value_type const,row_major, Device>
-//~ >::type 
-//~ to_matrix(
-	//~ vector_expression<V, Device> const& v,
-	//~ std::size_t size1, std::size_t size2
-//~ ){
-	//~ REMORA_SIZE_CHECK(size1 * size2 == v().size());
-	//~ return dense_matrix_adaptor<typename V::value_type const, row_major, Device>(v, size1, size2);
-//~ }
+/// \brief Converts a dense vector to a matrix of a given size
+template <class V, class Device>
+typename detail::vector_to_matrix_optimizer<V, row_major >::type to_matrix(
+	vector_expression<V, Device>& v,std::size_t size1, std::size_t size2
+){
+	REMORA_SIZE_CHECK(size1 * size2 == v().size());
+	return detail::vector_to_matrix_optimizer<V, row_major >::create(v(), size1, size2);
+}
 
-//~ template<class V>
-//~ auto to_matrix(vector_expression<V,Device>&& v, std::size_t size1, std::size_t size2)->decltype(to_matrix(static_cast<M&>(m()),size1, size2)){
-	//~ static_assert(!std::is_base_of<vector_container<V>,V>::value, "It is unsafe to create a proxy from a temporary container");
-	//~ return to_matrix(v(), size1, size2);
-//~ }
+template <class V, class Device>
+typename detail::vector_to_matrix_optimizer<typename const_expression<V>::type, row_major >::type to_matrix(
+	vector_expression<V,Device> && v,std::size_t size1, std::size_t size2
+){
+	static_assert(!std::is_base_of<vector_container<V, Device>,V>::value, "It is unsafe to create a proxy from a temporary container");
+	return to_matrix(v, size1, size2);
+}
+
 }
 
 #endif

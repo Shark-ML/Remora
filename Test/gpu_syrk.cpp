@@ -6,7 +6,8 @@
 
 #define BOOST_COMPUTE_DEBUG_KERNEL_COMPILATION
 #include <remora/kernels/syrk.hpp>
-#include <remora/matrix.hpp>
+#include <remora/dense.hpp>
+#include <remora/gpu/copy.hpp>
 #include <remora/matrix_expression.hpp>
 
 

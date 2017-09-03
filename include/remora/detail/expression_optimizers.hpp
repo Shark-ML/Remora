@@ -29,7 +29,6 @@
 #define REMORA_EXPRESSION_OPTIMIZERS_HPP
 
 #include "proxy_optimizers_fwd.hpp"
-#include "matrix_proxy_classes.hpp"
 #include "vector_expression_classes.hpp"
 #include "matrix_expression_classes.hpp"
 
@@ -620,6 +619,127 @@ struct matrix_range_optimizer<diagonal_matrix<V> >{
 		return type(opt::create(m.expression(),startV, endV));
 	}
 };
+
+
+///////////////////////////////////
+//// Matrix Rows
+////////////////////////////////////
+
+//rows(alpha * M) = alpha * rows(M)
+template<class M>
+struct matrix_rows_optimizer<matrix_scalar_multiply<M> >{
+	typedef matrix_rows_optimizer<typename M::const_closure_type > opt;
+	typedef matrix_scalar_multiply<typename opt::type > type;
+	
+	static type create(matrix_scalar_multiply<M> const& m,
+		std::size_t start, std::size_t end
+	){
+		return type(opt::create(m.expression(),start,end), m.scalar());
+	}
+};
+
+//range(M1+M2) = range(M1) + range(M2)
+template<class M1, class M2>
+struct matrix_rows_optimizer<matrix_addition<M1,M2> >{
+	typedef matrix_rows_optimizer<typename M1::const_closure_type > left_opt;
+	typedef matrix_rows_optimizer<typename M2::const_closure_type > right_opt;
+	typedef matrix_addition<typename left_opt::type, typename right_opt::type > type;
+	
+	static type create(matrix_addition<M1,M2> const& m,std::size_t start, std::size_t end){
+		return type(left_opt::create(m.lhs(),start,end),right_opt::create(m.rhs(),start,end));
+	}
+};
+
+//range(constant)  -> constant (changed sizes)
+template<class T, class Device>
+struct matrix_rows_optimizer<scalar_matrix<T,Device> >{
+	typedef scalar_matrix<T,Device> type;
+	static type create(type const& m,std::size_t start, std::size_t end){
+		return type(end - start, m.size2(), m.scalar());
+	}
+};
+
+//repeater behaves like outer_product
+template<class V>
+struct matrix_rows_optimizer<vector_repeater<V, column_major> >{
+	typedef vector_range_optimizer<typename V::const_closure_type> vector_opt;
+	typedef vector_repeater<typename vector_opt::type, row_major> type;
+	
+	static type create(vector_repeater<V, column_major> const& m,std::size_t start, std::size_t end){
+		return type( vector_opt::create(m.expression(),start,end), m.size2());
+	}
+};
+template<class V>
+struct matrix_rows_optimizer<vector_repeater<V, row_major> >{
+	typedef vector_repeater<V, row_major> type;
+	
+	static type create(type const& m,std::size_t start, std::size_t end){
+		return type( m.expression(), end - start);
+	}
+};
+
+//rows(f(M)) = f(rows(M))
+template<class M, class F>
+struct matrix_rows_optimizer<matrix_unary<M, F> >{
+	typedef matrix_rows_optimizer<typename M::const_closure_type > opt;
+	typedef matrix_unary<typename opt::type, F > type;
+	
+	static type create(matrix_unary<M, F> const& m, std::size_t start, std::size_t end){
+		return type(opt::create(m.expression(),start,end), m.functor());
+	}
+};
+
+//rows(f(M1,M2)) = f(rows(M1),rows(M2))
+template<class M1, class M2, class F>
+struct matrix_rows_optimizer<matrix_binary<M1,M2, F> >{
+	typedef matrix_rows_optimizer<typename M1::const_closure_type > left_opt;
+	typedef matrix_rows_optimizer<typename M2::const_closure_type > right_opt;
+	typedef matrix_binary<typename left_opt::type, typename right_opt::type, F > type;
+	
+	static type create(matrix_binary<M1,M2,F> const& m,std::size_t start, std::size_t end){
+		return type(left_opt::create(m.lhs(),start,end),right_opt::create(m.rhs(),start,end),m.functor());
+	}
+};
+
+//rows( u v^T) = range(u) v^T
+template<class V1, class V2>
+struct matrix_rows_optimizer<outer_product<V1,V2> >{
+	typedef vector_range_optimizer<typename V1::const_closure_type > left_opt;
+	typedef outer_product<typename left_opt::type, V2> type;
+	
+	static type create(outer_product<V1,V2> const& m,std::size_t start, std::size_t end){
+		return type( left_opt::create(m.lhs(),start,end), m.rhs());
+	}
+};
+
+//rows(prod(A,B),i) = prod(rows(B),A) 
+template<class M1, class M2>
+struct matrix_rows_optimizer<matrix_matrix_prod<M1,M2> >{
+	typedef matrix_range_optimizer<typename M1::const_closure_type> left_opt;
+	typedef matrix_matrix_prod_optimizer<typename left_opt::type, M2> opt;
+	typedef typename opt::type type;
+	
+	static type create(matrix_matrix_prod<M1,M2> const& m,std::size_t start, std::size_t end){
+		return opt::create(left_opt::create(m.lhs(),start,end),m.rhs());
+	}
+};
+
+
+//rows(diagonal)  -> diagonal padded with 0
+//~ template<class V>
+//~ struct matrix_rows_optimizer<diagonal_matrix<V> >{
+    //~ typedef vector_range_optimizer<typename V::const_closure_type > opt;
+	//~ typedef diagonal_matrix<typename opt::type> type;
+	//~ static type create(diagonal_matrix<V> const& m,
+		//~ std::size_t start, std::size_t end, std::size_t start2, std::size_t end2
+	//~ ){
+        //~ REMORA_RANGE_CHECK(start1 == start2);// "unimplemented: non-diagonal subranges of diagonal matrix"
+        //~ REMORA_RANGE_CHECK(end1 == end2); //"unimplemented: non-diagonal subranges of diagonal matrix"
+        //~ std::size_t startV = std::max(start1,start2);
+        //~ std::size_t endV = std::min(end1,end2);
+		//~ return type(opt::create(m.expression(),startV, endV));
+	//~ }
+//~ };
 
 ////////////////////////////////////
 //// Matrix Vector Product

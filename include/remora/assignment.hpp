@@ -683,6 +683,10 @@ template <class C, class Device>
 noalias_proxy<C> noalias(vector_expression<C, Device>&& rvalue) {
 	return noalias_proxy<C>(rvalue());
 }
+template <class C, class Device>
+noalias_proxy<C> noalias(matrix_expression<C, Device>&& lvalue) {
+	return noalias_proxy<C> (lvalue());
+}
 
 template <class C, class Device>
 noalias_proxy<C> noalias(vector_set_expression<C>& lvalue) {

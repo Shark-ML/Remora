@@ -4,8 +4,8 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/matrix_expression.hpp>
-#include <remora/vector.hpp>
-#include <remora/matrix.hpp>
+#include <remora/dense.hpp>
+#include <remora/device_copy.hpp>
 
 using namespace remora;
 

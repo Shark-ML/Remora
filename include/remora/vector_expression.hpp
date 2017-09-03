@@ -413,15 +413,7 @@ typename std::enable_if<
 	return scalar_vector<T, Device>(1,t) | v;
 }
 
-template<class E>
-E const& copy_to_cpu(vector_expression<E, cpu_tag> const& e){
-	return e();
-}
 
 }
-
-#ifdef REMORA_USE_GPU
-#include "gpu/copy.hpp"
-#endif
 
 #endif

@@ -4,11 +4,8 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/kernels/matrix_assign.hpp>
-#include <remora/vector.hpp>
-#include <remora/matrix.hpp>
-#include <remora/matrix_proxy.hpp>//FIXME: should be unneeded
-#include <remora/matrix_expression.hpp>// for copy
-#include <remora/vector_expression.hpp>
+#include <remora/dense.hpp>
+#include <remora/device_copy.hpp>
 
 #include <iostream>
 using namespace remora;

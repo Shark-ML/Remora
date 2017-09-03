@@ -2,10 +2,9 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <remora/vector_proxy.hpp>
-#include <remora/gpu/vector.hpp>
-#include <remora/gpu/copy.hpp>
-#include <remora/vector.hpp>
+#include <remora/proxy_expressions.hpp>
+#include <remora/device_copy.hpp>
+#include <remora/dense.hpp>
 
 #include <iostream>
 using namespace remora;

@@ -992,6 +992,47 @@ private:
 };
 
 
-}
+namespace detail{
+template<class T, class Orientation>
+struct vector_to_matrix_optimizer<dense_vector_adaptor<T, continuous_dense_tag, cpu_tag>, Orientation >{
+	typedef dense_matrix_adaptor<T, Orientation, continuous_dense_tag, cpu_tag> type;
+	
+	static type create(
+		dense_vector_adaptor<T, continuous_dense_tag, cpu_tag> const& v,
+		std::size_t size1, std::size_t size2
+	){
+		dense_matrix_storage<T, continuous_dense_tag> storage = {v.raw_storage().values, Orientation::index_m(size1,size2)};
+		return type(storage, v.queue(), size1, size2);
+	}
+};
+
+template<class T, class Orientation>
+struct vector_to_matrix_optimizer<vector<T, cpu_tag> const, Orientation >{
+	typedef dense_matrix_adaptor<T const, Orientation, continuous_dense_tag, cpu_tag> type;
+	
+	static type create(
+		vector<T, cpu_tag> const& v,
+		std::size_t size1, std::size_t size2
+	){
+		dense_matrix_storage<T const, continuous_dense_tag> storage = {v.raw_storage().values, Orientation::index_m(size1,size2)};
+		return type(storage, v.queue(), size1, size2);
+	}
+};
+
+template<class T, class Orientation>
+struct vector_to_matrix_optimizer<vector<T, cpu_tag>, Orientation >{
+	typedef dense_matrix_adaptor<T, Orientation, continuous_dense_tag, cpu_tag> type;
+	
+	static type create(
+		vector<T, cpu_tag>& v,
+		std::size_t size1, std::size_t size2
+	){
+		dense_matrix_storage<T, continuous_dense_tag> storage = {v.raw_storage().values, Orientation::index_m(size1,size2)};
+		return type(storage, v.queue(), size1, size2);
+	}
+};
+
+
+}}
 
 #endif

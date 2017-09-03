@@ -38,7 +38,7 @@ namespace remora{namespace bindings{
 // Explicitly iterating row major
 template<class F, class M>
 void matrix_apply(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	F const& f,
 	row_major
 ){
@@ -50,7 +50,7 @@ void matrix_apply(
 // Explicitly iterating column major
 template<class F, class M>
 void matrix_apply(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	F const& f,
 	column_major
 ){
@@ -62,7 +62,7 @@ void matrix_apply(
 // Spcial case triangular packed - just calls the first two implementations.
 template<class F, class M, class Orientation, class Triangular>
 void matrix_apply(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	F const& f,
 	triangular<Orientation,Triangular>
 ){
@@ -77,7 +77,7 @@ void matrix_apply(
 // Explicitly iterating row major
 template<class F, class M, class Orientation>
 void matrix_assign(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	typename M::value_type t,
 	Orientation
 ){
@@ -92,13 +92,14 @@ void matrix_assign(
 //////Matrix Assignment implementing op=
 ////////////////////////////////////////////////////////////////
 
-//direct assignment without functor
-//the cases were both arguments have the same orientation can be implemented using assign.
-template<class M, class E,class TagE, class TagM>
+// direct assignment without functor
+// the cases were both arguments have the same orientation and the left hand side
+// is dense can be implemented using assign.
+template<class M, class E,class TagE>
 void matrix_assign(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
-	row_major, row_major,TagE, TagM
+	row_major, row_major,dense_tag, TagE
 ) {
 	for(std::size_t i = 0; i != m().size1(); ++i){
 		auto rowM = row(m,i);
@@ -106,12 +107,29 @@ void matrix_assign(
 	}
 }
 
-//remain the versions where both argumnts to not have the same orientation
+// direct assignment for sparse matrices with the same orientation
+template<class M, class E>
+void matrix_assign(
+	matrix_expression<M, cpu_tag>& m,
+	matrix_expression<E, cpu_tag> const& e,
+	row_major, row_major,sparse_tag, sparse_tag
+) {
+	m().clear();
+	for(std::size_t i = 0; i != m().size1(); ++i){
+		auto m_pos = m().row_begin(i);
+		auto end = e().row_end(i);
+		for(auto it = e().row_begin(i); it != end; ++it){
+			m_pos = m().set_element(m_pos,it.index(),*it);
+		}
+	}
+}
+
+//remain the versions where both arguments do not have the same orientation
 
 //dense-dense case
 template<class M, class E>
 void matrix_assign(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
 	row_major, column_major,dense_tag, dense_tag
 ) {
@@ -147,7 +165,7 @@ void matrix_assign(
 // dense-sparse
 template<class M, class E>
 void matrix_assign(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
 	row_major, column_major,dense_tag, sparse_tag
 ) {
@@ -157,24 +175,10 @@ void matrix_assign(
 	}
 }
 
-
-//sparse-dense
-template<class M, class E>
-void matrix_assign(
-	matrix_expression<M, cpu_tag> &m,
-	matrix_expression<E, cpu_tag> const& e,
-	row_major, column_major, sparse_tag, dense_tag
-) {
-	for(std::size_t i = 0; i != m().size1(); ++i){
-		auto rowM = row(m,i);
-		kernels::assign(rowM,row(e,i));
-	}
-}
-
 //sparse-sparse
 template<class M, class E>
 void matrix_assign(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
 	row_major, column_major,sparse_tag,sparse_tag
 ) {
@@ -207,7 +211,7 @@ void matrix_assign(
 		//count elements in row and reserve enough space for it
 		size_type row = elements[current].i;
 		size_type row_end = current;
-		while(row_end != elements.size() && elements[row_end].i == row)
+		while(row_end != elements.size()& & elements[row_end].i == row)
 			++ row_end;
 		m().reserve_row(row,row_end - current);
 
@@ -220,10 +224,10 @@ void matrix_assign(
 	}
 }
 
-//packed row_major,row_major
+//triangular row_major,row_major
 template<class M, class E,class Triangular>
 void matrix_assign(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
 	triangular<row_major,Triangular>, triangular<row_major,Triangular>,
 	packed_tag, packed_tag
@@ -242,20 +246,18 @@ void matrix_assign(
 	}
 }
 
-////packed row_major,column_major
+////triangular row_major,column_major
 //todo: this is suboptimal as we do strided access!!!!
 template<class M, class E,class Triangular>
 void matrix_assign(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
 	triangular<row_major,Triangular>, triangular<column_major,Triangular>,
 	packed_tag, packed_tag
 ) {
-	typedef typename M::row_iterator MIter;
-
 	for(std::size_t i = 0; i != m().size1(); ++i){
-		MIter mpos = m().row_begin(i);
-		MIter mend = m().row_end(i);
+		auto mpos = m().row_begin(i);
+		auto mend = m().row_end(i);
 		for(; mpos!=mend; ++mpos){
 			*mpos = e()(i,mpos.index());
 		}
@@ -266,27 +268,79 @@ void matrix_assign(
 //////Matrix Assignment With Functor implementing +=,-=...
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-//when both are row-major we can map to vector case
-//this is not necessarily efficient if m is sparse.
-template<class F, class M, class E, class TagE, class TagM>
+//when both are row-major and target is dense we can map to vector case
+template<class F, class M, class E, class TagE>
 void matrix_assign_functor(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
 	F f,
-	row_major, row_major,TagM, TagE
+	row_major, row_major, dense_tag, TagE
 ) {
 	for(std::size_t i = 0; i != m().size1(); ++i){
 		auto rowM = row(m,i);
 		kernels::assign(rowM,row(e,i),f);
 	}
 }
+template<class F, class M, class E>
+void matrix_assign_functor(
+	matrix_expression<M, cpu_tag>& m,
+	matrix_expression<E, cpu_tag> const& e,
+	F f,
+	row_major, row_major, sparse_tag, sparse_tag
+) {
+	typedef typename M::value_type value_type;
+	value_type zero = value_type();
+	typedef row_major::sparse_element<value_type> Element;
+	std::vector<Element> elements;
+	
+	for(std::size_t i = 0; i != m().size1(); ++i){
+		//first merge the two rows in elements using the functor
+		
+		elements.clear();
+		auto m_pos = m().row_begin(i);
+		auto m_end = m().row_end(i);
+		auto e_pos = e().row_begin(i);
+		auto e_end = e().row_end(i);
+		
+		while(m_pos != m_end && e_pos != e_end){
+			if(m_pos.index() < e_pos.index()){
+				elements.push_back({i,m_pos.index(), f(*m_pos, zero)});
+				++m_pos;
+			}if( m_pos.index() == e_pos.index()){
+				elements.push_back({i,m_pos.index(), f(*m_pos ,*e_pos)});
+				++m_pos;
+				++e_pos;
+			}
+			else{ //m_pos.index() > e_pos.index()
+				elements.push_back({i,e_pos.index(), f(zero,*e_pos)});
+				++e_pos;
+			}
+		}
+		for(;m_pos != m_end;++m_pos){
+			elements.push_back({i,m_pos.index(), f(*m_pos, zero)});
+		}
+		for(;e_pos != e_end; ++e_pos){
+			elements.push_back({i,e_pos.index(), f(zero, *m_pos)});
+		}
+		
+		
+		//clear contents of m and fill with elements
+		m().clear_range(m().row_begin(i),m().row_end(i));
+		m().reserve_row(i,elements.size());
+		m_pos = m().row_begin(i);
+		for(auto elem: elements){
+			m_pos = m().set_element(m_pos, elem.i,elem.j, elem.value);
+		}
+	}
+}
+	
 
 //we only need to implement the remaining versions for column major second argument
 
 //dense-dense case
 template<class F,class M, class E>
 void matrix_assign_functor(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
 	F f,
 	row_major, column_major,dense_tag, dense_tag
@@ -323,7 +377,7 @@ void matrix_assign_functor(
 //dense-sparse case
 template<class F,class M, class E>
 void matrix_assign_functor(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
 	F f,
 	row_major, column_major,dense_tag, sparse_tag
@@ -334,24 +388,10 @@ void matrix_assign_functor(
 	}
 }
 
-//sparse-dense case
-template<class F,class M, class E>
-void matrix_assign_functor(
-	matrix_expression<M, cpu_tag> &m,
-	matrix_expression<E, cpu_tag> const& e,
-	F f,
-	row_major, column_major, sparse_tag, dense_tag
-) {
-	for(std::size_t i = 0; i != m().size1(); ++i){
-		auto rowM = row(m,i);
-		kernels::assign(rowM,row(e,i),f);
-	}
-}
-
 //sparse-sparse
 template<class F,class M, class E>
 void matrix_assign_functor(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
 	F f,
 	row_major, column_major,sparse_tag t,sparse_tag
@@ -394,7 +434,7 @@ void matrix_assign_functor(
 		//~ //todo pre-reserve enough space in the row of m()
 		//~ //merge both rows with f as functor
 		//~ typename M::row_iterator it = m().row_begin(row);
-		//~ while(it != m().row_end(row) && elem != elem_end && elem->i == row) {
+		//~ while(it != m().row_end(row)& & elem != elem_end& & elem->i == row) {
 			//~ size_type it_index = it.index();
 			//~ size_type elem_index = elem->j;
 			//~ if (it_index == elem_index) {
@@ -422,10 +462,10 @@ void matrix_assign_functor(
 }
 
 
-//kernels for packed
+//kernels for triangular
 template<class F, class M, class E, class Triangular, class Tag1, class Tag2>
 void matrix_assign_functor(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
 	F f,
 	triangular<row_major,Triangular>, triangular<row_major,Triangular>,
@@ -450,7 +490,7 @@ void matrix_assign_functor(
 //todo: this is suboptimal as we do strided access!!!!
 template<class F, class M, class E, class Triangular, class Tag1, class Tag2>
 void matrix_assign_functor(
-	matrix_expression<M, cpu_tag> &m,
+	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
 	F f,
 	triangular<row_major,Triangular>, triangular<column_major,Triangular>,

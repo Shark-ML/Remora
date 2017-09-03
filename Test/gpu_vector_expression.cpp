@@ -3,9 +3,8 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/vector_expression.hpp>
-#include <remora/vector.hpp>
-#include <remora/gpu/vector.hpp>
-#include <remora/gpu/copy.hpp>
+#include <remora/dense.hpp>
+#include <remora/device_copy.hpp>
 
 using namespace remora;
 

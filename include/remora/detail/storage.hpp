@@ -34,6 +34,7 @@
 #define REMORA_DETAIL_STORAGE_HPP
 
 #include "structure.hpp"
+#include <type_traits>
 
 namespace remora{
 	
@@ -76,6 +77,13 @@ struct dense_matrix_storage{
 		dense_vector_storage<T, dense_tag>
 	>{};
 	
+	template<class O>
+	struct rows_storage: public std::conditional<
+		std::is_same<O,row_major>::value,
+		dense_matrix_storage<T, Tag>,
+		dense_matrix_storage<T, dense_tag>
+	>{};
+	
 	typedef dense_vector_storage<T, dense_tag> diag_storage;
 	typedef dense_matrix_storage<T, dense_tag> sub_region_storage;
 	
@@ -98,12 +106,22 @@ struct dense_matrix_storage{
 	}
 	
 	template<class Orientation>
+	typename rows_storage<Orientation>::type sub_rows(std::size_t offset, Orientation) const{
+		std::size_t stride = Orientation::index_M(leading_dimension,(std::size_t)1);
+		return {values + offset * stride, leading_dimension};
+	}
+	
+	template<class Orientation>
 	typename row_storage<Orientation>::type row(std::size_t i, Orientation) const{
 		return {values + i * Orientation::index_M(leading_dimension,(std::size_t)1), Orientation::index_m(leading_dimension,(std::size_t)1)};
 	}
 	
 	diag_storage diag() const{
 		return {values, leading_dimension+1};
+	}
+	
+	dense_vector_storage<T, continuous_dense_tag> linear() const{
+		return {values, 1};
 	}
 };
 

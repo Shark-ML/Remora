@@ -3,12 +3,8 @@
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/mpl/list.hpp>
 
-#include <remora/io.hpp>
-#include <iostream>
-
 #include <remora/kernels/conv2d.hpp>
-#include <remora/matrix_proxy.hpp>//fixme: required by assign :(
-#include <remora/matrix.hpp>
+#include <remora/dense.hpp>
 #include <remora/vector_expression.hpp>
 
 using namespace remora;

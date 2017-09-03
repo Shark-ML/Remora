@@ -2,9 +2,9 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <remora/vector_proxy.hpp>
-#include <remora/vector.hpp>
-#include <remora/vector_sparse.hpp>
+#include <remora/proxy_expressions.hpp>
+#include <remora/dense.hpp>
+//~ #include <remora/vector_sparse.hpp>
 
 using namespace remora;
 
@@ -60,7 +60,7 @@ std::size_t Dimensions = 8;
 struct VectorProxyFixture
 {
 	vector<double> denseData;
-	compressed_vector<double> compressedData;
+	//~ compressed_vector<double> compressedData;
 	
 	VectorProxyFixture():denseData(Dimensions){
 		for(std::size_t i = 0; i!= Dimensions;++i){
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Subrange ){
 			//assignment using op() and iterators
 			{
 				vector<double> newData(Dimensions,1.0);
-				vector_range<vector<double> > rangeTest = subrange(newData,rangeBegin,rangeEnd);
+				auto rangeTest = subrange(newData,rangeBegin,rangeEnd);
 				checkDenseVectorAssignment(rangeTest,vTest);//cehcks op() and iterators for assignment
 				
 				//check that after assignment all elements outside the range are still intact
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Subrange ){
 			{
 			
 				vector<double> newData(Dimensions,1.0);
-				vector_range<vector<double> > rangeTest = subrange(newData,rangeBegin,rangeEnd);
+				auto rangeTest = subrange(newData,rangeBegin,rangeEnd);
 				
 				rangeTest.clear();
 				for(std::size_t i = 0; i != size; ++i){

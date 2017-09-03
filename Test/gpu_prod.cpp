@@ -3,8 +3,8 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/matrix_expression.hpp>
-#include <remora/vector.hpp>
-#include <remora/matrix.hpp>
+#include <remora/dense.hpp>
+#include <remora/device_copy.hpp>
 
 #include <iostream>
 using namespace remora;
@@ -55,8 +55,6 @@ BOOST_AUTO_TEST_CASE( Remora_gpu_prod_vector_dense ){
 	vector<float, gpu_tag> arg2 = copy_to_gpu(arg2_cpu);
 	std::cout<<"\nchecking dense matrix-vector plusassign multiply"<<std::endl;
     
-    matrix_transpose<matrix<float,row_major, gpu_tag> > t = trans(arg1rm);
-    ExpressionToFunctor<decltype(t)>::transform(t);
 	//test first expressions of the form A += alpha*B*C 
 	{
 		std::cout<<"row major Ax"<<std::endl;

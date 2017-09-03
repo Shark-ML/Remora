@@ -98,10 +98,10 @@ public:
 
 	// Iterator types
 	typedef typename device_traits<device_type>:: template transform_iterator<
-		typename E::const_row_iterator, functor_type
+		typename expression_closure_type::const_row_iterator, functor_type
 	>::type const_row_iterator;
 	typedef typename device_traits<device_type>:: template transform_iterator<
-		typename E::const_column_iterator, functor_type
+		typename expression_closure_type::const_column_iterator, functor_type
 	>::type const_column_iterator;
 	typedef const_row_iterator row_iterator;
 	typedef const_column_iterator column_iterator;
@@ -205,13 +205,13 @@ public:
 
 public:
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
-		typename E1::const_row_iterator,
-		typename E2::const_row_iterator,
+		typename lhs_closure_type::const_row_iterator,
+		typename rhs_closure_type::const_row_iterator,
 		functor_type
 	>::type const_row_iterator;
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
-		typename E1::const_column_iterator,
-		typename E2::const_column_iterator,
+		typename lhs_closure_type::const_column_iterator,
+		typename rhs_closure_type::const_column_iterator,
 		functor_type
 	>::type const_column_iterator;
 	typedef const_row_iterator row_iterator;
@@ -509,8 +509,8 @@ public:
 	}
 
 	// Iterator types
-	typedef typename device_traits<device_type>:: template transform_iterator<typename E::const_row_iterator, F>::type const_row_iterator;
-	typedef typename device_traits<device_type>:: template transform_iterator<typename E::const_column_iterator, F>::type const_column_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename expression_closure_type::const_row_iterator, F>::type const_row_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename expression_closure_type::const_column_iterator, F>::type const_column_iterator;
 	typedef const_row_iterator row_iterator;
 	typedef const_column_iterator column_iterator;
 	
@@ -536,8 +536,6 @@ private:
 template<class E1, class E2, class F>
 class matrix_binary:public matrix_expression<matrix_binary<E1, E2, F>, typename E1::device_type > {
 public:
-	typedef E1 lhs_type;
-	typedef E2 rhs_type;
 	typedef typename E1::const_closure_type lhs_closure_type;
 	typedef typename E2::const_closure_type rhs_closure_type;
 
@@ -609,10 +607,10 @@ public:
 	}
 	
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
-		typename E1::const_row_iterator,typename E2::const_row_iterator,functor_type
+		typename lhs_closure_type::const_row_iterator,typename rhs_closure_type::const_row_iterator,functor_type
 	>::type const_row_iterator;
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
-		typename E1::const_column_iterator,typename E2::const_column_iterator,functor_type
+		typename lhs_closure_type::const_column_iterator,typename rhs_closure_type::const_column_iterator,functor_type
 	>::type const_column_iterator;
 	typedef const_row_iterator row_iterator;
 	typedef const_column_iterator column_iterator;
@@ -715,8 +713,8 @@ public:
 		plus_assign(X, e, alpha);
 	}
 
-	typedef typename device_traits<device_type>:: template transform_iterator<typename E2::const_iterator,functor_type>::type const_row_iterator;
-	typedef typename device_traits<device_type>:: template transform_iterator<typename E1::const_iterator,functor_type>::type const_column_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename rhs_closure_type::const_iterator,functor_type>::type const_row_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename lhs_closure_type::const_iterator,functor_type>::type const_column_iterator;
 	typedef const_row_iterator row_iterator;
 	typedef const_column_iterator column_iterator;
 	
@@ -948,9 +946,9 @@ public:
 		return expression().raw_storage_type();
 	}
 	
-	typedef typename M::const_row_iterator row_iterator;
+	typedef typename matrix_closure_type::const_row_iterator row_iterator;
 	typedef row_iterator const_row_iterator;
-	typedef typename M::const_column_iterator column_iterator;
+	typedef typename matrix_closure_type::const_column_iterator column_iterator;
 	typedef column_iterator const_column_iterator;
 private:
 	matrix_closure_type m_expression;

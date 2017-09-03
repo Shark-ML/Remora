@@ -3,8 +3,8 @@
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/mpl/list.hpp>
 
-#include <remora/matrix.hpp>
-#include <remora/vector.hpp>
+#include <remora/dense.hpp>
+#include <remora/device_copy.hpp>
 #include <remora/matrix_expression.hpp>
 
 #include <iostream>

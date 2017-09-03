@@ -4,7 +4,8 @@
 
 #define BOOST_COMPUTE_DEBUG_KERNEL_COMPILATION
 #include <remora/solve.hpp>
-#include <remora/matrix.hpp>
+#include <remora/dense.hpp>
+#include <remora/device_copy.hpp>
 #include <remora/matrix_expression.hpp>
 #include <remora/vector_expression.hpp>
 
@@ -42,60 +43,60 @@ BOOST_AUTO_TEST_CASE( Solve_Vector ){
 	std::cout<<"left - lower"<<std::endl;
 	{
 		vector<float, gpu_tag> testResult = solve(A,b, lower(), left());
-		vector<float> result = copy_to_cpu(triangular_prod<lower>(A,testResult));
-		float error = norm_inf(result-b_cpu);
+		vector<float, gpu_tag> result = triangular_prod<lower>(A,testResult);
+		float error = norm_inf(result-b);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	std::cout<<"right - lower"<<std::endl;
 	{
 		vector<float, gpu_tag> testResult = solve(A,b, lower(), right());
-		vector<float> result = copy_to_cpu(triangular_prod<upper>(Aupper,testResult));
-		float error = norm_inf(result-b_cpu);
+		vector<float, gpu_tag> result = triangular_prod<upper>(Aupper,testResult);
+		float error = norm_inf(result-b);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	
 	std::cout<<"left - unit_lower"<<std::endl;
 	{
 		vector<float, gpu_tag> testResult = solve(A,b, unit_lower(), left());
-		vector<float> result = copy_to_cpu(triangular_prod<unit_lower>(A,testResult));
-		float error = norm_inf(result-b_cpu);
+		vector<float, gpu_tag> result = triangular_prod<unit_lower>(A,testResult);
+		float error = norm_inf(result-b);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	std::cout<<"right - unit_lower"<<std::endl;
 	{
 		vector<float, gpu_tag> testResult = solve(A,b, unit_lower(), right());
-		vector<float> result = copy_to_cpu(triangular_prod<unit_upper>(Aupper,testResult));
-		float error = norm_inf(result-b_cpu);
+		vector<float, gpu_tag> result = triangular_prod<unit_upper>(Aupper,testResult);
+		float error = norm_inf(result-b);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	
 	std::cout<<"left - upper"<<std::endl;
 	{
 		vector<float, gpu_tag> testResult = solve(Aupper,b, upper(), left());
-		vector<float> result = copy_to_cpu(triangular_prod<upper>(Aupper,testResult));
-		float error = norm_inf(result-b_cpu);
+		vector<float, gpu_tag> result = triangular_prod<upper>(Aupper,testResult);
+		float error = norm_inf(result-b);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	std::cout<<"right - upper"<<std::endl;
 	{
 		vector<float, gpu_tag> testResult = solve(Aupper,b, upper(), right());
-		vector<float> result = copy_to_cpu(triangular_prod<lower>(A,testResult));
-		float error = norm_inf(result-b_cpu);
+		vector<float, gpu_tag> result = triangular_prod<lower>(A,testResult);
+		float error = norm_inf(result-b);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	
 	std::cout<<"left - unit_upper"<<std::endl;
 	{
 		vector<float, gpu_tag> testResult = solve(Aupper,b, unit_upper(), left());
-		vector<float> result = copy_to_cpu(triangular_prod<unit_upper>(Aupper,testResult));
-		float error = norm_inf(result-b_cpu);
+		vector<float, gpu_tag> result = triangular_prod<unit_upper>(Aupper,testResult);
+		float error = norm_inf(result-b);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	std::cout<<"right - unit_upper"<<std::endl;
 	{
 		vector<float, gpu_tag> testResult = solve(Aupper,b, unit_upper(), right());
-		vector<float> result = copy_to_cpu(triangular_prod<unit_lower>(A,testResult));
-		float error = norm_inf(result-b_cpu);
+		vector<float, gpu_tag> result = triangular_prod<unit_lower>(A,testResult);
+		float error = norm_inf(result-b);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 }
@@ -137,8 +138,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(GPU_Solve_Matrix, Orientation,result_orientations)
 	std::cout<<"right - lower"<<std::endl;
 	{
 		matrix<float,Orientation, gpu_tag> testResult = solve(A,Bright, lower(), right());
-		matrix<float, row_major, gpu_tag> result = trans(matrix<float, row_major, gpu_tag>(triangular_prod<upper>(Aupper,trans(testResult))));
-		float error = norm_inf(result-Bright);
+		matrix<float, row_major, gpu_tag> result = triangular_prod<upper>(Aupper,trans(testResult));
+		float error = norm_inf(trans(result)-Bright);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	std::cout<<"left - unit_lower"<<std::endl;
@@ -151,8 +152,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(GPU_Solve_Matrix, Orientation,result_orientations)
 	std::cout<<"right - unit_lower"<<std::endl;
 	{
 		matrix<float,Orientation, gpu_tag> testResult = solve(A,Bright, unit_lower(), right());
-		matrix<float,row_major, gpu_tag> result = trans(matrix<float, row_major, gpu_tag>(triangular_prod<unit_upper>(Aupper,trans(testResult))));
-		float error = norm_inf(result-Bright);
+		matrix<float,row_major, gpu_tag> result = triangular_prod<unit_upper>(Aupper,trans(testResult));
+		float error = norm_inf(trans(result) - Bright);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	
@@ -166,8 +167,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(GPU_Solve_Matrix, Orientation,result_orientations)
 	std::cout<<"right - upper"<<std::endl;
 	{
 		matrix<float,Orientation, gpu_tag> testResult = solve(Aupper,Bright, upper(), right());
-		matrix<float, row_major, gpu_tag> result = trans(matrix<float, row_major, gpu_tag>(triangular_prod<lower>(A,trans(testResult))));
-		float error = norm_inf(result-Bright);
+		matrix<float, row_major, gpu_tag> result = triangular_prod<lower>(A,trans(testResult));
+		float error = norm_inf(trans(result) - Bright);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	std::cout<<"left - unit_upper"<<std::endl;
@@ -180,8 +181,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(GPU_Solve_Matrix, Orientation,result_orientations)
 	std::cout<<"right - unit_upper"<<std::endl;
 	{
 		matrix<float,Orientation, gpu_tag> testResult = solve(Aupper,Bright, unit_upper(), right());
-		matrix<float,row_major, gpu_tag> result = trans(matrix<float, row_major, gpu_tag>(triangular_prod<unit_lower>(A,trans(testResult))));
-		float error = norm_inf(result-Bright);
+		matrix<float,row_major, gpu_tag> result = triangular_prod<unit_lower>(A,trans(testResult));
+		float error = norm_inf(trans(result) - Bright);
 		BOOST_CHECK_SMALL(error, 1.e-5f);
 	}
 	

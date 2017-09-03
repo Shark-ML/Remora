@@ -619,18 +619,6 @@ typename std::enable_if<
 	return repeat(t,1, A().size2()) & A;
 }
 
-
-//copy between cpu and device
-template<class E>
-E const&  copy_to_cpu(matrix_expression<E, cpu_tag> const& e){
-	return e();
 }
-
-}
-
-#ifdef REMORA_USE_GPU
-#include "gpu/copy.hpp"
-#endif
-
 
 #endif

@@ -3,9 +3,9 @@
 #include <boost/test/floating_point_comparison.hpp>
 
 #include <remora/kernels/getrf.hpp>
-#include <remora/matrix.hpp>
+#include <remora/dense.hpp>
 #include <remora/matrix_expression.hpp>
-#include <remora/matrix_proxy.hpp>
+
 #include <iostream>
 #include <boost/mpl/list.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
