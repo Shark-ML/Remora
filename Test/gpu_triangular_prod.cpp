@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(Remora_triangular_prod_matrix_matrix, Orientation,
 	matrix<float, column_major, gpu_tag> arg1lowercm = copy_to_gpu(arg1lowercm_cpu);
 	matrix<float, row_major, gpu_tag> arg1upperrm = copy_to_gpu(arg1upperrm_cpu);
 	matrix<float, row_major, gpu_tag> arg1uppercm = copy_to_gpu(arg1uppercm_cpu);
-	matrix<float, row_major, gpu_tag> arg2 = copy_to_gpu(arg2_cpu);
+	matrix<float, column_major, gpu_tag> arg2 = copy_to_gpu(arg2_cpu);
 
 	std::cout << "\nchecking matrix-matrix prod V=AX non-unit" << std::endl;
 	{

@@ -906,7 +906,7 @@ public:
 	typedef typename M::value_type value_type;
 	typedef typename M::const_reference const_reference;
 	typedef typename reference<M>::type reference;
-	typedef dense_triangular_proxy<typename const_expression<M>::type,TriangularType> const_closure_type;
+	typedef dense_triangular_proxy<typename M::const_closure_type,TriangularType> const_closure_type;
 	typedef dense_triangular_proxy<M,TriangularType> closure_type;
 
 	//~ typedef typename M::storage_type storage_type;
@@ -1033,13 +1033,14 @@ private:
 	//trmv
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha, triangular_structure, dense_tag)const{
-		noalias(X) = eval_block(alpha * m_rhs);
+		assign(X, m_rhs, alpha);
 		kernels::trmm<MatA::orientation::is_upper, MatA::orientation::is_unit>(m_lhs.expression(), X);
 	}
 	template<class MatX>
 	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha, triangular_structure, dense_tag )const{
 		//computation of tpmv is in-place so we need a temporary for plus-assign.
-		typename matrix_temporary<MatX>::type temp( eval_block(alpha * m_rhs));
+		typename matrix_temporary<MatX>::type temp(X().size1(),X().size2());
+		assign(temp, m_rhs, alpha);
 		kernels::trmm<MatA::orientation::is_upper, MatA::orientation::is_unit>(m_lhs.expression(), temp);
 		noalias(X) += temp;
 	}

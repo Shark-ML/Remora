@@ -598,7 +598,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_norm_sqr )
 		result +=x_cpu(i)*x_cpu(i);
 	}
 	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
-	BOOST_CHECK_CLOSE(norm_sqr(x),result,1.e-10);
+	BOOST_CHECK_CLOSE(norm_sqr(x),result,1.e-4);
 }
 BOOST_AUTO_TEST_CASE( Remora_Vector_norm_2 )
 {
@@ -610,7 +610,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_norm_2 )
 	}
 	result = std::sqrt(result);
 	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
-	BOOST_CHECK_CLOSE(norm_2(x),result,1.e-10);
+	BOOST_CHECK_CLOSE(norm_2(x),result,1.e-4);
 }
 BOOST_AUTO_TEST_CASE( Remora_Vector_norm_inf )
 {

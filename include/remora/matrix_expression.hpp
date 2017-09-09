@@ -334,13 +334,13 @@ auto operator%(matrix_expression<MatA, Device> const& A,vector_expression<VecV, 
 ///
 ///Example: x += triangular_prod<lower>(A,v);
 template<class TriangularType, class MatA, class VecV, class Device>
-matrix_vector_prod<detail::dense_triangular_proxy<typename const_expression<MatA>::type,TriangularType> ,VecV>
+matrix_vector_prod<detail::dense_triangular_proxy<typename MatA::const_closure_type,TriangularType> ,VecV>
 triangular_prod(
 	matrix_expression<MatA, Device> const& A,
 	vector_expression<VecV, Device>& v
 ) {
 	REMORA_SIZE_CHECK(A().size2() == v().size());
-	typedef detail::dense_triangular_proxy<typename const_expression<MatA>::type,TriangularType> Wrapper;
+	typedef detail::dense_triangular_proxy<typename MatA::const_closure_type,TriangularType> Wrapper;
 	return matrix_vector_prod<Wrapper ,VecV>(Wrapper(A()), v());
 }
 
@@ -377,7 +377,7 @@ auto operator%(
 ///
 ///Example: x += triangular_prod<lower>(A,v);
 template<class TriangularType, class MatA, class MatB, class Device>
-matrix_matrix_prod<detail::dense_triangular_proxy<typename const_expression<MatA>::type,TriangularType> ,MatB>
+matrix_matrix_prod<detail::dense_triangular_proxy<typename MatA::const_closure_type,TriangularType> ,MatB>
 triangular_prod(
 	matrix_expression<MatA, Device> const& A,
 	matrix_expression<MatB, Device> const& B
@@ -385,7 +385,7 @@ triangular_prod(
 	REMORA_SIZE_CHECK(A().size2() == B().size1());
 	static_assert(std::is_base_of<linear_structure, typename MatA::orientation>::value, "A must be linearly stored");
 	static_assert(std::is_base_of<linear_structure, typename MatB::orientation>::value, "B must be linearly stored");
-	typedef detail::dense_triangular_proxy<typename const_expression<MatA>::type,TriangularType> Wrapper;
+	typedef detail::dense_triangular_proxy<typename MatA::const_closure_type,TriangularType> Wrapper;
 	return matrix_matrix_prod<Wrapper ,MatB>(Wrapper(A()), B());
 }
 

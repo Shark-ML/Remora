@@ -23,7 +23,7 @@ void checkMatrixVectorMultiply(M const& arg1_gpu, V const& arg2_gpu, Result cons
 		for(std::size_t k = 0; k != arg1.size2(); ++k){
 			test_result += factor * arg1(i,k)*arg2(k);
 		}
-		BOOST_CHECK_CLOSE(result(i), test_result,1.e-4);
+		BOOST_CHECK_CLOSE(result(i), test_result,1.e-2);
 	}
 }
 
@@ -124,7 +124,7 @@ void checkMatrixMatrixMultiply(Arg1 const& arg1_gpu, Arg2 const& arg2_gpu, Resul
 			for(std::size_t k = 0; k != arg1.size2(); ++k){
 				 test_result += factor * arg1(i,k)*arg2(k,j);
 			}
-			BOOST_CHECK_CLOSE(result(i,j), test_result,1.e-4);
+			BOOST_CHECK_CLOSE(result(i,j), test_result,1.e-2);
 		}
 	}
 }

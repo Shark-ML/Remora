@@ -38,10 +38,18 @@ namespace remora{namespace bindings{
 
 template<class F, class V>
 void vector_fold(vector_expression<V, gpu_tag> const& v, typename F::result_type& value, dense_tag) { 
-	boost::compute::array<typename F::result_type,1> val;
-	boost::compute::copy_n(&value,1,val.begin(), v().queue());
-	boost::compute::reduce(v().begin(), v().end(),  val.begin(), F(), v().queue());
-	boost::compute::copy_n(val.begin(),1,&value, v().queue());
+	//~ boost::compute::array<typename F::result_type,1> val;
+	//~ boost::compute::copy_n(&value,1,val.begin(), v().queue());
+	//~ boost::compute::reduce(v().begin(), v().end(),  val.begin(), F(), v().queue()); //this fails due to a bug in strided iterator. or somewhere down there.
+	//~ boost::compute::copy_n(val.begin(),1,&value, v().queue());
+	//this is the implementation used above minus the errornous computation of size
+	size_t block_size = 256;
+
+	auto results = boost::compute::detail::block_reduce(v().begin(),v().size(),block_size,F(),v().queue());
+	if(results.size() > 1){
+		boost::compute::detail::inplace_reduce(results.begin(),results.end(),F(),v().queue());
+	}
+	boost::compute::copy_n(results.begin(),1,&value, v().queue());
 }
 
 

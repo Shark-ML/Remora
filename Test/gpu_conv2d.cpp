@@ -5,6 +5,7 @@
 
 #include <remora/kernels/conv2d.hpp>
 #include <remora/dense.hpp>
+#include <remora/device_copy.hpp>
 #include <remora/vector_expression.hpp>
 
 using namespace remora;

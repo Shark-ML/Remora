@@ -105,12 +105,11 @@ public:
 		auto storageE = e_eval.raw_storage();
 		auto& buffer = storageE.buffer;
 		//map buffer to host memory
-		auto p = (typename E::value_type*) m_expression.queue().enqueue_map_buffer(
+		auto p = (value_type*) m_expression.queue().enqueue_map_buffer(
 			buffer, CL_MAP_READ, 0, buffer.size()
 		);
 		//adapt host memory buffer to vector and assign
 		auto adaptE = adapt_vector(size(), p + storageE.offset, storageE.stride);
-		
 		plus_assign(x,adaptE, alpha);
 		
 		//unmap memory

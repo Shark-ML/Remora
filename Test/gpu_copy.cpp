@@ -2,6 +2,8 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
+#include <iostream>
+#include <remora/io.hpp>
 #include <remora/device_copy.hpp>
 #include <remora/dense.hpp>
 
@@ -35,7 +37,7 @@ BOOST_AUTO_TEST_SUITE (Remora_gpu_copy)
 BOOST_AUTO_TEST_CASE( Remora_Vector_Copy ){
 	std::cout<<"testing vector copy to gpu and back"<<std::endl;
 	vector<float> source(100);
-	for(std::size_t i = 0; i != 100; ++i){
+	for(std::size_t i = 0; i != source.size(); ++i){
 		source(i) = 2*i+1;
 	}
 	vector<float, gpu_tag> target_gpu = copy_to_gpu(source);
@@ -46,14 +48,13 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Copy ){
 BOOST_AUTO_TEST_CASE( Remora_Vector_Copy_Plus_Assign ){
 	std::cout<<"testing vector assignment to gpu and back"<<std::endl;
 	vector<float> source(100);
-	for(std::size_t i = 0; i != 100; ++i){
+	for(std::size_t i = 0; i != source.size(); ++i){
 		source(i) = 2*i+1;
 	}
-	vector<float, gpu_tag> target_gpu(100,1.0);
+	vector<float, gpu_tag> target_gpu(source.size(),1.0);
 	noalias(target_gpu) += copy_to_gpu(source);
-	vector<float> target_cpu(100,-2.0);
+	vector<float> target_cpu(source.size(),-1.0);
 	noalias(target_cpu) += copy_to_cpu(target_gpu);
-	
 	checkVectorEqual(source , target_cpu);
 }
 
@@ -105,7 +106,7 @@ BOOST_AUTO_TEST_CASE( Remora_Matrix_Copy_Plus_Assign ){
 	{
 		matrix<float,row_major, gpu_tag> target_gpu(32,16,1.0);
 		noalias(target_gpu) += copy_to_gpu(source);
-		matrix<float,row_major> target_cpu(32,16,-2.0);
+		matrix<float,row_major> target_cpu(32,16,-1.0);
 		noalias(target_cpu) += copy_to_cpu(target_gpu);
 		checkMatrixEqual(source , target_cpu);
 	}
@@ -113,7 +114,7 @@ BOOST_AUTO_TEST_CASE( Remora_Matrix_Copy_Plus_Assign ){
 	{
 		matrix<float,column_major, gpu_tag> target_gpu(32,16,1.0);
 		noalias(target_gpu) += copy_to_gpu(source);
-		matrix<float,column_major> target_cpu(32,16,-2.0);
+		matrix<float,column_major> target_cpu(32,16,-1.0);
 		noalias(target_cpu) += copy_to_cpu(target_gpu);
 		checkMatrixEqual(source , target_cpu);	
 	}
@@ -121,7 +122,7 @@ BOOST_AUTO_TEST_CASE( Remora_Matrix_Copy_Plus_Assign ){
 	{
 		matrix<float,column_major, gpu_tag> target_gpu(32,16,1.0);
 		noalias(target_gpu) += copy_to_gpu(source_cm);
-		matrix<float,row_major> target_cpu(32,16,-2.0);
+		matrix<float,row_major> target_cpu(32,16,-1.0);
 		noalias(target_cpu) += copy_to_cpu(target_gpu);
 		checkMatrixEqual(source , target_cpu);
 	}
@@ -129,7 +130,7 @@ BOOST_AUTO_TEST_CASE( Remora_Matrix_Copy_Plus_Assign ){
 	{
 		matrix<float,row_major, gpu_tag> target_gpu(32,16,1.0);
 		noalias(target_gpu) += copy_to_gpu(source_cm);
-		matrix<float,column_major> target_cpu(32,16,-2.0);
+		matrix<float,column_major> target_cpu(32,16,-1.0);
 		noalias(target_cpu) += copy_to_cpu(target_gpu);
 		checkMatrixEqual(source , target_cpu);
 	}

@@ -33,6 +33,7 @@
 #include <boost/compute/kernel.hpp>
 #include <boost/compute/detail/meta_kernel.hpp>
 
+#include <iostream>
 namespace remora{namespace bindings{
 	
 	
@@ -72,7 +73,7 @@ void matrix_assign(
 	Orientation o
 ){
 	static_assert(std::is_base_of<dense_tag, typename M::storage_type::storage_tag>::value, "target must have dense storage for assignment");
-    auto f = device_traits<gpu_tag>::make_bind_second(F(), t);
+	auto f = device_traits<gpu_tag>::make_bind_second(F(), t);
 	matrix_apply(m,f,o);
 }
 
@@ -94,8 +95,8 @@ void matrix_assign_functor(
 	auto e = k.register_args(to_functor(e_unreg));
 	auto f = k.register_args(f_unreg);
 
-    auto id0 = k.expr<cl_uint>("get_global_id(0)");
-    auto id1 = k.expr<cl_uint>("get_global_id(1)");
+	auto id0 = k.expr<cl_uint>("get_global_id(0)");
+	auto id1 = k.expr<cl_uint>("get_global_id(1)");
 	k<< m(id0,id1) << "=" << f(m(id0,id1),e(id0,id1))<<";\n";
 	//enqueue kernel
 	boost::compute::kernel kernel = k.compile(m_unreg().queue().get_context());
@@ -111,7 +112,7 @@ void matrix_assign_functor(
 	F f_unreg,
 	row_major, column_major ,dense_tag, dense_tag
 ) {
-    typedef typename M::value_type value_type;
+	typedef typename M::value_type value_type;
 	std::size_t TILE_DIM = 32;
 	char const* options ="-DTILE_DIM=32ul";
 	//There are usually not enough parallel worker threads in a local group
@@ -119,7 +120,6 @@ void matrix_assign_functor(
 	//BLOCK_COLS are the number of parallel threads reading a column
 	//and must be a divisor of TILE_DIM
 	std::size_t BLOCK_COLS = 8; 
-	
 	
 	//create source
 	gpu::detail::meta_kernel k("blas_matrix_assign_row_col");

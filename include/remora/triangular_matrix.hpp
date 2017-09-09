@@ -498,15 +498,6 @@ private:
 };
 
 template<class T, class Orientation, class TriangularType>
-struct const_expression<triangular_matrix<T,Orientation, TriangularType> >{
-	typedef triangular_matrix<T,Orientation, TriangularType> const type;
-};
-template<class T, class Orientation, class TriangularType>
-struct const_expression<triangular_matrix<T,Orientation, TriangularType> const>{
-	typedef triangular_matrix<T,Orientation, TriangularType> const type;
-};
-
-template<class T, class Orientation, class TriangularType>
 struct matrix_temporary_type<T,triangular<Orientation, TriangularType >,packed_tag, cpu_tag> {
 	typedef triangular_matrix<T,Orientation, TriangularType> type;
 };

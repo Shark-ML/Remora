@@ -133,6 +133,11 @@ struct matrix_temporary_type<T,unknown_orientation,continuous_dense_tag, Device>
 ///////////////////////////////////
 
 namespace detail{
+	
+	
+///////////////////////////////////////////////////
+//////Traits For Proxy Expressions
+///////////////////////////////////////////////////
 
 	
 ////////////////////////VECTOR RANGE//////////////////////
@@ -145,25 +150,6 @@ struct vector_range_optimizer<dense_vector_adaptor<T, Tag, Device> >{
 		return type(storage.sub_region(start), m.queue(), end - start);
 	}
 };
-template<class T, class Device>
-struct vector_range_optimizer<vector<T, Device> >{
-	typedef dense_vector_adaptor<T, continuous_dense_tag, Device> type;
-	
-	static type create(vector<T, Device>& m, std::size_t start, std::size_t end){
-		auto const& storage = m.raw_storage();
-		return type(storage.sub_region(start), m.queue(), end - start);
-	}
-};
-template<class T, class Device>
-struct vector_range_optimizer<vector<T, Device> const >{
-	typedef dense_vector_adaptor<T const, continuous_dense_tag, Device> type;
-	
-	static type create(vector<T, Device> const& m, std::size_t start, std::size_t end){
-		auto const& storage = m.raw_storage();
-		return type(storage.sub_region(start), m.queue(), end - start);
-	}
-};
-
 
 ////////////////////////MATRIX TRANSPOSE//////////////////////
 template<class T, class Orientation, class Tag, class Device>
@@ -175,23 +161,6 @@ struct matrix_transpose_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Devic
 	}
 };
 
-template<class T, class Orientation, class Device>
-struct matrix_transpose_optimizer<matrix<T,Orientation, Device> >{
-	typedef dense_matrix_adaptor<T,typename Orientation::transposed_orientation, continuous_dense_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device>& m){
-		return type(m.raw_storage(), m.queue(), m.size2(), m.size1());
-	}
-};
-template<class T, class Orientation, class Device>
-struct matrix_transpose_optimizer<matrix<T,Orientation, Device> const >{
-	typedef dense_matrix_adaptor<T const,typename Orientation::transposed_orientation, continuous_dense_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device> const& m){
-		return type(m.raw_storage(), m.queue(), m.size2(), m.size1());
-	}
-};
-
 ////////////////////////MATRIX ROW//////////////////////
 template<class T, class Orientation, class Tag, class Device>
 struct matrix_row_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device> >{
@@ -199,36 +168,6 @@ struct matrix_row_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device> >{
 	typedef dense_vector_adaptor<T, proxy_tag, Device> type;
 	
 	static type create(dense_matrix_adaptor<T,Orientation, Tag, Device> const& m, std::size_t i){
-		auto const& storage = m.raw_storage();
-		return type(storage.row(i, Orientation()), m.queue(), m.size2());
-	}
-};
-
-template<class T, class Orientation, class Device>
-struct matrix_row_optimizer<matrix<T,Orientation, Device> >{
-	typedef typename std::conditional<
-		std::is_same<Orientation, row_major>::value,
-		continuous_dense_tag,
-		dense_tag
-	>::type proxy_tag;
-	typedef dense_vector_adaptor<T, proxy_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device>& m, std::size_t i){
-		auto const& storage = m.raw_storage();
-		return type(storage.row(i, Orientation()), m.queue(), m.size2());
-	}
-};
-
-template<class T, class Orientation, class Device>
-struct matrix_row_optimizer<matrix<T,Orientation, Device> const >{
-	typedef typename std::conditional<
-		std::is_same<Orientation, row_major>::value,
-		continuous_dense_tag,
-		dense_tag
-	>::type proxy_tag;
-	typedef dense_vector_adaptor<T const, proxy_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device> const& m, std::size_t i){
 		auto const& storage = m.raw_storage();
 		return type(storage.row(i, Orientation()), m.queue(), m.size2());
 	}
@@ -248,33 +187,6 @@ struct matrix_range_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device> >
 		return type(storage.sub_region(start1, start2, Orientation()), m.queue(), end1-start1, end2-start2);
 	}
 };
-
-template<class T, class Orientation, class Device>
-struct matrix_range_optimizer<matrix<T,Orientation, Device> >{
-	typedef dense_matrix_adaptor<T, Orientation, dense_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device>& m, 
-		std::size_t start1, std::size_t end1,
-		std::size_t start2, std::size_t end2
-	){
-		auto const& storage = m.raw_storage();
-		return type(storage.sub_region(start1, start2, Orientation()), m.queue(), end1-start1, end2-start2);
-	}
-};
-
-template<class T, class Orientation, class Device>
-struct matrix_range_optimizer<matrix<T,Orientation, Device> const >{
-	typedef dense_matrix_adaptor<T const, Orientation, dense_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device> const& m, 
-		std::size_t start1, std::size_t end1,
-		std::size_t start2, std::size_t end2
-	){
-		auto const& storage = m.raw_storage();
-		return type(storage.sub_region(start1, start2, Orientation()), m.queue(), end1-start1, end2-start2);
-	}
-};
-
 ////////////////////////MATRIX ROWS//////////////////////
 template<class T, class Orientation, class Tag, class Device>
 struct matrix_rows_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device> >{
@@ -293,65 +205,12 @@ struct matrix_rows_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device> >{
 	}
 };
 
-template<class T, class Orientation, class Device>
-struct matrix_rows_optimizer<matrix<T,Orientation, Device> >{
-	typedef typename std::conditional<
-		std::is_same<Orientation, row_major>::value,
-		continuous_dense_tag,
-		dense_tag
-	>::type proxy_tag;
-	typedef dense_matrix_adaptor<T, Orientation, proxy_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device>& m, 
-		std::size_t start, std::size_t end
-	){
-		auto const& storage = m.raw_storage();
-		return type(storage.sub_rows(start, Orientation()), m.queue(), end - start, m.size2());
-	}
-};
-
-template<class T, class Orientation, class Device>
-struct matrix_rows_optimizer<matrix<T,Orientation, Device> const >{
-	typedef typename std::conditional<
-		std::is_same<Orientation, row_major>::value,
-		continuous_dense_tag,
-		dense_tag
-	>::type proxy_tag;
-	typedef dense_matrix_adaptor<T const, Orientation, proxy_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device> const& m, 
-		std::size_t start, std::size_t end
-	){
-		auto const& storage = m.raw_storage();
-		return type(storage.sub_rows(start, Orientation()), m.queue(), end - start, m.size2());
-	}
-};
-
-
 ////////////////////////MATRIX DIAGONAL//////////////////////
 template<class T, class Orientation, class Tag, class Device>
 struct matrix_diagonal_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device> >{
 	typedef dense_vector_adaptor<T, dense_tag, Device> type;
 	
 	static type create(dense_matrix_adaptor<T,Orientation, Tag, Device> const& m){
-		return type(m.raw_storage().diag(), m.queue(), std::min(m.size1(), m.size2()));
-	}
-};
-
-template<class T, class Orientation, class Device>
-struct matrix_diagonal_optimizer<matrix<T,Orientation, Device> >{
-	typedef dense_vector_adaptor<T, dense_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device>& m){
-		return type(m.raw_storage().diag(), m.queue(), std::min(m.size1(), m.size2()));
-	}
-};
-
-template<class T, class Orientation, class Device>
-struct matrix_diagonal_optimizer<matrix<T,Orientation, Device> const >{
-	typedef dense_vector_adaptor<T const, dense_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device> const& m){
 		return type(m.raw_storage().diag(), m.queue(), std::min(m.size1(), m.size2()));
 	}
 };
@@ -363,24 +222,6 @@ struct linearized_matrix_optimizer<dense_matrix_adaptor<T,Orientation, continuou
 	typedef dense_vector_adaptor<T, continuous_dense_tag, Device> type;
 	
 	static type create(dense_matrix_adaptor<T,Orientation, continuous_dense_tag, Device> const& m){
-		return type(m.raw_storage().linear(), m.queue(), m.size1() * m.size2());
-	}
-};
-
-template<class T, class Orientation, class Device>
-struct linearized_matrix_optimizer<matrix<T,Orientation, Device> const >{
-	typedef dense_vector_adaptor<T const, continuous_dense_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device> const& m){
-		return type(m.raw_storage().linear(), m.queue(), m.size1() * m.size2());
-	}
-};
-
-template<class T, class Orientation, class Device>
-struct linearized_matrix_optimizer<matrix<T,Orientation, Device> >{
-	typedef dense_vector_adaptor<T, continuous_dense_tag, Device> type;
-	
-	static type create(matrix<T,Orientation, Device>& m){
 		return type(m.raw_storage().linear(), m.queue(), m.size1() * m.size2());
 	}
 };

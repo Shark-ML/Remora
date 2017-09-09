@@ -61,29 +61,23 @@ public:
 
 	// Construction and destruction
 
-	/// \brief Constructor of a vector proxy from a Dense VectorExpression
+	/// \brief Constructor of a vector proxy from a vector
 	///
 	/// Be aware that the expression must live longer than the proxy!
 	/// \param expression The Expression from which to construct the Proxy
-	template<class E>
-	dense_vector_adaptor(vector_expression<E, cpu_tag> const& expression)
-	: m_values(expression().raw_storage().values)
-	, m_size(expression().size())
-	, m_stride(expression().raw_storage().stride){
-		static_assert(std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argument to the given Tag");
-	}
+	dense_vector_adaptor(vector<value_type, cpu_tag> const& expression)
+	: m_values(expression.raw_storage().values)
+	, m_size(expression.size())
+	, m_stride(expression.raw_storage().stride){}
 	
-	/// \brief Constructor of a vector proxy from a Dense VectorExpression
+	/// \brief Constructor of a vector proxy from a vector
 	///
 	/// Be aware that the expression must live longer than the proxy!
 	/// \param expression The Expression from which to construct the Proxy
-	template<class E>
-	dense_vector_adaptor(vector_expression<E,cpu_tag>& expression)
-	: m_values(expression().raw_storage().values)
-	, m_size(expression().size())
-	, m_stride(expression().raw_storage().stride){
-		static_assert(std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argument to the given Tag");
-	}
+	dense_vector_adaptor(vector<value_type, cpu_tag>& expression)
+	: m_values(expression.raw_storage().values)
+	, m_size(expression.size())
+	, m_stride(expression.raw_storage().stride){}
 		
 	/// \brief Constructor of a vector proxy from a block of memory
 	/// \param values the block of memory used
@@ -188,6 +182,7 @@ public:
 	}
 	
 private:
+	dense_vector_adaptor(vector<value_type, cpu_tag>&& expression); // no construction from temporaries
 	T* m_values;
 	size_type m_size;
 	size_type m_stride;
@@ -231,37 +226,31 @@ public:
 		m_stride2 = Orientation::index_m(storage.leading_dimension,1);
 	}
 
-	/// \brief Constructor of a vector proxy from a Dense MatrixExpression
+	/// \brief Constructor of a vector proxy from a Dense matrix
 	///
 	/// Be aware that the expression must live longer than the proxy!
 	/// \param expression Expression from which to construct the Proxy
-	template<class E>
-	dense_matrix_adaptor(matrix_expression<E, cpu_tag> const& expression)
-	: m_size1(expression().size1())
-	, m_size2(expression().size2())
+	dense_matrix_adaptor(matrix<value_type, Orientation, cpu_tag> const& expression)
+	: m_size1(expression.size1())
+	, m_size2(expression.size2())
 	{
-		auto storage_type = expression().raw_storage();
+		auto storage_type = expression.raw_storage();
 		m_values = storage_type.values;
 		m_stride1 = Orientation::index_M(storage_type.leading_dimension,1);
 		m_stride2 = Orientation::index_m(storage_type.leading_dimension,1);
-		static_assert(std::is_same<typename E::orientation,orientation>::value, "matrix orientation mismatch");
-		static_assert(std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argument to the given Tag");
 	}
 
-	/// \brief Constructor of a vector proxy from a Dense MatrixExpression
+	/// \brief Constructor of a vector proxy from a Dense matrix
 	///
 	/// Be aware that the expression must live longer than the proxy!
 	/// \param expression Expression from which to construct the Proxy
-	template<class E>
-	dense_matrix_adaptor(matrix_expression<E, cpu_tag>& expression)
-	: m_size1(expression().size1())
-	, m_size2(expression().size2()){
-		auto storage_type = expression().raw_storage();
+	dense_matrix_adaptor(matrix<value_type, Orientation, cpu_tag>& expression)
+	: m_size1(expression.size1())
+	, m_size2(expression.size2()){
+		auto storage_type = expression.raw_storage();
 		m_values = storage_type.values;
 		m_stride1 = Orientation::index_M(storage_type.leading_dimension,1);
 		m_stride2 = Orientation::index_m(storage_type.leading_dimension,1);
-		static_assert(std::is_same<typename E::orientation,orientation>::value, "matrix orientation mismatch");
-		static_assert(std::is_convertible<typename E::storage_type::storage_tag,Tag>::value, "Can not convert storage type of argument to the given Tag");
 	}
 		
 	/// \brief Constructor of a vector proxy from a block of memory
@@ -286,28 +275,6 @@ public:
 		if(!m_stride2)
 			m_stride2= Orientation::stride2(m_size1,m_size2);
 	}
-	
-	
-	template<class E>
-	dense_matrix_adaptor(vector_expression<E, cpu_tag> const& expression, std::size_t size1, std::size_t size2)
-	: m_values(expression().raw_storage().values)
-	, m_size1(size1)
-	, m_size2(size2)
-	{
-		m_stride1= Orientation::stride1(m_size1,m_size2);
-		m_stride2= Orientation::stride2(m_size1,m_size2);
-	}
-	
-	template<class E>
-	dense_matrix_adaptor(vector_expression<E, cpu_tag>& expression, std::size_t size1, std::size_t size2)
-	: m_values(expression().raw_storage().values)
-	, m_size1(size1)
-	, m_size2(size2)
-	{
-		m_stride1= Orientation::stride1(m_size1,m_size2);
-		m_stride2= Orientation::stride2(m_size1,m_size2);
-	}
-	
 	
 	// ---------
 	// Dense low level interface
@@ -422,6 +389,7 @@ public:
 		}
 	}
 private:
+	dense_matrix_adaptor(matrix<value_type, Orientation, cpu_tag>&& expression); //no construction from temporary matrix
 	T* m_values;
 	size_type m_size1;
 	size_type m_size2;

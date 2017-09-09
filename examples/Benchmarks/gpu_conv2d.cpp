@@ -1,5 +1,6 @@
 #include <remora/kernels/conv2d.hpp>
 #include <remora/remora.hpp>
+#include <remora/device_copy.hpp>
 #include "Timer.hpp"
 #include <iostream>
 using namespace remora;

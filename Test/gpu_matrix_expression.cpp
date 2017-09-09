@@ -46,8 +46,8 @@ void checkDenseExpressionEquality(
 		matrix<float, column_major, gpu_tag> res2_gpu(result.size1(),result.size2(),0.1f);
 		op_gpu().assign_to(res1_gpu,2.0f);
 		op_gpu().plus_assign_to(res2_gpu,2.0f);
-		matrix<float> res1 = copy_to_cpu(res1_gpu);
-		matrix<float> res2 = copy_to_cpu(res2_gpu);
+		matrix<float, column_major> res1 = copy_to_cpu(res1_gpu);
+		matrix<float, column_major> res2 = copy_to_cpu(res2_gpu);
 		for(std::size_t i = 0; i != op.size1(); ++i){
 			for(std::size_t j = 0; j != op.size2(); ++j){
 				BOOST_CHECK_CLOSE(2.0f * result(i,j), res1(i,j),1.e-3);

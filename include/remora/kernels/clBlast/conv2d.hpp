@@ -33,7 +33,6 @@
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
-#include "../default/simple_proxies.hpp"
 #include <clblast.h>
 namespace remora{namespace bindings {
 		

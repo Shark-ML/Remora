@@ -59,14 +59,6 @@ struct closure: public std::conditional<
 	typename E::const_closure_type,
 	typename E::closure_type
 >{};
-	
-template<class E>
-struct const_expression : public std::conditional<
-	std::is_base_of<vector_container<typename std::remove_const<E>::type,typename E::device_type>, E >::value
-	||std::is_base_of<matrix_container<typename std::remove_const<E>::type,typename E::device_type>, E >::value,
-	E const,
-	typename E::const_closure_type
->{};
 
 template<class E>
 struct reference: public std::conditional<

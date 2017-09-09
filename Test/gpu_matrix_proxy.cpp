@@ -2,7 +2,6 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-
 #include <remora/proxy_expressions.hpp>
 #include <remora/dense.hpp>
 #include <remora/device_copy.hpp>
@@ -13,6 +12,8 @@ template<class Operation, class Result>
 void checkDenseMatrixEquality(Operation op_gpu, Result const& result){
 	BOOST_REQUIRE_EQUAL(op_gpu.size1(), result.size1());
 	BOOST_REQUIRE_EQUAL(op_gpu.size2(), result.size2());
+	
+	auto storage = op_gpu.raw_storage();
 	
 	//test copy to cpu, this tests the buffer
 	matrix<float> op = copy_to_cpu(op_gpu);
@@ -139,6 +140,24 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Subrange ){
 			}
 		}
 	}
+}
+
+BOOST_AUTO_TEST_CASE( Remora_Dense_Transpose){
+	{
+		checkDenseMatrixEquality(trans(denseData),trans(denseData_cpu));
+		
+		//now test whether we can assign to a range like this.
+		matrix<float, row_major, gpu_tag> newData(Dimensions1, Dimensions2,1.0);
+		auto transTest = trans(newData);
+		noalias(transTest) = trans(denseData);
+		//check that the assignment has been carried out correctly
+		checkDenseMatrixEquality(transTest,trans(denseData_cpu));
+	}
+	{
+		dense_matrix_adaptor<float,row_major, continuous_dense_tag, gpu_tag> adaptor(denseData.raw_storage(),denseData.queue(), Dimensions1,Dimensions2);
+		checkDenseMatrixEquality(trans(adaptor),trans(denseData_cpu));
+	}
+	
 }
 
 BOOST_AUTO_TEST_CASE( Remora_Dense_row){
@@ -275,9 +294,9 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_To_Vector_Row_Major){
 	//now test whether we can assign to it
 	matrix<float, row_major, gpu_tag> new_data_full(offset1 + Dimensions1, Dimensions2,1.0);
 	auto new_data = rows(new_data_full,2*offset1,offset1+Dimensions1);
-	//~ noalias(to_vector(new_data)) = vec_result; 
+	noalias(to_vector(new_data)) = vec_result; 
 	//check that the assignment has been carried out correctly
-	//~ checkDenseVectorEquality(to_vector(new_data),vec_result_cpu);
+	checkDenseVectorEquality(to_vector(new_data),vec_result_cpu);
 }
 
 BOOST_AUTO_TEST_CASE( Remora_Dense_To_Vector_Column_Major){
@@ -302,9 +321,9 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_To_Vector_Column_Major){
 	//now test whether we can assign to it
 	matrix<float, column_major, gpu_tag> new_data_full(Dimensions1, offset2 + Dimensions2,1.0);
 	auto new_data = columns(new_data_full,2*offset2, offset2 + Dimensions2);
-	//~ noalias(to_vector(new_data)) = vec_result; 
+	noalias(to_vector(new_data)) = vec_result; 
 	//check that the assignment has been carried out correctly
-	//~ checkDenseVectorEquality(to_vector(new_data),vec_result_cpu);
+	checkDenseVectorEquality(to_vector(new_data),vec_result_cpu);
 }
 
 BOOST_AUTO_TEST_SUITE_END();

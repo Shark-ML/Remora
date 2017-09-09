@@ -71,14 +71,12 @@ public:
 	, m_queue(&queue)
 	, m_size(size){}
 	
-	template<class U>
-	dense_vector_adaptor(vector_expression<U, gpu_tag> const& v)
+	dense_vector_adaptor(vector<value_type, gpu_tag> const& v)
 	: m_storage(v().raw_storage())
 	, m_queue(&v().queue())
 	, m_size(v().size()){}
 	
-	template<class U>
-	dense_vector_adaptor(vector_expression<U, gpu_tag>& v)
+	dense_vector_adaptor(vector<value_type, gpu_tag>& v)
 	: m_storage(v().raw_storage())
 	, m_queue(&v().queue())
 	, m_size(v().size()){}
@@ -143,6 +141,9 @@ public:
 		);
 	}
 private:
+	template<class,class,class> friend class dense_vector_adaptor;
+	dense_vector_adaptor(vector<value_type, gpu_tag> && v);//no construction from temporary vector
+
 	storage_type m_storage;
 	boost::compute::command_queue* m_queue;
 	size_type m_size;
@@ -165,7 +166,7 @@ public:
 
 	// Construction and destruction
 	template<class U, class Tag2>
-	dense_matrix_adaptor(dense_matrix_adaptor<U, Orientation, Tag2> const& expression)
+	dense_matrix_adaptor(dense_matrix_adaptor<U, Orientation, Tag2, gpu_tag> const& expression)
 	: m_storage(expression.m_storage)
 	, m_queue(expression.m_queue)
 	, m_size1(expression.size1())
@@ -185,18 +186,14 @@ public:
 	, m_size1(size1)
 	, m_size2(size2){}
 	
-	template<class M>
-	dense_matrix_adaptor(
-		matrix_expression<M, gpu_tag> const& m 
-	):m_storage(m().raw_storage())
+	dense_matrix_adaptor(matrix<value_type, Orientation, gpu_tag> const& m )
+	: m_storage(m().raw_storage())
 	, m_queue(&m().queue())
 	, m_size1(m().size1())
 	, m_size2(m().size2()){}
 	
-	template<class M>
-	dense_matrix_adaptor(
-		matrix_expression<M, gpu_tag>& m 
-	):m_storage(m().raw_storage())
+	dense_matrix_adaptor(matrix<value_type, Orientation, gpu_tag>& m )
+	: m_storage(m().raw_storage())
 	, m_queue(&m().queue())
 	, m_size1(m().size1())
 	, m_size2(m().size2()){}
@@ -290,6 +287,9 @@ public:
 	}
 
 private:
+	template<class,class,class,class> friend class dense_matrix_adaptor;
+	dense_matrix_adaptor(matrix<value_type, Orientation, gpu_tag>&& m ); //no construction from temporary matrix
+
 	boost::compute::buffer_iterator<T const> buffer_begin()const{
 		return boost::compute::buffer_iterator<T>(m_storage.buffer, m_storage.offset);
 	}
@@ -299,10 +299,10 @@ private:
 	}
 
 	std::ptrdiff_t stride1() const {
-		return (std::ptrdiff_t) orientation::stride1(std::size_t(1), m_storage.leading_dimension);
+		return (std::ptrdiff_t) orientation::index_m(std::size_t(1), m_storage.leading_dimension);
 	}
 	std::ptrdiff_t stride2() const {
-		return (std::ptrdiff_t) orientation::stride2(std::size_t(1), m_storage.leading_dimension);
+		return (std::ptrdiff_t) orientation::index_M(std::size_t(1), m_storage.leading_dimension);
 	}
 	
 	storage_type m_storage;
@@ -808,8 +808,8 @@ template<class T, class Tag, class Orientation>
 struct ExpressionToFunctor<dense_matrix_adaptor<T, Orientation, Tag, gpu_tag> >{
 	static gpu::detail::dense_matrix_element<T> transform(dense_matrix_adaptor<T, Orientation, Tag, gpu_tag> const& e){
 		auto const& storage = e().raw_storage(); 
-		std::size_t stride1 = Orientation::stride1(std::size_t(1), storage.leading_dimension);
-		std::size_t stride2 = Orientation::stride2(std::size_t(1), storage.leading_dimension);
+		std::size_t stride1 = Orientation::index_m(std::size_t(1), storage.leading_dimension);
+		std::size_t stride2 = Orientation::index_M(std::size_t(1), storage.leading_dimension);
 		return {storage.buffer, stride1, stride2, storage.offset}; 
 	}
 };
