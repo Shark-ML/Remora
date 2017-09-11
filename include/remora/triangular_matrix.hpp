@@ -416,7 +416,7 @@ public:
 		return const_row_iterator(
 			m_data.data()+orientation::element(i,index,size1(),packed_tag())
 			,index
-			,orientation::orientation::stride2(size1(),size2())//1 if row_major, size2() otherwise
+			,orientation::orientation::stride2(m_size)//1 if row_major, size otherwise
 		);
 	}
 	const_row_iterator row_end(size_type i) const {
@@ -424,7 +424,7 @@ public:
 		return const_row_iterator(
 			m_data.data() + orientation::element(i, index, size1(),packed_tag())
 			,index
-			,orientation::orientation::stride2(size1(),size2())//1 if row_major, size2() otherwise
+			,orientation::orientation::stride2(m_size)//1 if row_major, size2() otherwise
 		);
 	}
 	row_iterator row_begin(size_type i){
@@ -432,7 +432,7 @@ public:
 		return row_iterator(
 			m_data.data() + orientation::element(i, index, size1(),packed_tag())
 			,index
-			,orientation::orientation::stride2(size1(),size2())//1 if row_major, size2() otherwise
+			,orientation::orientation::stride2(m_size)//1 if row_major, size2() otherwise
 		);
 	}
 	row_iterator row_end(size_type i){
@@ -440,7 +440,7 @@ public:
 		return row_iterator(
 			m_data.data() + orientation::element(i, index, size1(),packed_tag())
 			,index
-			,orientation::orientation::stride2(size1(),size2())//1 if row_major, size2() otherwise
+			,orientation::orientation::stride2(m_size)//1 if row_major, size2() otherwise
 		);
 	}
 
@@ -449,7 +449,7 @@ public:
 		return const_column_iterator(
 			m_data.data() + orientation::element(index, i, size1(),packed_tag())
 			,index
-			,orientation::orientation::stride1(size1(),size2())//size1() if row_major, 1 otherwise
+			,orientation::orientation::stride1(m_size)//size1() if row_major, 1 otherwise
 		);
 	}
 	const_column_iterator column_end(size_type i) const {
@@ -457,7 +457,7 @@ public:
 		return const_column_iterator(
 			m_data.data() + orientation::element(index, i, size1(),packed_tag())
 			,index
-			,orientation::orientation::stride1(size1(),size2())//size1() if row_major, 1 otherwise
+			,orientation::orientation::stride1(m_size)//size1() if row_major, 1 otherwise
 		);
 	}
 	column_iterator column_begin(size_type i){
@@ -465,7 +465,7 @@ public:
 		return column_iterator(
 			m_data.data() + orientation::element(index, i, size1(),packed_tag())
 			,index
-			,orientation::orientation::stride1(size1(),size2())//size1() if row_major, 1 otherwise
+			,orientation::orientation::stride1(m_size)//size1() if row_major, 1 otherwise
 		);
 	}
 	column_iterator column_end(size_type i){
@@ -473,7 +473,7 @@ public:
 		return column_iterator(
 			m_data.data() + orientation::element(index, i, size1(),packed_tag())
 			,index
-			,orientation::orientation::stride1(size1(),size2())//size1() if row_major, 1 otherwise
+			,orientation::orientation::stride1(m_size)//size1() if row_major, 1 otherwise
 		);
 	}
 

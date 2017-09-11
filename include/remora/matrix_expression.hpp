@@ -334,14 +334,12 @@ auto operator%(matrix_expression<MatA, Device> const& A,vector_expression<VecV, 
 ///
 ///Example: x += triangular_prod<lower>(A,v);
 template<class TriangularType, class MatA, class VecV, class Device>
-matrix_vector_prod<detail::dense_triangular_proxy<typename MatA::const_closure_type,TriangularType> ,VecV>
-triangular_prod(
+auto triangular_prod(
 	matrix_expression<MatA, Device> const& A,
 	vector_expression<VecV, Device>& v
-) {
+) -> decltype(prod(to_triangular(A, TriangularType()), v)){
 	REMORA_SIZE_CHECK(A().size2() == v().size());
-	typedef detail::dense_triangular_proxy<typename MatA::const_closure_type,TriangularType> Wrapper;
-	return matrix_vector_prod<Wrapper ,VecV>(Wrapper(A()), v());
+	return prod(to_triangular(A, TriangularType()), v);
 }
 
 /// \brief computes the matrix-matrix product X+=AB
@@ -351,8 +349,6 @@ typename detail::matrix_matrix_prod_optimizer<MatA,MatB>::type prod(
 	matrix_expression<MatB, Device> const& B
 ) {
 	REMORA_SIZE_CHECK(A().size2() == B().size1());
-	static_assert(std::is_base_of<linear_structure, typename MatA::orientation>::value, "A must be linearly stored");
-	static_assert(std::is_base_of<linear_structure, typename MatB::orientation>::value, "B must be linearly stored");
 	return detail::matrix_matrix_prod_optimizer<MatA,MatB>::create(A(),B());
 }
 
@@ -377,16 +373,12 @@ auto operator%(
 ///
 ///Example: x += triangular_prod<lower>(A,v);
 template<class TriangularType, class MatA, class MatB, class Device>
-matrix_matrix_prod<detail::dense_triangular_proxy<typename MatA::const_closure_type,TriangularType> ,MatB>
-triangular_prod(
+auto triangular_prod(
 	matrix_expression<MatA, Device> const& A,
 	matrix_expression<MatB, Device> const& B
-) {
+)  -> decltype(prod(to_triangular(A, TriangularType()), B)){
 	REMORA_SIZE_CHECK(A().size2() == B().size1());
-	static_assert(std::is_base_of<linear_structure, typename MatA::orientation>::value, "A must be linearly stored");
-	static_assert(std::is_base_of<linear_structure, typename MatB::orientation>::value, "B must be linearly stored");
-	typedef detail::dense_triangular_proxy<typename MatA::const_closure_type,TriangularType> Wrapper;
-	return matrix_matrix_prod<Wrapper ,MatB>(Wrapper(A()), B());
+	return prod(to_triangular(A, TriangularType()), B);
 }
 
 template<class MatA, class Device>

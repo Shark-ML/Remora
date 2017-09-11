@@ -33,7 +33,6 @@
 #ifndef REMORA_GPU_TRAITS_HPP
 #define REMORA_GPU_TRAITS_HPP
 
-#include "iterators.hpp"
 #include <boost/compute/command_queue.hpp>
 #include <boost/compute/core.hpp>
 #include <boost/compute/container/vector.hpp>
@@ -89,8 +88,8 @@ struct dense_matrix_storage{
 	
 	dense_matrix_storage(){}
 	dense_matrix_storage(boost::compute::buffer const& buffer, std::size_t offset, std::size_t leading_dimension)
-	:buffer(buffer), offset(offset), leading_dimension(leading_dimension){
-	}
+	:buffer(buffer), offset(offset), leading_dimension(leading_dimension){}
+	
 	template<class U, class Tag2>
 	dense_matrix_storage(dense_matrix_storage<U, Tag2> const& storage):
 	buffer(storage.buffer), offset(storage.offset), leading_dimension(storage.leading_dimension){
@@ -240,27 +239,27 @@ struct device_traits<gpu_tag>{
 	
 	template <class Iterator, class Functor>
 	struct transform_iterator{
-		typedef boost::compute::transform_iterator<Iterator, Functor> type;
+		typedef no_iterator type;
 	};
 	
 	template <class Iterator1, class Iterator2, class Functor>
 	struct binary_transform_iterator{
-		typedef gpu::detail::binary_transform_iterator<Iterator1,Iterator2, Functor> type;
+		typedef no_iterator type;
 	};
 	
 	template<class T>
 	struct constant_iterator{
-		typedef boost::compute::constant_iterator<T> type;
+		typedef no_iterator type;
 	};
 	
 	template<class T>
 	struct one_hot_iterator{
-		typedef iterators::one_hot_iterator<T> type;
+		typedef no_iterator type;
 	};
 	
 	template<class Closure>
 	struct indexed_iterator{
-		typedef gpu::detail::indexed_iterator<Closure> type;
+		typedef no_iterator type;
 	};
 	
 	//functional

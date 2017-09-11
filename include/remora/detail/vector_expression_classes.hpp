@@ -567,8 +567,8 @@ public:
 	}
 
 	// Iterator types
-	typedef iterators::no_iterator const_iterator;
-	typedef iterators::no_iterator iterator;
+	typedef no_iterator const_iterator;
+	typedef no_iterator iterator;
 
 private:
 	lhs_closure_type m_lhs;
@@ -614,7 +614,7 @@ struct ExpressionToFunctor<vector_binary<E1, E2, F> >{
 template<class T, class Device>
 struct ExpressionToFunctor<scalar_vector<T, Device> >{
 	static typename device_traits<Device>::template constant<T> transform(scalar_vector<T, Device> const& e){
-		return device_traits<Device>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor());
+		return typename device_traits<Device>::template constant<T>(e.scalar());
 	}
 };
 

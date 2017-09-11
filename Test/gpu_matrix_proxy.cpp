@@ -22,30 +22,6 @@ void checkDenseMatrixEquality(Operation op_gpu, Result const& result){
 			BOOST_CHECK_CLOSE(result(i,j), op(i,j),1.e-8);
 		}
 	}
-	
-	//test row iterators
-	{
-		vector<float, gpu_tag> opcopy_gpu(op.size2());
-		for(std::size_t i = 0; i != op.size1(); ++i){
-			boost::compute::copy(op_gpu.row_begin(i),op_gpu.row_end(i),opcopy_gpu.begin());
-			vector<float> opcopy = copy_to_cpu(opcopy_gpu);
-			for(std::size_t j = 0; j != op.size2(); ++j){
-				BOOST_CHECK_CLOSE(result(i,j), opcopy(j),1.e-8);
-			}
-		}
-	}
-	
-	//test column iterators
-	{
-		vector<float, gpu_tag> opcopy_gpu(op.size1());
-		for(std::size_t j = 0; j != op.size2(); ++j){
-			boost::compute::copy(op_gpu.column_begin(j),op_gpu.column_end(j),opcopy_gpu.begin());
-			vector<float> opcopy = copy_to_cpu(opcopy_gpu);
-			for(std::size_t i = 0; i != op.size1(); ++i){
-				BOOST_CHECK_CLOSE(result(i,j), opcopy(i),1.e-8);
-			}
-		}
-	}
 }
 template<class Operation, class Result>
 void checkDenseVectorEquality(Operation op_gpu, Result const& result){
@@ -56,15 +32,6 @@ void checkDenseVectorEquality(Operation op_gpu, Result const& result){
 	BOOST_REQUIRE_EQUAL(op.size(), result.size());
 	for(std::size_t i = 0; i != op.size(); ++i){
 		BOOST_CHECK_CLOSE(result(i), op(i),1.e-8);
-	}
-	
-	//test iterators
-	BOOST_REQUIRE_EQUAL(op_gpu.end() - op_gpu.begin(), op.size());
-	vector<float, gpu_tag> opcopy_gpu(op.size());
-	boost::compute::copy(op_gpu.begin(),op_gpu.end(),opcopy_gpu.begin());
-	vector<float> opcopy = copy_to_cpu(opcopy_gpu);
-	for(std::size_t i = 0; i != result.size(); ++i){
-		BOOST_CHECK_CLOSE(result(i), opcopy(i),1.e-8);
 	}
 }
 

@@ -55,16 +55,39 @@ class vector;
 /// Orientation can also be specified, otherwise a \c row_major is used.
 ///
 /// \tparam T the type of object stored in the matrix (like double, float, complex, etc...)
-/// \tparam L the storage organization. It can be either \c row_major or \c column_major. Default is \c row_major
+/// \tparam Orientation the storage organization. It can be either \c row_major or \c column_major. Default is \c row_major
 /// \tparam Device the device this matrix lives on, the default is cpu_tag for a cpu matrix
-template<class T, class L=row_major, class Device = cpu_tag>
+template<class T, class Orientation=row_major, class Device = cpu_tag>
 class matrix;
 
+
+/// \brief A proxy to a  dense vector of values of type \c T.
+///
+/// Using external memory providing by another vector, references a part of the vector.
+/// The referenced region is not required to be consecutive, i.e. elements can have a stride larger than one
+///
+/// \tparam T the type of object stored in the matrix (like double, float, complex, etc...)
+/// \tparam Tag the storage tag. dense_tag by default and continuous_dense_tag if stride is guarantueed to be 1.
+/// \tparam Device the device this vector lives on, the default is cpu_tag for a cpu vector
 template<class T, class Tag = dense_tag, class Device = cpu_tag>
 class dense_vector_adaptor;
 
+/// \brief A proxy to a  dense matrix of values of type \c T.
+///
+/// Using external memory providing by another matrix, references a subrange of the matrix
+/// The referenced region is not required to be consecutive, i.e. a subregion of a matrix can be used
+/// However, either the row or column indices must be consecutive
+///
+/// \tparam T the type of object stored in the matrix (like double, float, complex, etc...)
+/// \tparam Orientation the storage organization. It can be either \c row_major or \c column_major. Default is \c row_major
+/// \tparam Tag the storage tag. dense_tag by default and continuous_dense_tag if the memory region referenced is continuous.
+/// \tparam Device the device this vector lives on, the default is cpu_tag for a cpu vector
 template<class T,class Orientation = row_major, class Tag = dense_tag, class Device = cpu_tag>
 class dense_matrix_adaptor;
+
+
+template<class T, class Orientation, class TriangularType, class Device>
+class dense_triangular_proxy;
 
 ///////////////////////////////////
 // Adapt memory as vector
@@ -93,7 +116,6 @@ template <class T, std::size_t M, std::size_t N>
 dense_matrix_adaptor<T, row_major, continuous_dense_tag, cpu_tag> adapt_matrix(T (&array)[M][N]){
 	return dense_matrix_adaptor<T, row_major, continuous_dense_tag, cpu_tag>(&(array[0][0]),M,N);
 }
-
 
 ///////////////////////////////////
 // Traits
@@ -161,6 +183,15 @@ struct matrix_transpose_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Devic
 	}
 };
 
+template<class T, class Orientation, class Triangular, class Device>
+struct matrix_transpose_optimizer<dense_triangular_proxy<T, Orientation, Triangular, Device> >{
+	typedef dense_triangular_proxy<T, typename Orientation::transposed_orientation, Triangular, Device> type;
+	
+	static type create(dense_triangular_proxy<T, Orientation, Triangular, Device> const& m){
+		return type(m.raw_storage(), m.queue(), m.size2(), m.size1());
+	}
+};
+
 ////////////////////////MATRIX ROW//////////////////////
 template<class T, class Orientation, class Tag, class Device>
 struct matrix_row_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device> >{
@@ -223,6 +254,18 @@ struct linearized_matrix_optimizer<dense_matrix_adaptor<T,Orientation, continuou
 	
 	static type create(dense_matrix_adaptor<T,Orientation, continuous_dense_tag, Device> const& m){
 		return type(m.raw_storage().linear(), m.queue(), m.size1() * m.size2());
+	}
+};
+
+
+////////////////////////TO TRIANGULAR//////////////////////
+
+template<class T, class Orientation, class Tag, class Device, class Triangular>
+struct triangular_proxy_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Device>, Triangular >{
+	typedef dense_triangular_proxy<T, Orientation, Triangular, Device> type;
+	
+	static type create(dense_matrix_adaptor<T,Orientation, Tag, Device> const& m){
+		return type(m.raw_storage(), m.queue(), m.size1(), m.size2());
 	}
 };
 

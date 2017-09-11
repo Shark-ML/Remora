@@ -35,8 +35,6 @@
 #include "../../detail/traits.hpp"
 #include "../../proxy_expressions.hpp"
 #include "../gemv.hpp"
-#include <boost/compute/kernel.hpp>
-#include <boost/compute/detail/meta_kernel.hpp>
 #include <boost/compute/functional/operator.hpp> //for multiplies
 
 ///solves systems of triangular matrices with one left hand side

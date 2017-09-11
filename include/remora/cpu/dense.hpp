@@ -114,7 +114,7 @@ public:
 		return m_size;
 	}
 	
-	///\brief Returns the underlying storage_type structure for low level access
+	///\brief Returns the underlying storage structure for low level access
 	storage_type raw_storage() const{
 		return {m_values,m_stride};
 	}
@@ -271,9 +271,9 @@ public:
 	, m_stride2(stride2)
 	{
 		if(!m_stride1)
-			m_stride1= Orientation::stride1(m_size1,m_size2);
+			m_stride1= Orientation::stride1(orientation::index_m(m_size1,m_size2));
 		if(!m_stride2)
-			m_stride2= Orientation::stride2(m_size1,m_size2);
+			m_stride2= Orientation::stride2(orientation::index_m(m_size1,m_size2));
 	}
 	
 	// ---------
@@ -289,7 +289,7 @@ public:
 		return m_size2;
 	}
 	
-	///\brief Returns the underlying storage_type structure for low level access
+	///\brief Returns the underlying storage structure for low level access
 	storage_type raw_storage()const{
 		return {m_values, orientation::index_M(m_stride1,m_stride2)};
 	}
@@ -539,12 +539,12 @@ public:
 	
 	///\brief Returns the underlying storage structure for low level access
 	storage_type raw_storage(){
-		return {m_data.data(), orientation::index_m(m_size1,m_size2)};
+		return {m_data.data(), leading_dimension()};
 	}
 	
 	///\brief Returns the underlying storage structure for low level access
 	const_storage_type raw_storage()const{
-		return {m_data.data(), orientation::index_m(m_size1,m_size2)};
+		return {m_data.data(), leading_dimension()};
 	}
 	typename device_traits<cpu_tag>::queue_type& queue() const{
 		return device_traits<cpu_tag>::default_queue();
@@ -572,18 +572,18 @@ public:
 	const_reference operator()(size_type i, size_type j) const {
 		REMORA_SIZE_CHECK(i < size1());
 		REMORA_SIZE_CHECK(j < size2());
-		return m_data[orientation::element(i, m_size1, j, m_size2)];
+		return m_data[orientation::element(i, j, leading_dimension())];
 	}
 	reference operator()(size_type i, size_type j) {
 		REMORA_SIZE_CHECK(i < size1());
 		REMORA_SIZE_CHECK(j < size2());
-		return m_data[orientation::element(i, m_size1, j, m_size2)];
+		return m_data[orientation::element(i, j, leading_dimension())];
 	}
 	
 	void set_element(size_type i, size_type j,value_type t){
 		REMORA_SIZE_CHECK(i < size1());
 		REMORA_SIZE_CHECK(j < size2());
-		m_data[orientation::element(i, m_size1, j, m_size2)]  = t;
+		m_data[orientation::element(i, j, leading_dimension())]  = t;
 	}
 
 	// Swapping
@@ -685,13 +685,17 @@ public:
 	}
 
 private:
+	size_type leading_dimension() const {
+		return orientation::index_m(m_size1, m_size2);
+	}
 	size_type stride1() const {
-		return orientation::stride1(m_size1, m_size2);
+		return orientation::stride1(leading_dimension());
 	}
 	size_type stride2() const {
-		return orientation::stride2(m_size1, m_size2);
+		return orientation::stride2(leading_dimension());
 	}
-
+	
+	
 	size_type m_size1;
 	size_type m_size2;
 	array_type m_data;
@@ -960,6 +964,112 @@ private:
 };
 
 
+template<class T, class Orientation, bool Upper, bool Unit>
+class dense_triangular_proxy<T, Orientation, triangular_tag<Upper, Unit> , cpu_tag>
+: public matrix_expression<dense_triangular_proxy<T, Orientation, triangular_tag<Upper, Unit>, cpu_tag>, cpu_tag> {
+public:
+	typedef std::size_t size_type;
+	typedef typename std::remove_const<T>::type value_type;
+	typedef value_type result_type;
+	typedef typename std::conditional<Unit, value_type const&, T&>::type reference;
+	typedef value_type const& const_reference;
+	typedef dense_triangular_proxy<value_type const, Orientation, triangular_tag<Upper, Unit> , cpu_tag> const_closure_type;
+	typedef dense_triangular_proxy<T, Orientation, triangular_tag<Upper, Unit> , cpu_tag> closure_type;
+
+	typedef dense_matrix_storage<T, dense_tag> storage_type;
+	typedef dense_matrix_storage<value_type const, dense_tag> const_storage_type;
+
+	typedef elementwise<dense_tag> evaluation_category;
+	typedef triangular<Orientation,triangular_tag<Upper, Unit> > orientation;
+
+
+	template<class U>
+	dense_triangular_proxy(dense_triangular_proxy<U, Orientation, triangular_tag<Upper, Unit>, cpu_tag> const& expression)
+	: m_values(expression.raw_storage().values)
+	, m_size1(expression.size1())
+	, m_size2(expression.size2())
+	, m_leading_dimension(expression.raw_storage().leading_dimension){}
+
+	/// \brief Constructor of a vector proxy from a Dense matrix
+	///
+	/// Be aware that the expression must live longer than the proxy!
+	/// \param expression Expression from which to construct the Proxy
+	dense_triangular_proxy(storage_type const& storage, no_queue, std::size_t size1, std::size_t size2)
+	: m_values(storage.values)
+	, m_size1(size1)
+	, m_size2(size2)
+	, m_leading_dimension(storage.leading_dimension){}
+	
+	dense_matrix_adaptor<T, Orientation, dense_tag, cpu_tag> to_dense() const{
+		return {raw_storage(), queue(), m_size1, m_size2};
+	}
+	
+	
+	/// \brief Return the number of rows of the matrix
+	size_type size1() const {
+		return m_size1;
+	}
+	/// \brief Return the number of columns of the matrix
+	size_type size2() const {
+		return m_size2;
+	}
+	
+	///\brief Returns the underlying storage structure for low level access
+	storage_type raw_storage() const{
+		return {m_values, m_leading_dimension};
+	}
+	
+	typename device_traits<cpu_tag>::queue_type& queue()const{
+		return device_traits<cpu_tag>::default_queue();
+	}
+
+	typedef iterators::dense_storage_iterator<value_type> row_iterator;
+	typedef iterators::dense_storage_iterator<value_type> column_iterator;
+	typedef iterators::dense_storage_iterator<value_type const> const_row_iterator;
+	typedef iterators::dense_storage_iterator<value_type const> const_column_iterator;
+	
+	const_row_iterator row_begin(size_type i) const {
+		std::size_t start =  Upper? i + Unit: 0;
+		return const_row_iterator(m_values + orientation::element(i,start, m_leading_dimension),start, orientation::stride2(m_leading_dimension));
+	}
+	const_row_iterator row_end(size_type i) const {
+		std::size_t end =  Upper? m_size2: i +1 - Unit;
+		return const_row_iterator(m_values + orientation::element(i,end, m_leading_dimension),end, orientation::stride2(m_leading_dimension));
+	}
+	row_iterator row_begin(size_type i){
+		std::size_t start =  Upper? i + Unit: 0;
+		return row_iterator(m_values + orientation::element(i,start, m_leading_dimension),start, orientation::stride2(m_leading_dimension));
+	}
+	row_iterator row_end(size_type i){
+		std::size_t end =  Upper? m_size2: i + 1 - Unit;
+		return row_iterator(m_values + orientation::element(i,end, m_leading_dimension),end, orientation::stride2(m_leading_dimension));
+	}
+	
+	const_row_iterator column_begin(std::size_t j) const {
+		std::size_t start =  Upper? 0 :(j + Unit);
+		return const_column_iterator(m_values + orientation::element(start, j, m_leading_dimension),start, orientation::stride1(m_leading_dimension));
+	}
+	const_column_iterator column_end(std::size_t j) const {
+		std::size_t end =  Upper? j +1 - Unit : m_size1;
+		return const_column_iterator(m_values + orientation::element(end, j, m_leading_dimension),end, orientation::stride1(m_leading_dimension));
+	}
+	column_iterator column_begin(std::size_t j){
+		std::size_t start =  Upper? 0 :(j + Unit);
+		return column_iterator(m_values + orientation::element(start, j, m_leading_dimension),start, orientation::stride1(m_leading_dimension));
+	}
+	column_iterator column_end(std::size_t j){
+		std::size_t end =  Upper? j + 1 - Unit : m_size1;
+		return column_iterator(m_values + orientation::element(end, j, m_leading_dimension),end, orientation::stride1(m_leading_dimension));
+	}
+	
+private:
+	T* m_values;
+	std::size_t m_size1;
+	std::size_t m_size2;
+	std::size_t m_leading_dimension;
+};
+
+
 namespace detail{
 template<class T, class Orientation>
 struct vector_to_matrix_optimizer<dense_vector_adaptor<T, continuous_dense_tag, cpu_tag>, Orientation >{
@@ -967,32 +1077,6 @@ struct vector_to_matrix_optimizer<dense_vector_adaptor<T, continuous_dense_tag, 
 	
 	static type create(
 		dense_vector_adaptor<T, continuous_dense_tag, cpu_tag> const& v,
-		std::size_t size1, std::size_t size2
-	){
-		dense_matrix_storage<T, continuous_dense_tag> storage = {v.raw_storage().values, Orientation::index_m(size1,size2)};
-		return type(storage, v.queue(), size1, size2);
-	}
-};
-
-template<class T, class Orientation>
-struct vector_to_matrix_optimizer<vector<T, cpu_tag> const, Orientation >{
-	typedef dense_matrix_adaptor<T const, Orientation, continuous_dense_tag, cpu_tag> type;
-	
-	static type create(
-		vector<T, cpu_tag> const& v,
-		std::size_t size1, std::size_t size2
-	){
-		dense_matrix_storage<T const, continuous_dense_tag> storage = {v.raw_storage().values, Orientation::index_m(size1,size2)};
-		return type(storage, v.queue(), size1, size2);
-	}
-};
-
-template<class T, class Orientation>
-struct vector_to_matrix_optimizer<vector<T, cpu_tag>, Orientation >{
-	typedef dense_matrix_adaptor<T, Orientation, continuous_dense_tag, cpu_tag> type;
-	
-	static type create(
-		vector<T, cpu_tag>& v,
 		std::size_t size1, std::size_t size2
 	){
 		dense_matrix_storage<T, continuous_dense_tag> storage = {v.raw_storage().values, Orientation::index_m(size1,size2)};

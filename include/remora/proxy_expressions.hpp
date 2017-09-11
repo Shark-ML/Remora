@@ -326,6 +326,29 @@ to_vector(matrix_expression<M, Device> && m){
 }
 
 
+////////////////////////////////////////////////
+//// Matrix to Triangular Matrix
+////////////////////////////////////////////////
+
+template <class M, class Device, class Tag>
+typename detail::triangular_proxy_optimizer<typename M::closure_type, Tag>::type
+to_triangular(matrix_expression<M, Device>& m, Tag){
+	return detail::triangular_proxy_optimizer<typename M::closure_type, Tag>::create(m());
+}
+
+template <class M, class Device, class Tag>
+typename detail::triangular_proxy_optimizer<typename M::const_closure_type, Tag>::type
+to_triangular(matrix_expression<M, Device> const& m, Tag){
+	return detail::triangular_proxy_optimizer<typename M::const_closure_type, Tag>::create(m());
+}
+
+template <class M, class Device, class Tag>
+typename detail::triangular_proxy_optimizer<typename M::closure_type, Tag>::type
+to_triangular(matrix_expression<M, Device>&& m, Tag){
+	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
+	return detail::triangular_proxy_optimizer<typename M::closure_type, Tag>::create(m());
+}
+
 ////////////////////////////////////
 //// Matrix Adaptor
 ////////////////////////////////////

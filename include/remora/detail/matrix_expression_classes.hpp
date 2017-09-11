@@ -784,8 +784,8 @@ public:
 		return m_vector;
 	}
 	
-	typedef iterators::no_iterator const_iterator;
-	typedef iterators::no_iterator iterator;
+	typedef no_iterator const_iterator;
+	typedef no_iterator iterator;
 
 
 	typename device_traits<device_type>::queue_type& queue()const{
@@ -830,13 +830,13 @@ private:
 	template<class VecX>
 	void assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha, triangular_structure, dense_tag )const{
 		noalias(x) = eval_block(alpha * m_vector);
-		kernels::trmv<MatA::orientation::is_upper, MatA::orientation::is_unit>(m_matrix.expression(), x);
+		kernels::trmv<MatA::orientation::is_upper, MatA::orientation::is_unit>(m_matrix.to_dense(), x);
 	}
 	template<class VecX>
 	void plus_assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha, triangular_structure, dense_tag )const{
 		//computation of tpmv is in-place so we need a temporary for plus-assign.
 		typename vector_temporary<VecX>::type temp( eval_block(alpha * m_vector));
-		kernels::trmv<MatA::orientation::is_upper, MatA::orientation::is_unit>(m_matrix.expression(), temp);
+		kernels::trmv<MatA::orientation::is_upper, MatA::orientation::is_unit>(m_matrix.to_dense(), temp);
 		noalias(x) += temp;
 	}
 	matrix_closure_type m_matrix;
@@ -878,8 +878,8 @@ public:
 		return m_matrix.queue();
 	}
 	
-	typedef iterators::no_iterator const_iterator;
-	typedef iterators::no_iterator iterator;
+	typedef no_iterator const_iterator;
+	typedef no_iterator iterator;
 
 	//dispatcher to computation kernels for blockwise case
 	template<class VecX>
@@ -894,66 +894,6 @@ public:
 private:
 	matrix_closure_type m_matrix;
 };
-
-namespace detail{
-template<class M, class TriangularType>
-class dense_triangular_proxy: public matrix_expression<dense_triangular_proxy<M, TriangularType>, typename M::device_type > {
-	typedef typename closure<M>::type matrix_closure_type;
-public:
-	static_assert(std::is_base_of<dense_tag, typename M::storage_type::storage_tag>::value, "Can only create triangular proxies of dense matrices");
-
-	typedef typename M::size_type size_type;
-	typedef typename M::value_type value_type;
-	typedef typename M::const_reference const_reference;
-	typedef typename reference<M>::type reference;
-	typedef dense_triangular_proxy<typename M::const_closure_type,TriangularType> const_closure_type;
-	typedef dense_triangular_proxy<M,TriangularType> closure_type;
-
-	//~ typedef typename M::storage_type storage_type;
-	//~ typedef typename M::const_storage_type const_storage_type;
-	typedef dense_matrix_storage<value_type, dense_tag> storage_type;
-	typedef dense_matrix_storage<value_type const, dense_tag> const_storage_type;
-
-	typedef elementwise<dense_tag> evaluation_category;
-	typedef triangular<typename M::orientation,TriangularType> orientation;
-
-	// Construction and destruction
-	explicit dense_triangular_proxy(matrix_closure_type const& m)
-	: m_expression(m) {
-		REMORA_SIZE_CHECK(m.size1() == m.size2());
-	}
-
-	matrix_closure_type const& expression() const{
-		return m_expression;
-	}
-	matrix_closure_type expression(){
-		return m_expression;
-	}
-	
-	 size_type size1 () const {
-		return expression().size1 ();
-        }
-        size_type size2 () const {
-		return expression().size2 ();
-        }
-	
-	typename device_traits<typename M::device_type>::queue_type& queue()const{
-		return m_expression.queue();
-	}
-	
-	///\brief Returns the underlying storage_type structure for low level access
-	storage_type raw_storage_type(){
-		return expression().raw_storage_type();
-	}
-	
-	typedef typename matrix_closure_type::const_row_iterator row_iterator;
-	typedef row_iterator const_row_iterator;
-	typedef typename matrix_closure_type::const_column_iterator column_iterator;
-	typedef column_iterator const_column_iterator;
-private:
-	matrix_closure_type m_expression;
-};
-}
 
 //matrix-matrix prod
 template<class MatA, class MatB>
@@ -1004,10 +944,10 @@ public:
 		return m_lhs.queue();
 	}
 	
-	typedef iterators::no_iterator const_row_iterator;
-	typedef iterators::no_iterator const_column_iterator;
-	typedef iterators::no_iterator row_iterator;
-	typedef iterators::no_iterator column_iterator;
+	typedef no_iterator const_row_iterator;
+	typedef no_iterator const_column_iterator;
+	typedef no_iterator row_iterator;
+	typedef no_iterator column_iterator;
 	
 	//dispatcher to computation kernels
 	template<class MatX>
@@ -1034,14 +974,14 @@ private:
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha, triangular_structure, dense_tag)const{
 		assign(X, m_rhs, alpha);
-		kernels::trmm<MatA::orientation::is_upper, MatA::orientation::is_unit>(m_lhs.expression(), X);
+		kernels::trmm<MatA::orientation::is_upper, MatA::orientation::is_unit>(m_lhs.to_dense(), X);
 	}
 	template<class MatX>
 	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha, triangular_structure, dense_tag )const{
 		//computation of tpmv is in-place so we need a temporary for plus-assign.
 		typename matrix_temporary<MatX>::type temp(X().size1(),X().size2());
 		assign(temp, m_rhs, alpha);
-		kernels::trmm<MatA::orientation::is_upper, MatA::orientation::is_unit>(m_lhs.expression(), temp);
+		kernels::trmm<MatA::orientation::is_upper, MatA::orientation::is_unit>(m_lhs.to_dense(), temp);
 		noalias(X) += temp;
 	}
 private:
@@ -1171,10 +1111,10 @@ public:
 		return m_lhs.queue();
 	}
 	
-	typedef iterators::no_iterator const_row_iterator;
-	typedef iterators::no_iterator const_column_iterator;
-	typedef iterators::no_iterator row_iterator;
-	typedef iterators::no_iterator column_iterator;
+	typedef no_iterator const_row_iterator;
+	typedef no_iterator const_column_iterator;
+	typedef no_iterator row_iterator;
+	typedef no_iterator column_iterator;
 	
 	//dispatcher to computation kernels
 	template<class MatX>

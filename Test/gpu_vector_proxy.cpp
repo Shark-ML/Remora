@@ -20,15 +20,6 @@ void checkDenseVectorEquality(
 	for(std::size_t i = 0; i != op.size(); ++i){
 		BOOST_CHECK_CLOSE(result(i), op(i),1.e-8);
 	}
-	
-	//test iterators
-	BOOST_REQUIRE_EQUAL(op_gpu.end() - op_gpu.begin(), op.size());
-	vector<float, gpu_tag> opcopy_gpu(op.size());
-	boost::compute::copy(op_gpu.begin(),op_gpu.end(),opcopy_gpu.begin());
-	vector<float> opcopy = copy_to_cpu(opcopy_gpu);
-	for(std::size_t i = 0; i != result.size(); ++i){
-		BOOST_CHECK_CLOSE(result(i), opcopy(i),1.e-8);
-	}
 }
 
 std::size_t Dimensions = 20;

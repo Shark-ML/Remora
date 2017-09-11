@@ -225,11 +225,11 @@ void matrix_assign(
 }
 
 //triangular row_major,row_major
-template<class M, class E,class Triangular>
+template<class M, class E, bool Upper, bool Unit>
 void matrix_assign(
 	matrix_expression<M, cpu_tag>& m,
 	matrix_expression<E, cpu_tag> const& e,
-	triangular<row_major,Triangular>, triangular<row_major,Triangular>,
+	triangular<row_major,triangular_tag<Upper, false> >, triangular<row_major,triangular_tag<Upper, Unit> >,
 	packed_tag, packed_tag
 ) {
 	typedef typename M::row_iterator MIter;
@@ -238,10 +238,17 @@ void matrix_assign(
 	for(std::size_t i = 0; i != m().size1(); ++i){
 		MIter mpos = m().row_begin(i);
 		EIter epos = e().row_begin(i);
-		MIter mend = m().row_end(i);
+		MIter eend = e().row_end(i);
+		if(Unit && Upper){
+			*mpos = 1;
+			++mpos;
+		}
 		REMORA_SIZE_CHECK(mpos.index() == epos.index());
-		for(; mpos!=mend; ++mpos,++epos){
+		for(; epos != eend; ++epos,++mpos){
 			*mpos = *epos;
+		}
+		if(Unit && Upper){
+			*mpos = 1;
 		}
 	}
 }

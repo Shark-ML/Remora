@@ -37,8 +37,13 @@
 #include "iterator.hpp"
 #include <cmath>
 
-namespace remora{
 
+
+namespace remora{
+//pure block expressions do not have an iterator but the interface still requires one.
+// this is our cheap way out.
+struct no_iterator{};
+//some devices do not need a queue but the interface still expects one.
 struct no_queue{};
 
 template<class Device>

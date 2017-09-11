@@ -1,4 +1,5 @@
 #define BOOST_TEST_MODULE Remora_GPU_vector_expression
+#define BOOST_COMPUTE_DEBUG_KERNEL_COMPILATION
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
@@ -30,17 +31,6 @@ void checkDenseExpressionEquality(
 	for(std::size_t i = 0; i != op.size(); ++i){
 		BOOST_CHECK_CLOSE(2.0f * result(i), res1(i),1.e-3);
 		BOOST_CHECK_CLOSE(2.0f * result(i) + 0.1f, res2(i),1.e-2);
-	}
-	
-	
-	
-	//test iterators
-	BOOST_REQUIRE_EQUAL(op_gpu.end() - op_gpu.begin(), op.size());
-	vector<float, gpu_tag> opcopy_gpu(op.size());
-	boost::compute::copy(op_gpu.begin(),op_gpu.end(),opcopy_gpu.begin());
-	vector<float> opcopy = copy_to_cpu(opcopy_gpu);
-	for(std::size_t i = 0; i != result.size(); ++i){
-		BOOST_CHECK_CLOSE(result(i), opcopy(i),1.e-3);
 	}
 }
 

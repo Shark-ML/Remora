@@ -107,39 +107,8 @@ public:
 		queue().enqueue_nd_range_kernel(kernel, 1,nullptr, global_work_size, nullptr);
 	}
 	
-	// --------------
-	// ITERATORS
-	// --------------
-	
-
-	typedef boost::compute::strided_iterator<boost::compute::buffer_iterator<T> > iterator;
-	typedef boost::compute::strided_iterator<boost::compute::buffer_iterator<T> > const_iterator;
-
-	/// \brief return an iterator on the first element of the vector
-	const_iterator begin() const {
-		return const_iterator(boost::compute::buffer_iterator<T>(m_storage.buffer, m_storage.offset),m_storage.stride);
-	}
-
-	/// \brief return an iterator after the last element of the vector
-	const_iterator end() const {
-		return const_iterator(
-			boost::compute::buffer_iterator<T>(m_storage.buffer, m_size * m_storage.stride + m_storage.offset)
-			,m_storage.stride
-		);
-	}
-
-	/// \brief Return an iterator on the first element of the vector
-	iterator begin(){
-		return iterator(boost::compute::buffer_iterator<T>(m_storage.buffer, m_storage.offset),m_storage.stride);
-	}
-
-	/// \brief Return an iterator at the end of the vector
-	iterator end(){
-		return iterator(
-			boost::compute::buffer_iterator<T>(m_storage.buffer, m_size * m_storage.stride + m_storage.offset)
-			,m_storage.stride
-		);
-	}
+	typedef no_iterator iterator;
+	typedef no_iterator const_iterator;
 private:
 	template<class,class,class> friend class dense_vector_adaptor;
 	dense_vector_adaptor(vector<value_type, gpu_tag> && v);//no construction from temporary vector
@@ -167,8 +136,8 @@ public:
 	// Construction and destruction
 	template<class U, class Tag2>
 	dense_matrix_adaptor(dense_matrix_adaptor<U, Orientation, Tag2, gpu_tag> const& expression)
-	: m_storage(expression.m_storage)
-	, m_queue(expression.m_queue)
+	: m_storage(expression.raw_storage())
+	, m_queue(&expression.queue())
 	, m_size1(expression.size1())
 	, m_size2(expression.size2())
 	{static_assert(std::is_convertible<Tag2,Tag>::value, "Can not convert storage type of argument to the given Tag");}
@@ -253,58 +222,13 @@ public:
 	}
 	
 	// Iterator types
-	typedef boost::compute::strided_iterator<boost::compute::buffer_iterator<T> > row_iterator;
-	typedef boost::compute::strided_iterator<boost::compute::buffer_iterator<T> > column_iterator;
-	typedef boost::compute::strided_iterator<boost::compute::buffer_iterator<T const> > const_row_iterator;
-	typedef boost::compute::strided_iterator<boost::compute::buffer_iterator<T const> > const_column_iterator;
+	typedef no_iterator row_iterator;
+	typedef no_iterator column_iterator;
+	typedef no_iterator const_row_iterator;
+	typedef no_iterator const_column_iterator;
 
-	const_row_iterator row_begin(size_type i) const {
-		return {buffer_begin() + i * stride1(), stride2()};
-	}
-	const_row_iterator row_end(size_type i) const {
-		return {buffer_begin() + i * stride1()+size2()*stride2(), stride2()};
-	}
-	
-	const_row_iterator column_begin(size_type j) const {
-		return {buffer_begin() + j * stride2(), stride1()};
-	}
-	const_column_iterator column_end(size_type j) const {
-		return {buffer_begin() + j * stride2()+size1()*stride1(), stride1()};
-	}
-	
-	row_iterator row_begin(size_type i){
-		return {buffer_begin() + i * stride1(), stride2()};
-	}
-	row_iterator row_end(size_type i){
-		return {buffer_begin() + i * stride1()+size2()*stride2(), stride2()};
-	}
-	
-	row_iterator column_begin(size_type j){
-		return {buffer_begin() + j * stride2(), stride1()};
-	}
-	column_iterator column_end(size_type j){
-		return {buffer_begin() + j * stride2()+size1()*stride1(), stride1()};
-	}
 
 private:
-	template<class,class,class,class> friend class dense_matrix_adaptor;
-	dense_matrix_adaptor(matrix<value_type, Orientation, gpu_tag>&& m ); //no construction from temporary matrix
-
-	boost::compute::buffer_iterator<T const> buffer_begin()const{
-		return boost::compute::buffer_iterator<T>(m_storage.buffer, m_storage.offset);
-	}
-
-	boost::compute::buffer_iterator<T> buffer_begin(){
-		return boost::compute::buffer_iterator<T>(m_storage.buffer, m_storage.offset);
-	}
-
-	std::ptrdiff_t stride1() const {
-		return (std::ptrdiff_t) orientation::index_m(std::size_t(1), m_storage.leading_dimension);
-	}
-	std::ptrdiff_t stride2() const {
-		return (std::ptrdiff_t) orientation::index_M(std::size_t(1), m_storage.leading_dimension);
-	}
-	
 	storage_type m_storage;
 	boost::compute::command_queue* m_queue;
 	size_type m_size1;
@@ -488,39 +412,8 @@ public:
 	}
 	
 	// Iterator types
-	typedef typename boost::compute::vector<T>::iterator iterator;
-	typedef typename boost::compute::vector<T>::const_iterator const_iterator;
-	
-	/// \brief return an iterator on the first element of the vector
-	const_iterator cbegin() const {
-		return m_storage.begin();
-	}
-
-	/// \brief return an iterator after the last element of the vector
-	const_iterator cend() const {
-		return m_storage.end();
-	}
-
-	/// \brief return an iterator on the first element of the vector
-	const_iterator begin() const {
-		return cbegin();
-	}
-
-	/// \brief return an iterator after the last element of the vector
-	const_iterator end() const {
-		return cend();
-	}
-
-	/// \brief Return an iterator on the first element of the vector
-	iterator begin(){
-		return m_storage.begin();
-	}
-
-	/// \brief Return an iterator at the end of the vector
-	iterator end(){
-		return m_storage.end();
-	}
-	
+	typedef no_iterator iterator;
+	typedef no_iterator const_iterator;
 private:
 	boost::compute::vector<T> m_storage;
 	boost::compute::command_queue* m_queue;
@@ -674,12 +567,12 @@ public:
 	}
 	///\brief Returns the underlying storage structure for low level access
 	const_storage_type raw_storage() const{
-		return {m_storage.get_buffer(),0,orientation::index_m(m_size1,m_size2)};
+		return {m_storage.get_buffer(),0,leading_dimension()};
 	}
 	
 	///\brief Returns the underlying storage structure for low level access
 	storage_type raw_storage(){
-		return {m_storage.get_buffer(),0,orientation::index_m(m_size1,m_size2)};
+		return {m_storage.get_buffer(),0,leading_dimension()};
 	}
 	
 	
@@ -716,40 +609,11 @@ public:
 	}
 	
 	// Iterator types
-	typedef boost::compute::strided_iterator<typename boost::compute::vector<T>::iterator > row_iterator;
-	typedef boost::compute::strided_iterator<typename boost::compute::vector<T>::iterator > column_iterator;
-	typedef boost::compute::strided_iterator<typename boost::compute::vector<T>::const_iterator > const_row_iterator;
-	typedef boost::compute::strided_iterator<typename boost::compute::vector<T>::const_iterator > const_column_iterator;
+	typedef no_iterator row_iterator;
+	typedef no_iterator column_iterator;
+	typedef no_iterator const_row_iterator;
+	typedef no_iterator const_column_iterator;
 
-	const_row_iterator row_begin(size_type i) const {
-		return {m_storage.begin() + i * stride1(), stride2()};
-	}
-	const_row_iterator row_end(size_type i) const {
-		return {m_storage.begin() + i * stride1()+size2()*stride2(), stride2()};
-	}
-	
-	const_row_iterator column_begin(size_type j) const {
-		return {m_storage.begin() + j * stride2(), stride1()};
-	}
-	const_column_iterator column_end(size_type j) const {
-		return {m_storage.begin() + j * stride2()+size1()*stride1(), stride1()};
-	}
-	
-	row_iterator row_begin(size_type i){
-		return {m_storage.begin() + i * stride1(), stride2()};
-	}
-	row_iterator row_end(size_type i){
-		return {m_storage.begin() + i * stride1()+size2()*stride2(), stride2()};
-	}
-	
-	row_iterator column_begin(size_type j){
-		return {m_storage.begin() + j * stride2(), stride1()};
-	}
-	column_iterator column_end(size_type j){
-		return {m_storage.begin() + j * stride2()+size1()*stride1(), stride1()};
-	}
-
-	
 	/// \brief Swap the content of two matrixs
 	/// \param m1 is the first matrix. It takes values from m2
 	/// \param m2 is the second matrix It takes values from m1
@@ -763,17 +627,81 @@ public:
 	
 	
 private:
-	std::ptrdiff_t stride1() const {
-		return (std::ptrdiff_t) orientation::stride1(m_size1, m_size2);
-	}
-	std::ptrdiff_t stride2() const {
-		return (std::ptrdiff_t) orientation::stride2(m_size1, m_size2);
-	}
+	std::size_t leading_dimension() const{
+		return orientation::index_m(m_size1, m_size2);
+	};
 	
 	boost::compute::vector<T> m_storage;
 	boost::compute::command_queue* m_queue;
 	size_type m_size1;
 	size_type m_size2;
+};
+
+
+template<class T, class Orientation, bool Upper, bool Unit>
+class dense_triangular_proxy<T, Orientation, triangular_tag<Upper, Unit> , gpu_tag>
+: public matrix_expression<dense_triangular_proxy<T, Orientation, triangular_tag<Upper, Unit>, gpu_tag>, gpu_tag> {
+public:
+	typedef std::size_t size_type;
+	typedef typename std::remove_const<T>::type value_type;
+	typedef value_type result_type;
+	typedef typename std::conditional<Unit, value_type const&, T&>::type reference;
+	typedef value_type const& const_reference;
+	typedef dense_triangular_proxy<value_type const, Orientation, triangular_tag<Upper, Unit> , gpu_tag> const_closure_type;
+	typedef dense_triangular_proxy<T, Orientation, triangular_tag<Upper, Unit> , gpu_tag> closure_type;
+
+	typedef gpu::dense_matrix_storage<T, dense_tag> storage_type;
+	typedef gpu::dense_matrix_storage<value_type const, dense_tag> const_storage_type;
+
+	typedef elementwise<dense_tag> evaluation_category;
+	typedef triangular<Orientation,triangular_tag<Upper, Unit> > orientation;
+
+
+	template<class U>
+	dense_triangular_proxy(dense_triangular_proxy<U, Orientation, triangular_tag<Upper, Unit>, gpu_tag> const& expression)
+	: m_storage(expression.raw_storage())
+	, m_queue(&expression.queue())
+	, m_size1(expression.size1())
+	, m_size2(expression.size2()){}
+
+	dense_triangular_proxy(storage_type const& storage, boost::compute::command_queue& queue, std::size_t size1, std::size_t size2)
+	: m_storage(storage)
+	, m_queue(&queue)
+	, m_size1(size1)
+	, m_size2(size2){}
+	
+	dense_matrix_adaptor<T, Orientation, dense_tag, gpu_tag> to_dense() const{
+		return {m_storage, queue(), m_size1, m_size2};
+	}
+	
+	
+	/// \brief Return the number of rows of the matrix
+	size_type size1() const {
+		return m_size1;
+	}
+	/// \brief Return the number of columns of the matrix
+	size_type size2() const {
+		return m_size2;
+	}
+	
+	///\brief Returns the underlying storage structure for low level access
+	storage_type raw_storage() const{
+		return m_storage;
+	}
+	
+	 boost::compute::command_queue& queue()const{
+		return *m_queue;
+	}
+
+	typedef no_iterator row_iterator;
+	typedef no_iterator column_iterator;
+	typedef no_iterator const_row_iterator;
+	typedef no_iterator const_column_iterator;
+private:
+	storage_type m_storage;
+	boost::compute::command_queue* m_queue;
+	std::size_t m_size1;
+	std::size_t m_size2;
 };
 
 //////////////////////////////////
@@ -790,7 +718,8 @@ struct ExpressionToFunctor<vector<T, gpu_tag> >{
 template<class T, class Orientation>
 struct ExpressionToFunctor<matrix<T, Orientation, gpu_tag> >{
 	static gpu::detail::dense_matrix_element<T> transform(matrix<T, Orientation, gpu_tag> const& e){
-		return {e().raw_storage().buffer, Orientation::stride1(e.size1(), e.size2()), Orientation::stride2(e.size1(), e.size2()),0}; 
+		std::size_t leading = e().raw_storage().leading_dimension;
+		return {e().raw_storage().buffer, Orientation::stride1(leading), Orientation::stride2(leading),0}; 
 	}
 };
 
@@ -823,30 +752,6 @@ struct vector_to_matrix_optimizer<dense_vector_adaptor<T, continuous_dense_tag, 
 	static type create(
 		dense_vector_adaptor<T, continuous_dense_tag, gpu_tag> const& v,
 		std::size_t size1, std::size_t size2
-	){
-		gpu::dense_matrix_storage<T, continuous_dense_tag> storage = {v.raw_storage().buffer, v.raw_storage().offset, Orientation::index_m(size1,size2)};
-		return type(storage, v.queue(), size1, size2);
-	}
-};
-
-template<class T, class Orientation>
-struct vector_to_matrix_optimizer<vector<T, gpu_tag> const, Orientation >{
-	typedef dense_matrix_adaptor<T const, Orientation, continuous_dense_tag, gpu_tag> type;
-	
-	static type create(
-		vector<T, gpu_tag> const& v, std::size_t size1, std::size_t size2
-	){
-		gpu::dense_matrix_storage<T const, continuous_dense_tag> storage = {v.raw_storage().buffer, v.raw_storage().offset, Orientation::index_m(size1,size2)};
-		return type(storage, v.queue(), size1, size2);
-	}
-};
-
-template<class T, class Orientation>
-struct vector_to_matrix_optimizer<vector<T, gpu_tag>, Orientation >{
-	typedef dense_matrix_adaptor<T, Orientation, continuous_dense_tag, gpu_tag> type;
-	
-	static type create(
-		vector<T, gpu_tag>& v, std::size_t size1, std::size_t size2
 	){
 		gpu::dense_matrix_storage<T, continuous_dense_tag> storage = {v.raw_storage().buffer, v.raw_storage().offset, Orientation::index_m(size1,size2)};
 		return type(storage, v.queue(), size1, size2);

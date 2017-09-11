@@ -30,8 +30,6 @@
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
-#include <boost/compute/kernel.hpp>
-#include <boost/compute/detail/meta_kernel.hpp>
 
 #include <iostream>
 namespace remora{namespace bindings{
