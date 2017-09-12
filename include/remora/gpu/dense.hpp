@@ -199,13 +199,9 @@ public:
 	boost::compute::command_queue& queue() const{
 		return *m_queue;
 	}
-	///\brief Returns the underlying storage structure for low level access
-	storage_type raw_storage(){
-		return {m_storage.buffer, m_storage.offset, m_storage.leading_dimension};
-	}
 	
 	///\brief Returns the underlying storage structure for low level access
-	const_storage_type raw_storage() const{
+	storage_type raw_storage() const{
 		return {m_storage.buffer, m_storage.offset, m_storage.leading_dimension};
 	}
 	

@@ -8,6 +8,33 @@
 
 using namespace remora;
 
+template<class Operation, class Result>
+void checkDenseMatrixEquality(Operation op_gpu, Result const& result){
+	BOOST_REQUIRE_EQUAL(op_gpu.size1(), result.size1());
+	BOOST_REQUIRE_EQUAL(op_gpu.size2(), result.size2());
+	
+	auto storage = op_gpu.raw_storage();
+	
+	//test copy to cpu, this tests the buffer
+	matrix<float> op = copy_to_cpu(op_gpu);
+	for(std::size_t i = 0; i != op.size1(); ++i){
+		for(std::size_t j = 0; j != op.size2(); ++j){
+			BOOST_CHECK_CLOSE(result(i,j), op(i,j),1.e-8);
+		}
+	}
+}
+template<class Operation, class Result>
+void checkDenseVectorEquality(Operation op_gpu, Result const& result){
+	BOOST_REQUIRE_EQUAL(op_gpu.size(), result.size());
+	
+	//test copy to cpu, this tests the buffer
+	vector<float> op = copy_to_cpu(op_gpu);
+	BOOST_REQUIRE_EQUAL(op.size(), result.size());
+	for(std::size_t i = 0; i != op.size(); ++i){
+		BOOST_CHECK_CLOSE(result(i), op(i),1.e-8);
+	}
+}
+
 std::size_t Dimensions1 = 20;
 std::size_t Dimensions2 = 10;
 struct MatrixProxyFixture
@@ -334,7 +361,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Matrix_Row, Orientation, result_orientations){
 		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
 	}
 	{
-		dense_vector_adaptor<float, Tag, gpu_tag> closure = row(const_proxy,3);
+		dense_vector_adaptor<float const, Tag, gpu_tag> closure = row(const_proxy,3);
 		BOOST_CHECK_EQUAL(closure.size(),data.size2());
 		auto storage = closure.raw_storage();
 		BOOST_CHECK_EQUAL(storage.offset,5*stride1);
@@ -352,7 +379,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Matrix_Row, Orientation, result_orientations){
 		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
 	}
 	{
-		dense_vector_adaptor<float, Tag, gpu_tag> closure = row(typename matrix<float, Orientation, gpu_tag>::const_closure_type(proxy),3);
+		dense_vector_adaptor<float const, Tag, gpu_tag> closure = row(typename matrix<float, Orientation, gpu_tag>::const_closure_type(proxy),3);
 		BOOST_CHECK_EQUAL(closure.size(),data.size2());
 		auto storage = closure.raw_storage();
 		BOOST_CHECK_EQUAL(storage.offset,5*stride1);
@@ -589,7 +616,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Matrix_Diagonal, Orientation, result_orientations
 		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
 	}
 	{
-		dense_vector_adaptor<float, dense_tag, gpu_tag> closure = diag(const_proxy);
+		dense_vector_adaptor<float const, dense_tag, gpu_tag> closure = diag(const_proxy);
 		BOOST_CHECK_EQUAL(closure.size(),data.size2()-1);
 		auto storage = closure.raw_storage();
 		BOOST_CHECK_EQUAL(storage.offset,4);
@@ -607,7 +634,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Matrix_Diagonal, Orientation, result_orientations
 		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
 	}
 	{
-		dense_vector_adaptor<float, dense_tag, gpu_tag> closure = diag(typename matrix<float, Orientation, gpu_tag>::const_closure_type(proxy));
+		dense_vector_adaptor<float const, dense_tag, gpu_tag> closure = diag(typename matrix<float, Orientation, gpu_tag>::const_closure_type(proxy));
 		BOOST_CHECK_EQUAL(closure.size(),data.size2()-1);
 		auto storage = closure.raw_storage();
 		BOOST_CHECK_EQUAL(storage.offset,4);
@@ -658,11 +685,87 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Matrix_Linearizer, Orientation, result_orientatio
 		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
 	}
 	{
-		dense_vector_adaptor<float, continuous_dense_tag, gpu_tag> closure = to_vector(typename matrix<float, Orientation, gpu_tag>::const_closure_type(proxy));
+		dense_vector_adaptor<float const, continuous_dense_tag, gpu_tag> closure = to_vector(typename matrix<float, Orientation, gpu_tag>::const_closure_type(proxy));
 		BOOST_CHECK_EQUAL(closure.size(), data.size1() * data.size2());
 		auto storage = closure.raw_storage();
 		BOOST_CHECK_EQUAL(storage.offset,0);
 		BOOST_CHECK_EQUAL(storage.stride,1);
+		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
+	}
+}
+
+
+BOOST_AUTO_TEST_CASE( Vector_To_Matrix){
+	auto storageR = denseDataVec.raw_storage();
+
+	{
+		dense_matrix_adaptor<float, row_major, continuous_dense_tag, gpu_tag> closure = to_matrix(denseDataVec,4,5);
+		BOOST_CHECK_EQUAL(closure.size1(),4);
+		BOOST_CHECK_EQUAL(closure.size2(),5);
+		auto storage = closure.raw_storage();
+		BOOST_CHECK_EQUAL(storage.offset,0);
+		BOOST_CHECK_EQUAL(storage.leading_dimension,5);
+		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
+	}
+	{
+		dense_matrix_adaptor<float const, row_major, continuous_dense_tag, gpu_tag> closure = to_matrix((remora::vector<float,gpu_tag> const&)denseDataVec,4,5);
+		BOOST_CHECK_EQUAL(closure.size1(),4);
+		BOOST_CHECK_EQUAL(closure.size2(),5);
+		auto storage = closure.raw_storage();
+		BOOST_CHECK_EQUAL(storage.offset,0);
+		BOOST_CHECK_EQUAL(storage.leading_dimension,5);
+		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
+	}
+	{
+		dense_matrix_adaptor<float const, row_major, continuous_dense_tag, gpu_tag> closure = to_matrix(denseDataVec,4,5);
+		BOOST_CHECK_EQUAL(closure.size1(),4);
+		BOOST_CHECK_EQUAL(closure.size2(),5);
+		auto storage = closure.raw_storage();
+		BOOST_CHECK_EQUAL(storage.offset,0);
+		BOOST_CHECK_EQUAL(storage.leading_dimension,5);
+		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
+	}
+	
+	
+	storageR.offset = 4;
+	typename vector<float, gpu_tag>::closure_type proxy(storageR, denseDataVec.queue(), 16);
+	typename vector<float, gpu_tag>::const_closure_type const_proxy = proxy;
+	{
+		dense_matrix_adaptor<float, row_major, continuous_dense_tag, gpu_tag> closure = to_matrix(proxy,2,8);
+		BOOST_CHECK_EQUAL(closure.size1(),2);
+		BOOST_CHECK_EQUAL(closure.size2(),8);
+		auto storage = closure.raw_storage();
+		BOOST_CHECK_EQUAL(storage.offset,4);
+		BOOST_CHECK_EQUAL(storage.leading_dimension,8);
+		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
+	}
+	{
+		dense_matrix_adaptor<float const, row_major, continuous_dense_tag, gpu_tag> closure = to_matrix(const_proxy,2,8);
+		BOOST_CHECK_EQUAL(closure.size1(),2);
+		BOOST_CHECK_EQUAL(closure.size2(),8);
+		auto storage = closure.raw_storage();
+		BOOST_CHECK_EQUAL(storage.offset,4);
+		BOOST_CHECK_EQUAL(storage.leading_dimension,8);
+		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
+	}
+	
+	//also check rvalue version
+	{
+		dense_matrix_adaptor<float, row_major, continuous_dense_tag, gpu_tag> closure = to_matrix(dense_vector_adaptor<float, continuous_dense_tag, gpu_tag>(proxy),2,8);
+		BOOST_CHECK_EQUAL(closure.size1(),2);
+		BOOST_CHECK_EQUAL(closure.size2(),8);
+		auto storage = closure.raw_storage();
+		BOOST_CHECK_EQUAL(storage.offset,4);
+		BOOST_CHECK_EQUAL(storage.leading_dimension,8);
+		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
+	}
+	{
+		dense_matrix_adaptor<float const, row_major, continuous_dense_tag, gpu_tag> closure = to_matrix(dense_vector_adaptor<float const, continuous_dense_tag, gpu_tag>(const_proxy),2,8);
+		BOOST_CHECK_EQUAL(closure.size1(),2);
+		BOOST_CHECK_EQUAL(closure.size2(),8);
+		auto storage = closure.raw_storage();
+		BOOST_CHECK_EQUAL(storage.offset,4);
+		BOOST_CHECK_EQUAL(storage.leading_dimension,8);
 		BOOST_CHECK_EQUAL(storage.buffer.get(),storageR.buffer.get());
 	}
 }

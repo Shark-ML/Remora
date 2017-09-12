@@ -55,6 +55,7 @@ struct dense_vector_storage{
 	template<class U, class Tag2>
 	dense_vector_storage(dense_vector_storage<U, Tag2> const& storage):
 	buffer(storage.buffer), offset(storage.offset), stride(storage.stride){
+		static_assert(std::is_convertible<U&, T&>::value, "incompatible storage");
 		static_assert(!(std::is_same<Tag,continuous_dense_tag>::value && std::is_same<Tag2,dense_tag>::value), "Trying to assign dense to continuous dense storage");
 	}
 	
@@ -93,6 +94,7 @@ struct dense_matrix_storage{
 	template<class U, class Tag2>
 	dense_matrix_storage(dense_matrix_storage<U, Tag2> const& storage):
 	buffer(storage.buffer), offset(storage.offset), leading_dimension(storage.leading_dimension){
+		static_assert(std::is_convertible<U&, T&>::value, "incompatible storage");
 		static_assert(!(std::is_same<Tag,continuous_dense_tag>::value && std::is_same<Tag2,dense_tag>::value), "Trying to assign dense to continuous dense storage");
 	}
 	
