@@ -8,33 +8,6 @@
 
 using namespace remora;
 
-template<class Operation, class Result>
-void checkDenseMatrixEquality(Operation op_gpu, Result const& result){
-	BOOST_REQUIRE_EQUAL(op_gpu.size1(), result.size1());
-	BOOST_REQUIRE_EQUAL(op_gpu.size2(), result.size2());
-	
-	auto storage = op_gpu.raw_storage();
-	
-	//test copy to cpu, this tests the buffer
-	matrix<float> op = copy_to_cpu(op_gpu);
-	for(std::size_t i = 0; i != op.size1(); ++i){
-		for(std::size_t j = 0; j != op.size2(); ++j){
-			BOOST_CHECK_CLOSE(result(i,j), op(i,j),1.e-8);
-		}
-	}
-}
-template<class Operation, class Result>
-void checkDenseVectorEquality(Operation op_gpu, Result const& result){
-	BOOST_REQUIRE_EQUAL(op_gpu.size(), result.size());
-	
-	//test copy to cpu, this tests the buffer
-	vector<float> op = copy_to_cpu(op_gpu);
-	BOOST_REQUIRE_EQUAL(op.size(), result.size());
-	for(std::size_t i = 0; i != op.size(); ++i){
-		BOOST_CHECK_CLOSE(result(i), op(i),1.e-8);
-	}
-}
-
 std::size_t Dimensions1 = 20;
 std::size_t Dimensions2 = 10;
 struct MatrixProxyFixture
@@ -58,6 +31,104 @@ struct MatrixProxyFixture
 };
 
 BOOST_FIXTURE_TEST_SUITE (Remora_matrix_proxy, MatrixProxyFixture);
+
+BOOST_AUTO_TEST_CASE( Vector_Proxy){
+	vector<float, gpu_tag> data = denseDataVec;
+	auto storageVec = data.raw_storage();
+	storageVec.offset = 3;
+	storageVec.stride = 2;
+	
+	dense_vector_adaptor<float, continuous_dense_tag, gpu_tag> proxy(storageVec,denseDataVec.queue(), 6);
+	BOOST_CHECK_EQUAL(proxy.size(),6);
+	BOOST_CHECK_EQUAL(proxy.raw_storage().stride,storageVec.stride);
+	BOOST_CHECK_EQUAL(proxy.raw_storage().offset,storageVec.offset);
+	BOOST_CHECK_EQUAL(proxy.raw_storage().buffer.get(),storageVec.buffer.get());
+	BOOST_CHECK_EQUAL(proxy.queue().get(),data.queue().get());
+	
+	//test whether the referenced values are correct
+	vector<float> op = copy_to_cpu(proxy);
+	BOOST_REQUIRE_EQUAL(op.size(), 6);
+	for(std::size_t i = 0; i != op.size(); ++i){
+		BOOST_CHECK_EQUAL(denseData_cpu_vec(storageVec.offset+storageVec.stride*i), op(i));
+	}
+	
+	//test whether clearing works
+	proxy.clear();
+	vector<float> result = denseData_cpu_vec;
+	for(std::size_t i = 0; i != proxy.size(); ++i){
+		result(storageVec.offset+storageVec.stride*i) = 0;
+	}
+	op = copy_to_cpu(data);
+	for(std::size_t i = 0; i != data.size(); ++i){
+		BOOST_CHECK_EQUAL(result(i), op(i));
+	}
+	
+	//Test assignment
+	{
+		vector<float, gpu_tag> dataConst(proxy.size(),1.0);
+		for(std::size_t i = 0; i != proxy.size(); ++i){
+			result(storageVec.offset+storageVec.stride*i) = 1;
+		}
+		proxy = dataConst;
+		op = copy_to_cpu(data);
+		for(std::size_t i = 0; i != data.size(); ++i){
+			BOOST_CHECK_EQUAL(result(i), op(i));
+		}
+	}
+	{
+		vector<float, gpu_tag> dataConst(2 * proxy.size(),3.0,data.queue());
+		for(std::size_t i = 0; i != proxy.size(); ++i){
+			result(storageVec.offset+storageVec.stride*i) = 3.0;
+		}
+		auto storage = dataConst.raw_storage();
+		storage.offset = 5;
+		dense_vector_adaptor<float const, continuous_dense_tag, gpu_tag> proxyTest(storage,data.queue(), proxy.size());
+		proxy = proxyTest;
+		op = copy_to_cpu(data);
+		for(std::size_t i = 0; i != data.size(); ++i){
+			BOOST_CHECK_EQUAL(result(i), op(i));
+		}
+	}
+}
+
+typedef boost::mpl::list<row_major,column_major> result_orientations;
+BOOST_AUTO_TEST_CASE_TEMPLATE( Matrix_Proxy, Orientation, result_orientations){
+	matrix<float, Orientation, gpu_tag> data = denseData;
+	auto storage = data.raw_storage();
+	storage.offset = Orientation::stride1(storage.leading_dimension) * 3+ Orientation::stride2(storage.leading_dimension) * 2;
+	
+	dense_matrix_adaptor<float,Orientation, continuous_dense_tag, gpu_tag> proxy(storage,data.queue(), Dimensions1 - 6, Dimensions2 - 4);
+	BOOST_CHECK_EQUAL(proxy.size1(),Dimensions1 - 6);
+	BOOST_CHECK_EQUAL(proxy.size2(),Dimensions2 - 4);
+	BOOST_CHECK_EQUAL(proxy.raw_storage().leading_dimension,storage.leading_dimension);
+	BOOST_CHECK_EQUAL(proxy.raw_storage().offset,storage.offset);
+	BOOST_CHECK_EQUAL(proxy.raw_storage().buffer.get(),storage.buffer.get());
+	BOOST_CHECK_EQUAL(proxy.queue().get(),data.queue().get());
+	
+	//test whether the referenced values are correct
+	matrix<float> op = copy_to_cpu(proxy);
+	for(std::size_t i = 0; i != proxy.size1(); ++i){
+		for(std::size_t j = 0; j != proxy.size2(); ++j){
+			BOOST_CHECK_EQUAL(op(i,j),denseData_cpu(i+3,j+2));
+		}
+	}
+	
+	//test whether clearing works
+	proxy.clear();
+	op = copy_to_cpu(data);
+	matrix<float> result = denseData_cpu;
+	for(std::size_t i = 0; i != proxy.size1(); ++i){
+		for(std::size_t j = 0; j != proxy.size2(); ++j){
+			result(i+3,j+2) = 0;
+		}
+	}
+	for(std::size_t i = 0; i != data.size1(); ++i){
+		for(std::size_t j = 0; j != data.size2(); ++j){
+			BOOST_CHECK_EQUAL(result(i,j),op(i,j));
+		}
+	}
+}
+
 
 //check that vectors are correctly transformed into their closures
 BOOST_AUTO_TEST_CASE( Vector_Closure){
@@ -226,7 +297,6 @@ BOOST_AUTO_TEST_CASE( Vector_Subrange){
 		BOOST_CHECK_EQUAL(storage.buffer.get(),storageVec.buffer.get());
 	}
 }
-typedef boost::mpl::list<row_major,column_major> result_orientations;
 BOOST_AUTO_TEST_CASE_TEMPLATE( Matrix_Transpose, Orientation, result_orientations){
 	matrix<float, Orientation, gpu_tag> data = denseData;
 	

@@ -81,6 +81,20 @@ public:
 	, m_queue(&v().queue())
 	, m_size(v().size()){}
 	
+	// -------------------
+	// Assignment operators
+	// -------------------
+	
+	dense_vector_adaptor& operator = (dense_vector_adaptor const& e) {
+		REMORA_SIZE_CHECK(size() == e().size());
+		return assign(*this, typename vector_temporary<dense_vector_adaptor>::type(e));
+	}
+	template<class E>
+	dense_vector_adaptor& operator = (vector_expression<E, gpu_tag> const& e) {
+		REMORA_SIZE_CHECK(size() == e().size());
+		return assign(*this, typename vector_temporary<dense_vector_adaptor>::type(e));
+	}
+	
 	/// \brief Return the size of the vector.
 	size_type size() const {
 		return m_size;
