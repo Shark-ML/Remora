@@ -54,6 +54,7 @@ remora_add_test( symm_solve.cpp Symm_Solve)
 remora_add_test( general_solve.cpp General_Solve)
 remora_add_test( cholesky.cpp Cholesky)
 remora_add_test( eigensymm.cpp Eigensymm)
+remora_add_test( random.cpp Random)
 
 #GPU tests
 if(ENABLE_GPU)
@@ -67,6 +68,7 @@ remora_add_test( gpu_prod.cpp GPU_Prod)
 remora_add_test( gpu_syrk.cpp GPU_Syrk)
 remora_add_test( gpu_triangular_prod.cpp GPU_Triangular_Prod)
 remora_add_test( gpu_triangular_solve.cpp GPU_Triangular_Solve)
+remora_add_test( gpu_random.cpp GPU_Random)
 endif()
 
 
