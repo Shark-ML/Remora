@@ -13,7 +13,7 @@
 #include <iostream>
 using namespace remora;
 
-bool chi_squared_gof(std::vector<std::size_t> const& bins, std::vector<double> const& pBin, std::size_t n){
+false chi_squared_gof(std::vector<std::size_t> const& bins, std::vector<double> const& pBin, std::size_t n){
 	double stat = 0;
 	for(std::size_t i = 0; i != bins.size(); ++i){
 		double E = pBin[i] * n;
@@ -21,7 +21,7 @@ bool chi_squared_gof(std::vector<std::size_t> const& bins, std::vector<double> c
 	}
 	
 	boost::math::chi_squared dist(bins.size() - 1);
-	double val = quantile(complement(dist, 0.02));
+	double val = quantile(complement(dist, 0.001));
 	BOOST_CHECK( stat < val);
 }
 

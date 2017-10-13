@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(Remora_Random_uniform) {
 
 
 BOOST_AUTO_TEST_CASE(Remora_Random_discrete) {
-	std::size_t Dimensions = 10000;
+	std::size_t Dimensions = 50000;
 	std::mt19937 gen(42);
 	boost::math::uniform_distribution<> dist(-5,7);
 	for(std::size_t i = 0; i != 10; ++i){

@@ -144,13 +144,39 @@ boost::compute::kernel get_random_kernel32(std::string const& kernelname, boost:
 		"    phi.hi = z;"
 		"    return mean + stddev * r.s0011 * phi;\n"
 		"}\n"
+		"uint4 discrete4_32(uint4 key, uint4 ctr, uint N, uint4 inc) {\n"
+		"    uint max_valid = (MAX_RANDOM_32 / N) * N;\n"
+		"    int num_valid = 0;\n"
+		"    uint res[4];"
+		"    while(num_valid < 4){\n"
+		"        uint4 x = rng4_32(ctr, key);\n"
+		"        if(x.s0 < max_valid){\n"
+		"            res[num_valid] = x.s0 % N;\n"
+		"            ++num_valid;\n"
+		"        }\n"
+		"        if(num_valid < 4 && x.s1 < max_valid){\n"
+		"            res[num_valid] = x.s1 % N;\n"
+		"            ++num_valid;\n"
+		"        }\n"
+		"        if(num_valid < 4 && x.s2 < max_valid){\n"
+		"            res[num_valid] = x.s2 % N;\n"
+		"            ++num_valid;\n"
+		"        }\n"
+		"        if(num_valid < 4 && x.s3 < max_valid){\n"
+		"            res[num_valid] = x.s3 % N;\n"
+		"            ++num_valid;\n"
+		"        }\n"
+		"        ctr += inc;\n"
+		"    }\n"
+		"    return (uint4)(res[0],res[1],res[2],res[3]);\n"
+		"}\n"
 		//kernel routines
 		"__kernel void generate_uniform32(__global float *res, uint4 key, float low, float high, ulong offset, ulong cols, ulong leading, ulong stride) {\n"
 		"    uint4 ctr;\n"
 		"    ctr.s0 = get_global_id(0) & 0x0000ffff;\n"
-		"    ctr.s2 = get_global_id(0) & 0xffff0000;\n"
+		"    ctr.s2 = get_global_id(0) >> 32;\n"
 		"    ctr.s1 = get_global_id(1) & 0x0000ffff;\n"
-		"    ctr.s3 = get_global_id(1) & 0xffff0000;\n"
+		"    ctr.s3 = get_global_id(1) >> 32;\n"
 		"    uint4 x = rng4_32(ctr, key);\n"
 		"    float4 u = uniform4_32(low, high, x);\n"
 		"    size_t col = 4 * get_global_id(1);\n"
@@ -163,9 +189,9 @@ boost::compute::kernel get_random_kernel32(std::string const& kernelname, boost:
 		"__kernel void generate_normal32(__global float *res, uint4 key, float mean, float stddev, ulong offset, ulong cols, ulong leading, ulong stride) {\n"
 		"    uint4 ctr;\n"
 		"    ctr.s0 = get_global_id(0) & 0x0000ffff;\n"
-		"    ctr.s2 = get_global_id(0) & 0xffff0000;\n"
+		"    ctr.s2 = get_global_id(0) >> 32;\n"
 		"    ctr.s1 = get_global_id(1) & 0x0000ffff;\n"
-		"    ctr.s3 = get_global_id(1) & 0xffff0000;\n"
+		"    ctr.s3 = get_global_id(1) >> 32;\n"
 		"    uint4 x = rng4_32(ctr, key);\n"
 		"    float4 u = normal4_32(mean, stddev, x);\n"
 		"    size_t col = 4 * get_global_id(1);\n"
@@ -175,38 +201,22 @@ boost::compute::kernel get_random_kernel32(std::string const& kernelname, boost:
 		"    if(col + 1 < cols) res[pos +2 * stride] = u.s2;\n"
 		"    if(col + 2 < cols) res[pos +3 * stride] = u.s3;\n"
 		"}\n"
-		"__kernel void generate_discrete32(__global float* res,  uint4 key, int low, int high, ulong offset, ulong cols, ulong leading, ulong stride) {\n"
-		"    int N = high - low + 1;\n"
-		"    int max_valid = (MAX_RANDOM_32 / N) * N;\n"
-		"    int num_valid = 0;\n"
+		"__kernel void generate_discrete_float_int32(__global float* res,  uint4 key, int low, int high, ulong offset, ulong cols, ulong leading, ulong stride) {\n"
+		"    uint N = high - low + 1;\n"
+		"    uint4 ctr;\n"
+		"    ctr.s0 = get_global_id(0) & 0x0000ffff;\n"
+		"    ctr.s2 = get_global_id(0) >> 32;\n"
+		"    ctr.s1 = get_global_id(1) & 0x0000ffff;\n"
+		"    ctr.s3 = get_global_id(1) >> 32;\n"
+		"    uint4 inc = (uint4)(0,get_global_size(1) & 0x0000ffff, 0, get_global_size(1) >> 32);\n"
+		"    uint4 z = discrete4_32(key,ctr,N,inc);\n" 
 		"    size_t col = 4 * get_global_id(1);\n"
 		"    size_t pos = offset + stride * (get_global_id(0) * cols + col);\n"
 		"    int valid_required = min((size_t)4, cols - col);\n"
-		"    uint4 ctr;\n"
-		"    ctr.s0 = get_global_id(0) & 0x0000ffff;\n"
-		"    ctr.s2 = get_global_id(0) & 0xffff0000;\n"
-		"    ctr.s1 = get_global_id(1) & 0x0000ffff;\n"
-		"    ctr.s3 = get_global_id(1) & 0xffff0000;\n"
-		"    while(num_valid < valid_required){"
-		"        uint4 x = rng4_32(ctr, key);\n"
-		"        if(x.s0 < max_valid){\n"
-		"            res[pos] = low + convert_float(x.s0 % N);\n"
-		"            ++num_valid;\n"
-		"        }\n"
-		"        if(num_valid < valid_required && x.s1 < max_valid){\n"
-		"            res[pos + num_valid * stride] = low + convert_float(x.s1 % N);\n"
-		"            ++num_valid;\n"
-		"        }\n"
-		"        if(num_valid < valid_required && x.s2 < max_valid){\n"
-		"            res[pos + num_valid * stride] = low + convert_float(x.s2 % N);\n"
-		"            ++num_valid;\n"
-		"        }\n"
-		"        if(num_valid < valid_required && x.s3 < max_valid){\n"
-		"            res[pos + num_valid * stride] = low + convert_float(x.s3 % N);\n"
-		"            ++num_valid;\n"
-		"        }\n"
-		"        ctr.s2 += get_global_size(0);\n"
-		"    }\n"
+		"    res[pos] = low + convert_float(z.s0)\n;"
+		"    if(1 < valid_required) res[pos+stride] = low + convert_float(z.s1)\n;"
+		"    if(2 < valid_required) res[pos+2*stride] = low + convert_float(z.s2)\n;"
+		"    if(3 < valid_required) res[pos+3*stride] = low + convert_float(z.s2)\n;"
 		"}\n";
 	auto program = boost::compute::program_cache::get_global_cache(ctx)->get_or_build("remora_random_program32", "", source, ctx);
 	return program.create_kernel(kernelname+"32");
@@ -295,7 +305,7 @@ void generate_discrete(
 	int high
 ) {
 	auto storage = v().raw_storage();
-	run_random_kernel("generate_discrete", rng, v().queue(), storage.buffer, storage.offset, 1, v().size(), 1, storage.stride, low, high);
+	run_random_kernel("generate_discrete_float_int", rng, v().queue(), storage.buffer, storage.offset, 1, v().size(), 1, storage.stride, low, high);
 }
 
 template<class M, class Rng>
@@ -308,7 +318,7 @@ void generate_discrete(
 	auto storage = m().raw_storage();
 	std::size_t major = M::orientation::index_M(m().size1(), m().size2());
 	std::size_t minor = M::orientation::index_m(m().size1(), m().size2());
-	run_random_kernel("generate_discrete", rng, m().queue(), storage.buffer, storage.offset, major, minor,storage.leading_dimension, 1, low, high);
+	run_random_kernel("generate_discrete_float_int", rng, m().queue(), storage.buffer, storage.offset, major, minor,storage.leading_dimension, 1, low, high);
 }
 
 }}
