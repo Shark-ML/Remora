@@ -82,18 +82,18 @@ public:
 		return m_system_type;
 	}
 	
-	typedef typename MatA::const_row_iterator iterator;
+	typedef no_iterator iterator;
 	typedef iterator const_iterator;
 	
 	//dispatcher to computation kernels
 	template<class VecX>
-	void assign_to(vector_expression<VecX, device_type>& x, value_type alpha)const{
+	void assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
 		assign(x,m_rhs,alpha);
 		solver<MatA,SystemType> alg(m_matrix, m_system_type);
 		alg.solve(x,Side());
 	}
 	template<class VecX>
-	void plus_assign_to(vector_expression<VecX, device_type>& x, value_type alpha)const{
+	void plus_assign_to(vector_expression<VecX, device_type>& x, typename VecX::value_type alpha)const{
 		typename vector_temporary<VecX>::type temp(m_rhs);
 		solver<MatA,SystemType> alg(m_matrix, m_system_type);
 		alg.solve(temp,Side());
@@ -156,20 +156,20 @@ public:
 			return m_system_type;
 	}
 	
-	typedef typename MatA::const_row_iterator row_iterator;
+	typedef no_iterator row_iterator;
 	typedef row_iterator const_row_iterator;
-	typedef typename MatA::const_column_iterator column_iterator;
+	typedef no_iterator column_iterator;
 	typedef column_iterator const_column_iterator;
 	
 	//dispatcher to computation kernels
 	template<class MatX>
-	void assign_to(matrix_expression<MatX, device_type>& X, value_type alpha)const{
+	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
 		assign(X,m_rhs,alpha);
 		solver<MatA,SystemType> alg(m_matrix,m_system_type);
 		alg.solve(X,Side());
 	}
 	template<class MatX>
-	void plus_assign_to(matrix_expression<MatX, device_type>& X, value_type alpha)const{
+	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
 		typename matrix_temporary<MatX>::type temp(m_rhs);
 		solver<MatA,SystemType> alg(m_matrix,m_system_type);
 		alg.solve(temp,Side());
@@ -223,21 +223,21 @@ public:
 			return m_system_type;
 	}
 	
-	typedef typename MatA::const_row_iterator row_iterator;
+	typedef no_iterator row_iterator;
 	typedef row_iterator const_row_iterator;
-	typedef typename MatA::const_column_iterator column_iterator;
+	typedef no_iterator column_iterator;
 	typedef column_iterator const_column_iterator;
 	
 	//dispatcher to computation kernels
 	template<class MatX>
-	void assign_to(matrix_expression<MatX, device_type>& X, value_type alpha)const{
+	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
 		typedef scalar_vector<value_type, device_type> diag_vec;
 		assign(X,diagonal_matrix<diag_vec>(diag_vec(size1(),value_type(1))),alpha);
 		solver<MatA,SystemType> alg(m_matrix,m_system_type);
 		alg.solve(X,left());
 	}
 	template<class MatX>
-	void plus_assign_to(matrix_expression<MatX, device_type>& X, value_type alpha)const{
+	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha)const{
 		typedef scalar_vector<value_type, device_type> diag_vec;
 		typename matrix_temporary<MatX>::type temp = diagonal_matrix<diag_vec>(diag_vec(size1(),value_type(1)),alpha);
 		solver<MatA,SystemType> alg(m_matrix,m_system_type);

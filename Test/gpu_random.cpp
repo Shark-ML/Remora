@@ -6,7 +6,7 @@
 #include <remora/dense.hpp>
 #include <remora/device_copy.hpp>
 #include <remora/matrix_expression.hpp>
-#include <remora/kernels/random.hpp>
+#include <remora/random.hpp>
 
 #include <boost/math/distributions/normal.hpp>
 #include <boost/math/distributions/uniform.hpp>
@@ -15,7 +15,7 @@
 #include <iostream>
 using namespace remora;
 
-bool chi_squared_gof(std::vector<std::size_t> const& bins, std::vector<float> const& pBin, std::size_t n){
+void chi_squared_gof(std::vector<std::size_t> const& bins, std::vector<float> const& pBin, std::size_t n){
 	float stat = 0;
 	for(std::size_t i = 0; i != bins.size(); ++i){
 		float E = pBin[i] * n;
@@ -82,10 +82,12 @@ BOOST_AUTO_TEST_CASE(Remora_Random_Normal) {
 	std::mt19937 gen(42);
 	boost::math::normal_distribution<> dist(-2,3);
 	for(std::size_t i = 0; i != 10; ++i){
-		vector<float, gpu_tag> v(Dimensions);
-		kernels::generate_normal(v, gen, -2, 9);
-		chi_squared_gof(v,dist, -10, 10,20);
-		
+		//test kernels
+		{
+			vector<float, gpu_tag> v(Dimensions);
+			kernels::generate_normal(v, gen, -2, 9);
+			chi_squared_gof(v,dist, -10, 10,20);
+		}
 		{
 			matrix<float, row_major, gpu_tag> m(77,Dimensions/77);
 			kernels::generate_normal(m, gen, -2, 9);
@@ -96,6 +98,25 @@ BOOST_AUTO_TEST_CASE(Remora_Random_Normal) {
 			kernels::generate_normal(m, gen, -2, 9);
 			chi_squared_gof(m,dist, -10,10,20);
 		}
+		//test expressions
+		{
+			vector<float, gpu_tag> v = 3.0*normal(gen, Dimensions, -2.0/3.0, 1.0, gpu_tag());
+			chi_squared_gof(v,dist, -10, 10,20);
+		}
+		{
+			vector<float, gpu_tag> v(Dimensions,1);
+			noalias(v) += 3.0*normal(gen, Dimensions, -1.0, 1.0, gpu_tag());
+			chi_squared_gof(v,dist, -10, 10,20);
+		}
+		{
+			matrix<float, row_major, gpu_tag> m = 3.0*normal(gen, 77, Dimensions/77, -2.0/3.0, 1.0, gpu_tag());
+			chi_squared_gof(m,dist, -10, 10,20);
+		}
+		{
+			matrix<float, row_major, gpu_tag> m(77,Dimensions/77,1);
+			noalias(m) += 3.0*normal(gen, 77, Dimensions/77, -1.0, 1.0, gpu_tag());
+			chi_squared_gof(m,dist, -10, 10,20);
+		}
 	}
 }
 
@@ -104,10 +125,11 @@ BOOST_AUTO_TEST_CASE(Remora_Random_uniform) {
 	std::mt19937 gen(42);
 	boost::math::uniform_distribution<> dist(-5,7);
 	for(std::size_t i = 0; i != 10; ++i){
-		vector<float, gpu_tag> v(Dimensions);
-		kernels::generate_uniform(v, gen, -5,7);
-		chi_squared_gof(v,dist,-5,7,20);
-		
+		{
+			vector<float, gpu_tag> v(Dimensions);
+			kernels::generate_uniform(v, gen, -5,7);
+			chi_squared_gof(v,dist,-5,7,20);
+		}
 		{
 			matrix<float, row_major, gpu_tag> m(77,Dimensions/77);
 			kernels::generate_uniform(m, gen, -5, 7);
@@ -116,6 +138,25 @@ BOOST_AUTO_TEST_CASE(Remora_Random_uniform) {
 		{
 			matrix<float, column_major, gpu_tag> m(77,Dimensions/77);
 			kernels::generate_uniform(m, gen, -5, 7);
+			chi_squared_gof(m,dist,-5,7,20);
+		}
+		//test expressions
+		{
+			vector<float, gpu_tag> v = 3.0*uniform(gen, Dimensions, -5.0/3.0, 7.0/3.0, gpu_tag());
+			chi_squared_gof(v,dist,-5,7,20);
+		}
+		{
+			vector<float, gpu_tag> v(Dimensions,1);
+			noalias(v) += 3.0*uniform(gen, Dimensions, -6/3.0, 6/3.0, gpu_tag());
+			chi_squared_gof(v,dist,-5,7,20);
+		}
+		{
+			matrix<float, row_major, gpu_tag> m = 3.0*uniform(gen, 77, Dimensions/77, -5.0/3.0, 7.0/3.0, gpu_tag());
+			chi_squared_gof(m,dist,-5,7,20);
+		}
+		{
+			matrix<float, row_major, gpu_tag> m(77,Dimensions/77,1);
+			noalias(m) += 3.0*uniform(gen, 77, Dimensions/77, -6/3.0, 6/3.0, gpu_tag());
 			chi_squared_gof(m,dist,-5,7,20);
 		}
 	}

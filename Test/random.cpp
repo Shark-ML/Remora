@@ -4,7 +4,7 @@
 
 #include <remora/dense.hpp>
 #include <remora/matrix_expression.hpp>
-#include <remora/kernels/random.hpp>
+#include <remora/random.hpp>
 
 #include <boost/math/distributions/normal.hpp>
 #include <boost/math/distributions/uniform.hpp>
@@ -13,7 +13,7 @@
 #include <iostream>
 using namespace remora;
 
-false chi_squared_gof(std::vector<std::size_t> const& bins, std::vector<double> const& pBin, std::size_t n){
+void chi_squared_gof(std::vector<std::size_t> const& bins, std::vector<double> const& pBin, std::size_t n){
 	double stat = 0;
 	for(std::size_t i = 0; i != bins.size(); ++i){
 		double E = pBin[i] * n;
@@ -22,6 +22,7 @@ false chi_squared_gof(std::vector<std::size_t> const& bins, std::vector<double> 
 	
 	boost::math::chi_squared dist(bins.size() - 1);
 	double val = quantile(complement(dist, 0.001));
+	std::cout<<stat<<" "<<val<<std::endl;
 	BOOST_CHECK( stat < val);
 }
 
@@ -60,37 +61,58 @@ void chi_squared_gof(matrix_expression<V, cpu_tag> const& m, Dist const& dist, t
 
 BOOST_AUTO_TEST_SUITE (Remora_Random)
 
-BOOST_AUTO_TEST_CASE(Remora_Random_Normal) {
-	std::size_t Dimensions = 50000;
-	std::mt19937 gen(42);
-	boost::math::normal_distribution<> dist(-2,3);
-	for(std::size_t i = 0; i != 10; ++i){
-		vector<double> v(Dimensions);
-		kernels::generate_normal(v, gen, -2, 9);
-		chi_squared_gof(v,dist,-10,10,20);
+//~ BOOST_AUTO_TEST_CASE(Remora_Random_Normal) {
+	//~ std::size_t Dimensions = 50000;
+	//~ std::mt19937 gen(42);
+	//~ boost::math::normal_distribution<> dist(-2,3);
+	//~ for(std::size_t i = 0; i != 10; ++i){
+		//~ vector<double> v(Dimensions);
+		//~ kernels::generate_normal(v, gen, -2, 9);
+		//~ chi_squared_gof(v,dist,-10,10,20);
 		
-		{
-			matrix<double, row_major> m(100,Dimensions/100);
-			kernels::generate_normal(m, gen, -2, 9);
-			chi_squared_gof(m,dist,-10,10,20);
-		}
-		{
-			matrix<double, column_major> m(100,Dimensions/100);
-			kernels::generate_normal(m, gen, -2, 9);
-			chi_squared_gof(m,dist,-10,10,20);
-		}
-	}
-}
+		//~ {
+			//~ matrix<double, row_major> m(100,Dimensions/100);
+			//~ kernels::generate_normal(m, gen, -2, 9);
+			//~ chi_squared_gof(m,dist,-10,10,20);
+		//~ }
+		//~ {
+			//~ matrix<double, column_major> m(100,Dimensions/100);
+			//~ kernels::generate_normal(m, gen, -2, 9);
+			//~ chi_squared_gof(m,dist,-10,10,20);
+		//~ }
+		
+		//~ //test expressions
+		//~ {
+			//~ vector<double> v = 3.0*normal(gen, Dimensions, -2.0/3.0, 1.0, cpu_tag());
+			//~ chi_squared_gof(v,dist, -10, 10,20);
+		//~ }
+		//~ {
+			//~ vector<double> v(Dimensions,1);
+			//~ noalias(v) += 3.0*normal(gen, Dimensions, -1.0, 1.0, cpu_tag());
+			//~ chi_squared_gof(v,dist, -10, 10,20);
+		//~ }
+		//~ {
+			//~ matrix<double, row_major> m = 3.0*normal(gen, 77, Dimensions/77, -2.0/3.0, 1.0, cpu_tag());
+			//~ chi_squared_gof(m,dist, -10, 10,20);
+		//~ }
+		//~ {
+			//~ matrix<double, row_major> m(77,Dimensions/77,1);
+			//~ noalias(m) += 3.0*normal(gen, 77, Dimensions/77, -1.0, 1.0, cpu_tag());
+			//~ chi_squared_gof(m,dist, -10, 10,20);
+		//~ }
+	//~ }
+//~ }
 
 BOOST_AUTO_TEST_CASE(Remora_Random_uniform) {
 	std::size_t Dimensions = 50000;
 	std::mt19937 gen(42);
 	boost::math::uniform_distribution<> dist(-5,7);
 	for(std::size_t i = 0; i != 10; ++i){
-		vector<double> v(Dimensions);
-		kernels::generate_uniform(v, gen, -5, 7);
-		chi_squared_gof(v,dist,-5,7,20);
-		
+		{
+			vector<double> v(Dimensions);
+			kernels::generate_uniform(v, gen, -5, 7);
+			chi_squared_gof(v,dist,-5,7,20);
+		}
 		{
 			matrix<double, row_major> m(100,Dimensions/100);
 			kernels::generate_uniform(m, gen, -5, 7);
@@ -99,6 +121,25 @@ BOOST_AUTO_TEST_CASE(Remora_Random_uniform) {
 		{
 			matrix<double, column_major> m(100,Dimensions/100);
 			kernels::generate_uniform(m, gen, -5, 7);
+			chi_squared_gof(m,dist,-5,7,20);
+		}
+		//test expressions
+		{
+			vector<double> v = 3.0*uniform(gen, Dimensions, -5.0/3.0, 7.0/3.0, cpu_tag());
+			chi_squared_gof(v,dist,-5,7,20);
+		}
+		{
+			vector<double> v(Dimensions,1);
+			noalias(v) += 3.0*uniform(gen, Dimensions, -6/3.0, 6/3.0, cpu_tag());
+			chi_squared_gof(v,dist,-5,7,20);
+		}
+		{
+			matrix<double, row_major> m = 3.0*uniform(gen, 77, Dimensions/77, -5.0/3.0, 7.0/3.0, cpu_tag());
+			chi_squared_gof(m,dist,-5,7,20);
+		}
+		{
+			matrix<double, row_major> m(77,Dimensions/77,1);
+			noalias(m) += 3.0*uniform(gen, 77, Dimensions/77, -6/3.0, 6/3.0, cpu_tag());
 			chi_squared_gof(m,dist,-5,7,20);
 		}
 	}
