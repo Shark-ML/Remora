@@ -217,11 +217,8 @@ public:
 	typedef blockwise<typename E::evaluation_category::tag> evaluation_category;
 	typedef typename E::orientation orientation;
 
-	//FIXME: This is required even though iterators for block expressions are meaningless
-	typedef typename E::const_row_iterator const_row_iterator;
-	typedef typename E::const_column_iterator const_column_iterator;
-	typedef const_row_iterator row_iterator;
-	typedef const_column_iterator column_iterator;
+	typedef no_iterator const_major_iterator;
+	typedef no_iterator major_iterator;
 
 	// Construction and destruction
 	explicit matrix_transport_to_cpu(
@@ -256,10 +253,8 @@ public:
 		);
 		//adapt host memory buffer to matrix and assign
 		typedef typename decltype(e_eval)::orientation EOrientation;
-		std::size_t stride1 = EOrientation::index_M(storageE.leading_dimension,1);
-		std::size_t stride2 = EOrientation::index_m(storageE.leading_dimension,1);
 		typedef dense_matrix_adaptor<typename E::value_type, EOrientation> AdaptE;
-		AdaptE adaptE(p + storageE.offset,size1(), size2(), stride1,stride2);
+		AdaptE adaptE(p + storageE.offset,size1(), size2(), storageE.leading_dimension);
 		
 		assign(X, adaptE, alpha);
 		
@@ -280,10 +275,8 @@ public:
 		);
 		//adapt host memory buffer to matrix and assign
 		typedef typename decltype(e_eval)::orientation EOrientation;
-		std::size_t stride1 = EOrientation::index_M(storageE.leading_dimension,1);
-		std::size_t stride2 = EOrientation::index_m(storageE.leading_dimension,1);
 		typedef dense_matrix_adaptor<typename E::value_type, EOrientation> AdaptE;
-		AdaptE adaptE(p + storageE.offset, size1(), size2(), stride1,stride2);
+		AdaptE adaptE(p + storageE.offset, size1(), size2(), storageE.leading_dimension);
 		
 		plus_assign(X, adaptE, alpha);
 		
@@ -311,11 +304,8 @@ public:
 	typedef blockwise<typename E::evaluation_category::tag> evaluation_category;
 	typedef typename E::orientation orientation;
 
-	//FIXME: This is required even though iterators for block expressions are meaningless
-	typedef typename E::const_row_iterator const_row_iterator;
-	typedef typename E::const_column_iterator const_column_iterator;
-	typedef const_row_iterator row_iterator;
-	typedef const_column_iterator column_iterator;
+	typedef no_iterator const_major_iterator;
+	typedef no_iterator major_iterator;
 
 	// Construction and destruction
 	explicit matrix_transport_to_gpu(
@@ -347,9 +337,7 @@ public:
 		);
 		//adapt host memory buffer to vector and assign
 		typedef typename MatX::orientation XOrientation;
-		std::size_t stride1 = XOrientation::index_M(storageX.leading_dimension, 1);
-		std::size_t stride2 = XOrientation::index_m(storageX.leading_dimension, 1);
-		dense_matrix_adaptor<typename MatX::value_type, XOrientation> adaptX(p, size1(), size2(), stride1, stride2);
+		dense_matrix_adaptor<typename MatX::value_type, XOrientation> adaptX(p, size1(), size2(), storageX.leading_dimension);
 		assign(adaptX, m_expression, alpha);
 		
 		//unmap memory
@@ -365,10 +353,8 @@ public:
 		);
 		//adapt host memory buffer to matrix and assign
 		typedef typename MatX::orientation XOrientation;
-		std::size_t stride1 = XOrientation::index_M(storageX.leading_dimension, 1);
-		std::size_t stride2 = XOrientation::index_m(storageX.leading_dimension, 1);
 		typedef dense_matrix_adaptor<typename MatX::value_type, XOrientation> AdaptX;
-		AdaptX adaptX(p + storageX.offset, size1(), size2(), stride1, stride2);
+		AdaptX adaptX(p + storageX.offset, size1(), size2(), storageX.leading_dimension);
 		
 		plus_assign(adaptX, m_expression, alpha);
 		

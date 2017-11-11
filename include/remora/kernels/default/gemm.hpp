@@ -129,8 +129,8 @@ void gemm(
 	sparse_tag, dense_tag
 ){
 	for (std::size_t k = 0; k != e1().size2(); ++k) {
-		auto e1end = e1().column_end(k);
-		for(auto e1pos = e1().column_begin(k); e1pos != e1end; ++e1pos){
+		auto e1end = e1().major_end(k);
+		for(auto e1pos = e1().major_begin(k); e1pos != e1end; ++e1pos){
 			std::size_t i = e1pos.index();
 			auto row_m = row(m,i);
 			plus_assign(row_m,row(e2,k),alpha * (*e1pos));
@@ -153,11 +153,11 @@ void gemm(
 	vector<value_type> temporary(e2().size2(), zero);//dense vector for quick random access
 	for (std::size_t i = 0; i != e1().size1(); ++i) {
 		kernels::gemv(trans(e2),row(e1,i),temporary,alpha);
-		auto insert_pos = m().row_begin(i);
+		auto insert_pos = m().major_begin(i);
 		for (std::size_t j = 0; j != temporary.size(); ++ j) {
 			if (temporary(j) != zero) {
 				//find element with that index
-				auto row_end = m().row_end(i);
+				auto row_end = m().major_end(i);
 				while(insert_pos != row_end && insert_pos.index() < j)
 					++insert_pos;
 				//check if element exists

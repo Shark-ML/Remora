@@ -39,10 +39,10 @@
 #include "../proxy_expressions.hpp"
 #include <type_traits>
 
-namespace remora {
+namespace remora{
 
 template<class E>
-class matrix_scalar_multiply:public matrix_expression<matrix_scalar_multiply<E>, typename E::device_type > {
+class matrix_scalar_multiply:public matrix_expression<matrix_scalar_multiply<E>, typename E::device_type >{
 private:
 	typedef typename device_traits<typename E::device_type>::template multiply_scalar<typename E::value_type> functor_type;
 public:
@@ -64,10 +64,10 @@ public:
 	explicit matrix_scalar_multiply(expression_closure_type const& e, value_type scalar)
 	:m_expression(e), m_scalar(scalar){}
 
-	size_type size1() const {
+	size_type size1() const{
 		return m_expression.size1();
 	}
-	size_type size2() const {
+	size_type size2() const{
 		return m_expression.size2();
 	}
 	
@@ -82,7 +82,7 @@ public:
 	}
 
 	// Element access
-	const_reference operator()(std::size_t i, std::size_t j) const {
+	const_reference operator()(std::size_t i, std::size_t j) const{
 		return m_scalar * m_expression(i,j);
 	}
 	
@@ -98,26 +98,15 @@ public:
 
 	// Iterator types
 	typedef typename device_traits<device_type>:: template transform_iterator<
-		typename expression_closure_type::const_row_iterator, functor_type
-	>::type const_row_iterator;
-	typedef typename device_traits<device_type>:: template transform_iterator<
-		typename expression_closure_type::const_column_iterator, functor_type
-	>::type const_column_iterator;
-	typedef const_row_iterator row_iterator;
-	typedef const_column_iterator column_iterator;
+		typename expression_closure_type::const_major_iterator, functor_type
+	>::type const_major_iterator;
+	typedef const_major_iterator major_iterator;
 	
-	const_row_iterator row_begin(size_type i) const {
-		return const_row_iterator(m_expression.row_begin(i),functor_type(m_scalar));
+	const_major_iterator major_begin(size_type i) const{
+		return const_major_iterator(m_expression.major_begin(i),functor_type(m_scalar));
 	}
-	const_row_iterator row_end(size_type i) const {
-		return const_row_iterator(m_expression.row_end(i),functor_type(m_scalar));
-	}
-
-	const_column_iterator column_begin(size_type i) const {
-		return const_column_iterator(m_expression.column_begin(i),functor_type(m_scalar));
-	}
-	const_column_iterator column_end(size_type i) const {
-		return const_column_iterator(m_expression.column_end(i),functor_type(m_scalar));
+	const_major_iterator major_end(size_type i) const{
+		return const_major_iterator(m_expression.major_end(i),functor_type(m_scalar));
 	}
 
 private:
@@ -126,7 +115,7 @@ private:
 };	
 	
 template<class E1, class E2>
-class matrix_addition: public matrix_expression<matrix_addition<E1, E2>, typename E1::device_type > {
+class matrix_addition: public matrix_expression<matrix_addition<E1, E2>, typename E1::device_type >{
 private:
 	typedef typename device_traits<typename E1::device_type>:: template add<typename E1::value_type> functor_type;
 	typedef typename E1::const_closure_type lhs_closure_type;
@@ -162,10 +151,10 @@ public:
 		rhs_closure_type const& e2
 	): m_lhs (e1), m_rhs (e2){}
 
-        size_type size1 () const {
+        size_type size1() const{
 		return m_lhs.size1();
         }
-        size_type size2 () const {
+        size_type size2() const{
 		return m_lhs.size2();
         }
 	
@@ -181,7 +170,7 @@ public:
 	}
 
         // Element access
-	const_reference operator()(std::size_t i, std::size_t j) const {
+	const_reference operator()(std::size_t i, std::size_t j) const{
 		return lhs()(i,j) + rhs()(i,j);
 	}
 
@@ -203,43 +192,23 @@ public:
 		plus_assign(X,m_rhs,alpha);
 	}
 
-public:
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
-		typename lhs_closure_type::const_row_iterator,
-		typename rhs_closure_type::const_row_iterator,
+		typename lhs_closure_type::const_major_iterator,
+		typename rhs_closure_type::const_major_iterator,
 		functor_type
-	>::type const_row_iterator;
-	typedef typename device_traits<device_type>:: template binary_transform_iterator<
-		typename lhs_closure_type::const_column_iterator,
-		typename rhs_closure_type::const_column_iterator,
-		functor_type
-	>::type const_column_iterator;
-	typedef const_row_iterator row_iterator;
-	typedef const_column_iterator column_iterator;
+	>::type const_major_iterator;
+	typedef const_major_iterator major_iterator;
 
-	const_row_iterator row_begin(size_type i) const {
-		return const_row_iterator (functor_type(),
-			m_lhs.row_begin(i),m_lhs.row_end(i),
-			m_rhs.row_begin(i),m_rhs.row_end(i)
+	const_major_iterator major_begin(size_type i) const{
+		return const_major_iterator (functor_type(),
+			m_lhs.major_begin(i),m_lhs.major_end(i),
+			m_rhs.major_begin(i),m_rhs.major_end(i)
 		);
 	}
-	const_row_iterator row_end(size_type i) const {
-		return const_row_iterator (functor_type(),
-			m_lhs.row_end(i),m_lhs.row_end(i),
-			m_rhs.row_end(i),m_rhs.row_end(i)
-		);
-	}
-
-	const_column_iterator column_begin(size_type j) const {
-		return const_column_iterator (functor_type(),
-			m_lhs.column_begin(j),m_lhs.column_end(j),
-			m_rhs.column_begin(j),m_rhs.column_end(j)
-		);
-	}
-	const_column_iterator column_end(size_type j) const {
-		return const_column_iterator (functor_type(),
-			m_lhs.column_end(j),m_lhs.column_end(j),
-			m_rhs.column_end(j),m_rhs.column_end(j)
+	const_major_iterator major_end(size_type i) const{
+		return const_major_iterator (functor_type(),
+			m_lhs.major_end(i),m_lhs.major_end(i),
+			m_rhs.major_end(i),m_rhs.major_end(i)
 		);
 	}
 
@@ -250,7 +219,7 @@ private:
 };
 
 template<class V, class Orientation=row_major>
-class vector_repeater:public matrix_expression<vector_repeater<V, Orientation>, typename V::device_type > {
+class vector_repeater:public matrix_expression<vector_repeater<V, Orientation>, typename V::device_type >{
 public:
 	typedef typename V::const_closure_type expression_closure_type;
 	typedef typename V::size_type size_type;
@@ -267,17 +236,16 @@ public:
 	typedef typename V::device_type device_type;
 
 	// Construction and destruction
-	explicit vector_repeater (expression_closure_type const& e, size_type elements):
-	m_vector(e), m_elements(elements) {}
+	explicit vector_repeater(expression_closure_type const& e, size_type elements):
+	m_vector(e), m_elements(elements){}
 
-	size_type size1() const {
+	size_type size1() const{
 		return orientation::index_M(m_elements,m_vector.size());
 	}
-	size_type size2() const {
+	size_type size2() const{
 		return orientation::index_m(m_elements,m_vector.size());
 	}
-
-	const expression_closure_type& expression() const {
+	const expression_closure_type& expression() const{
 		return m_vector;
 	}
 	
@@ -291,12 +259,12 @@ public:
 	}
 
 	template<class MatX>
-	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const {
+	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const{
 		X().clear();
 		plus_assign_to(X,eval_block(m_vector), alpha);
 	}
 	template<class MatX>
-	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const {
+	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const{
 		plus_assign_to(X,eval_block(m_vector), alpha);
 	}
 	
@@ -307,45 +275,33 @@ private:
 	typedef typename V::const_iterator vector_iterator;
 	typedef typename device_traits<typename V::device_type>:: template constant_iterator<value_type>::type constant_iterator;
 	
-	vector_iterator begin(size_type i, row_major) const {
+	vector_iterator begin(size_type i, row_major) const{
 		return m_vector.begin();
 	}
-	vector_iterator end(size_type i, row_major) const {
+	vector_iterator end(size_type i, row_major) const{
 		return m_vector.end();
 	}
-	constant_iterator begin(size_type i, column_major) const {
-		return const_column_iterator(m_vector(i),0);
+	constant_iterator begin(size_type i, column_major) const{
+		return constant_iterator(m_vector(i),0);
 	}
-	constant_iterator end(size_type i, column_major) const {
-		return const_column_iterator(m_vector(i), m_elements);
+	constant_iterator end(size_type i, column_major) const{
+		return constant_iterator(m_vector(i), m_elements);
 	}
 public:
 
 	// Iterator types
-	typedef typename std::conditional<std::is_same<Orientation, row_major>::value, vector_iterator, constant_iterator>::type const_row_iterator;
-	typedef const_row_iterator row_iterator;
-	typedef typename std::conditional<std::is_same<Orientation, row_major>::value, constant_iterator, vector_iterator>::type const_column_iterator;
-	typedef const_column_iterator column_iterator;
+	typedef typename std::conditional<std::is_same<Orientation, row_major>::value, vector_iterator, constant_iterator>::type const_major_iterator;
+	typedef const_major_iterator major_iterator;
 
 	// Element lookup
 	
-	const_row_iterator row_begin(size_type i) const {
+	const_major_iterator major_begin(size_type i) const{
 		REMORA_RANGE_CHECK( i < size1());
-		return begin(i,Orientation());
+		return m_vector.begin();
 	}
-	const_row_iterator row_end(size_type i) const {
+	const_major_iterator major_end(size_type i) const{
 		REMORA_RANGE_CHECK( i < size1());
-		return end(i,Orientation());
-	}
-	
-	const_column_iterator column_begin(size_type j) const {
-		REMORA_RANGE_CHECK( j < size2());
-		return begin(j,typename Orientation::transposed_orientation());
-		
-	}
-	const_column_iterator column_end(size_type j) const {
-		REMORA_RANGE_CHECK( j < size2());
-		return end(j,typename Orientation::transposed_orientation());
+		return m_vector.end();
 	}
 private:
 	
@@ -366,8 +322,8 @@ private:
 /// \brief A matrix with all values of type \c T equal to the same value
 ///
 /// \tparam T the type of object stored in the matrix (like double, float, complex, etc...)
-template<class T, class Device>
-class scalar_matrix:public matrix_expression<scalar_matrix<T, Device>, Device > {
+template<class T, class Device, class Orientation>
+class scalar_matrix:public matrix_expression<scalar_matrix<T, Device, Orientation>, Device >{
 public:
 	typedef std::size_t size_type;
 	typedef T value_type;
@@ -378,21 +334,21 @@ public:
 	typedef scalar_matrix closure_type;
 	typedef unknown_storage storage_type;
 	typedef unknown_storage const_storage_type;
-	typedef unknown_orientation orientation;
+	typedef Orientation orientation;
 	typedef elementwise<dense_tag> evaluation_category;
 
 	// Construction and destruction
 	scalar_matrix():
-		m_size1(0), m_size2(0), m_value() {}
+		m_size1(0), m_size2(0), m_value(){}
 	scalar_matrix(size_type size1, size_type size2, const value_type& value = value_type(1)):
-		m_size1(size1), m_size2(size2), m_value(value) {}
+		m_size1(size1), m_size2(size2), m_value(value){}
 	scalar_matrix(const scalar_matrix& m):
-		m_size1(m.m_size1), m_size2(m.m_size2), m_value(m.m_value) {}
+		m_size1(m.m_size1), m_size2(m.m_size2), m_value(m.m_value){}
 
-	size_type size1() const {
+	size_type size1() const{
 		return m_size1;
 	}
-	size_type size2() const {
+	size_type size2() const{
 		return m_size2;
 	}
 	
@@ -401,7 +357,7 @@ public:
 	}
 
 	// Element access
-	const_reference operator()(std::size_t i, std::size_t j) const {
+	const_reference operator()(std::size_t i, std::size_t j) const{
 		return m_value;
 	}
     
@@ -410,23 +366,14 @@ public:
     }
 	
 	//Iterators
-	typedef typename device_traits<Device>:: template constant_iterator<value_type>::type const_row_iterator;
-	typedef typename device_traits<Device>:: template constant_iterator<value_type>::type const_column_iterator;
-	typedef const_row_iterator row_iterator;
-	typedef const_column_iterator column_iterator;
+	typedef typename device_traits<Device>:: template constant_iterator<value_type>::type const_major_iterator;
+	typedef const_major_iterator major_iterator;
 
-	const_row_iterator row_begin(size_type i) const {
-		return const_row_iterator(m_value, 0);
+	const_major_iterator major_begin(size_type i) const{
+		return const_major_iterator(m_value, 0);
 	}
-	const_row_iterator row_end(size_type i) const {
-		return const_row_iterator(m_value, size2());
-	}
-	
-	const_column_iterator column_begin(size_type j) const {
-		return const_column_iterator(m_value, 0);
-	}
-	const_column_iterator column_end(size_type j) const {
-		return const_column_iterator(m_value, size1());
+	const_major_iterator major_end(size_type i) const{
+		return const_major_iterator(m_value, orientation::index_m(size1(),size2()));
 	}
 private:
 	size_type m_size1;
@@ -442,7 +389,7 @@ private:
 ///F must provide a boolean flag F::zero_identity which indicates that f(0) = 0. This is needed for correct usage with sparse
 ///arguments - if f(0) != 0 this expression will be dense!
 template<class E, class F>
-class matrix_unary:public matrix_expression<matrix_unary<E, F>, typename E::device_type > {
+class matrix_unary:public matrix_expression<matrix_unary<E, F>, typename E::device_type >{
 public:
 	typedef typename E::const_closure_type expression_closure_type;
 
@@ -462,20 +409,20 @@ public:
 
 	// Construction and destruction
 	explicit matrix_unary(expression_closure_type const& e, functor_type const& functor):
-		m_expression(e), m_functor(functor) {}
+		m_expression(e), m_functor(functor){}
 
-	size_type size1() const {
+	size_type size1() const{
 		return m_expression.size1();
 	}
-	size_type size2() const {
+	size_type size2() const{
 		return m_expression.size2();
 	}
 	
-	expression_closure_type const& expression() const {
+	expression_closure_type const& expression() const{
 		return m_expression;
 	}
 	
-	functor_type const& functor() const {
+	functor_type const& functor() const{
 		return m_functor;
 	}
 	
@@ -484,13 +431,13 @@ public:
 	}
 	
 	// Element access
-	const_reference operator()(std::size_t i, std::size_t j) const {
+	const_reference operator()(std::size_t i, std::size_t j) const{
 		return m_functor(m_expression(i,j));
 	}
 	
 	//computation kernels
 	template<class MatX>
-	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const {
+	void assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const{
 		assign(X,m_expression);
 		//merge the multiplication with the functor to run only one kernel.
 		typedef typename device_traits<device_type>::template multiply_scalar<value_type> Multiply;
@@ -498,7 +445,7 @@ public:
 		kernels::apply(X,Composed(m_functor,Multiply(alpha)));
 	}
 	template<class MatX>
-	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const {
+	void plus_assign_to(matrix_expression<MatX, device_type>& X, typename MatX::value_type alpha) const{
 		auto eval_rhs = eval_block(m_expression);
 		//merge the multiplication with the functor to run only one kernel.
 		//also make use of that we can now run the assignment kernel directly with that functor
@@ -509,23 +456,14 @@ public:
 	}
 
 	// Iterator types
-	typedef typename device_traits<device_type>:: template transform_iterator<typename expression_closure_type::const_row_iterator, F>::type const_row_iterator;
-	typedef typename device_traits<device_type>:: template transform_iterator<typename expression_closure_type::const_column_iterator, F>::type const_column_iterator;
-	typedef const_row_iterator row_iterator;
-	typedef const_column_iterator column_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename expression_closure_type::const_major_iterator, F>::type const_major_iterator;
+	typedef const_major_iterator major_iterator;
 	
-	const_row_iterator row_begin(size_type i) const {
-		return const_row_iterator(m_expression.row_begin(i),m_functor);
+	const_major_iterator major_begin(size_type i) const{
+		return const_major_iterator(m_expression.major_begin(i),m_functor);
 	}
-	const_row_iterator row_end(size_type i) const {
-		return const_row_iterator(m_expression.row_end(i),m_functor);
-	}
-
-	const_column_iterator column_begin(size_type i) const {
-		return const_column_iterator(m_expression.column_begin(i),m_functor);
-	}
-	const_column_iterator column_end(size_type i) const {
-		return const_column_iterator(m_expression.column_end(i),m_functor);
+	const_major_iterator major_end(size_type i) const{
+		return const_major_iterator(m_expression.major_end(i),m_functor);
 	}
 
 private:
@@ -534,7 +472,7 @@ private:
 };
 
 template<class E1, class E2, class F>
-class matrix_binary:public matrix_expression<matrix_binary<E1, E2, F>, typename E1::device_type > {
+class matrix_binary:public matrix_expression<matrix_binary<E1, E2, F>, typename E1::device_type >{
 public:
 	typedef typename E1::const_closure_type lhs_closure_type;
 	typedef typename E2::const_closure_type rhs_closure_type;
@@ -553,7 +491,11 @@ public:
 		typename E1::orientation,
 		unknown_orientation
 	>::type orientation;
-	typedef typename evaluation_restrict_traits<E1,E2>::type evaluation_category;
+	typedef typename std::conditional<
+		std::is_same<orientation, unknown_orientation>::value,
+		blockwise<typename evaluation_restrict_traits<E1,E2>::type::tag>,
+		typename evaluation_restrict_traits<E1,E2>::type
+	>::type evaluation_category;
 	typedef typename E1::device_type device_type;
 
 	typedef F functor_type;
@@ -562,22 +504,22 @@ public:
 
         explicit matrix_binary (
 		lhs_closure_type const& e1,  rhs_closure_type const& e2, functor_type functor 
-	): m_lhs (e1), m_rhs (e2),m_functor(functor) {}
+	): m_lhs (e1), m_rhs (e2),m_functor(functor){}
 
-        size_type size1 () const {
-		return m_lhs.size1 ();
+        size_type size1() const{
+		return m_lhs.size1();
         }
-        size_type size2 () const {
-		return m_lhs.size2 ();
+        size_type size2() const{
+		return m_lhs.size2();
         }
 	
-	lhs_closure_type const& lhs() const {
+	lhs_closure_type const& lhs() const{
 		return m_lhs;
 	}
-	rhs_closure_type const& rhs() const {
+	rhs_closure_type const& rhs() const{
 		return m_rhs;
 	}
-	functor_type const& functor() const {
+	functor_type const& functor() const{
 		return m_functor;
 	}
 
@@ -586,7 +528,7 @@ public:
 	}
 
 	// Element access
-	const_reference operator()(std::size_t i, std::size_t j) const {
+	const_reference operator()(std::size_t i, std::size_t j) const{
 		return m_functor(m_lhs(i,j), m_rhs(i,j));
 	}
 
@@ -607,37 +549,20 @@ public:
 	}
 	
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
-		typename lhs_closure_type::const_row_iterator,typename rhs_closure_type::const_row_iterator,functor_type
-	>::type const_row_iterator;
-	typedef typename device_traits<device_type>:: template binary_transform_iterator<
-		typename lhs_closure_type::const_column_iterator,typename rhs_closure_type::const_column_iterator,functor_type
-	>::type const_column_iterator;
-	typedef const_row_iterator row_iterator;
-	typedef const_column_iterator column_iterator;
+		typename lhs_closure_type::const_major_iterator,typename rhs_closure_type::const_major_iterator,functor_type
+	>::type const_major_iterator;
+	typedef const_major_iterator major_iterator;
 
-	const_row_iterator row_begin(size_type i) const {
-		return const_row_iterator (m_functor,
-			m_lhs.row_begin(i),m_lhs.row_end(i),
-			m_rhs.row_begin(i),m_rhs.row_end(i)
+	const_major_iterator major_begin(size_type i) const{
+		return const_major_iterator (m_functor,
+			m_lhs.major_begin(i),m_lhs.major_end(i),
+			m_rhs.major_begin(i),m_rhs.major_end(i)
 		);
 	}
-	const_row_iterator row_end(size_type i) const {
-		return const_row_iterator (m_functor,
-			m_lhs.row_end(i),m_lhs.row_end(i),
-			m_rhs.row_end(i),m_rhs.row_end(i)
-		);
-	}
-
-	const_column_iterator column_begin(size_type j) const {
-		return const_column_iterator (m_functor,
-			m_lhs.column_begin(j),m_lhs.column_end(j),
-			m_rhs.column_begin(j),m_rhs.column_end(j)
-		);
-	}
-	const_column_iterator column_end(size_type j) const {
-		return const_column_iterator (m_functor,
-			m_lhs.column_end(j),m_lhs.column_end(j),
-			m_rhs.column_end(j),m_rhs.column_end(j)
+	const_major_iterator major_end(size_type i) const{
+		return const_major_iterator (m_functor,
+			m_lhs.major_end(i),m_lhs.major_end(i),
+			m_rhs.major_end(i),m_rhs.major_end(i)
 		);
 	}
 
@@ -648,7 +573,7 @@ private:
 };
 
 template<class E1, class E2>
-class outer_product:public matrix_expression<outer_product<E1, E2>, typename E1::device_type > {
+class outer_product:public matrix_expression<outer_product<E1, E2>, typename E1::device_type >{
 	typedef typename common_value_type<E1,E2>::type common_arg;
 	typedef typename device_traits< typename E1::device_type>:: template multiply_scalar<common_arg> functor_type;
 	typedef typename device_traits< typename E1::device_type>:: template multiply<common_arg> functor_type_op;
@@ -666,7 +591,7 @@ public:
 	typedef outer_product closure_type;
 	typedef unknown_storage storage_type;
 	typedef unknown_storage const_storage_type;
-	typedef unknown_orientation orientation;
+	typedef row_major orientation;
 	typedef typename evaluation_restrict_traits<E1,E2>::type evaluation_category;
 	typedef typename E1::device_type device_type;
 	// Construction and destruction
@@ -674,17 +599,17 @@ public:
 	explicit outer_product(lhs_closure_type const& e1, rhs_closure_type const& e2)
 	:m_lhs(e1), m_rhs(e2){}
 
-	size_type size1() const {
+	size_type size1() const{
 		return m_lhs.size();
 	}
-	size_type size2() const {
+	size_type size2() const{
 		return m_rhs.size();
 	}
 
-	lhs_closure_type const& lhs() const {
+	lhs_closure_type const& lhs() const{
 		return m_lhs;
 	}
-	rhs_closure_type const& rhs() const {
+	rhs_closure_type const& rhs() const{
 		return m_rhs;
 	}
 
@@ -693,7 +618,7 @@ public:
 	}
 
 	// Element access
-	const_reference operator()(std::size_t i, std::size_t j) const {
+	const_reference operator()(std::size_t i, std::size_t j) const{
 		return m_lhs(i) * m_rhs(j);
 	}
 	
@@ -713,30 +638,17 @@ public:
 		plus_assign(X, e, alpha);
 	}
 
-	typedef typename device_traits<device_type>:: template transform_iterator<typename rhs_closure_type::const_iterator,functor_type>::type const_row_iterator;
-	typedef typename device_traits<device_type>:: template transform_iterator<typename lhs_closure_type::const_iterator,functor_type>::type const_column_iterator;
-	typedef const_row_iterator row_iterator;
-	typedef const_column_iterator column_iterator;
+	typedef typename device_traits<device_type>:: template transform_iterator<typename rhs_closure_type::const_iterator,functor_type>::type const_major_iterator;
+	typedef const_major_iterator major_iterator;
 	
-	const_row_iterator row_begin(size_type i) const {
-		return const_row_iterator(m_rhs.begin(),
+	const_major_iterator major_begin(size_type i) const{
+		return const_major_iterator(m_rhs.begin(),
 			functor_type(m_lhs(i))
 		);
 	}
-	const_row_iterator row_end(size_type i) const {
-		return const_row_iterator(m_rhs.end(),
+	const_major_iterator major_end(size_type i) const{
+		return const_major_iterator(m_rhs.end(),
 			functor_type(m_lhs(i))
-		);
-	}
-
-	const_column_iterator column_begin(size_type i) const {
-		return const_column_iterator(m_lhs.begin(),
-			functor_type(m_rhs(i))
-		);
-	}
-	const_column_iterator column_end(size_type i) const {
-		return const_column_iterator(m_lhs.end(),
-			functor_type(m_rhs(i))
 		);
 	}
 private:
@@ -745,7 +657,7 @@ private:
 };
 
 template<class MatA, class VecV>
-class matrix_vector_prod:public vector_expression<matrix_vector_prod<MatA, VecV>, typename MatA::device_type > {
+class matrix_vector_prod:public vector_expression<matrix_vector_prod<MatA, VecV>, typename MatA::device_type >{
 public:
 	typedef typename MatA::const_closure_type matrix_closure_type;
 	typedef typename VecV::const_closure_type vector_closure_type;
@@ -771,16 +683,16 @@ public:
 	explicit matrix_vector_prod(
 		matrix_closure_type const& matrix,
 		vector_closure_type const& vector
-	):m_matrix(matrix), m_vector(vector) {}
+	):m_matrix(matrix), m_vector(vector){}
 
-	size_type size() const {
+	size_type size() const{
 		return m_matrix.size1();
 	}
 	
-	matrix_closure_type const& matrix() const {
+	matrix_closure_type const& matrix() const{
 		return m_matrix;
 	}
-	vector_closure_type const& vector() const {
+	vector_closure_type const& vector() const{
 		return m_vector;
 	}
 	
@@ -845,7 +757,7 @@ private:
 
 
 template<class MatA>
-class sum_matrix_rows:public vector_expression<sum_matrix_rows<MatA>, typename MatA::device_type > {
+class sum_matrix_rows:public vector_expression<sum_matrix_rows<MatA>, typename MatA::device_type >{
 public:
 	typedef typename MatA::const_closure_type matrix_closure_type;
 public:
@@ -866,11 +778,11 @@ public:
 		matrix_closure_type const& matrix
 	):m_matrix(matrix){}
 
-	size_type size() const {
+	size_type size() const{
 		return m_matrix.size2();
 	}
 	
-	matrix_closure_type const& matrix() const {
+	matrix_closure_type const& matrix() const{
 		return m_matrix;
 	}
 
@@ -897,7 +809,7 @@ private:
 
 //matrix-matrix prod
 template<class MatA, class MatB>
-class matrix_matrix_prod: public matrix_expression<matrix_matrix_prod<MatA, MatB>, typename MatA::device_type > {
+class matrix_matrix_prod: public matrix_expression<matrix_matrix_prod<MatA, MatB>, typename MatA::device_type >{
 public:
 	typedef typename MatA::const_closure_type matrix_closure_typeA;
 	typedef typename MatB::const_closure_type matrix_closure_typeB;
@@ -924,19 +836,19 @@ public:
 	explicit matrix_matrix_prod(
 		matrix_closure_typeA const& lhs,
 		matrix_closure_typeB const& rhs
-	):m_lhs(lhs), m_rhs(rhs) {}
+	):m_lhs(lhs), m_rhs(rhs){}
 
-	size_type size1() const {
+	size_type size1() const{
 		return m_lhs.size1();
 	}
-	size_type size2() const {
+	size_type size2() const{
 		return m_rhs.size2();
 	}
 	
-	matrix_closure_typeA const& lhs() const {
+	matrix_closure_typeA const& lhs() const{
 		return m_lhs;
 	}
-	matrix_closure_typeB const& rhs() const {
+	matrix_closure_typeB const& rhs() const{
 		return m_rhs;
 	}
 
@@ -944,10 +856,8 @@ public:
 		return m_lhs.queue();
 	}
 	
-	typedef no_iterator const_row_iterator;
-	typedef no_iterator const_column_iterator;
-	typedef no_iterator row_iterator;
-	typedef no_iterator column_iterator;
+	typedef no_iterator const_major_iterator;
+	typedef no_iterator major_iterator;
 	
 	//dispatcher to computation kernels
 	template<class MatX>
@@ -993,7 +903,7 @@ private:
 ///
 /// the matrix stores a Vector representing the diagonal.
 template<class V>
-class diagonal_matrix: public matrix_expression<diagonal_matrix< V >, typename V::device_type > {
+class diagonal_matrix: public matrix_expression<diagonal_matrix< V >, typename V::device_type >{
 	typedef typename V::const_closure_type vector_closure_type;
 public:
 	typedef typename V::size_type size_type;
@@ -1006,18 +916,19 @@ public:
 	typedef unknown_storage storage_type;
 	typedef unknown_storage const_storage_type;
 	typedef elementwise<dense_tag> evaluation_category;
-	typedef unknown_orientation orientation;
+	typedef row_major orientation;
 	typedef typename V::device_type device_type;
 
 	// Construction and destruction
 	diagonal_matrix(vector_closure_type const& diagonal):m_diagonal(diagonal){}
 
-	size_type size1() const {
+	size_type size1() const{
 		return m_diagonal.size();
 	}
-	size_type size2() const {
+	size_type size2() const{
 		return m_diagonal.size();
 	}
+	
 	typename device_traits<device_type>::queue_type& queue()const{
 		return m_diagonal.queue();
 	}
@@ -1026,7 +937,7 @@ public:
 		return m_diagonal;
 	}
 	// Element access
-	const_reference operator()(size_type i, size_type j) const {
+	const_reference operator()(size_type i, size_type j) const{
 		if (i == j)
 			return m_diagonal(i);
 		else
@@ -1034,23 +945,14 @@ public:
 	}
 	
 	//Iterators
-	typedef typename device_traits<device_type>:: template one_hot_iterator<value_type const>::type const_row_iterator;
-	typedef const_row_iterator const_column_iterator;
-	typedef const_row_iterator row_iterator;
-	typedef const_column_iterator column_iterator;
+	typedef typename device_traits<device_type>:: template one_hot_iterator<value_type const>::type const_major_iterator;
+	typedef const_major_iterator major_iterator;
 
-	
-	const_row_iterator row_begin(size_type i) const {
-		return row_iterator(i, m_diagonal(i),false);
+	const_major_iterator major_begin(size_type i) const{
+		return major_iterator(i, m_diagonal(i),false);
 	}
-	const_row_iterator row_end(size_type i) const {
-		return const_row_iterator(i, value_type(),true);
-	}
-	const_column_iterator column_begin(size_type i) const {
-		return column_iterator(i, m_diagonal(i),false);
-	}
-	const_column_iterator column_end(size_type i) const {
-		return const_column_iterator(i, value_type(),true);
+	const_major_iterator major_end(size_type i) const{
+		return const_major_iterator(i, value_type(),true);
 	}
 
 private:
@@ -1066,7 +968,7 @@ private:
 /// --
 /// B
 template<class MatA, class MatB, bool add_right>
-class matrix_concat: public matrix_expression<matrix_concat<MatA, MatB,  add_right>, typename MatA::device_type > {
+class matrix_concat: public matrix_expression<matrix_concat<MatA, MatB,  add_right>, typename MatA::device_type >{
 public:
 	typedef typename MatA::const_closure_type matrix_closure_typeA;
 	typedef typename MatB::const_closure_type matrix_closure_typeB;
@@ -1091,19 +993,19 @@ public:
 	explicit matrix_concat(
 		matrix_closure_typeA const& lhs,
 		matrix_closure_typeB const& rhs
-	):m_lhs(lhs), m_rhs(rhs) {}
+	):m_lhs(lhs), m_rhs(rhs){}
 
-	size_type size1() const {
+	size_type size1() const{
 		return add_right? m_lhs.size1() : m_lhs.size1() + m_rhs.size1();
 	}
-	size_type size2() const {
+	size_type size2() const{
 		return add_right? m_lhs.size2() + m_rhs.size2() : m_lhs.size2();
 	}
 	
-	matrix_closure_typeA const& lhs() const {
+	matrix_closure_typeA const& lhs() const{
 		return m_lhs;
 	}
-	matrix_closure_typeB const& rhs() const {
+	matrix_closure_typeB const& rhs() const{
 		return m_rhs;
 	}
 
@@ -1111,10 +1013,8 @@ public:
 		return m_lhs.queue();
 	}
 	
-	typedef no_iterator const_row_iterator;
-	typedef no_iterator const_column_iterator;
-	typedef no_iterator row_iterator;
-	typedef no_iterator column_iterator;
+	typedef no_iterator const_major_iterator;
+	typedef no_iterator major_iterator;
 	
 	//dispatcher to computation kernels
 	template<class MatX>
@@ -1186,9 +1086,9 @@ struct ExpressionToFunctor<matrix_binary<E1, E2, F> >{
 	}
 };
 
-template<class T, class Device>
-struct ExpressionToFunctor<scalar_matrix<T, Device> >{
-	static typename device_traits<Device>::template constant<T> transform(scalar_matrix<T, Device> const& e){
+template<class T, class Device, class Orientation>
+struct ExpressionToFunctor<scalar_matrix<T, Device, Orientation> >{
+	static typename device_traits<Device>::template constant<T> transform(scalar_matrix<T, Device, Orientation> const& e){
 		return typename device_traits<Device>::template constant<T>(e.scalar());
 	}
 };

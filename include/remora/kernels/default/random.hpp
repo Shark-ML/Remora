@@ -56,8 +56,8 @@ void generate_normal(
 	std::normal_distribution<typename M::value_type> dist(mean,std::sqrt(variance));
 	std::size_t size = M::orientation::index_M(m().size1(),m().size2());
 	for(std::size_t i = 0; i != size; ++i){
-		auto end = major_end(m,i);
-		for(auto pos = major_begin(m,i);pos != end; ++pos){
+		auto end = m().major_end(i);
+		for(auto pos = m().major_begin(i);pos != end; ++pos){
 			*pos = dist(rng);
 		}
 	}
@@ -85,8 +85,8 @@ void generate_uniform(
 	std::uniform_real_distribution<typename M::value_type> dist(low,high);
 	std::size_t size = M::orientation::index_M(m().size1(),m().size2());
 	for(std::size_t i = 0; i != size; ++i){
-		auto end = major_end(m,i);
-		for(auto pos = major_begin(m,i);pos != end; ++pos){
+		auto end = m().major_end(i);
+		for(auto pos = m().major_begin(i);pos != end; ++pos){
 			*pos = dist(rng);
 		}
 	}
@@ -114,8 +114,8 @@ void generate_discrete(
 	std::uniform_int_distribution<int> dist(low,high);
 	std::size_t size = M::orientation::index_M(m().size1(),m().size2());
 	for(std::size_t i = 0; i != size; ++i){
-		auto end = major_end(m,i);
-		for(auto pos = major_begin(m,i);pos != end; ++pos){
+		auto end = m().major_end(i);
+		for(auto pos = m().major_begin(i);pos != end; ++pos){
 			*pos = dist(rng);
 		}
 	}

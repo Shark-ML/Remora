@@ -41,7 +41,14 @@ void checkDenseBlockAssign(
 		}
 	}
 }
-
+template<class M1>
+double get(M1 const& m, std::size_t i, std::size_t j, row_major){
+	return m(i,j);
+}
+template<class M1>
+double get(M1 const& m, std::size_t i, std::size_t j, column_major){
+	return m(j,i);
+}
 template<class Operation, class Result>
 void checkDenseExpressionEquality(
 	matrix_expression<Operation, cpu_tag> const& op, Result const& result
@@ -55,24 +62,14 @@ void checkDenseExpressionEquality(
 			BOOST_CHECK_CLOSE(result(i,j), op()(i,j),1.e-5);
 		}
 	}
-	//check that row iterator work
-	for(std::size_t i = 0; i != op().size1(); ++i){
-		auto pos = op().row_begin(i);
-		for(std::size_t j = 0; j != op().size2(); ++j,++pos){
+	//check that iterators work
+	for(std::size_t i = 0; i != major_size(op); ++i){
+		auto pos = op().major_begin(i);
+		for(std::size_t j = 0; j != minor_size(op); ++j,++pos){
 			BOOST_CHECK_EQUAL(j, pos.index());
-			BOOST_CHECK_CLOSE(result(i,j), *pos,1.e-5);
+			BOOST_CHECK_CLOSE(get(result,i,j, typename Operation::orientation()), *pos,1.e-5);
 		}
 	}
-	
-	//check that column iterator work
-	for(std::size_t j = 0; j != op().size2(); ++j){
-		auto pos = op().column_begin(j);
-		for(std::size_t i = 0; i != op().size1(); ++i,++pos){
-			BOOST_CHECK_EQUAL(i, pos.index());
-			BOOST_CHECK_CLOSE(result(i,j), *pos,1.e-5);
-		}
-	}
-	
 	checkDenseBlockAssign(op,result);
 }
 
@@ -107,14 +104,10 @@ void checkDiagonalMatrix(M const& diagonal, D const& diagonalElements){
 			else
 				BOOST_CHECK_EQUAL(diagonal(i,i),diagonalElements(i));
 		}
-		auto row_begin = diagonal.row_begin(i);
-		auto col_begin = diagonal.column_begin(i);
-		BOOST_CHECK_EQUAL(row_begin.index(),i);
-		BOOST_CHECK_EQUAL(col_begin.index(),i);
-		BOOST_CHECK_EQUAL(std::distance(row_begin, diagonal.row_end(i)),1);
-		BOOST_CHECK_EQUAL(std::distance(col_begin, diagonal.column_end(i)),1);
-		BOOST_CHECK_EQUAL(*row_begin,diagonalElements(i));
-		BOOST_CHECK_EQUAL(*col_begin,diagonalElements(i));
+		auto major_begin = diagonal.major_begin(i);
+		BOOST_CHECK_EQUAL(major_begin.index(),i);
+		BOOST_CHECK_EQUAL(std::distance(major_begin, diagonal.major_end(i)),1);
+		BOOST_CHECK_EQUAL(*major_begin,diagonalElements(i));
 	}
 	
 }

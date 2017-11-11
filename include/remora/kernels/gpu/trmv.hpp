@@ -77,14 +77,14 @@ trmv_kernel createTRMVBlockKernel(
 	k << "const ulong curTileA =  end-start;\n";
 	k << "for(ulong i = 0; i < curTileA; ++i){\n";
 	k << "	for(ulong j = get_local_id(0); j < curTileA; j += numWorkers){\n";
-	k << "		Asub[i][j] ="<< A(k.expr<cl_ulong>("(i+start)"),k.expr<cl_ulong>("(j+start)"))<<";\n";
+	//~ k << "		Asub[i][j] ="<< A(k.expr<cl_ulong>("(i+start)"),k.expr<cl_ulong>("(j+start)"))<<";\n";
 	k << "	}\n";
 	k << "}\n";
 		
 	//ensure we are not reading out of bounds
 	// Load Tile of B into local memory, store columns of B as rows
 	k << "for(ulong i = get_local_id(0); i < curTileA; i += numWorkers){\n";
-	k << "	Bsub[i] = "<< v(k.expr<cl_ulong>("(start+i)"))<<";\n";
+	//~ k << "	Bsub[i] = "<< v(k.expr<cl_ulong>("(start+i)"))<<";\n";
 	k << "}\n";
 	// Synchronise to make sure the tile is loaded
 	k << "barrier(CLK_LOCAL_MEM_FENCE);\n";
@@ -93,7 +93,7 @@ trmv_kernel createTRMVBlockKernel(
 	// by computing outer products ulongo the local accumulation registers acc
 	//lower-case
 	k << "if(!upper){\n";
-	k << "	for(ulong i = get_local_id(0); i < curTileA; i += numWorkers){\n";
+	k << "	for(ulong i = get_local_id(0); i < TILE_SIZE; i += numWorkers){\n";
 	k << "		BResult[i] = Bsub[i];\n";
 	k << "		if(!unit){BResult[i] *= Asub[i][i];}\n";
 	k << "		for(ulong j = 0; j < i; ++j){\n";
@@ -106,15 +106,15 @@ trmv_kernel createTRMVBlockKernel(
 	k << "		BResult[i] = Bsub[i];\n";
 	k << "		if(!unit){BResult[i] *= Asub[i][i];}\n";
 	k << "			for(ulong j = i+1; j < curTileA; ++j){\n";
-	k << "			BResult[i] +="<< prod(k.expr<value_typeV>("Bsub[j]"), k.expr<value_typeA>("Asub[i][j]"))<<";\n";
+	k << "				BResult[i] +="<< prod(k.expr<value_typeV>("Bsub[j]"), k.expr<value_typeA>("Asub[i][j]"))<<";\n";
 	k << "		}\n";
 	k << "	}\n";
 	k << "}\n";
-	//~ // Synchronise before loading the next tile
+	// Synchronise before loading the next tile
 	k << "barrier(CLK_LOCAL_MEM_FENCE);\n";
 	// Store the final results back in B
-	k << "for(ulong i = 0; i < curTileA; ++i){\n";
-	k << v(k.expr<cl_ulong>("(start+i)"))<<" =  BResult[i];\n";
+	k << "for(ulong i = get_local_id(0); i < curTileA; i += numWorkers){\n";
+	//~ k << v(k.expr<cl_ulong>("(start+i)"))<<" =  BResult[i];\n";
 	k << "}\n";
 	
 	boost::compute::kernel kernel = k.compile(v_unreg().queue().get_context(), options);
@@ -135,6 +135,8 @@ void trmv_recursive(
 	
 	//if the matrix is small enough, call the computation kernel directly for the block
 	if(size <= tileSizeA){
+		std::cout<<"called "<<size<<" "<<start<<" "<<end<<" "<<Afull().raw_storage().leading_dimension<<std::endl;
+	
 		//enqueue kernel with kernel args
 		kernel.kernel.set_arg(kernel.start_index, start);
 		kernel.kernel.set_arg(kernel.end_index, end);
@@ -142,11 +144,11 @@ void trmv_recursive(
 		kernel.kernel.set_arg(kernel.upper_index, (std::size_t)Triangular::is_upper);
 		
 		std::size_t global_work_size[2] = {
-			(size+tileSizeA-1) / tileSizeA * tileSizeA,
+			tileSizeA,
 			1
 		};
-		std::size_t local_work_size[2] = {tileSizeA, 1};
-		vfull().queue().enqueue_nd_range_kernel(kernel.kernel, 2,nullptr, global_work_size, local_work_size);
+		//~ std::size_t local_work_size[2] = {tileSizeA, 1};
+		vfull().queue().enqueue_nd_range_kernel(kernel.kernel, 2,nullptr, global_work_size, global_work_size);
 		return;
 	}
 	//otherwise run the kernel recursively
@@ -157,12 +159,12 @@ void trmv_recursive(
 	if(Triangular::is_upper){ //Upper triangular case
 		auto Aur = subrange(Afull,start,start+split,start+split,end);
 		trmv_recursive(Afull, vfull, kernel, start, start+split, tileSizeA, t);
-		kernels::gemv(Aur, vback, vfront, 1.0);
+		//~ kernels::gemv(Aur, vback, vfront, 1.0);
 		trmv_recursive(Afull, vfull, kernel, start+split, end, tileSizeA, t);
 	}else{// Lower triangular caste
 		auto All = subrange(Afull,start+split,end,start,start+split);
 		trmv_recursive(Afull, vfull, kernel, start+split, end, tileSizeA, t);
-		kernels::gemv(All, vfront, vback, 1.0);
+		//~ kernels::gemv(All, vfront, vback, 1.0);
 		trmv_recursive(Afull, vfull, kernel, start, start+split, tileSizeA, t);
 	}
 
@@ -179,7 +181,7 @@ void trmv(
 	REMORA_SIZE_CHECK(A().size2() == v().size());
 	
 	std::size_t const TileSizeA = 32;//size of the diagonal blocks where the single kernel runs
-	char const* options ="-DTILE_SIZE=32ul";
+	char const* options ="-DTILE_SIZE=32ul -g";
 	auto kernel = bindings::createTRMVBlockKernel(A,v,options);
 	
 	bindings::trmv_recursive(A,v,kernel,0,A().size1(), TileSizeA, triangular_tag<Upper,Unit>());

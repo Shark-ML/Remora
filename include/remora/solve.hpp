@@ -156,10 +156,8 @@ public:
 			return m_system_type;
 	}
 	
-	typedef no_iterator row_iterator;
-	typedef row_iterator const_row_iterator;
-	typedef no_iterator column_iterator;
-	typedef column_iterator const_column_iterator;
+	typedef no_iterator major_iterator;
+	typedef major_iterator const_major_iterator;
 	
 	//dispatcher to computation kernels
 	template<class MatX>
@@ -223,10 +221,8 @@ public:
 			return m_system_type;
 	}
 	
-	typedef no_iterator row_iterator;
-	typedef row_iterator const_row_iterator;
-	typedef no_iterator column_iterator;
-	typedef column_iterator const_column_iterator;
+	typedef no_iterator major_iterator;
+	typedef major_iterator const_major_iterator;
 	
 	//dispatcher to computation kernels
 	template<class MatX>

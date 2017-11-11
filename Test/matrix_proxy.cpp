@@ -8,6 +8,15 @@
 
 using namespace remora;
 
+
+template<class M1>
+double get(M1 const& m, std::size_t i, std::size_t j, row_major){
+	return m(i,j);
+}
+template<class M1>
+double get(M1 const& m, std::size_t i, std::size_t j, column_major){
+	return m(j,i);
+}
 template<class M1, class M2>
 void checkDenseMatrixEqual(M1 const& m1, M2 const& m2){
 	BOOST_REQUIRE_EQUAL(m1.size1(),m2.size1());
@@ -20,29 +29,19 @@ void checkDenseMatrixEqual(M1 const& m1, M2 const& m2){
 	}
 	//iterator access rows
 	for(std::size_t i = 0; i != m2.size1(); ++i){
-		typedef typename M1::const_row_iterator Iter;
-		BOOST_REQUIRE_EQUAL(m1.row_end(i)-m1.row_begin(i), m1.size2());
+		typedef typename M1::const_major_iterator Iter;
+		BOOST_REQUIRE_EQUAL(m1.major_end(i)-m1.major_begin(i), m1.size2());
 		std::size_t k = 0;
-		for(Iter it = m1.row_begin(i); it != m1.row_end(i); ++it,++k){
+		for(Iter it = m1.major_begin(i); it != m1.major_end(i); ++it,++k){
 			BOOST_CHECK_EQUAL(k,it.index());
-			BOOST_CHECK_EQUAL(*it,m2(i,k));
+			BOOST_CHECK_EQUAL(*it,get(m2,i,k, typename M1::orientation()));
 		}
 		//test that the actual iterated length equals the number of elements
 		BOOST_CHECK_EQUAL(k, m1.size2());
 	}
-	//iterator access columns
-	for(std::size_t i = 0; i != m2.size2(); ++i){
-		typedef typename M1::const_column_iterator Iter;
-		BOOST_REQUIRE_EQUAL(m1.column_end(i)-m1.column_begin(i), m1.size1());
-		std::size_t k = 0;
-		for(Iter it = m1.column_begin(i); it != m1.column_end(i); ++it,++k){
-			BOOST_CHECK_EQUAL(k,it.index());
-			BOOST_CHECK_EQUAL(*it,m2(k,i));
-		}
-		//test that the actual iterated length equals the number of elements
-		BOOST_CHECK_EQUAL(k, m1.size1());
-	}
 }
+
+
 template<class M1, class M2>
 void checkDenseMatrixAssignment(M1& m1, M2 const& m2){
 	BOOST_REQUIRE_EQUAL(m1.size1(),m2.size1());
@@ -59,44 +58,21 @@ void checkDenseMatrixAssignment(M1& m1, M2 const& m2){
 		}
 	}
 	//iterator access rows
-	for(std::size_t i = 0; i != m2.size1(); ++i){
-		typedef typename M1::row_iterator Iter;
-		BOOST_REQUIRE_EQUAL(m1.row_end(i)-m1.row_begin(i), m1.size2());
+	for(std::size_t i = 0; i != major_size(m1); ++i){
+		typedef typename M1::major_iterator Iter;
+		BOOST_REQUIRE_EQUAL(m1.major_end(i)-m1.major_begin(i), minor_size(m1));
 		std::size_t k = 0;
-		for(Iter it = m1.row_begin(i); it != m1.row_end(i); ++it,++k){
+		for(Iter it = m1.major_begin(i); it != m1.major_end(i); ++it,++k){
 			BOOST_CHECK_EQUAL(k,it.index());
 			*it=0;
 			BOOST_CHECK_EQUAL(*it,0);
-			BOOST_CHECK_EQUAL(m1(i,k),0);
-			*it = m2(i,k);
-			BOOST_CHECK_EQUAL(*it,m2(i,k));
-			BOOST_CHECK_EQUAL(m1(i,k),m2(i,k));
-			*it=0;
-			BOOST_CHECK_EQUAL(*it,0);
-			BOOST_CHECK_EQUAL(m1(i,k),0);
+			BOOST_CHECK_EQUAL(get(m1,i,k, typename M1::orientation()),0);
+			*it = get(m2,i,k, typename M1::orientation());
+			BOOST_CHECK_EQUAL(*it,get(m2,i,k, typename M1::orientation()));
+			BOOST_CHECK_EQUAL(get(m1,i,k, typename M1::orientation()),get(m2,i,k, typename M1::orientation()));
 		}
 		//test that the actual iterated length equals the number of elements
-		BOOST_CHECK_EQUAL(k, m1.size2());
-	}
-	//iterator access columns
-	for(std::size_t i = 0; i != m2.size2(); ++i){
-		typedef typename M1::column_iterator Iter;
-		BOOST_REQUIRE_EQUAL(m1.column_end(i)-m1.column_begin(i), m1.size1());
-		std::size_t k = 0;
-		for(Iter it = m1.column_begin(i); it != m1.column_end(i); ++it,++k){
-			BOOST_CHECK_EQUAL(k,it.index());
-			*it=0;
-			BOOST_CHECK_EQUAL(*it,0);
-			BOOST_CHECK_EQUAL(m1(k,i),0);
-			*it = m2(k,i);
-			BOOST_CHECK_EQUAL(*it,m2(k,i));
-			BOOST_CHECK_EQUAL(m1(k,i),m2(k,i));
-			*it=0;
-			BOOST_CHECK_EQUAL(*it,0);
-			BOOST_CHECK_EQUAL(m1(k,i),0);
-		}
-		//test that the actual iterated length equals the number of elements
-		BOOST_CHECK_EQUAL(k, m1.size1());
+		BOOST_CHECK_EQUAL(k, minor_size(m1));
 	}
 }
 template<class V1, class V2>

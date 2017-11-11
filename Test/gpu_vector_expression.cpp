@@ -22,15 +22,15 @@ void checkDenseExpressionEquality(
 	}
 	
 	//test block assignment operators
-	vector<float, gpu_tag> res1_gpu(result.size(),0.1f);
-	vector<float, gpu_tag> res2_gpu(result.size(),0.1f);
+	vector<float, gpu_tag> res1_gpu(result.size(),0.01f);
+	vector<float, gpu_tag> res2_gpu(result.size(),0.01f);
 	op_gpu.assign_to(res1_gpu,2.0f);
 	op_gpu.plus_assign_to(res2_gpu,2.0f);
 	vector<float> res1 = copy_to_cpu(res1_gpu);
 	vector<float> res2 = copy_to_cpu(res2_gpu);
 	for(std::size_t i = 0; i != op.size(); ++i){
 		BOOST_CHECK_CLOSE(2.0f * result(i), res1(i),1.e-3);
-		BOOST_CHECK_CLOSE(2.0f * result(i) + 0.1f, res2(i),1.e-2);
+		BOOST_CHECK_CLOSE(2.0f * result(i) + 0.01f, res2(i),1.e-2);
 	}
 }
 
@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Tanh )
 	vector<float> result(Dimensions);
 	
 	for (size_t i = 0; i < Dimensions; i++){
-		x_cpu(i) = i;
+		x_cpu(i) = i*0.01-0.5;
 		result(i)=std::tanh(x_cpu(i));
 	}
 	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);
@@ -362,8 +362,8 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Binary_Minus)
 	
 	for (size_t i = 0; i < Dimensions; i++)
 	{
-		x_cpu(i) = i;
-		y_cpu(i) = -3.0*i+Dimensions;
+		x_cpu(i) = 0.1*i;
+		y_cpu(i) = -3.0*i+0.1*Dimensions;
 		result(i) = x_cpu(i)-y_cpu(i);
 	}
 	vector<float, gpu_tag> x = copy_to_gpu(x_cpu);

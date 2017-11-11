@@ -116,9 +116,9 @@ void matrix_assign(
 ) {
 	m().clear();
 	for(std::size_t i = 0; i != m().size1(); ++i){
-		auto m_pos = m().row_begin(i);
-		auto end = e().row_end(i);
-		for(auto it = e().row_begin(i); it != end; ++it){
+		auto m_pos = m().major_begin(i);
+		auto end = e().major_end(i);
+		for(auto it = e().major_begin(i); it != end; ++it){
 			m_pos = m().set_element(m_pos,it.index(),*it);
 		}
 	}
@@ -193,8 +193,8 @@ void matrix_assign(
 
 	size_type size2 = m().size2();
 	for(size_type j = 0; j != size2; ++j){
-		typename E::const_column_iterator pos_e = e().column_begin(j);
-		typename E::const_column_iterator end_e = e().column_end(j);
+		auto pos_e = e().major_begin(j);
+		auto end_e = e().major_end(j);
 		for(; pos_e != end_e; ++pos_e){
 			Element element;
 			element.i = pos_e.index();
@@ -216,10 +216,9 @@ void matrix_assign(
 		m().reserve_row(row,row_end - current);
 
 		//copy elements
-		typename M::row_iterator row_pos = m().row_begin(row);
+		auto row_pos = m().major_begin(row);
 		for(; current != row_end; ++current){
 			row_pos = m().set_element(row_pos,elements[current].j,elements[current].value);
-			++row_pos;
 		}
 	}
 }
@@ -232,13 +231,10 @@ void matrix_assign(
 	triangular<row_major,triangular_tag<Upper, false> >, triangular<row_major,triangular_tag<Upper, Unit> >,
 	packed_tag, packed_tag
 ) {
-	typedef typename M::row_iterator MIter;
-	typedef typename E::const_row_iterator EIter;
-
 	for(std::size_t i = 0; i != m().size1(); ++i){
-		MIter mpos = m().row_begin(i);
-		EIter epos = e().row_begin(i);
-		MIter eend = e().row_end(i);
+		auto mpos = m().major_begin(i);
+		auto epos = e().major_begin(i);
+		auto eend = e().major_end(i);
 		if(Unit && Upper){
 			*mpos = 1;
 			++mpos;
@@ -263,8 +259,8 @@ void matrix_assign(
 	packed_tag, packed_tag
 ) {
 	for(std::size_t i = 0; i != m().size1(); ++i){
-		auto mpos = m().row_begin(i);
-		auto mend = m().row_end(i);
+		auto mpos = m().major_begin(i);
+		auto mend = m().major_end(i);
 		for(; mpos!=mend; ++mpos){
 			*mpos = e()(i,mpos.index());
 		}
@@ -304,10 +300,10 @@ void matrix_assign_functor(
 		//first merge the two rows in elements using the functor
 		
 		elements.clear();
-		auto m_pos = m().row_begin(i);
-		auto m_end = m().row_end(i);
-		auto e_pos = e().row_begin(i);
-		auto e_end = e().row_end(i);
+		auto m_pos = m().major_begin(i);
+		auto m_end = m().major_end(i);
+		auto e_pos = e().major_begin(i);
+		auto e_end = e().major_end(i);
 		
 		while(m_pos != m_end && e_pos != e_end){
 			if(m_pos.index() < e_pos.index()){
@@ -332,9 +328,9 @@ void matrix_assign_functor(
 		
 		
 		//clear contents of m and fill with elements
-		m().clear_range(m().row_begin(i),m().row_end(i));
+		m().clear_range(m().major_begin(i),m().major_end(i));
 		m().reserve_row(i,elements.size());
-		m_pos = m().row_begin(i);
+		m_pos = m().major_begin(i);
 		for(auto elem: elements){
 			m_pos = m().set_element(m_pos, elem.i,elem.j, elem.value);
 		}
@@ -405,67 +401,6 @@ void matrix_assign_functor(
 ) {
 	typename matrix_temporary<M>::type eTrans = e;//explicit calculation of the transpose for now
 	matrix_assign_functor(m,eTrans,f,row_major(),row_major(),t,t);
-	//~ F<typename M::iterator::reference, typename E::value_type> f;
-	//~ //first evaluate e and fill the values  togethe into a vector which
-	//~ //is then sorted by row_major order
-	//~ //this gives this algorithm a run time of  O(eval(e)+k*log(k))
-	//~ //where eval(e) is the time to evaluate and k*log(k) the number of non-zero elements
-	//~ typedef typename M::value_type value_type;
-	//~ typedef typename M::size_type size_type;
-	//~ typedef row_major::sparse_element<value_type> Element;
-	//~ std::vector<Element> elements;
-
-	//~ size_type size2 = m().size2();
-	//~ size_type size1 = m().size1();
-	//~ for(size_type j = 0; j != size2; ++j){
-		//~ typename E::const_column_iterator pos_e = e().column_begin(j);
-		//~ typename E::const_column_iterator end_e = e().column_end(j);
-		//~ for(; pos_e != end_e; ++pos_e){
-			//~ Element element;
-			//~ element.i = pos_e.index();
-			//~ element.j = j;
-			//~ element.value = *pos_e;
-			//~ elements.push_back(element);
-		//~ }
-	//~ }
-	//~ std::sort(elements.begin(),elements.end());
-
-
-	//~ //assign the contents to m, applying the functor every time
-	//~ //that is we assign it for every element for e and m
-	//~ m().reserve(elements.size());//reserve a bit of space, we might need more, though.
-	//~ std::vector<Element>::const_iterator elem = elements.begin();
-	//~ std::vector<Element>::const_iterator elem_end = elements.end();
-	//~ value_type zero = value_type();
-	//~ for(size_type row = 0; row != m().size2(); ++row){
-		//~ //todo pre-reserve enough space in the row of m()
-		//~ //merge both rows with f as functor
-		//~ typename M::row_iterator it = m().row_begin(row);
-		//~ while(it != m().row_end(row)& & elem != elem_end& & elem->i == row) {
-			//~ size_type it_index = it.index();
-			//~ size_type elem_index = elem->j;
-			//~ if (it_index == elem_index) {
-				//~ f(*it, *elem);
-				//~ ++ elem;
-			//~ } else if (it_index < elem_index) {
-				//~ f(*it, zero);
-			//~ } else{//it_index > elem_index so insert new element in v()
-				//~ it = m().set_element(it,elem_index,zero);
-				//~ f(*it, *elem);
-				//~ ++elem;
-			//~ }
-			//~ ++it;
-		//~ }
-		//~ //apply f to remaining elemms in the row
-		//~ for(;it != v().end();++it) {
-			//~ f(*it, zero);
-		//~ }
-		//~ //add missing elements
-		//~ for(;elem != elem_end;++it,++elem) {
-			//~ it = m().set_element(it,elem.index(),zero);
-			//~ f(*it, zero);
-		//~ }
-	//~ }
 }
 
 
@@ -478,15 +413,13 @@ void matrix_assign_functor(
 	triangular<row_major,Triangular>, triangular<row_major,Triangular>,
 	Tag1, Tag2
 ) {
-	typedef typename M::row_iterator MIter;
-	typedef typename E::const_row_iterator EIter;
 	//there is nothing we can do if F does not leave the non-stored elements 0
 	//this is the case for all current assignment functors, but you never know :)
 
 	for(std::size_t i = 0; i != m().size1(); ++i){
-		MIter mpos = m().row_begin(i);
-		EIter epos = e().row_begin(i);
-		MIter mend = m().row_end(i);
+		auto mpos = m().major_begin(i);
+		auto epos = e().major_begin(i);
+		auto mend = m().major_end(i);
 		REMORA_SIZE_CHECK(mpos.index() == epos.index());
 		for(; mpos!=mend; ++mpos,++epos){
 			*mpos = f(*mpos,*epos);
@@ -503,12 +436,11 @@ void matrix_assign_functor(
 	triangular<row_major,Triangular>, triangular<column_major,Triangular>,
 	Tag1, Tag2
 ) {
-	typedef typename M::row_iterator MIter;
 	//there is nothing we can do, if F does not leave the non-stored elements 0
 
 	for(std::size_t i = 0; i != m().size1(); ++i){
-		MIter mpos = m().row_begin(i);
-		MIter mend = m().row_end(i);
+		auto mpos = m().major_begin(i);
+		auto mend = m().major_end(i);
 		for(; mpos!=mend; ++mpos){
 			*mpos = f(*mpos,e()(i,mpos.index()));
 		}

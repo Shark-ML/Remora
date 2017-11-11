@@ -75,69 +75,18 @@ struct storage: public std::conditional<
 >{};
 	
 template<class M>
-struct row_iterator: public std::conditional<
+struct major_iterator: public std::conditional<
 	std::is_const<M>::value,
-	typename M::const_row_iterator,
-	typename M::row_iterator
+	typename M::const_major_iterator,
+	typename M::major_iterator
 >{};
 	
 template<class M>
-struct column_iterator: public std::conditional<
+struct minor_iterator: public std::conditional<
 	std::is_const<M>::value,
-	typename M::const_column_iterator,
-	typename M::column_iterator
+	typename M::const_minor_iterator,
+	typename M::minor_iterator
 >{};
-
-template<class Matrix> 
-struct major_iterator:public std::conditional<
-	std::is_same<typename Matrix::orientation, column_major>::value,
-	typename column_iterator<Matrix>::type,
-	typename row_iterator<Matrix>::type
->{};	
-	
-namespace detail{
-	template<class M>
-	typename column_iterator<M>::type major_begin(M& m,std::size_t i, column_major){
-		return m.column_begin(i);
-	}
-	template<class M>
-	typename row_iterator<M>::type major_begin(M& m,std::size_t i, row_major){
-		return m.row_begin(i);
-	}
-	template<class M>
-	typename row_iterator<M>::type major_begin(M& m,std::size_t i, unknown_orientation){
-		return m.row_begin(i);
-	}
-	template<class M>
-	typename column_iterator<M>::type major_end(M& m,std::size_t i, column_major){
-		return m.column_end(i);
-	}
-	template<class M>
-	typename row_iterator<M>::type major_end(M& m,std::size_t i, row_major){
-		return m.row_end(i);
-	}
-	template<class M>
-	typename row_iterator<M>::type major_end(M& m,std::size_t i, unknown_orientation){
-		return m.row_end(i);
-	}
-}
-
-template<class M, class Device>
-typename major_iterator<M const>::type major_begin(matrix_expression<M, Device> const& m, std::size_t i){
-	return detail::major_begin(m(),i, typename M::orientation::orientation());
-}
-template<class M, class Device>
-typename major_iterator<M const>::type major_end(matrix_expression<M, Device> const& m, std::size_t i){
-	return detail::major_end(m(),i, typename M::orientation::orientation());
-}
-template<class M, class Device>
-typename major_iterator<M>::type major_begin(matrix_expression<M, Device>& m, std::size_t i){
-	return detail::major_begin(m(),i, typename M::orientation::orientation());
-}
-template<class M, class Device>
-typename major_iterator<M>::type major_end(matrix_expression<M, Device>& m, std::size_t i){
-	return detail::major_end(m(),i, typename M::orientation::orientation());
-}
 
 ///\brief Determines a good vector type storing an expression returning values of type T having a certain evaluation category on a specific device.
 template<class ValueType, class Cateogry, class Device>
@@ -235,6 +184,15 @@ auto to_functor(matrix_expression<E, Device> const& e) -> decltype(ExpressionToF
 template<class E, class Device>
 auto to_functor(vector_expression<E, Device> const& e) -> decltype(ExpressionToFunctor<E>::transform(e())){
 	return ExpressionToFunctor<E>::transform(e());
+}
+
+template<class M, class Device>
+typename M::size_type major_size(matrix_expression<M, Device> const& m){
+	return M::orientation::index_M(m().size1(),m().size2());
+}
+template<class M, class Device>
+typename M::size_type minor_size(matrix_expression<M, Device> const& m){
+	return M::orientation::index_m(m().size1(),m().size2());
 }
 
 }

@@ -160,10 +160,8 @@ public:
 		return m_distribution;
 	}
 	
-	typedef no_iterator row_iterator;
-	typedef no_iterator column_iterator;
-	typedef no_iterator const_row_iterator;
-	typedef no_iterator const_column_iterator;
+	typedef no_iterator major_iterator;
+	typedef no_iterator const_major_iterator;
 	
 	//dispatcher to computation kernels
 	template<class MatX>

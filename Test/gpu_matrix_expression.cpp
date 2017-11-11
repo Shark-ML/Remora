@@ -55,32 +55,6 @@ void checkDenseExpressionEquality(
 			}
 		}
 	}
-	
-	
-	vector<float, gpu_tag> op_row_gpu(op_gpu().size2());
-	vector<float, gpu_tag> op_col_gpu(op_gpu().size1());
-	vector<float> op_row(op_gpu().size2());
-	vector<float> op_col(op_gpu().size2());
-	
-	//~ //check that row iterator work
-	//~ for(std::size_t i = 0; i != op.size1(); ++i){
-		
-		//~ boost::compute::copy(op_gpu().row_begin(i), op_gpu().row_end(i), op_row_gpu.begin());
-		//~ boost::compute::copy(op_row_gpu.begin(), op_row_gpu.end(), op_row.begin());
-		
-		//~ for(std::size_t j = 0; j != op.size2(); ++j){
-			//~ BOOST_CHECK_CLOSE(result(i,j), op_row(j),1.e-8);
-		//~ }
-	//~ }
-	
-	//~ //check that column iterator work
-	//~ for(std::size_t j = 0; j != op.size2(); ++j){
-		//~ boost::compute::copy(op_gpu().column_begin(j), op_gpu().column_end(j), op_col_gpu.begin());
-		//~ boost::compute::copy(op_col_gpu.begin(), op_col_gpu.end(), op_col.begin());
-		//~ for(std::size_t i = 0; i != op.size1(); ++i){
-			//~ BOOST_CHECK_CLOSE(result(i,j), op_col(i),1.e-8);
-		//~ }
-	//~ }
 }
 
 
@@ -301,7 +275,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Exp )
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
-			x_cpu(i,j) = -3.0+i-j;
+			x_cpu(i,j) = -3.0+0.1*i-0.1*j;
 			result(i,j)= std::exp(x_cpu(i,j));
 		}
 	}
@@ -445,7 +419,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Tanh )
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
-			x_cpu(i,j) = -3.0+i-j;
+			x_cpu(i,j) = -3.0+0.001*i-0.001*j;
 			result(i,j)= std::tanh(x_cpu(i,j));
 		}
 	}
@@ -487,7 +461,7 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Pow )
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
-			x_cpu(i,j) = 0.001*(i+j+2.0);;
+			x_cpu(i,j) = 0.001*(i+j)+0.5;
 			result(i,j)= std::pow(x_cpu(i,j),3.2);
 		}
 	}

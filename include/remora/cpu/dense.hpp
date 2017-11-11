@@ -213,18 +213,14 @@ public:
 	: m_values(expression.m_values)
 	, m_size1(expression.size1())
 	, m_size2(expression.size2())
-	, m_stride1(expression.m_stride1)
-	, m_stride2(expression.m_stride2)
+	, m_leading_dimension(expression.m_leading_dimension)
 	{static_assert(std::is_convertible<TagU,Tag>::value, "Can not convert storage type of argument to the given Tag");}
 	
 	dense_matrix_adaptor(storage_type const& storage, no_queue, std::size_t size1, std::size_t size2)
-	: m_size1(size1)
+	: m_values(storage.values)
+	, m_size1(size1)
 	, m_size2(size2)
-	{
-		m_values = storage.values;
-		m_stride1 = Orientation::index_M(storage.leading_dimension,1);
-		m_stride2 = Orientation::index_m(storage.leading_dimension,1);
-	}
+	, m_leading_dimension(storage.leading_dimension){}
 
 	/// \brief Constructor of a vector proxy from a Dense matrix
 	///
@@ -234,10 +230,9 @@ public:
 	: m_size1(expression.size1())
 	, m_size2(expression.size2())
 	{
-		auto storage_type = expression.raw_storage();
-		m_values = storage_type.values;
-		m_stride1 = Orientation::index_M(storage_type.leading_dimension,1);
-		m_stride2 = Orientation::index_m(storage_type.leading_dimension,1);
+		auto storage = expression.raw_storage();
+		m_values = storage.values;
+		m_leading_dimension = storage.leading_dimension;
 	}
 
 	/// \brief Constructor of a vector proxy from a Dense matrix
@@ -247,33 +242,28 @@ public:
 	dense_matrix_adaptor(matrix<value_type, Orientation, cpu_tag>& expression)
 	: m_size1(expression.size1())
 	, m_size2(expression.size2()){
-		auto storage_type = expression.raw_storage();
-		m_values = storage_type.values;
-		m_stride1 = Orientation::index_M(storage_type.leading_dimension,1);
-		m_stride2 = Orientation::index_m(storage_type.leading_dimension,1);
+		auto storage = expression.raw_storage();
+		m_values = storage.values;
+		m_leading_dimension = storage.leading_dimension;
 	}
 		
 	/// \brief Constructor of a vector proxy from a block of memory
 	/// \param values the block of memory used
 	/// \param size1 size in 1st direction
 	/// \param size2 size in 2nd direction
-	/// \param stride1 distance in 1st direction between elements of the matrix in memory
-	/// \param stride2 distance in 2nd direction between elements of the matrix in memory
+	/// \param leading_dimension distance between two elements in the "slow" direction. 
 	dense_matrix_adaptor(
 		T* values, 
 		size_type size1, size_type size2,
-		size_type stride1 = 0, size_type stride2 = 0 
+		size_type leading_dimension = 0
 	)
 	: m_values(values)
 	, m_size1(size1)
 	, m_size2(size2)
-	, m_stride1(stride1)
-	, m_stride2(stride2)
+	, m_leading_dimension(leading_dimension)
 	{
-		if(!m_stride1)
-			m_stride1= Orientation::stride1(orientation::index_m(m_size1,m_size2));
-		if(!m_stride2)
-			m_stride2= Orientation::stride2(orientation::index_m(m_size1,m_size2));
+		if(!m_leading_dimension)
+			m_leading_dimension = orientation::index_m(m_size1,m_size2);
 	}
 	
 	// ---------
@@ -291,7 +281,7 @@ public:
 	
 	///\brief Returns the underlying storage structure for low level access
 	storage_type raw_storage()const{
-		return {m_values, orientation::index_M(m_stride1,m_stride2)};
+		return {m_values, m_leading_dimension};
 	}
 	
 	typename device_traits<cpu_tag>::queue_type& queue()const{
@@ -325,47 +315,32 @@ public:
 	reference operator() (size_type i, size_type j) const {
 		REMORA_SIZE_CHECK( i < m_size1);
 		REMORA_SIZE_CHECK( j < m_size2);
-		return m_values[i*m_stride1+j*m_stride2];
-		}
+		return m_values[orientation::element(i, j, m_leading_dimension)];
+	}
 	void set_element(size_type i, size_type j,value_type t){
 		REMORA_SIZE_CHECK( i < m_size1);
 		REMORA_SIZE_CHECK( j < m_size2);
-		m_values[i*m_stride1+j*m_stride2]  = t;
+		return m_values[orientation::element(i, j, m_leading_dimension)];
 	}
 
 	// --------------
 	// ITERATORS
 	// --------------
 
-	typedef iterators::dense_storage_iterator<T> row_iterator;
-	typedef iterators::dense_storage_iterator<T> column_iterator;
-	typedef iterators::dense_storage_iterator<value_type const> const_row_iterator;
-	typedef iterators::dense_storage_iterator<value_type const> const_column_iterator;
+	typedef iterators::dense_storage_iterator<T> major_iterator;
+	typedef iterators::dense_storage_iterator<value_type const> const_major_iterator;
 
-	const_row_iterator row_begin(size_type i) const {
-		return const_row_iterator(m_values+i*m_stride1,0,m_stride2);
+	const_major_iterator major_begin(size_type i) const {
+		return const_major_iterator(m_values + i * m_leading_dimension, 0, 1);
 	}
-	const_row_iterator row_end(size_type i) const {
-		return const_row_iterator(m_values+i*m_stride1+size2()*m_stride2,size2(),m_stride2);
+	const_major_iterator major_end(size_type i) const {
+		return const_major_iterator(m_values + i * m_leading_dimension + minor_size(*this), minor_size(*this), 1);
 	}
-	row_iterator row_begin(size_type i){
-		return row_iterator(m_values+i*m_stride1,0,m_stride2);
+	major_iterator major_begin(size_type i){
+		return major_iterator(m_values + i * m_leading_dimension, 0, 1);
 	}
-	row_iterator row_end(size_type i){
-		return row_iterator(m_values+i*m_stride1+size2()*m_stride2,size2(),m_stride2);
-	}
-	
-	const_column_iterator column_begin(size_type j) const {
-		return const_column_iterator(m_values+j*m_stride2,0,m_stride1);
-	}
-	const_column_iterator column_end(size_type j) const {
-		return const_column_iterator(m_values+j*m_stride2+size1()*m_stride1,size1(),m_stride1);
-	}
-	column_iterator column_begin(size_type j){
-		return column_iterator(m_values+j*m_stride2,0,m_stride1);
-	}
-	column_iterator column_end(size_type j){
-		return column_iterator(m_values+j*m_stride2+size1()*m_stride1,size1(),m_stride1);
+	major_iterator major_end(size_type i){
+		return major_iterator(m_values + i * m_leading_dimension + minor_size(*this), minor_size(*this), 1);
 	}
 	
 	void swap_rows(size_type i, size_type j){
@@ -382,9 +357,9 @@ public:
 	
 		
 	void clear(){
-		for(size_type i = 0; i != size1(); ++i){
-			for(size_type j = 0; j != size2(); ++j){
-				(*this)(i,j) = value_type();
+		for(size_type i = 0; i != major_size(*this); ++i){
+			for(size_type j = 0; j != minor_size(*this); ++j){
+				m_values[i * m_leading_dimension + j] = value_type();
 			}
 		}
 	}
@@ -393,8 +368,7 @@ private:
 	T* m_values;
 	size_type m_size1;
 	size_type m_size2;
-	size_type m_stride1;
-	size_type m_stride2;
+	size_type m_leading_dimension;
 };
 
 
@@ -405,10 +379,10 @@ private:
  * the container for column major orientation. In a dense matrix all elements are represented in memory in a
  * contiguous chunk of memory by definition.
  *
- * Orientation can also be specified, otherwise a \c row_major is used.
+ * Orientation can also be specified, otherwise a \c major_major is used.
  *
  * \tparam T the type of object stored in the matrix (like double, float, complex, etc...)
- * \tparam L the storage organization. It can be either \c row_major or \c column_major. Default is \c row_major
+ * \tparam L the storage organization. It can be either \c major_major or \c minor_major. Default is \c major_major
  */
 template<class T, class L>
 class matrix<T,L,cpu_tag>:public matrix_container<matrix<T, L, cpu_tag>, cpu_tag > {
@@ -442,7 +416,7 @@ public:
 		auto pos = list.begin();
 		for(std::size_t i = 0; i != list.size(); ++i,++pos){
 			REMORA_SIZE_CHECK(pos->size() == m_size2);
-			std::copy(pos->begin(),pos->end(),row_begin(i));
+			std::copy(pos->begin(),pos->end(),major_begin(i));
 		}
 	}
 
@@ -630,38 +604,21 @@ public:
 	}
 
 	//Iterators
-	typedef iterators::dense_storage_iterator<value_type> row_iterator;
-	typedef iterators::dense_storage_iterator<value_type> column_iterator;
-	typedef iterators::dense_storage_iterator<value_type const> const_row_iterator;
-	typedef iterators::dense_storage_iterator<value_type const> const_column_iterator;
+	typedef iterators::dense_storage_iterator<T> major_iterator;
+	typedef iterators::dense_storage_iterator<value_type const> const_major_iterator;
 
-	const_row_iterator row_begin(size_type i) const {
-		return const_row_iterator(m_data.data() + i*stride1(),0,stride2());
+	const_major_iterator major_begin(size_type i) const {
+		return const_major_iterator(m_data.data() + i * leading_dimension(), 0, 1);
 	}
-	const_row_iterator row_end(size_type i) const {
-		return const_row_iterator(m_data.data() + i*stride1()+stride2()*size2(),size2(),stride2());
+	const_major_iterator major_end(size_type i) const {
+		return const_major_iterator(m_data.data() + i * leading_dimension() + minor_size(*this), minor_size(*this), 1);
 	}
-	row_iterator row_begin(size_type i){
-		return row_iterator(m_data.data() + i*stride1(),0,stride2());
+	major_iterator major_begin(size_type i){
+		return major_iterator(m_data.data() + i * leading_dimension(), 0, 1);
 	}
-	row_iterator row_end(size_type i){
-		return row_iterator(m_data.data() + i*stride1()+stride2()*size2(),size2(),stride2());
+	major_iterator major_end(size_type i){
+		return major_iterator(m_data.data() + i * leading_dimension() + minor_size(*this), minor_size(*this), 1);
 	}
-	
-	const_row_iterator column_begin(std::size_t j) const {
-		return const_column_iterator(m_data.data() + j*stride2(),0,stride1());
-	}
-	const_column_iterator column_end(std::size_t j) const {
-		return const_column_iterator(m_data.data() + j*stride2()+ stride1()*size1(),size1(),stride1());
-	}
-	column_iterator column_begin(std::size_t j){
-		return column_iterator(m_data.data() + j*stride2(),0,stride1());
-	}
-	column_iterator column_end(std::size_t j){
-		return column_iterator(m_data.data() + j * stride2()+ stride1() * size1(), size1(), stride1());
-	}
-	
-	typedef typename major_iterator<matrix>::type major_iterator;
 
 	// Serialization
 	template<class Archive>
@@ -688,13 +645,6 @@ private:
 	size_type leading_dimension() const {
 		return orientation::index_m(m_size1, m_size2);
 	}
-	size_type stride1() const {
-		return orientation::stride1(leading_dimension());
-	}
-	size_type stride2() const {
-		return orientation::stride2(leading_dimension());
-	}
-	
 	
 	size_type m_size1;
 	size_type m_size2;
@@ -1023,43 +973,24 @@ public:
 		return device_traits<cpu_tag>::default_queue();
 	}
 
-	typedef iterators::dense_storage_iterator<value_type> row_iterator;
-	typedef iterators::dense_storage_iterator<value_type> column_iterator;
-	typedef iterators::dense_storage_iterator<value_type const> const_row_iterator;
-	typedef iterators::dense_storage_iterator<value_type const> const_column_iterator;
+	typedef iterators::dense_storage_iterator<value_type> major_iterator;
+	typedef iterators::dense_storage_iterator<value_type const> const_major_iterator;
 	
-	const_row_iterator row_begin(size_type i) const {
+	const_major_iterator major_begin(size_type i) const {
 		std::size_t start =  Upper? i + Unit: 0;
-		return const_row_iterator(m_values + orientation::element(i,start, m_leading_dimension),start, orientation::stride2(m_leading_dimension));
+		return const_major_iterator(m_values + orientation::element(i,start, m_leading_dimension),start, 1);
 	}
-	const_row_iterator row_end(size_type i) const {
+	const_major_iterator major_end(size_type i) const {
 		std::size_t end =  Upper? m_size2: i +1 - Unit;
-		return const_row_iterator(m_values + orientation::element(i,end, m_leading_dimension),end, orientation::stride2(m_leading_dimension));
+		return const_major_iterator(m_values + orientation::element(i,end, m_leading_dimension),end, 1);
 	}
-	row_iterator row_begin(size_type i){
+	major_iterator major_begin(size_type i){
 		std::size_t start =  Upper? i + Unit: 0;
-		return row_iterator(m_values + orientation::element(i,start, m_leading_dimension),start, orientation::stride2(m_leading_dimension));
+		return major_iterator(m_values + orientation::element(i,start, m_leading_dimension),start, 1);
 	}
-	row_iterator row_end(size_type i){
+	major_iterator major_end(size_type i){
 		std::size_t end =  Upper? m_size2: i + 1 - Unit;
-		return row_iterator(m_values + orientation::element(i,end, m_leading_dimension),end, orientation::stride2(m_leading_dimension));
-	}
-	
-	const_row_iterator column_begin(std::size_t j) const {
-		std::size_t start =  Upper? 0 :(j + Unit);
-		return const_column_iterator(m_values + orientation::element(start, j, m_leading_dimension),start, orientation::stride1(m_leading_dimension));
-	}
-	const_column_iterator column_end(std::size_t j) const {
-		std::size_t end =  Upper? j +1 - Unit : m_size1;
-		return const_column_iterator(m_values + orientation::element(end, j, m_leading_dimension),end, orientation::stride1(m_leading_dimension));
-	}
-	column_iterator column_begin(std::size_t j){
-		std::size_t start =  Upper? 0 :(j + Unit);
-		return column_iterator(m_values + orientation::element(start, j, m_leading_dimension),start, orientation::stride1(m_leading_dimension));
-	}
-	column_iterator column_end(std::size_t j){
-		std::size_t end =  Upper? j + 1 - Unit : m_size1;
-		return column_iterator(m_values + orientation::element(end, j, m_leading_dimension),end, orientation::stride1(m_leading_dimension));
+		return major_iterator(m_values + orientation::element(i,end, m_leading_dimension),end, 1);
 	}
 	
 private:

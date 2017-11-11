@@ -184,10 +184,10 @@ struct matrix_transpose_optimizer<vector_repeater<V,Orientation> >{
 };
 
 //trans(constant)  -> constant (swapped sizes)
-template<class T, class Device>
-struct matrix_transpose_optimizer<scalar_matrix<T,Device> >{
-	typedef scalar_matrix<T,Device> type;
-	static type create(type const& m){
+template<class T, class Device, class Orientation>
+struct matrix_transpose_optimizer<scalar_matrix<T,Device, Orientation> >{
+	typedef scalar_matrix<T,Device, typename Orientation::transposed_orientation> type;
+	static type create(scalar_matrix<T,Device, Orientation> const& m){
 		return type(m.size2(), m.size1(), m.scalar());
 	}
 };
@@ -288,11 +288,11 @@ struct matrix_row_optimizer<matrix_addition<M1,M2> >{
 };
 
 //row(constant,i) = constant
-template<class T, class Device>
-struct matrix_row_optimizer<scalar_matrix<T, Device> >{
+template<class T, class Device, class Orientation>
+struct matrix_row_optimizer<scalar_matrix<T, Device, Orientation> >{
 	typedef scalar_vector<T, Device> type;
 	
-	static type create(scalar_matrix<T, Device> const& m, std::size_t){
+	static type create(scalar_matrix<T, Device, Orientation> const& m, std::size_t){
 		return type(m.size2(),m.scalar());
 	}
 };
@@ -404,11 +404,11 @@ struct matrix_diagonal_optimizer<matrix_addition<M1,M2> >{
 };
 
 //diag(constant)  -> constant (vector)
-template<class T, class Device>
-struct matrix_diagonal_optimizer<scalar_matrix<T,Device> >{
+template<class T, class Device, class Orientation>
+struct matrix_diagonal_optimizer<scalar_matrix<T,Device, Orientation> >{
 	typedef scalar_vector<T,Device> type;
 	
-	static type create(scalar_matrix<T,Device> const& m){
+	static type create(scalar_matrix<T,Device, Orientation> const& m){
 		return type(m().size(), m.scalar());
 	}
 };
@@ -513,9 +513,9 @@ struct matrix_range_optimizer<matrix_addition<M1,M2> >{
 };
 
 //range(constant)  -> constant (changed sizes)
-template<class T, class Device>
-struct matrix_range_optimizer<scalar_matrix<T,Device> >{
-	typedef scalar_matrix<T,Device> type;
+template<class T, class Device, class Orientation>
+struct matrix_range_optimizer<scalar_matrix<T,Device, Orientation> >{
+	typedef scalar_matrix<T,Device, Orientation> type;
 	static type create(type const& m,
 		std::size_t start1, std::size_t end1, std::size_t start2, std::size_t end2
 	){
@@ -651,9 +651,9 @@ struct matrix_rows_optimizer<matrix_addition<M1,M2> >{
 };
 
 //range(constant)  -> constant (changed sizes)
-template<class T, class Device>
-struct matrix_rows_optimizer<scalar_matrix<T,Device> >{
-	typedef scalar_matrix<T,Device> type;
+template<class T, class Device, class Orientation>
+struct matrix_rows_optimizer<scalar_matrix<T,Device, Orientation> >{
+	typedef scalar_matrix<T,Device, Orientation> type;
 	static type create(type const& m,std::size_t start, std::size_t end){
 		return type(end - start, m.size2(), m.scalar());
 	}

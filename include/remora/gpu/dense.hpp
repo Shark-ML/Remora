@@ -232,10 +232,8 @@ public:
 	}
 	
 	// Iterator types
-	typedef no_iterator row_iterator;
-	typedef no_iterator column_iterator;
-	typedef no_iterator const_row_iterator;
-	typedef no_iterator const_column_iterator;
+	typedef no_iterator major_iterator;
+	typedef no_iterator const_major_iterator;
 
 
 private:
@@ -326,7 +324,7 @@ public:
 	/// \return a reference to a vector (i.e. the destination vector)
 	vector& operator = (vector const& v){
 		resize(v.size());
-		assign(*this, v);
+		return assign(*this, v);
 	}
 	
 	/// \brief Move-Assign a full vector (\e RHS-vector) to the current vector (\e LHS-vector)
@@ -619,10 +617,8 @@ public:
 	}
 	
 	// Iterator types
-	typedef no_iterator row_iterator;
-	typedef no_iterator column_iterator;
-	typedef no_iterator const_row_iterator;
-	typedef no_iterator const_column_iterator;
+	typedef no_iterator major_iterator;
+	typedef no_iterator const_major_iterator;
 
 	/// \brief Swap the content of two matrixs
 	/// \param m1 is the first matrix. It takes values from m2
@@ -703,10 +699,8 @@ public:
 		return *m_queue;
 	}
 
-	typedef no_iterator row_iterator;
-	typedef no_iterator column_iterator;
-	typedef no_iterator const_row_iterator;
-	typedef no_iterator const_column_iterator;
+	typedef no_iterator major_iterator;
+	typedef no_iterator const_major_iterator;
 private:
 	storage_type m_storage;
 	boost::compute::command_queue* m_queue;
