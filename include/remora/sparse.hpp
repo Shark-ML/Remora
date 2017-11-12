@@ -25,12 +25,14 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
- #ifndef REMORA_CPU_SPARSE_HPP
-#define REMORA_CPU_SPARSE_HPP
+ #ifndef REMORA_SPARSE_HPP
+#define REMORA_SPARSE_HPP
 
 
+#include "detail/storage.hpp"
 #include "detail/traits.hpp"
 #include "cpu/sparse.hpp"
+#include "cpu/sparse_matrix.hpp"
 #include "expression_types.hpp"
 #include "assignment.hpp"
 
@@ -222,293 +224,311 @@ public:
 	// Serialization
 	template<class Archive>
 	void serialize(Archive& ar, const unsigned int /* file_version */) {
-		ar & this->m_manager;
+		ar & this->m_impl;
 		ar & boost::serialization::make_nvp("size", this->m_size());
 		if (Archive::is_loading::value) {
-			this->m_storage = this->m_manager.reserve(this->nnz());
+			this->m_storage = this->m_impl.reserve(this->nnz());
 		}
 	}
 };
 
-//~ template<class T, class I, class Orientation> 
-//~ class compressed_matrix_reference: public matrix_expression<compressed_matrix_reference<T, I, Orientation> >{
-//~ public:
-	//~ typedef I size_type;
-	//~ typedef T value_type;
-	//~ typedef T const& const_reference;
-	//~ typedef T& reference;
-	//~ typedef compressed_matrix_reference<T const,I const> const_closure_type;
-	//~ typedef compressed_matrix_reference<T, I> closure_type;
-	//~ typedef sparse_matrix_storage<T,I> storage_type;
-	//~ typedef sparse_matrix_storage<value_type const,size_type const> const_storage_type;
-	//~ typedef elementwise<sparse_tag> evaluation_category;
-	//~ typedef row_major orientation;
+template<class T, class I, class Orientation> 
+class compressed_matrix_reference
+: public matrix_expression<compressed_matrix_reference<T, I, Orientation>, cpu_tag >{
+public:
+	typedef I size_type;
+	typedef T value_type;
+	typedef T const& const_reference;
+	typedef T& reference;
+	typedef compressed_matrix_reference<T const,I const, Orientation> const_closure_type;
+	typedef compressed_matrix_reference<T, I, Orientation> closure_type;
+	typedef sparse_matrix_storage<T,I> storage_type;
+	typedef sparse_matrix_storage<value_type const,size_type const> const_storage_type;
+	typedef elementwise<sparse_tag> evaluation_category;
+	typedef row_major orientation;
 
-	//~ compressed_matrix_reference(compressed_matrix<T,I,Orientation>& matrix)
-	//~ :m_impl(detail::MatrixReference<compressed_matrix<T,I> >(matrix));
+	compressed_matrix_reference(compressed_matrix<T,I,Orientation>& matrix)
+	:m_impl(detail::MatrixReference<compressed_matrix<T,I> >(matrix)){}
 	
-	//~ size_type size1() const {
-		//~ return orientation::index_M(m_impl.major_size(),m_impl.minor_size());
-	//~ }
-	//~ size_type size2() const {
-		//~ return orientation::index_m(m_impl.major_size(),m_impl.minor_size());
-	//~ }
+	///\brief Number of rows of the matrix
+	size_type size1() const {
+		return orientation::index_M(m_impl.major_size(), m_impl.minor_size());
+	}
 	
-	//~ /// \brief Number of nonzeros this matrix can maximally store before requiring new memory
-	//~ std::size_t nnz_capacity() const{
-		//~ return return m_impl.capacity();
-	//~ }
-	//~ /// \brief Total Number of nonzeros this matrix stores
-	//~ std::size_t nnz() const {
-		//~ return m_impl.nnz(i);
-	//~ }
-	//~ /// \brief Number of nonzeros the major index (a major or column depending on orientation) can maximally store before a resize
-	//~ std::size_t major_capacity(size_type i)const{
-		//~ return m_impl.major_capacity(i);
-	//~ }
-	//~ /// \brief Number of nonzeros the major index (a major or column depending on orientation) currently stores
-	//~ std::size_t major_nnz(size_type i) const {
-		//~ return m_impl.major_nnz(i);
-	//~ }
-
-	//~ /// \brief Set the total number of nonzeros stored by the matrix
-	//~ void set_nnz(std::size_t non_zeros) {
-		//~ m_impl.set_nnz(non_zeros);
-	//~ }
-	//~ /// \brief Set the number of nonzeros stored in the major index (a major or column depending on orientation)
-	//~ void set_major_nnz(size_type i,std::size_t non_zeros) {
-		//~ m_impl.set_major_nnz(i,non_zeros);
-	//~ }
+	///\brief Number of columns of the matrix
+	size_type size2() const {
+		return orientation::index_m(m_impl.major_size(), m_impl.minor_size());
+	}
 	
-	//~ storage_type raw_storage()const{
-		//~ return m_impl.raw_storage();
-	//~ }
+	/// \brief Number of nonzeros this matrix can maximally store before requiring new memory
+	std::size_t nnz_capacity() const{
+		return m_impl.nnz_capacity();
+	}
+	/// \brief Total Number of nonzeros this matrix stores
+	std::size_t nnz() const {
+		return m_impl.nnz();
+	}
+	/// \brief Number of nonzeros the major index (a major or column depending on orientation) can maximally store before a resize
+	std::size_t major_capacity(size_type i)const{
+		return m_impl.major_capacity(i);
+	}
+	/// \brief Number of nonzeros the major index (a major or column depending on orientation) currently stores
+	std::size_t major_nnz(size_type i) const {
+		return m_impl.major_nnz(i);
+	}
+
+	/// \brief Set the total number of nonzeros stored by the matrix
+	void set_nnz(std::size_t non_zeros) {
+		m_impl.set_nnz(non_zeros);
+	}
+	/// \brief Set the number of nonzeros stored in the major index (a major or column depending on orientation)
+	void set_major_nnz(size_type i,std::size_t non_zeros) {
+		m_impl.set_major_nnz(i,non_zeros);
+	}
 	
-	//~ void reserve(std::size_t non_zeros) {
-		//~ m_impl.reserve(non_zeros);
-	//~ }
-
-	//~ void major_reserve(size_type i, std::size_t non_zeros, bool exact_size = false) {
-		//~ m_impl.major_reserve(i, non_zeros, exact_size);
-	//~ }
+	storage_type raw_storage()const{
+		return m_impl.raw_storage();
+	}
 	
-	//~ typedef typename detail::sparse_matrix_impl<detail::MatrixReference<compressed_matrix<T,I> > >::const_major_iterator const_major_iterator;
-	//~ typedef typename detail::sparse_matrix_impl<detail::MatrixReference<compressed_matrix<T,I> > >::major_iterator major_iterator;
+	void reserve(std::size_t non_zeros) {
+		m_impl.reserve(non_zeros);
+	}
 
-	//~ const_major_iterator major_begin(size_type i) const {
-		//~ return m_impl.cmajor_begin(i);
-	//~ }
-
-	//~ const_major_iterator major_end(size_type i) const{
-		//~ return m_impl.cmajor_end(i);
-	//~ }
-
-	//~ major_iterator major_begin(size_type i) {
-		//~ return m_impl.major_begin(i);
-	//~ }
-
-	//~ major_iterator major_end(size_type i) {
-		//~ return m_impl.major_end(i);
-	//~ }
+	void major_reserve(size_type i, std::size_t non_zeros, bool exact_size = false) {
+		m_impl.major_reserve(i, non_zeros, exact_size);
+	}
 	
-	//~ major_iterator set_element(major_iterator pos, size_type index, value_type value){
-		//~ m_impl.set_element(pos, index, value);
-	//~ }
+	typedef typename detail::compressed_matrix_impl<detail::MatrixReference<compressed_matrix<T,I> > >::const_major_iterator const_major_iterator;
+	typedef typename detail::compressed_matrix_impl<detail::MatrixReference<compressed_matrix<T,I> > >::major_iterator major_iterator;
 
-	//~ major_iterator clear_range(major_iterator start, major_iterator end) {
-		//~ m_impl.clear_range(start,end);
-	//~ }
+	const_major_iterator major_begin(size_type i) const {
+		return m_impl.cmajor_begin(i);
+	}
 
-//~ private:
-	//~ compressed_matrix_reference(compressed_matrix<value_type,size_type>&&);
-	//~ detail::sparse_matrix_impl<detail::MatrixReference<compressed_matrix<T,I> > > m_impl;
-//~ };
+	const_major_iterator major_end(size_type i) const{
+		return m_impl.cmajor_end(i);
+	}
 
-//~ template<class T, class I, class Orientation> 
-//~ class compressed_matrix_reference<T const, I const, Orientation> : public matrix_expression<compressed_matrix_reference<T, I, Orientation> >{
-//~ public:
-	//~ typedef I size_type;
-	//~ typedef T value_type;
-	//~ typedef T const& const_reference;
-	//~ typedef T const& reference;
+	major_iterator major_begin(size_type i) {
+		return m_impl.major_begin(i);
+	}
+
+	major_iterator major_end(size_type i) {
+		return m_impl.major_end(i);
+	}
 	
-	//~ typedef compressed_matrix_reference<T const,I const> const_closure_type;
-	//~ typedef const_closure_type closure_type;
-	//~ typedef sparse_matrix_storage<T const,I const> const_storage_type;
-	//~ typedef const_storage_type storage_type;
-	//~ typedef elementwise<sparse_tag> evaluation_category;
-	//~ typedef row_major orientation;
+	major_iterator set_element(major_iterator pos, size_type index, value_type value){
+		m_impl.set_element(pos, index, value);
+	}
 
-	//~ compressed_matrix_reference(compressed_matrix<T,I,Orientation> const& matrix)
-	//~ :m_impl(detail::ConstantMatrixStorage<T const, I const>(matrix.raw_storage())){}
+	major_iterator clear_range(major_iterator start, major_iterator end) {
+		m_impl.clear_range(start,end);
+	}
+
+private:
+	compressed_matrix_reference(compressed_matrix<value_type,size_type>&&);
+	detail::compressed_matrix_impl<detail::MatrixReference<compressed_matrix<T,I> > > m_impl;
+};
+
+template<class T, class I, class Orientation> 
+class compressed_matrix_reference<T const, I const, Orientation>
+: public matrix_expression<compressed_matrix_reference<T, I, Orientation>, cpu_tag >{
+public:
+	typedef I size_type;
+	typedef T value_type;
+	typedef T const& const_reference;
+	typedef T const& reference;
 	
-	//~ compressed_matrix_reference(compressed_matrix_reference<T,I,Orientation> const& matrix)
-	//~ :m_impl(detail::ConstantMatrixStorage<T const, I const>(matrix.raw_storage())){}
+	typedef compressed_matrix_reference const_closure_type;
+	typedef compressed_matrix_reference closure_type;
+	typedef sparse_matrix_storage<T const,I const> const_storage_type;
+	typedef const_storage_type storage_type;
+	typedef elementwise<sparse_tag> evaluation_category;
+	typedef row_major orientation;
+
+	compressed_matrix_reference(compressed_matrix<T,I,Orientation> const& matrix)
+	:m_impl(detail::ConstantMatrixStorage<T const, I const>(matrix.raw_storage())){}
 	
-	//~ size_type size1() const {
-		//~ return orientation::index_M(m_impl.major_size(),m_impl.minor_size());
-	//~ }
-	//~ size_type size2() const {
-		//~ return orientation::index_m(m_impl.major_size(),m_impl.minor_size());
-	//~ }
+	compressed_matrix_reference(compressed_matrix_reference<T,I,Orientation> const& matrix)
+	:m_impl(detail::ConstantMatrixStorage<T const, I const>(matrix.raw_storage())){}
 	
-	//~ /// \brief Number of nonzeros this matrix can maximally store before requiring new memory
-	//~ std::size_t nnz_capacity() const{
-		//~ return return m_impl.nnz();
-	//~ }
-	//~ /// \brief Total Number of nonzeros this matrix stores
-	//~ std::size_t nnz() const {
-		//~ return m_impl.nnz(i);
-	//~ }
-	//~ /// \brief Number of nonzeros the major index (a major or column depending on orientation) can maximally store before a resize
-	//~ std::size_t major_capacity(size_type i)const{
-		//~ return m_impl.major_nnz(i);
-	//~ }
-	//~ /// \brief Number of nonzeros the major index (a major or column depending on orientation) currently stores
-	//~ std::size_t major_nnz(size_type i) const {
-		//~ return m_impl.major_nnz(i);
-	//~ }
+	///\brief Number of rows of the matrix
+	size_type size1() const {
+		return orientation::index_M(m_impl.major_size(), m_impl.minor_size());
+	}
 	
-	//~ const_storage_type raw_storage()const{
-		//~ return m_impl.raw_storage();
-	//~ }
+	///\brief Number of columns of the matrix
+	size_type size2() const {
+		return orientation::index_m(m_impl.major_size(), m_impl.minor_size());
+	}
 	
-	//~ typedef typename detail::sparse_matrix_impl<detail::ConstantMatrixStorage<T const, I const> >::const_major_iterator const_major_iterator;
-	//~ typedef typename detail::sparse_matrix_impl<detail::ConstantMatrixStorage<T const, I const> >::major_iterator major_iterator;
-
-	//~ const_major_iterator major_begin(size_type i) const {
-		//~ return m_impl.cmajor_begin(i);
-	//~ }
-
-	//~ const_major_iterator major_end(size_type i) const{
-		//~ return m_impl.cmajor_end(i);
-	//~ }
-
-//~ private:
-	//~ detail::sparse_matrix_impl<detail::ConstantMatrixStorage<T const, I const> > m_impl;
-	//~ compressed_matrix_reference(compressed_matrix<value_type,size_type>&&);
-//~ };
-
-
-
-//~ template<class T, class I=std::size_t>
-//~ class compressed_matrix:public matrix_container<compressed_matrix<T, I>, cpu_tag >{
-	//~ typedef compressed_matrix<T, I> self_type;
-//~ public:
-	//~ typedef I size_type;
-	//~ typedef T value_type;
-	//~ typedef T const& const_reference;
-	//~ typedef T& reference;
+	/// \brief Number of nonzeros this matrix can maximally store before requiring new memory
+	std::size_t nnz_capacity() const{
+		return m_impl.nnz();
+	}
+	/// \brief Total Number of nonzeros this matrix stores
+	std::size_t nnz() const {
+		return m_impl.nnz();
+	}
+	/// \brief Number of nonzeros the major index (a major or column depending on orientation) can maximally store before a resize
+	std::size_t major_capacity(size_type i)const{
+		return m_impl.major_nnz(i);
+	}
+	/// \brief Number of nonzeros the major index (a major or column depending on orientation) currently stores
+	std::size_t major_nnz(size_type i) const {
+		return m_impl.major_nnz(i);
+	}
 	
-	//~ typedef matrix_reference<self_type const> const_closure_type;
-	//~ typedef matrix_reference<self_type> closure_type;
-	//~ typedef sparse_matrix_storage<T,I> storage_type;
-	//~ typedef sparse_matrix_storage<value_type const,size_type const> const_storage_type;
-	//~ typedef elementwise<sparse_tag> evaluation_category;
-	//~ typedef row_major orientation;
-
-	//~ compressed_matrix():m_impl(detail::MatrixStorage<T,I>(0,0,0)){}
+	const_storage_type raw_storage()const{
+		return m_impl.raw_storage();
+	}
 	
-	//~ compressed_matrix(size_type rows, size_type cols, size_type non_zeros = 0)
-	//~ :m_impl(detail::MatrixStorage<T,I>(orientation::index_M(rows,cols),orientation::index_m(rows,cols),non_zeros)){}
+	typedef typename detail::compressed_matrix_impl<detail::ConstantMatrixStorage<T const, I const> >::const_major_iterator const_major_iterator;
+	typedef typename detail::compressed_matrix_impl<detail::ConstantMatrixStorage<T const, I const> >::major_iterator major_iterator;
+
+	const_major_iterator major_begin(size_type i) const {
+		return m_impl.cmajor_begin(i);
+	}
+
+	const_major_iterator major_end(size_type i) const{
+		return m_impl.cmajor_end(i);
+	}
+
+private:
+	detail::compressed_matrix_impl<detail::ConstantMatrixStorage<T const, I const> > m_impl;
+	compressed_matrix_reference(compressed_matrix<value_type,size_type>&&);
+};
+
+
+
+template<class T, class I, class Orientation>
+class compressed_matrix:public matrix_container<compressed_matrix<T, I, Orientation>, cpu_tag >{
+public:
+	typedef I size_type;
+	typedef T value_type;
+	typedef T const& const_reference;
+	typedef T& reference;
 	
-	//~ compressed_matrix(matrix_expression<E, cpu_tag> const& m, size_type non_zeros = 0)
-	//~ :m_impl(detail::MatrixStorage<T,I>(orientation::index_M(m.size1(), m.size2()),orientation::index_m(m.size1(), m.size2()),v)){
-		//~ assign(*this,m);
-	//~ }
+	typedef compressed_matrix_reference<T const,I const, Orientation> const_closure_type;
+	typedef compressed_matrix_reference<T, I, Orientation> closure_type;
+	typedef sparse_matrix_storage<T,I> storage_type;
+	typedef sparse_matrix_storage<value_type const,size_type const> const_storage_type;
+	typedef elementwise<sparse_tag> evaluation_category;
+	typedef row_major orientation;
+
+	compressed_matrix():m_impl(detail::MatrixStorage<T,I>(0,0,0)){}
 	
-	//~ compressed_matrix operator=(matrix_container<E, cpu_tag> const& m){
-		//~ resize(m.size1(),m.size2());
-		//~ assign(*this,m);
-		//~ return *this;
-	//~ }
+	compressed_matrix(size_type rows, size_type cols, size_type non_zeros = 0)
+	:m_impl(detail::MatrixStorage<T,I>(orientation::index_M(rows,cols),orientation::index_m(rows,cols)),non_zeros){}
 	
-	//~ compressed_matrix& operator=(matrix_expression<E, cpu_tag> const& m){
-		//~ vector temporary(e);
-		//~ swap(*this,temporary);
-		//~ return *this;
-	//~ }
-
-	//~ /// \brief Number of nonzeros this matrix can maximally store before requiring new memory
-	//~ std::size_t nnz_capacity() const{
-		//~ return return m_impl.capacity();
-	//~ }
-	//~ /// \brief Total Number of nonzeros this matrix stores
-	//~ std::size_t nnz() const {
-		//~ return m_impl.nnz(i);
-	//~ }
-	//~ /// \brief Number of nonzeros the major index (a major or column depending on orientation) can maximally store before a resize
-	//~ std::size_t major_capacity(size_type i)const{
-		//~ return m_impl.major_capacity(i);
-	//~ }
-	//~ /// \brief Number of nonzeros the major index (a major or column depending on orientation) currently stores
-	//~ std::size_t major_nnz(size_type i) const {
-		//~ return m_impl.major_nnz(i);
-	//~ }
-
-	//~ /// \brief Set the total number of nonzeros stored by the matrix
-	//~ void set_nnz(std::size_t non_zeros) {
-		//~ m_impl.set_nnz(non_zeros);
-	//~ }
-	//~ /// \brief Set the number of nonzeros stored in the major index (a major or column depending on orientation)
-	//~ void set_major_nnz(size_type i,std::size_t non_zeros) {
-		//~ m_impl.set_major_nnz(i,non_zeros);
-	//~ }
+	template<class E>
+	compressed_matrix(matrix_expression<E, cpu_tag> const& m, size_type non_zeros = 0)
+	:m_impl(detail::MatrixStorage<T,I>(orientation::index_M(m.size1(), m.size2()),orientation::index_m(m.size1(), m.size2()),non_zeros)){
+		assign(*this,m);
+	}
 	
-	//~ const_storage_type raw_storage()const{
-		//~ return m_impl.raw_storage();
-	//~ }
-	//~ storage_type raw_storage(){
-		//~ return m_impl.raw_storage();
-	//~ }
+	template<class E>
+	compressed_matrix operator=(matrix_container<E, cpu_tag> const& m){
+		resize(m.size1(),m.size2());
+		return assign(*this,m);
+	}
+	template<class E>
+	compressed_matrix& operator=(matrix_expression<E, cpu_tag> const& m){
+		compressed_matrix temporary(m);
+		swap(*this,temporary);
+		return *this;
+	}
 	
-	//~ void reserve(std::size_t non_zeros) {
-		//~ m_impl.reserve(non_zeros);
-	//~ }
-
-	//~ void major_reserve(size_type i, std::size_t non_zeros, bool exact_size = false) {
-		//~ m_impl.major_reserve(i, non_zeros, exact_size);
-	//~ }
-
-	//~ void resize(size_type rows, size_type columns){
-		//~ m_impl.resize(orientation::index_M(rows,columns),orientation::index_m(rows,columns));
-	//~ }
+	///\brief Number of rows of the matrix
+	size_type size1() const {
+		return orientation::index_M(m_impl.major_size(), m_impl.minor_size());
+	}
 	
-	//~ typedef typename detail::sparse_matrix_impl<MatrixStorage<T,I> >::const_major_iterator const_major_iterator;
-	//~ typedef typename detail::sparse_matrix_impl<MatrixStorage<T,I> >::major_iterator major_iterator;
+	///\brief Number of columns of the matrix
+	size_type size2() const {
+		return orientation::index_m(m_impl.major_size(), m_impl.minor_size());
+	}
 
-	//~ const_major_iterator major_begin(size_type i) const {
-		//~ return m_impl.cmajor_begin(i);
-	//~ }
+	/// \brief Number of nonzeros this matrix can maximally store before requiring new memory
+	std::size_t nnz_capacity() const{
+		return m_impl.nnz_capacity();
+	}
+	/// \brief Total Number of nonzeros this matrix stores
+	std::size_t nnz() const {
+		return m_impl.nnz();
+	}
+	/// \brief Number of nonzeros the major index (a major or column depending on orientation) can maximally store before a resize
+	std::size_t major_capacity(size_type i)const{
+		return m_impl.major_capacity(i);
+	}
+	/// \brief Number of nonzeros the major index (a major or column depending on orientation) currently stores
+	std::size_t major_nnz(size_type i) const {
+		return m_impl.major_nnz(i);
+	}
 
-	//~ const_major_iterator major_end(size_type i) const{
-		//~ return m_impl.cmajor_end(i);
-	//~ }
-
-	//~ major_iterator major_begin(size_type i) {
-		//~ return m_impl.major_begin(i);
-	//~ }
-
-	//~ major_iterator major_end(size_type i) {
-		//~ return m_impl.major_end(i);
-	//~ }
+	/// \brief Set the total number of nonzeros stored by the matrix
+	void set_nnz(std::size_t non_zeros) {
+		m_impl.set_nnz(non_zeros);
+	}
+	/// \brief Set the number of nonzeros stored in the major index (a major or column depending on orientation)
+	void set_major_nnz(size_type i,std::size_t non_zeros) {
+		m_impl.set_major_nnz(i,non_zeros);
+	}
 	
-	//~ major_iterator set_element(major_iterator pos, size_type index, value_type value){
-		//~ m_impl.set_element(pos, index, value);
-	//~ }
+	const_storage_type raw_storage()const{
+		return m_impl.raw_storage();
+	}
+	storage_type raw_storage(){
+		return m_impl.raw_storage();
+	}
+	
+	void reserve(std::size_t non_zeros) {
+		m_impl.reserve(non_zeros);
+	}
 
-	//~ major_iterator clear_range(major_iterator start, major_iterator end) {
-		//~ m_impl.clear_range(start,end);
-	//~ }
-	//~ // Serialization
-	//~ template<class Archive>
-	//~ void serialize(Archive &ar, const unsigned int /* file_version */) {
-		//~ ar & m_impl;
-	//~ }
+	void major_reserve(size_type i, std::size_t non_zeros, bool exact_size = false) {
+		m_impl.major_reserve(i, non_zeros, exact_size);
+	}
 
-//~ private:
-	//~ detail::sparse_matrix_impl<detail::MatrixStorage<T,I> > m_impl;
-//~ };
+	void resize(size_type rows, size_type columns){
+		m_impl.resize(orientation::index_M(rows,columns),orientation::index_m(rows,columns));
+	}
+	
+	typedef typename detail::compressed_matrix_impl<detail::MatrixStorage<T,I> >::const_major_iterator const_major_iterator;
+	typedef typename detail::compressed_matrix_impl<detail::MatrixStorage<T,I> >::major_iterator major_iterator;
+
+	const_major_iterator major_begin(size_type i) const {
+		return m_impl.cmajor_begin(i);
+	}
+
+	const_major_iterator major_end(size_type i) const{
+		return m_impl.cmajor_end(i);
+	}
+
+	major_iterator major_begin(size_type i) {
+		return m_impl.major_begin(i);
+	}
+
+	major_iterator major_end(size_type i) {
+		return m_impl.major_end(i);
+	}
+	
+	major_iterator set_element(major_iterator pos, size_type index, value_type value){
+		return m_impl.set_element(pos, index, value);
+	}
+
+	major_iterator clear_range(major_iterator start, major_iterator end) {
+		return m_impl.clear_range(start,end);
+	}
+	// Serialization
+	template<class Archive>
+	void serialize(Archive &ar, const unsigned int /* file_version */) {
+		ar & m_impl;
+	}
+
+private:
+	detail::compressed_matrix_impl<detail::MatrixStorage<T,I> > m_impl;
+};
 
 
 

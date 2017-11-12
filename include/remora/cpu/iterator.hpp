@@ -335,15 +335,15 @@ public:
 	compressed_storage_iterator() {}
 	compressed_storage_iterator(
 		T* value_array, I* index_array, 
-		size_type position, size_type row = 0
+		size_type position, size_type major_pos = 0
 	)
 	: m_values(value_array),m_indices(index_array)
-	, m_position(position), m_row(row){}
+	, m_position(position), m_major_pos(major_pos){}
 		
 	template<class U,class V>
 	compressed_storage_iterator(compressed_storage_iterator<U,V> const& it) {
 		m_position = it.m_position;
-		m_row = it.m_row;
+		m_major_pos = it.m_major_pos;
 		m_values = it.m_values;
 		m_indices = it.m_indices;
 	}
@@ -351,7 +351,7 @@ public:
 	template<class U,class V>
 	compressed_storage_iterator &operator = (compressed_storage_iterator<U,V> const& it) {
 		m_position = it.m_position;
-		m_row = it.m_row;
+		m_major_pos = it.m_major_pos;
 		m_values = it.m_values;
 		m_indices = it.m_indices;
 		return *this;
@@ -395,8 +395,8 @@ public:
 		return difference_type(m_position) - difference_type(it.m_position);
 	}
 	
-	size_type row()const{
-		return m_row;
+	size_type major_index()const{
+		return m_major_pos;
 	}
 
 	template<class U,class V>
@@ -410,7 +410,7 @@ private:
 	T* m_values;
 	I* m_indices;
 	std::size_t m_position;
-	std::size_t m_row;
+	std::size_t m_major_pos;
 	template<class,class> friend class compressed_storage_iterator;
 };
 

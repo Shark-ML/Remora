@@ -165,6 +165,20 @@ struct sparse_matrix_storage{
 	std::size_t nnz;
 	std::size_t capacity;
 	
+	sparse_matrix_storage(
+		T* values, I* indices, 
+		I* major_indices_begin, I* major_indices_end,
+		std::size_t nnz, std::size_t capacity
+	):values(values), indices(indices)
+	, major_indices_begin(major_indices_begin), major_indices_end(major_indices_end)
+	, nnz(nnz), capacity(capacity){}
+	
+	template<class U, class J>
+	sparse_matrix_storage(sparse_matrix_storage<U, J> const& storage)
+	: values(storage.values), indices(storage.indices)
+	, major_indices_begin(storage.major_indices_begin), major_indices_end(storage.major_indices_end)
+	, nnz(storage.nnz), capacity(storage.capacity){}
+	
 	sparse_vector_storage<T,I> row(std::size_t i, row_major){
 		std::size_t minor_nnz = major_indices_end[i] - major_indices_begin[i];
 		std::size_t minor_capacity = major_indices_begin[i+1] - major_indices_begin[i];

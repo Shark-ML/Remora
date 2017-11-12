@@ -25,8 +25,8 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
- #ifndef REMORA_CPU_DETAIL_SPARSE_HPP
-#define REMORA_CPU_DETAIL_SPARSE_HPP
+#ifndef REMORA_CPU_SPARSE_HPP
+#define REMORA_CPU_SPARSE_HPP
 
 #include "iterator.hpp"
 
