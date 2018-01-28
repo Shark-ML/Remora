@@ -33,6 +33,7 @@
 #include "../../detail/traits.hpp"
 #include <algorithm>
 #include <vector>
+#include <iostream>
 namespace remora{namespace bindings{
 
 // Explicitly iterating row major
@@ -206,14 +207,14 @@ void matrix_assign(
 	std::sort(elements.begin(),elements.end());
 	//fill m with the contents
 	m().clear();
-	m().reserve(elements.size());//reserve a bit of space
-	for(size_type current = 0; current != elements.size();){
+	size_type num_elems = size_type(elements.size());
+	for(size_type current = 0; current != num_elems;){
 		//count elements in row and reserve enough space for it
 		size_type row = elements[current].i;
 		size_type row_end = current;
-		while(row_end != elements.size()& & elements[row_end].i == row)
+		while(row_end != num_elems && elements[row_end].i == row)
 			++ row_end;
-		m().reserve_row(row,row_end - current);
+		m().major_reserve(row,row_end - current);
 
 		//copy elements
 		auto row_pos = m().major_begin(row);
@@ -296,7 +297,7 @@ void matrix_assign_functor(
 	typedef row_major::sparse_element<value_type> Element;
 	std::vector<Element> elements;
 	
-	for(std::size_t i = 0; i != m().size1(); ++i){
+	for(std::size_t i = 0; i != major_size(m); ++i){
 		//first merge the two rows in elements using the functor
 		
 		elements.clear();
@@ -309,7 +310,7 @@ void matrix_assign_functor(
 			if(m_pos.index() < e_pos.index()){
 				elements.push_back({i,m_pos.index(), f(*m_pos, zero)});
 				++m_pos;
-			}if( m_pos.index() == e_pos.index()){
+			}else if( m_pos.index() == e_pos.index()){
 				elements.push_back({i,m_pos.index(), f(*m_pos ,*e_pos)});
 				++m_pos;
 				++e_pos;
@@ -323,16 +324,15 @@ void matrix_assign_functor(
 			elements.push_back({i,m_pos.index(), f(*m_pos, zero)});
 		}
 		for(;e_pos != e_end; ++e_pos){
-			elements.push_back({i,e_pos.index(), f(zero, *m_pos)});
+			elements.push_back({i,e_pos.index(), f(zero, *e_pos)});
 		}
-		
 		
 		//clear contents of m and fill with elements
 		m().clear_range(m().major_begin(i),m().major_end(i));
-		m().reserve_row(i,elements.size());
+		m().major_reserve(i,elements.size());
 		m_pos = m().major_begin(i);
 		for(auto elem: elements){
-			m_pos = m().set_element(m_pos, elem.i,elem.j, elem.value);
+			m_pos = m().set_element(m_pos, elem.j, elem.value);
 		}
 	}
 }

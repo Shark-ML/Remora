@@ -5,10 +5,11 @@
 #include <remora/kernels/matrix_assign.hpp>
 //~ #include <remora/triangular_matrix.hpp>
 #include <remora/dense.hpp>
-//~ #include <remora/matrix_sparse.hpp>
-//~ #include <remora/vector_sparse.hpp>
+#include <remora/sparse.hpp>
+#include <remora/io.hpp>
 #include <remora/proxy_expressions.hpp>
 #include <iostream>
+
 using namespace remora;
 
 template<class M1, class M2>
@@ -20,6 +21,27 @@ void checkMatrixEqual(M1 const& m1, M2 const& m2){
 			BOOST_CHECK_EQUAL(m1(i,j),m2(i,j));
 		}
 	}
+}
+
+template<class M1, class M2>
+void checkSparseMatrixEqual(M1 const& m1, M2 const& m2){
+	BOOST_REQUIRE_EQUAL(m1.size1(),m2.size1());
+	BOOST_REQUIRE_EQUAL(m1.size2(),m2.size2());
+	matrix<typename M1::value_type, typename M1::orientation> m1t(m2.size1(),m2.size2(),0);
+	matrix<typename M1::value_type, typename M2::orientation> m2t(m2.size1(),m2.size2(),0);
+	typedef typename M1::orientation orientation1;
+	typedef typename M2::orientation orientation2;
+	for(std::size_t i = 0; i != major_size(m1); ++i){
+		for(auto pos = m1.major_begin(i); pos != m1.major_end(i); ++pos){
+			m1t(orientation1::index_M(i,pos.index()),orientation1::index_m(i,pos.index())) = *pos;
+		}
+	}
+	for(std::size_t i = 0; i != major_size(m2); ++i){
+		for(auto pos = m2.major_begin(i); pos != m2.major_end(i); ++pos){
+			m2t(orientation2::index_M(i,pos.index()),orientation2::index_m(i,pos.index())) = *pos;
+		}			
+	}
+	checkMatrixEqual(m1t,m2t);
 }
 
 
@@ -102,35 +124,35 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Matrix_Constant_Functor_Assign ){
 	//~ std::cout<<"\n";
 //~ }
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Matrix_Constant_Functor_Assign ){
-	//~ std::cout<<"testing sparse functor-constant assignment."<<std::endl;
-	//~ compressed_matrix<unsigned int> input_row_major(10,20,0);
-	//~ compressed_matrix<unsigned int> target_row_major(10,20,0);
-	//~ compressed_matrix<unsigned int> input_column_major_base(20,10,0);
-	//~ compressed_matrix<unsigned int> target_column_major_base(20,10,0);
-	//~ matrix_transpose<compressed_matrix<unsigned int> > input_column_major(input_column_major_base);
-	//~ matrix_transpose<compressed_matrix<unsigned int> > target_column_major(target_column_major_base);
-	//~ typedef device_traits<cpu_tag>::multiply<unsigned int> functor;
-	//~ const unsigned int t = 2;
-	//~ for(unsigned int i = 0; i != 10; ++i){
-		//~ for(unsigned int j = 1; j < 20; j += (i + 1)){
-			//~ input_row_major(i,j) = 2*(20*i+1)+1;
-			//~ input_column_major(i,j) =  2*(20*i+1)+1;//source_row_major(i,j)+2;
-			//~ target_row_major(i,j) = t*input_row_major(i,j);
-			//~ target_column_major(i,j) = t*input_column_major(i,j);
-		//~ }
-	//~ }
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Matrix_Constant_Functor_Assign ){
+	std::cout<<"testing sparse functor-constant assignment."<<std::endl;
+	compressed_matrix<unsigned int> input_row_major(10,20,0);
+	compressed_matrix<unsigned int,std::size_t, column_major> input_column_major(20,10,0);
+	matrix<unsigned int> result_row_major(10,20,0);
+	matrix<unsigned int> result_column_major(20,10,0);
+	typedef device_traits<cpu_tag>::multiply<unsigned int> functor;
+	const unsigned int t = 2;
+	for(unsigned int i = 0; i != 10; ++i){
+		auto in_row_pos = input_row_major.major_begin(i);
+		auto in_col_pos = input_column_major.major_begin(i);
+		for(unsigned int j = 1; j < 20; j += (i + 1)){
+			in_row_pos = input_row_major.set_element(in_row_pos, j, 2*(20*i+1)+j);
+			in_col_pos = input_column_major.set_element(in_col_pos, j, 3*(20*i+1)+j);
+			result_row_major(i,j) = t*(2*(20*i+1)+j);
+			result_column_major(j,i) = t*(3*(20*i+1)+j);
+		}
+	}
 
-	//~ std::cout<<"testing row-major"<<std::endl;
-	//~ kernels::assign<functor> (input_row_major, t);
-	//~ checkMatrixEqual(target_row_major,input_row_major);
+	std::cout<<"testing row-major"<<std::endl;
+	kernels::assign<functor> (input_row_major, t);
+	checkSparseMatrixEqual(result_row_major, input_row_major);
 	
-	//~ std::cout<<"testing column-major"<<std::endl;
-	//~ kernels::assign<functor> (input_column_major, t);
-	//~ checkMatrixEqual(target_column_major,input_column_major);
+	std::cout<<"testing column-major"<<std::endl;
+	kernels::assign<functor> (input_column_major, t);
+	checkSparseMatrixEqual(result_column_major, input_column_major);
 	
-	//~ std::cout<<"\n";
-//~ }
+	std::cout<<"\n";
+}
 
 //////////////////////////////////////////////////////
 //////SIMPLE ASSIGNMENT
@@ -412,118 +434,134 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Dense_Matrix_Assign ){
 //~ }
 
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Dense_Sparse_Matrix_Assign ){
-	//~ std::cout<<"\ntesting direct dense-sparse assignment"<<std::endl;
-	//~ compressed_matrix<unsigned int> source_row_major(10,20,0);
-	//~ compressed_matrix<unsigned int> source_column_major_base(20,10);
-	//~ matrix_transpose<compressed_matrix<unsigned int> > source_column_major(source_column_major_base);
+BOOST_AUTO_TEST_CASE( Remora_Dense_Sparse_Matrix_Assign ){
+	std::cout<<"\ntesting direct dense-sparse assignment"<<std::endl;
+	compressed_matrix<unsigned int> source_row_major(10,20);
+	for(unsigned int i = 0; i != 10; ++i){	
+		auto in_row_pos = source_row_major.major_begin(i);
+		for(unsigned int j = 1; j < 20; j += (i + 1)){
+			in_row_pos = source_row_major.set_element(in_row_pos, j,2*(20*i+1)+1);
+		}
+	}
+	compressed_matrix<unsigned int, std::size_t, column_major> source_column_major = source_row_major;
 	
-	//~ for(unsigned int i = 0; i != 10; ++i){
-		//~ for(unsigned int j = 1; j < 20; j += (i + 1)){
-			//~ source_row_major(i,j) = 2*(20*i+1)+1;
-			//~ source_column_major(i,j) =  2*(20*i+1)+1;//source_row_major(i,j)+2;
-		//~ }
-	//~ }
-	//~ //test all 4 combinations of row/column major
-	//~ {
-		//~ matrix<unsigned int,row_major> target(10,20);
-		//~ for(unsigned int i = 0; i != 10; ++i){
-			//~ for(unsigned int j = 0; j != 20; ++j){
-				//~ target(i,j) = 3*(20*i+1)+2;
-			//~ }
-		//~ }
-		//~ std::cout<<"testing row-row"<<std::endl;
-		//~ kernels::assign(target,source_row_major);
-		//~ checkMatrixEqual(target,source_row_major);
-	//~ }
+	//test all 4 combinations of row/column major
+	{
+		matrix<unsigned int,row_major> target(10,20);
+		for(unsigned int i = 0; i != 10; ++i){
+			for(unsigned int j = 0; j != 20; ++j){
+				target(i,j) = 3*(20*i+1)+2;
+			}
+		}
+		std::cout<<"testing row-row"<<std::endl;
+		kernels::assign(target,source_row_major);
+		checkSparseMatrixEqual(target,source_row_major);
+	}
 	
-	//~ {
-		//~ matrix<unsigned int,row_major> target(10,20);
-		//~ for(unsigned int i = 0; i != 10; ++i){
-			//~ for(unsigned int j = 0; j != 20; ++j){
-				//~ target(i,j) = 3*(20*i+1)+2;
-			//~ }
-		//~ }
-		//~ std::cout<<"testing row-column"<<std::endl;
-		//~ kernels::assign(target,source_column_major);
-		//~ checkMatrixEqual(target,source_column_major);
-	//~ }
+	{
+		matrix<unsigned int,row_major> target(10,20);
+		for(unsigned int i = 0; i != 10; ++i){
+			for(unsigned int j = 0; j != 20; ++j){
+				target(i,j) = 3*(20*i+1)+2;
+			}
+		}
+		std::cout<<"testing row-column"<<std::endl;
+		kernels::assign(target,source_column_major);
+		checkSparseMatrixEqual(target,source_column_major);
+	}
 	
-	//~ {
-		//~ matrix<unsigned int,column_major> target(10,20);
-		//~ for(unsigned int i = 0; i != 10; ++i){
-			//~ for(unsigned int j = 0; j != 20; ++j){
-				//~ target(i,j) = 3*(20*i+1)+2;
-			//~ }
-		//~ }
-		//~ std::cout<<"testing column-row"<<std::endl;
-		//~ kernels::assign(target,source_row_major);
-		//~ checkMatrixEqual(target,source_row_major);
-	//~ }
+	{
+		matrix<unsigned int,column_major> target(10,20);
+		for(unsigned int i = 0; i != 10; ++i){
+			for(unsigned int j = 0; j != 20; ++j){
+				target(i,j) = 3*(20*i+1)+2;
+			}
+		}
+		std::cout<<"testing column-row"<<std::endl;
+		kernels::assign(target,source_row_major);
+		checkSparseMatrixEqual(target,source_row_major);
+	}
 	
-	//~ {
-		//~ matrix<unsigned int,column_major> target(10,20);
-		//~ for(unsigned int i = 0; i != 10; ++i){
-			//~ for(unsigned int j = 0; j != 20; ++j){
-				//~ target(i,j) = 3*(20*i+1)+2;
-			//~ }
-		//~ }
-		//~ std::cout<<"testing column-column"<<std::endl;
-		//~ kernels::assign(target,source_column_major);
-		//~ checkMatrixEqual(target,source_column_major);
-	//~ }
+	{
+		matrix<unsigned int,column_major> target(10,20);
+		for(unsigned int i = 0; i != 10; ++i){
+			for(unsigned int j = 0; j != 20; ++j){
+				target(i,j) = 3*(20*i+1)+2;
+			}
+		}
+		std::cout<<"testing column-column"<<std::endl;
+		kernels::assign(target,source_column_major);
+		checkSparseMatrixEqual(target,source_column_major);
+	}
 	
-//~ }
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Sparse_Matrix_Assign ){
-	//~ std::cout<<"\ntesting direct sparse-sparse assignment"<<std::endl;
-	//~ compressed_matrix<unsigned int> source_row_major(10,20,0);
-	//~ compressed_matrix<unsigned int> source_column_major_base(20,10);
-	//~ matrix_transpose<compressed_matrix<unsigned int> > source_column_major(source_column_major_base);
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Sparse_Matrix_Assign ){
+	std::cout<<"\ntesting direct sparse-sparse assignment"<<std::endl;
+	compressed_matrix<unsigned int, std::size_t, row_major> source_row_major(10,20,0);
+	compressed_matrix<unsigned int, std::size_t, column_major> source_column_major(20,10);
+	for(unsigned int i = 0; i != 10; ++i){	
+		auto in_row_pos = source_row_major.major_begin(i);
+		auto in_col_pos = source_column_major.major_begin(i);
+		for(unsigned int j = 1; j < 20; j += (i + 1)){
+			in_row_pos = source_row_major.set_element(in_row_pos, j,2*(20*i+1)+1);
+			in_col_pos = source_column_major.set_element(in_col_pos, j,2*(20*i+1)+1);
+		}
+	}
 	
-	//~ for(unsigned int i = 0; i != 10; ++i){
-		//~ for(unsigned int j = 1; j < 20; j += (i + 1)){
-			//~ source_row_major(i,j) = 2*(20*i+1)+1;
-			//~ source_column_major(i,j) =  source_row_major(i,j);
-		//~ }
-	//~ }
+	//test all 4 combinations of row/column major
+	{
+		compressed_matrix<unsigned int> target(10,20,0);
+		for(unsigned int i = 0; i != 10; ++i){
+			auto tar_pos = target.major_begin(i);
+			for(unsigned int j = 1; j < 20; j += (i + 1)){
+				tar_pos =  target.set_element(tar_pos,j,4*(20*i+1)+9);
+			}
+		}
+		std::cout<<"testing row-row"<<std::endl;
+		kernels::assign(target,source_row_major);
+		checkSparseMatrixEqual(target,source_row_major);
+	}
 	
-	//~ //test all 4 combinations of row/column major
-	//~ {
-		//~ compressed_matrix<unsigned int> target(10,20,0);
-		//~ std::cout<<"testing row-row"<<std::endl;
-		//~ kernels::assign(target,source_row_major);
-		//~ checkMatrixEqual(target,source_row_major);
-	//~ }
+	{
+		compressed_matrix<unsigned int> target(20,10,0);
+		for(unsigned int i = 0; i != 20; ++i){
+			auto tar_pos = target.major_begin(i);
+			for(unsigned int j = 1; j < 10; j += (i + 1)){
+				tar_pos =  target.set_element(tar_pos,j,4*(20*i+1)+9);
+			}
+		}
+		std::cout<<"testing row-column"<<std::endl;
+		kernels::assign(target,source_column_major);
+		checkSparseMatrixEqual(target,source_column_major);
+	}
 	
-	//~ {
-		//~ compressed_matrix<unsigned int> target(10,20,0);
-		//~ std::cout<<"testing row-column"<<std::endl;
-		//~ kernels::assign(target,source_column_major);
-		//~ checkMatrixEqual(target,source_column_major);
-	//~ }
+	{
+		compressed_matrix<unsigned int, std::size_t, column_major> target(10,20);
+		for(unsigned int i = 0; i != 20; ++i){
+			auto tar_pos = target.major_begin(i);
+			for(unsigned int j = 1; j < 10; j += (i + 1)){
+				tar_pos =  target.set_element(tar_pos,j,4*(20*i+1)+9);
+			}
+		}
+		std::cout<<"testing column-row"<<std::endl;
+		kernels::assign(target,source_row_major);
+		checkSparseMatrixEqual(target,source_row_major);
+	}
 	
-	//~ {
-		//~ compressed_matrix<unsigned int> target_base(20,10);
-		//~ matrix_transpose<compressed_matrix<unsigned int> > target(target_base);
-		//~ std::cout<<"testing column-row"<<std::endl;
-		//~ kernels::assign(target,source_row_major);
-		//~ checkMatrixEqual(target,source_row_major);
-	//~ }
-	
-	//~ {
-		//~ compressed_matrix<unsigned int> target_base(20,10);
-		//~ matrix_transpose<compressed_matrix<unsigned int> > target(target_base);
-		//~ for(unsigned int i = 0; i != 10; ++i){
-			//~ for(unsigned int j = 1; j < 20; j += (i + 1)){
-				//~ target(i,j) =  4*(20*i+1)+9;
-			//~ }
-		//~ }
-		//~ std::cout<<"testing column-column"<<std::endl;
-		//~ kernels::assign(target,source_column_major);
-		//~ checkMatrixEqual(target,source_column_major);
-	//~ }
-//~ }
+	{
+		compressed_matrix<unsigned int, std::size_t, column_major> target(20,10);
+		for(unsigned int i = 0; i != 10; ++i){
+			auto tar_pos = target.major_begin(i);
+			for(unsigned int j = 1; j < 20; j += (i + 1)){
+				tar_pos =  target.set_element(tar_pos,j,4*(20*i+1)+9);
+			}
+		}
+		std::cout<<"testing column-column"<<std::endl;
+		kernels::assign(target,source_column_major);
+		checkSparseMatrixEqual(target,source_column_major);
+	}
+}
 
 
 
@@ -577,120 +615,124 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Dense_Matrix_Plus_Assign ){
 	}
 }
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Dense_Sparse_Matrix_Plus_Assign ){
-	//~ std::cout<<"\ntesting dense-sparse functor assignment"<<std::endl;
-	//~ compressed_matrix<unsigned int> source_row_major(10,20);
-	//~ compressed_matrix<unsigned int> source_column_major_base(20,10);
-	//~ matrix_transpose<compressed_matrix<unsigned int> > source_column_major(source_column_major_base);
-	//~ matrix<unsigned int,row_major> preinit(10,20);
-	//~ matrix<unsigned int,row_major> result(10,20);
-	//~ typedef device_traits<cpu_tag>::add<unsigned int> functor;
+BOOST_AUTO_TEST_CASE( Remora_Dense_Sparse_Matrix_Plus_Assign ){
+	std::cout<<"\ntesting dense-sparse functor assignment"<<std::endl;
+	typedef device_traits<cpu_tag>::add<unsigned int> functor;
 	
-	//~ for(unsigned int i = 0; i != 10; ++i){
-		//~ for(unsigned int j = 1; j < 20; j += (i + 1)){
-			//~ source_row_major(i,j) = 2*(20*i+1)+1;
-			//~ source_column_major(i,j) = 2*(20*i+1)+1;
-		//~ }
-	//~ }
+	matrix<unsigned int,row_major> preinit(10,20);
+	for(unsigned int i = 0; i != 10; ++i){
+		for(unsigned int j = 0; j != 20; ++j){
+			preinit(i,j) = 3*(20*i+1)+2;
+		}
+	}
+	
+	compressed_matrix<unsigned int> source_row_major(10,20);
+	matrix<unsigned int,row_major> result = preinit;
+	for(unsigned int i = 0; i != 10; ++i){	
+		auto in_row_pos = source_row_major.major_begin(i);
+		for(unsigned int j = 1; j < 20; j += (i + 1)){
+			in_row_pos = source_row_major.set_element(in_row_pos, j,2*(20*i+1)+1);
+			result(i,j) += 2*(20*i+1)+1;
+		}
+	}
+	compressed_matrix<unsigned int, std::size_t, column_major> source_column_major = source_row_major;
 
-	//~ for(unsigned int i = 0; i != 10; ++i){
-		//~ for(unsigned int j = 0; j != 20; ++j){
-			//~ preinit(i,j) = 3*(20*i+1)+2;
-			//~ result(i,j) = preinit(i,j)+source_row_major(i,j);
-		//~ }
-	//~ }
-
-	//~ //test all 4 combinations of row/column major
-	//~ {
-		//~ matrix<unsigned int,row_major> target = preinit;
-		//~ std::cout<<"testing row-row"<<std::endl;
-		//~ kernels::assign(target,source_row_major, functor());
-		//~ checkMatrixEqual(target,result);
-	//~ }
+	//test all 4 combinations of row/column major
+	{
+		matrix<unsigned int,row_major> target = preinit;
+		std::cout<<"testing row-row"<<std::endl;
+		kernels::assign(target,source_row_major, functor());
+		checkMatrixEqual(target,result);
+	}
 	
-	//~ {
-		//~ matrix<unsigned int,row_major> target = preinit;
-		//~ std::cout<<"testing row-column"<<std::endl;
-		//~ kernels::assign(target,source_column_major, functor());
-		//~ checkMatrixEqual(target,result);
-	//~ }
+	{
+		matrix<unsigned int,row_major> target = preinit;
+		std::cout<<"testing row-column"<<std::endl;
+		kernels::assign(target,source_column_major, functor());
+		checkMatrixEqual(target,result);
+	}
 	
-	//~ {
-		//~ matrix<unsigned int,column_major> target = preinit;
-		//~ std::cout<<"testing column-row"<<std::endl;
-		//~ kernels::assign(target,source_row_major, functor());
-		//~ checkMatrixEqual(target,result);
-	//~ }
+	{
+		matrix<unsigned int,column_major> target = preinit;
+		std::cout<<"testing column-row"<<std::endl;
+		kernels::assign(target,source_row_major, functor());
+		checkMatrixEqual(target,result);
+	}
 	
-	//~ {
-		//~ matrix<unsigned int,column_major> target = preinit;
-		//~ std::cout<<"testing column-column"<<std::endl;
-		//~ kernels::assign(target,source_column_major, functor());
-		//~ checkMatrixEqual(target,result);
-	//~ }
-//~ }
+	{
+		matrix<unsigned int,column_major> target = preinit;
+		std::cout<<"testing column-column"<<std::endl;
+		kernels::assign(target,source_column_major, functor());
+		checkMatrixEqual(target,result);
+	}
+}
 
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Sparse_Matrix_Plus_Assign ){
-	//~ std::cout<<"\ntesting sparse-sparse functor assignment"<<std::endl;
-	//~ compressed_matrix<unsigned int> source_row_major(10,20);
-	//~ compressed_matrix<unsigned int> source_column_major_base(20,10);
-	//~ matrix_transpose<compressed_matrix<unsigned int> > source_column_major(source_column_major_base);
-	//~ compressed_matrix<unsigned int> preinit(10,20);
-	//~ compressed_matrix<unsigned int> result(10,20);
-	//~ typedef device_traits<cpu_tag>::add<unsigned int> functor;
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Sparse_Matrix_Plus_Assign ){
+	std::cout<<"\ntesting sparse-sparse functor assignment"<<std::endl;
 	
-	//~ for(unsigned int i = 0; i != 10; ++i){
-		//~ for(unsigned int j = 1; j < 20; j += (i + 1)){
-			//~ source_row_major(i,j) = 2*(20*i+1)+1;
-			//~ source_column_major(i,j) = 2*(20*i+1)+1;
-		//~ }
-	//~ }
+	
+	compressed_matrix<unsigned int> preinit(10,20);
+	matrix<unsigned int> result_dense(10,20,0);
+	compressed_matrix<unsigned int> result(10,20);
+	typedef device_traits<cpu_tag>::add<unsigned int> functor;
+	
+	compressed_matrix<unsigned int> source_row_major(10,20);
+	for(unsigned int i = 0; i != 10; ++i){	
+		auto in_row_pos = source_row_major.major_begin(i);
+		for(unsigned int j = 1; j < 20; j += (i + 1)){
+			in_row_pos = source_row_major.set_element(in_row_pos, j,2*(20*i+1)+1);
+			result_dense(i,j) += 2*(20*i+1)+1;
+		}
+	}
+	compressed_matrix<unsigned int, std::size_t, column_major> source_column_major = source_row_major;
+	
+	for(unsigned int i = 0; i != 10; ++i){
+		auto pos = preinit.major_begin(i);
+		for(unsigned int j = 0; j < 20; j += (i + 2) / 2){
+			pos = preinit.set_element(pos, j,3*(20*i+1)+2);
+			result_dense(i,j) += 3*(20*i+1)+2;
+		}
+	}
+	compressed_matrix<unsigned int> preinit_c = preinit;
+	checkSparseMatrixEqual(source_column_major,source_row_major);
+	
+	for(unsigned int i = 0; i != 10; ++i){
+		auto pos = result.major_begin(i);
+		for(unsigned int j = 0; j < 20; ++j){
+			int r = result_dense(i,j);
+			if(r != 0)
+				pos = result.set_element(pos, j,r);
+		}
+	}
 
-	//~ for(unsigned int i = 0; i != 10; ++i){
-		//~ for(unsigned int j = 0; j < 20; j += (i + 2) / 2){
-			//~ preinit(i,j) = 3*(20*i+1)+2;
-		//~ }
-	//~ }
+	//test all 4 combinations of row/column major
+	{
+		compressed_matrix<unsigned int, std::size_t, row_major> target = preinit;
+		std::cout<<"testing row-row"<<std::endl;
+		kernels::assign(target,source_row_major, functor());
+		checkSparseMatrixEqual(target,result);
+	}
+	{
+		compressed_matrix<unsigned int, std::size_t, row_major> target = preinit;
+		std::cout<<"testing row-column"<<std::endl;
+		kernels::assign(target,source_column_major, functor());
+		checkSparseMatrixEqual(target,result);
+	}
+	{
+		compressed_matrix<unsigned int, std::size_t, column_major> target = preinit;
+		checkSparseMatrixEqual(target,preinit);
+		std::cout<<"testing column-row"<<std::endl;
+		kernels::assign(target,source_row_major, functor());
+		checkSparseMatrixEqual(target,result);
+	}
 	
-	//~ for(unsigned int i = 0; i != 10; ++i){
-		//~ for(unsigned int j = 0; j < 20; ++j){
-			//~ int r = preinit(i,j)+source_row_major(i,j);
-			//~ if(r != 0)
-				//~ result(i,j) = r;
-		//~ }
-	//~ }
-
-	//~ //test all 4 combinations of row/column major
-	//~ {
-		//~ compressed_matrix<unsigned int> target = preinit;
-		//~ std::cout<<"testing row-row"<<std::endl;
-		//~ kernels::assign(target,source_row_major, functor());
-		//~ checkMatrixEqual(target,result);
-	//~ }
-	
-	//~ {
-		//~ matrix<unsigned int,row_major> target = preinit;
-		//~ std::cout<<"testing row-column"<<std::endl;
-		//~ kernels::assign(target,source_column_major, functor());
-		//~ checkMatrixEqual(target,result);
-	//~ }
-	//~ {
-		//~ compressed_matrix<unsigned int> target_base(20,10);
-		//~ matrix_transpose<compressed_matrix<unsigned int> > target(target_base);
-		//~ target = preinit;
-		//~ std::cout<<"testing column-row"<<std::endl;
-		//~ kernels::assign(target,source_row_major, functor());
-		//~ checkMatrixEqual(target,result);
-	//~ }
-	
-	//~ {
-		//~ compressed_matrix<unsigned int> target_base(20,10);
-		//~ matrix_transpose<compressed_matrix<unsigned int> > target(target_base);
-		//~ target = preinit;
-		//~ std::cout<<"testing column-column"<<std::endl;
-		//~ kernels::assign(target,source_column_major, functor());
-		//~ checkMatrixEqual(target,result);
-	//~ }
-//~ }
+	{
+		compressed_matrix<unsigned int, std::size_t, column_major> target = preinit;
+		checkSparseMatrixEqual(target,preinit);
+		std::cout<<"testing column-column"<<std::endl;
+		kernels::assign(target,source_column_major, functor());
+		checkSparseMatrixEqual(target,result);
+	}
+}
 BOOST_AUTO_TEST_SUITE_END()

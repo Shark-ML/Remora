@@ -25,10 +25,9 @@ struct Element{
 
 //checks the internal memory structure of the matrix and ensures that it stores the same elements as 
 //are given in the vector.
-void checkCompressedMatrixStructure(std::vector<Element> const& elements, compressed_matrix<int> const& matrix){
+template<class Matrix>
+void checkCompressedMatrixStructure(std::vector<Element> const& elements, Matrix const& matrix){
 	//check storage invariants
-	BOOST_REQUIRE_EQUAL( matrix.nnz(), elements.size());
-	BOOST_REQUIRE( matrix.nnz_capacity() >= elements.size());
 	BOOST_REQUIRE_EQUAL(matrix.raw_storage().major_indices_begin[0], 0);
 	
 	std::size_t elem = 0;
@@ -115,6 +114,8 @@ BOOST_AUTO_TEST_CASE( Remora_sparse_matrix_insert_element_end){
 			int val = (int)(i + j);
 			major_iter = matrix_set.set_element(major_iter,j,val);
 			elements.push_back(Element(i,j,val));
+			BOOST_REQUIRE( matrix_set.nnz_reserved() >= elements.size());
+			BOOST_REQUIRE( matrix_set.nnz_capacity() >= elements.size());
 			checkCompressedMatrixStructure(elements,matrix_set);
 		}
 	}
@@ -132,12 +133,15 @@ BOOST_AUTO_TEST_CASE( Remora_sparse_matrix_insert_random ){
 		std::uniform_int_distribution<> row_dist(0, rows-1);
 		std::uniform_int_distribution<> col_dist(0, 5);//5 different elements per row
 		std::size_t major_index = row_dist(gen);
-		std::size_t minor_index = (col_dist(gen) * 7) % columns;
+		std::size_t minor_index = (major_index + col_dist(gen) * 7) % columns;
 		int value = i;
 		insertions.push_back({major_index,minor_index, value});
 	}
 	
 	compressed_matrix<int> matrix_set(rows,columns);
+	compressed_matrix<int> matrix_ref_set(rows,columns);
+	detail::compressed_matrix_proxy<compressed_matrix<int>, row_major> matrix_ref(matrix_ref_set);
+	
 	std::vector<Element> elements;
 	for(auto elem: insertions){
 		//update elements in the matrix
@@ -154,12 +158,25 @@ BOOST_AUTO_TEST_CASE( Remora_sparse_matrix_insert_random ){
 		}
 		
 		//insert into matrix. first create iterator to position
-		auto major_iter = matrix_set.major_begin(elem.major_index);
-		while(major_iter != matrix_set.major_end(elem.major_index) && major_iter.index()< elem.minor_index)
-			++major_iter;
-		//now insert and check
-		matrix_set.set_element(major_iter,elem.minor_index,elem.value);
-		checkCompressedMatrixStructure(elements,matrix_set);
+		{
+			auto major_iter = matrix_set.major_begin(elem.major_index);
+			while(major_iter != matrix_set.major_end(elem.major_index) && major_iter.index()< elem.minor_index)
+				++major_iter;
+			//now insert and check
+			matrix_set.set_element(major_iter,elem.minor_index,elem.value);
+			BOOST_REQUIRE( matrix_set.nnz_reserved() >= elements.size());
+			BOOST_REQUIRE( matrix_set.nnz_capacity() >= elements.size());
+			checkCompressedMatrixStructure(elements,matrix_set);
+		}
+		{
+			auto major_iter = matrix_ref.major_begin(elem.major_index);
+			while(major_iter != matrix_ref.major_end(elem.major_index) && major_iter.index()< elem.minor_index)
+				++major_iter;
+			//now insert and check
+			matrix_ref.set_element(major_iter,elem.minor_index,elem.value);
+			checkCompressedMatrixStructure(elements,matrix_ref);
+			checkCompressedMatrixStructure(elements,matrix_ref_set);
+		}
 	}
 }
 

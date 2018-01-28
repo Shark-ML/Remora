@@ -28,46 +28,7 @@
 #ifndef REMORA_CPU_SPARSE_MATRIX_HPP
 #define REMORA_CPU_SPARSE_MATRIX_HPP
 
-#include <iostream>
 namespace remora{namespace detail{
-template<class Mat>
-struct MatrixReference{
-	typedef typename Mat::storage_type storage_type;
-	typedef typename Mat::size_type size_type;
-	typedef typename Mat::value_type value_type;
-	
-	void set_nnz(size_type non_zeros){
-		m_matrix->set_nnz(non_zeros);
-	}
-	storage_type reserve(size_type non_zeros){
-		m_matrix->reserve(non_zeros);
-		return m_matrix->raw_storage();
-	}
-	
-	MatrixReference(Mat* matrix): m_matrix(matrix){}
-private:
-	Mat* m_matrix;
-};
-
-template<class T, class I>
-struct ConstantMatrixStorage{
-	typedef sparse_matrix_storage<T,I> storage_type;
-	typedef I size_type;
-	typedef typename std::remove_const<T>::type value_type;
-	
-	void set_nnz(size_type non_zeros){
-		assert(non_zeros <= m_storage.capacity);
-		m_storage.nnz = non_zeros;
-	}
-	storage_type reserve(size_type non_zeros){
-		assert(non_zeros <= m_storage.capacity);
-		return m_storage;
-	}
-	
-	ConstantMatrixStorage(storage_type storage): m_storage(storage){}
-private:
-	storage_type m_storage;
-};
 
 template<class T, class I>
 struct MatrixStorage{
@@ -75,14 +36,12 @@ struct MatrixStorage{
 	typedef I size_type;
 	typedef T value_type;
 	
-	MatrixStorage(size_type major_size, size_type minor_size)
+	MatrixStorage(size_type major_size, size_type minor_size, size_type non_zeros = 0)
 	: m_major_indices_begin(major_size + 1,0)
 	, m_major_indices_end(major_size,0)
-	, m_nnz(0)
-	, m_minor_size(minor_size){}
-	
-	void set_nnz(size_type non_zeros){
-		m_nnz = non_zeros;
+	, m_minor_size(minor_size)
+	{
+		reserve(non_zeros);
 	}
 	
 	storage_type reserve(size_type non_zeros){
@@ -90,7 +49,7 @@ struct MatrixStorage{
 			m_indices.resize(non_zeros);
 			m_values.resize(non_zeros);
 		}
-		return {m_values.data(), m_indices.data(), m_major_indices_begin.data(), m_major_indices_end.data(), m_nnz, m_indices.size()};
+		return {m_values.data(), m_indices.data(), m_major_indices_begin.data(), m_major_indices_end.data(), m_indices.size()};
 	}
 	
 	std::size_t major_size()const{
@@ -101,22 +60,19 @@ struct MatrixStorage{
 		return m_minor_size;
 	}
 	
-	MatrixStorage(): m_nnz(0){}
-	
 	template<class Archive>
 	void serialize(Archive& ar, const unsigned int /* file_version */) {
-		ar & boost::serialization::make_nvp("nnz", m_nnz);
 		ar & boost::serialization::make_nvp("indices", m_indices);
 		ar & boost::serialization::make_nvp("values", m_values);
 		ar & boost::serialization::make_nvp("major_indices_begin", m_major_indices_begin);
 		ar & boost::serialization::make_nvp("major_indices_end", m_major_indices_end);
+		ar & boost::serialization::make_nvp("minor_size", m_minor_size);
 	}
 private:
 	std::vector<I> m_major_indices_begin;
 	std::vector<I> m_major_indices_end;
 	std::vector<T> m_values;
 	std::vector<I> m_indices;
-	std::size_t m_nnz;
 	std::size_t m_minor_size;
 };
 template<class StorageManager>
@@ -126,9 +82,13 @@ public:
 	typedef typename StorageManager::size_type size_type;
 	typedef typename StorageManager::value_type value_type;
 
-	compressed_matrix_impl(StorageManager const& manager, std::size_t nnz)
+	compressed_matrix_impl(StorageManager const& manager, std::size_t nnz = 0)
 	: m_manager(manager)
 	, m_storage(m_manager.reserve(nnz)){};
+	
+	compressed_matrix_impl(compressed_matrix_impl const& impl)
+	: m_manager(impl.m_manager)
+	, m_storage(m_manager.reserve(impl.nnz_reserved())){};
 
 	// Accessors
 	size_type major_size() const {
@@ -142,13 +102,13 @@ public:
 		return m_storage;
 	}
 	
-	/// \brief Number of nonzeros this matrix can maximally store before requiring new memory
+	/// \brief Maximum number of non-zeros that the matrix can store or reserve before memory needs to be reallocated
 	std::size_t nnz_capacity() const{
 		return m_storage.capacity;
 	}
-	/// \brief Total Number of nonzeros this matrix stores
-	std::size_t nnz() const {
-		return m_storage.nnz;
+	/// \brief Size of reserved storage in the matrix (> number of nonzeros stored)
+	std::size_t nnz_reserved() const {
+		return m_storage.major_indices_begin[major_size()];
 	}
 	/// \brief Number of nonzeros the major index (a major or column depending on orientation) can maximally store before a resize
 	std::size_t major_capacity(size_type i)const{
@@ -160,11 +120,6 @@ public:
 		return m_storage.major_indices_end[i] - m_storage.major_indices_begin[i];
 	}
 
-	/// \brief Set the total number of nonzeros stored by the matrix
-	void set_nnz(std::size_t non_zeros) {
-		m_manager.set_nnz(non_zeros);
-		m_storage.nnz = non_zeros;
-	}
 	/// \brief Set the number of nonzeros stored in the major index (a major or column depending on orientation)
 	void set_major_nnz(size_type i,std::size_t non_zeros) {
 		REMORA_SIZE_CHECK(i < major_size());
@@ -185,7 +140,7 @@ public:
 		std::size_t space_difference = non_zeros - current_capacity;
 
 		//check if there is place in the end of the container to store the elements
-		if (space_difference > nnz_capacity() - m_storage.major_indices_begin[major_size()]){
+		if (space_difference > nnz_capacity() - nnz_reserved()){
 			std::size_t exact = nnz_capacity() + space_difference;
 			std::size_t spaceous = std::max(2*nnz_capacity(),nnz_capacity() + 2*space_difference);
 			reserve(exact_size? exact:spaceous);
@@ -268,7 +223,6 @@ public:
 		m_storage.values[arrayPos] = value;
 		m_storage.indices[arrayPos] = index;
 		++m_storage.major_indices_end[major_index];
-		set_nnz(nnz()+1);
 
 		//return new iterator to the inserted element.
 		return major_begin(major_index) + (line_pos + 1);
@@ -276,8 +230,8 @@ public:
 	}
 
 	major_iterator clear_range(major_iterator start, major_iterator end) {
-		REMORA_RANGE_CHECK(start.index() == end.index());
-		std::size_t major_index = start.index();
+		REMORA_RANGE_CHECK(start.major_index() == end.major_index());
+		std::size_t major_index = start.major_index();
 		std::size_t range_size = end - start;
 		std::size_t range_start = start - major_begin(major_index);
 		std::size_t range_end = range_start + range_size;
@@ -291,7 +245,6 @@ public:
 		std::copy(indices + range_end, indices + major_nnz(major_index), indices + range_start);
 		//subtract number of removed elements
 		m_storage.major_indices_end[major_index] -= range_size;
-		set_nnz(nnz() - range_size);
 		//return new iterator to the first element after the end of the range
 		return major_begin(major_index) + range_start;
 	}
@@ -305,6 +258,222 @@ private:
 	StorageManager m_manager;
 	storage_type m_storage;
 	size_type m_minor_size;
+};
+
+///\brief proxy handling: closure, transpose and rows of a given matrix
+template<class M, class Orientation>
+class compressed_matrix_proxy: public matrix_expression<compressed_matrix_proxy<M, Orientation>, cpu_tag>{
+private:
+	template<class,class> friend class compressed_matrix_proxy;
+public:
+	typedef typename M::size_type size_type;
+	typedef typename M::value_type value_type;
+	typedef typename M::const_reference const_reference;
+	typedef typename remora::reference<M>::type reference;
+	
+	typedef compressed_matrix_proxy<M const, Orientation> const_closure_type;
+	typedef compressed_matrix_proxy<M, Orientation> closure_type;
+	typedef typename remora::storage<M>::type storage_type;
+	typedef typename M::const_storage_type const_storage_type;
+	typedef elementwise<sparse_tag> evaluation_category;
+	typedef Orientation orientation;
+
+	
+	//conversion matrix->proxy
+	compressed_matrix_proxy(M& m): m_matrix(&m), m_major_start(0){
+		m_major_end = M::orientation::index_M(m.size1(),m.size2());
+	}
+	
+	//rows/columns proxy
+	compressed_matrix_proxy(M& m, size_type start, size_type end): m_matrix(&m), m_major_start(start), m_major_end(end){}
+	
+	
+	//copy-ctor/const-conversion
+	compressed_matrix_proxy( compressed_matrix_proxy<typename std::remove_const<M>::type, Orientation> const& proxy)
+	:m_matrix(proxy.m_matrix), m_major_start(proxy.m_major_start), m_major_end(proxy.m_major_end){}
+	
+	M& matrix() const{
+		return *m_matrix;
+	}
+	
+	size_type start() const{
+		return m_major_start;
+	}
+	size_type end() const{
+		return m_major_end;
+	}
+	
+	//assignment from different expression
+	template<class E>
+	compressed_matrix_proxy& operator=(matrix_expression<E, cpu_tag> const& e){
+		return assign(*this, typename matrix_temporary<E>::type(e));
+	}
+	compressed_matrix_proxy& operator=(compressed_matrix_proxy const& e){
+		return assign(*this, typename matrix_temporary<M>::type(e));
+	}
+	
+	///\brief Number of rows of the matrix
+	size_type size1() const {
+		return orientation::index_M( m_major_end - m_major_start, minor_size(*m_matrix));
+	}
+	
+	///\brief Number of columns of the matrix
+	size_type size2() const {
+		return orientation::index_m(m_major_end - m_major_start, minor_size(*m_matrix));
+	}
+
+	/// \brief Number of nonzeros the major index (a row or column depending on orientation) can maximally store before a resize
+	std::size_t major_capacity(size_type i)const{
+		return m_matrix->major_capacity(m_major_start + i);
+	}
+	/// \brief Number of nonzeros the major index (a row or column depending on orientation) currently stores
+	std::size_t major_nnz(size_type i) const {
+		return m_matrix->major_nnz(m_major_start + i);
+	}
+	
+	const_storage_type raw_storage()const{
+		return m_matrix->raw_storage();
+	}
+	
+	typename device_traits<cpu_tag>::queue_type& queue() const{
+		return m_matrix->queue();
+	}
+
+	void major_reserve(size_type i, std::size_t non_zeros, bool exact_size = false) {
+		m_matrix->major_reserve(m_major_start + i, non_zeros, exact_size);
+	}
+	
+	typedef typename major_iterator<M>::type major_iterator;
+	typedef major_iterator const_major_iterator;
+
+	major_iterator major_begin(size_type i) const {
+		return m_matrix->major_begin(m_major_start + i);
+	}
+
+	major_iterator major_end(size_type i) const{
+		return m_matrix->major_end(m_major_start + i);
+	}
+	
+	major_iterator set_element(major_iterator pos, size_type index, value_type value){
+		return m_matrix->set_element(pos, index, value);
+	}
+
+	major_iterator clear_range(major_iterator start, major_iterator end) {
+		return m_matrix->clear_range(start,end);
+	}
+	
+	void clear() {
+		if(m_major_start == 0 && m_major_end == major_size(*m_matrix))
+			m_matrix->clear();
+		else for(std::size_t i = m_major_start; i != m_major_end; ++i)
+			m_matrix->clear_range(m_matrix -> major_begin(i), m_matrix -> major_end(i));
+	}
+private:
+	M* m_matrix;
+	size_type m_major_start;
+	size_type m_major_end;
+};
+
+
+
+template<class M>
+class compressed_matrix_row: public vector_expression<compressed_matrix_row<M>, cpu_tag>{
+private:
+	template<class> friend class compressed_matrix_row;
+public:
+	typedef typename closure<M>::type matrix_type;
+	typedef typename M::size_type size_type;
+	typedef typename M::value_type value_type;
+	typedef typename M::const_reference const_reference;
+	typedef typename remora::reference<M>::type reference;
+	
+	typedef compressed_matrix_row<M const> const_closure_type;
+	typedef compressed_matrix_row closure_type;
+	typedef typename remora::storage<M>::type::template row_storage<row_major>::type storage_type;
+	typedef typename M::const_storage_type::template row_storage<row_major>::type const_storage_type;
+	typedef elementwise<sparse_tag> evaluation_category;
+
+	// Construction
+	compressed_matrix_row(matrix_type const& m, size_type i):m_matrix(m), m_row(i){}
+	//copy or conversion ctor non-const ->const proxy
+	compressed_matrix_row(compressed_matrix_row<typename std::remove_const<M>::type > const& ref):m_matrix(ref.m_matrix){}
+	
+	//assignment from different expression
+	template<class E>
+	compressed_matrix_row& operator=(vector_expression<E, cpu_tag> const& e){
+		return assign(*this, typename vector_temporary<E>::type(e));
+	}
+	
+	compressed_matrix_row& operator=(compressed_matrix_row const& e){
+		return assign(*this, typename vector_temporary<M>::type(e));
+	}
+	
+	///\brief Returns the underlying storage structure for low level access
+	storage_type raw_storage(){
+		return m_matrix.raw_storage().row(m_row, row_major());
+	}
+	
+	///\brief Returns the underlying storage structure for low level access
+	const_storage_type raw_storage() const{
+		return m_matrix.raw_storage().row(m_row, row_major());
+	}
+	
+	/// \brief Return the size of the vector
+	size_type size() const {
+		return m_matrix.size2();
+	}
+	
+	size_type nnz() const {
+		return m_matrix.major_nnz(m_row);
+	}
+	
+	size_type nnz_capacity(){
+		return m_matrix.major_capacity(m_row);
+	}
+	
+	void reserve(size_type non_zeros) {
+		m_matrix.major_reserve(m_row, non_zeros);
+	}
+	
+	typename device_traits<cpu_tag>::queue_type& queue(){
+		return device_traits<cpu_tag>::default_queue();
+	}
+	
+	// --------------
+	// ITERATORS
+	// --------------
+
+	typedef typename major_iterator<matrix_type>::type iterator;
+	typedef iterator const_iterator;
+
+	/// \brief return an iterator tp the first non-zero element of the vector
+	iterator begin() const {
+		return m_matrix.major_begin(m_row);
+	}
+
+	/// \brief return an iterator behind the last non-zero element of the vector
+	iterator end() const {
+		return m_matrix.major_end(m_row);
+	}
+	
+	iterator set_element(iterator pos, size_type index, value_type value) {
+		return m_matrix.set_element(pos,index,value);
+	}
+	
+	iterator clear_range(iterator start, iterator end) {
+		m_matrix.clear_range(start,end);
+	}
+
+	iterator clear_element(iterator pos){
+		m_matrix.clear_element(pos);
+	}
+	
+	void clear(){
+		m_matrix.clear_range(begin(),end());
+	}
+private:
+	matrix_type m_matrix;
+	size_type m_row;
 };
 
 }}

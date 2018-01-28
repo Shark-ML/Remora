@@ -173,14 +173,15 @@ BOOST_AUTO_TEST_CASE( compressed_vector_const_reference){
 	auto storage = v.raw_storage();
 	
 	{
-		compressed_vector_reference<unsigned int const, std::size_t const> ref(v);
+		detail::compressed_vector_reference<compressed_vector<unsigned int> const> ref(v);
 		auto ref_storage = ref.raw_storage();
 		BOOST_CHECK_EQUAL(ref_storage.values, storage.values);
 		BOOST_CHECK_EQUAL(ref_storage.indices, storage.indices);
-		BOOST_CHECK_EQUAL(ref_storage.nnz, storage.nnz);
-		BOOST_CHECK_EQUAL(ref_storage.capacity, storage.capacity);
+		BOOST_CHECK_EQUAL(ref_storage.start, storage.start);
+		BOOST_CHECK_EQUAL(ref_storage.end, storage.end);
+		BOOST_CHECK_EQUAL(ref_storage.storage_end, storage.storage_end);
 		
-		BOOST_CHECK_EQUAL(ref.nnz_capacity(), ref.nnz());
+		BOOST_CHECK_EQUAL(ref.nnz_capacity(), v.nnz_capacity());
 		BOOST_CHECK_EQUAL(ref.nnz(), v.nnz());
 		BOOST_CHECK_EQUAL(ref.size(), v.size());
 		
@@ -193,43 +194,14 @@ BOOST_AUTO_TEST_CASE( compressed_vector_const_reference){
 	
 	//construction from non-const reference
 	{
-		compressed_vector_reference<unsigned int, std::size_t> ref_non(v);
-		compressed_vector_reference<unsigned int const, std::size_t const> ref(ref_non);
+		detail::compressed_vector_reference<compressed_vector<unsigned int> > ref_non(v);
+		detail::compressed_vector_reference<compressed_vector<unsigned int> const> ref(ref_non);
 		auto ref_storage = ref.raw_storage();
 		BOOST_CHECK_EQUAL(ref_storage.values, storage.values);
 		BOOST_CHECK_EQUAL(ref_storage.indices, storage.indices);
-		BOOST_CHECK_EQUAL(ref_storage.nnz, storage.nnz);
-		BOOST_CHECK_EQUAL(ref_storage.capacity, storage.capacity);
-		
-		BOOST_CHECK_EQUAL(ref.nnz_capacity(), ref.nnz());
-		BOOST_CHECK_EQUAL(ref.nnz(), v.nnz());
-		BOOST_CHECK_EQUAL(ref.size(), v.size());
-		
-		int i = 0;
-		for(auto it = ref.begin(); it != ref.end(); ++it,++i){
-			BOOST_CHECK_EQUAL(*it,data[i]);
-			BOOST_CHECK_EQUAL(it.index(),index[i]);
-		}
-	}
-}
-
-
-BOOST_AUTO_TEST_CASE( compressed_vector_reference_test){
-	std::size_t index[]={1,2,4,7,8, 9,11,16,21};
-	unsigned int data[]={2,4,1,8,1,3,5,13,2};
-	compressed_vector<unsigned int> v(30);
-	auto pos = v.begin();
-	for(int i = 0; i != 6; ++i)
-		pos = v.set_element(pos,index[i],data[i]);
-	auto storage = v.raw_storage();
-	
-	{
-		compressed_vector_reference<unsigned int, std::size_t> ref(v);
-		auto ref_storage = ref.raw_storage();
-		BOOST_CHECK_EQUAL(ref_storage.values, storage.values);
-		BOOST_CHECK_EQUAL(ref_storage.indices, storage.indices);
-		BOOST_CHECK_EQUAL(ref_storage.nnz, storage.nnz);
-		BOOST_CHECK_EQUAL(ref_storage.capacity, storage.capacity);
+		BOOST_CHECK_EQUAL(ref_storage.start, storage.start);
+		BOOST_CHECK_EQUAL(ref_storage.end, storage.end);
+		BOOST_CHECK_EQUAL(ref_storage.storage_end, storage.storage_end);
 		
 		BOOST_CHECK_EQUAL(ref.nnz_capacity(), ref.nnz_capacity());
 		BOOST_CHECK_EQUAL(ref.nnz(), v.nnz());
@@ -241,24 +213,5 @@ BOOST_AUTO_TEST_CASE( compressed_vector_reference_test){
 			BOOST_CHECK_EQUAL(it.index(),index[i]);
 		}
 	}
-	
-	{
-		std::size_t index_new[]={0,1,3,6,7, 8};
-		unsigned int data_new[]={1,3,0,7,0,2};
-		compressed_vector<unsigned long> test(30);
-		auto pos = test.begin();
-		for(int i = 0; i != 6; ++i)
-			pos = test.set_element(pos,index_new[i],data_new[i]);
-		test = v;
-		BOOST_CHECK_EQUAL(test.nnz(), v.nnz());
-		BOOST_CHECK_EQUAL(test.size(), v.size());
-		
-		int i = 0;
-		for(auto it = test.begin(); it != test.end(); ++it,++i){
-			BOOST_CHECK_EQUAL(*it,data[i]);
-			BOOST_CHECK_EQUAL(it.index(),index[i]);
-		}
-	}
 }
-
 BOOST_AUTO_TEST_SUITE_END();

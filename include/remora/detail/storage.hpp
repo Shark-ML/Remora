@@ -131,15 +131,17 @@ struct sparse_vector_storage{
 	typedef sparse_tag storage_tag;
 	T* values;
 	I* indices;
-	std::size_t nnz;
-	std::size_t capacity;
+	std::size_t* start;
+	std::size_t* end;
+	std::size_t* storage_end;
 	
 	sparse_vector_storage(){}
-	sparse_vector_storage(T* values, I* indices, std::size_t nnz, std::size_t capacity)
-	:values(values), indices(indices), nnz(nnz), capacity(capacity){}
+	sparse_vector_storage(T* values, I* indices, std::size_t* start,  std::size_t* end, std::size_t* storage_end)
+	:values(values), indices(indices), start(start), end(end), storage_end(storage_end){}
 	template<class U, class J>
-	sparse_vector_storage(sparse_vector_storage<U, J> const& storage):
-	values(storage.values), indices(storage.indices), nnz(storage.nnz), capacity(storage.capacity){}
+	sparse_vector_storage(sparse_vector_storage<U, J> const& storage)
+	: values(storage.values), indices(storage.indices), start(storage.start)
+	, end(storage.end), storage_end(storage.storage_end){}
 };
 
 template<class T>
@@ -162,27 +164,28 @@ struct sparse_matrix_storage{
 	I* indices;
 	I* major_indices_begin;
 	I* major_indices_end;
-	std::size_t nnz;
 	std::size_t capacity;
 	
 	sparse_matrix_storage(
 		T* values, I* indices, 
 		I* major_indices_begin, I* major_indices_end,
-		std::size_t nnz, std::size_t capacity
+		std::size_t capacity
 	):values(values), indices(indices)
 	, major_indices_begin(major_indices_begin), major_indices_end(major_indices_end)
-	, nnz(nnz), capacity(capacity){}
+	, capacity(capacity){}
 	
 	template<class U, class J>
 	sparse_matrix_storage(sparse_matrix_storage<U, J> const& storage)
 	: values(storage.values), indices(storage.indices)
 	, major_indices_begin(storage.major_indices_begin), major_indices_end(storage.major_indices_end)
-	, nnz(storage.nnz), capacity(storage.capacity){}
+	, capacity(storage.capacity){}
 	
-	sparse_vector_storage<T,I> row(std::size_t i, row_major){
-		std::size_t minor_nnz = major_indices_end[i] - major_indices_begin[i];
-		std::size_t minor_capacity = major_indices_begin[i+1] - major_indices_begin[i];
-		return {values + major_indices_begin[i], indices + major_indices_begin[i],minor_nnz, minor_capacity};
+	sparse_vector_storage<T,I> row(std::size_t i, row_major)const{
+		return {
+			values, indices, major_indices_begin + i,
+			major_indices_end + i,
+			major_indices_begin + (i+1)
+		};
 	}
 };
 }

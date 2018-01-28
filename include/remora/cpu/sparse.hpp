@@ -31,48 +31,13 @@
 #include "iterator.hpp"
 
 #include <vector>
+#include <iostream>
 
 #include <boost/serialization/collection_size_type.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/vector.hpp>
  
 namespace remora{ namespace detail{ 
-	
-template<class Vec>
-struct VectorReference{
-	typedef typename Vec::storage_type storage_type;
-	typedef typename Vec::size_type size_type;
-	typedef typename Vec::value_type value_type;
-	
-	void set_nnz(size_type non_zeros){
-		m_vector->set_nnz(non_zeros);
-	}
-	storage_type reserve(size_type non_zeros){
-		m_vector->reserve(non_zeros);
-		return m_vector->raw_storage();
-	}
-	
-	VectorReference(Vec* vector): m_vector(vector){}
-private:
-	Vec* m_vector;
-};
-
-template<class T, class I>
-struct ConstantStorage{
-	typedef sparse_vector_storage<T,I> storage_type;
-	typedef I size_type;
-	typedef typename std::remove_const<T>::type value_type;
-	
-	void set_nnz(size_type non_zeros){assert(false);}
-	storage_type reserve(size_type non_zeros){
-		assert(non_zeros <= m_storage.capacity);
-		return m_storage;
-	}
-	
-	ConstantStorage(storage_type storage): m_storage(storage){}
-private:
-	storage_type m_storage;
-};
 
 template<class T, class I>
 struct VectorStorage{
@@ -80,17 +45,16 @@ struct VectorStorage{
 	typedef I size_type;
 	typedef T value_type;
 	
-	void set_nnz(size_type non_zeros){m_nnz = non_zeros;}
-	
 	storage_type reserve(size_type non_zeros){
-		if(non_zeros != m_nnz){
+		if(non_zeros > m_capacity){
 			m_indices.resize(non_zeros);
 			m_values.resize(non_zeros);
+			m_capacity = non_zeros;
 		}
-		return {m_values.data(), m_indices.data(), m_nnz, m_indices.size()};
+		return {m_values.data(), m_indices.data(), &m_start, &m_nnz, &m_capacity};
 	}
 	
-	VectorStorage(): m_nnz(0){}
+	VectorStorage(): m_start(0), m_nnz(0), m_capacity(0){}
 	
 	template<class Archive>
 	void serialize(Archive& ar, const unsigned int /* file_version */) {
@@ -99,16 +63,15 @@ struct VectorStorage{
 		ar & boost::serialization::make_nvp("values", m_values);
 	}
 private:
+	std::size_t m_start;
 	std::size_t m_nnz;
+	std::size_t m_capacity;
 	std::vector<T> m_values;
 	std::vector<I> m_indices;
 };
 
-template<class StorageManager, bool IsMutable>
-struct BaseSparseVector;
-	
 template<class StorageManager>
-struct BaseSparseVector<StorageManager, false>{
+struct BaseSparseVector{
 	typedef typename StorageManager::storage_type storage_type;
 	typedef typename StorageManager::size_type size_type;
 	typedef typename StorageManager::value_type value_type;
@@ -124,67 +87,11 @@ struct BaseSparseVector<StorageManager, false>{
 	}
 	
 	size_type nnz() const {
-		return m_storage.nnz;
+		return *m_storage.end - *m_storage.start;
 	}
 	
-	size_type nnz_capacity(){
-		return m_storage.nnz;
-	}
-	
-	typename device_traits<cpu_tag>::queue_type& queue(){
-		return device_traits<cpu_tag>::default_queue();
-	}
-	
-	// --------------
-	// ITERATORS
-	// --------------
-
-	typedef iterators::compressed_storage_iterator<value_type const, size_type const> const_iterator;
-	typedef const_iterator iterator;
-
-	/// \brief return an iterator behind the last non-zero element of the vector
-	const_iterator begin() const {
-		return const_iterator(m_storage.values,m_storage.indices,0);
-	}
-
-	/// \brief return an iterator behind the last non-zero element of the vector
-	const_iterator end() const {
-		return const_iterator(m_storage.values,m_storage.indices,nnz());
-	}
-	
-protected:
-	StorageManager m_manager;
-	storage_type m_storage;
-	std::size_t m_size;
-};
-	
-template<class StorageManager>
-struct BaseSparseVector<StorageManager, true>{
-	typedef typename StorageManager::storage_type storage_type;
-	typedef typename StorageManager::size_type size_type;
-	typedef typename StorageManager::value_type value_type;
-	
-	BaseSparseVector(StorageManager const& manager, std::size_t size, std::size_t nnz)
-	: m_manager(manager)
-	, m_storage(m_manager.reserve(nnz))
-	, m_size(size){};
-	
-	/// \brief Return the size of the vector
-	size_type size() const {
-		return m_size;
-	}
-	
-	size_type nnz() const {
-		return m_storage.nnz;
-	}
-	
-	void set_nnz(size_type non_zeros){
-		m_manager.set_nnz(non_zeros);
-		m_storage.nnz = non_zeros;
-	}
-	
-	size_type nnz_capacity(){
-		return m_storage.capacity;
+	size_type nnz_capacity() const{
+		return *m_storage.storage_end - *m_storage.start;
 	}
 	
 	void reserve(size_type non_zeros) {
@@ -205,22 +112,22 @@ struct BaseSparseVector<StorageManager, true>{
 
 	/// \brief return an iterator behind the last non-zero element of the vector
 	const_iterator begin() const {
-		return const_iterator(m_storage.values,m_storage.indices,0);
+		return const_iterator(m_storage.values + start_index(), m_storage.indices + start_index(), 0);
 	}
 
 	/// \brief return an iterator behind the last non-zero element of the vector
 	const_iterator end() const {
-		return const_iterator(m_storage.values,m_storage.indices,nnz());
+		return const_iterator(m_storage.values + start_index(), m_storage.indices + start_index(), nnz());
 	}
 	
 	/// \brief return an iterator behind the last non-zero element of the vector
 	iterator begin() {
-		return iterator(m_storage.values,m_storage.indices,0);
+		return iterator(m_storage.values + start_index(), m_storage.indices + start_index(), 0);
 	}
 
 	/// \brief return an iterator behind the last non-zero element of the vector
 	iterator end() {
-		return iterator(m_storage.values,m_storage.indices,nnz());
+		return iterator(m_storage.values + start_index(), m_storage.indices + start_index(), nnz());
 	}
 	
 	iterator set_element(iterator pos, size_type index, value_type value) {
@@ -236,14 +143,14 @@ struct BaseSparseVector<StorageManager, true>{
 			reserve(std::min(std::max<size_type>(5,2 * nnz_capacity()),size()));
 		
 		//copy the remaining elements to make space for the new ones
-		auto values = m_storage.values;
-		auto indices = m_storage.indices;
+		auto values = m_storage.values + start_index();
+		auto indices = m_storage.indices + start_index();
 		std::copy_backward(values + arrayPos, values + nnz() , values + nnz() +1);
 		std::copy_backward(indices + arrayPos, indices + nnz(), indices + nnz() +1);
 		//insert new element
 		values[arrayPos] = value;
 		indices[arrayPos] = index;
-		set_nnz(nnz()+1);
+		*m_storage.end += 1;
 		
 		//return new iterator to the inserted element.
 		return iterator(values,indices,arrayPos+1);
@@ -255,11 +162,11 @@ struct BaseSparseVector<StorageManager, true>{
 		std::ptrdiff_t endPos = end - begin();
 		
 		//remove the elements in the range
-		auto values = m_storage.values;
-		auto indices = m_storage.indices;
+		auto values = m_storage.values + start_index();
+		auto indices = m_storage.indices + start_index();
 		std::copy(values + endPos, values + nnz(), values + startPos);
 		std::copy(indices + endPos, indices + nnz() , indices + startPos);
-		set_nnz(nnz() - (endPos - startPos));
+		*m_storage.end -= endPos - startPos;
 		//return new iterator to the next element
 		return iterator(values, indices, startPos);
 	}
@@ -292,6 +199,112 @@ protected:
 		}
 		m_size = size;
 	}
+	
+	size_type start_index() const{
+		return *m_storage.start;
+	}
+};
+
+template<class V>
+class compressed_vector_reference: public vector_expression<compressed_vector_reference<V>, cpu_tag >{
+private:
+	template<class> friend class compressed_vector_reference;
+public:
+	typedef typename V::size_type size_type;
+	typedef typename V::value_type value_type;
+	typedef typename V::const_reference const_reference;
+	typedef typename remora::reference<V>::type reference;
+	
+	typedef compressed_vector_reference<V const> const_closure_type;
+	typedef compressed_vector_reference closure_type;
+	typedef typename remora::storage<V>::type storage_type;
+	typedef typename V::const_storage_type const_storage_type;
+	typedef elementwise<sparse_tag> evaluation_category;
+
+	// Construction
+	compressed_vector_reference(V& v):m_vector(&v){}
+	//copy or conversion ctor non-const ->const proxy
+	compressed_vector_reference(compressed_vector_reference<typename std::remove_const<V>::type > const& ref):m_vector(ref.m_vector){}
+	
+	//assignment from different expression
+	template<class E>
+	compressed_vector_reference& operator=(matrix_expression<E, cpu_tag> const& e){
+		return assign(*this, typename vector_temporary<E>::type(e));
+	}
+	
+	compressed_vector_reference& operator=(compressed_vector_reference const& e){
+		return assign(*this, typename vector_temporary<V>::type(e));
+	}
+	
+	///\brief Returns the underlying storage structure for low level access
+	storage_type raw_storage(){
+		return m_vector->raw_storage();
+	}
+	
+	///\brief Returns the underlying storage structure for low level access
+	const_storage_type raw_storage() const{
+		return m_vector->raw_storage();
+	}
+	
+	/// \brief Return the size of the vector
+	size_type size() const {
+		return m_vector->size();
+	}
+	
+	size_type nnz() const {
+		return m_vector->nnz();
+	}
+	
+	size_type nnz_capacity() const {
+		return m_vector->nnz_capacity();
+	}
+	
+	void reserve(size_type non_zeros) {
+		m_vector->reserve(non_zeros);
+	}
+	
+	typename device_traits<cpu_tag>::queue_type& queue(){
+		return device_traits<cpu_tag>::default_queue();
+	}
+	
+	// --------------
+	// ITERATORS
+	// --------------
+
+	typedef typename std::conditional<
+		std::is_const<V>::value,
+		typename V::const_iterator,
+		typename V::iterator
+	>::type iterator;
+	typedef iterator const_iterator;
+
+	/// \brief return an iterator tp the first non-zero element of the vector
+	iterator begin() const {
+		return m_vector->begin();
+	}
+
+	/// \brief return an iterator behind the last non-zero element of the vector
+	iterator end() const {
+		return m_vector->end();
+	}
+	
+	iterator set_element(iterator pos, size_type index, value_type value) {
+		return m_vector->set_element(pos,index,value);
+	}
+	
+	iterator clear_range(iterator start, iterator end) {
+		m_vector->clear_range(start,end);
+	}
+
+	iterator clear_element(iterator pos){
+		m_vector->clear_element(pos);
+	}
+	
+	void clear(){
+		m_vector->clear();
+	}
+private:
+	V* m_vector;
 };
 
 }}
