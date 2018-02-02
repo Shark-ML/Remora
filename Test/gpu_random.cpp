@@ -33,7 +33,6 @@ void chi_squared_gof(vector_expression<V, cpu_tag> const& v, Dist const& dist, t
 	std::vector<std::size_t> bins(numBins,0);
 	std::size_t numValid = 0;
 	for(auto val:v()){
-		//~ std::cout<<val<<" ";
 		if(val < min || val > max) continue;
 		std::size_t bin = std::size_t( numBins * (val - min)/(max-min));
 		if(bin == numBins)
@@ -51,7 +50,6 @@ void chi_squared_gof(vector_expression<V, cpu_tag> const& v, Dist const& dist, t
 	}
 	for(std::size_t i = 0;  i != p.size(); ++i){
 		p[i] /= sumpi;
-		//~ std::cout<<min + i *(max - min)/(numBins-1)<<" "<<bins[i]<<" "<<p[i]*numValid<<std::endl;
 	}
 	
 	chi_squared_gof(bins,p,numValid);

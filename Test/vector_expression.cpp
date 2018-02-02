@@ -4,7 +4,7 @@
 
 #include <remora/vector_expression.hpp>
 #include <remora/dense.hpp>
-//~ #include <remora/vector_sparse.hpp>
+#include <remora/sparse.hpp>
 
 #include <iostream>
 using namespace remora;
@@ -698,140 +698,156 @@ void checkSparseExpressionEquality(
 std::size_t SparseDimensions = 100;
 std::size_t VectorNNZ = 10;
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Unary_Minus )
-//~ {
-	//~ compressed_vector<double> x(SparseDimensions); 
-	//~ compressed_vector<double> result(SparseDimensions);
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Unary_Minus )
+{
+	compressed_vector<double> x(SparseDimensions); 
+	compressed_vector<double> result(SparseDimensions);
 	
-	//~ for (size_t i = 0; i < VectorNNZ; i++)
-	//~ {
-		//~ x(i*9+3) = i-3.0;
-		//~ result(i*9+3)= -x(i*9+3);
-	//~ }
-	//~ checkSparseExpressionEquality(-x,result);
-//~ }
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Scalar_Multiply )
-//~ {
-	//~ compressed_vector<double> x(SparseDimensions); 
-	//~ compressed_vector<double> result(SparseDimensions);
+	auto posx = x.begin();
+	auto posr = result.begin();
+	for (size_t i = 0; i < VectorNNZ; i++){
+		posx = x.set_element(posx,10*i+1,0.5*i+1);
+		posr = result.set_element(posr,10*i+1,-(0.5*i+1));
+	}
+	checkSparseExpressionEquality(-x,result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Scalar_Multiply )
+{
+	compressed_vector<double> x(SparseDimensions); 
+	compressed_vector<double> result(SparseDimensions);
 	
-	//~ for (size_t i = 0; i < VectorNNZ; i++)
-	//~ {
-		//~ x(i) = i-3.0;
-		//~ result(i)= 5.0*x(i);
-	//~ }
-	//~ checkSparseExpressionEquality(5.0*x,result);
-	//~ checkSparseExpressionEquality(x*5.0,result);
-//~ }
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Scalar_Div )
-//~ {
-	//~ compressed_vector<double> x(SparseDimensions); 
-	//~ compressed_vector<double> result(SparseDimensions);
+	auto posx = x.begin();
+	auto posr = result.begin();
+	for (size_t i = 0; i < VectorNNZ; i++){
+		posx = x.set_element(posx,10*i+1,0.5*i+1);
+		posr = result.set_element(posr,10*i+1,5.0*(0.5*i+1));
+	}
+	checkSparseExpressionEquality(5.0*x,result);
+	checkSparseExpressionEquality(x*5.0,result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Scalar_Div )
+{
+	compressed_vector<double> x(SparseDimensions); 
+	compressed_vector<double> result(SparseDimensions);
 	
-	//~ for (size_t i = 0; i < VectorNNZ; i++)
-	//~ {
-		//~ x(i+90) = i-3.0;
-		//~ result(i+90)= x(i+90)/5.0;
-	//~ }
-	//~ checkSparseExpressionEquality(x/5.0,result);
-//~ }
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Abs )
-//~ {
-	//~ compressed_vector<double> x(SparseDimensions); 
-	//~ compressed_vector<double> result(SparseDimensions);
+	auto posx = x.begin();
+	auto posr = result.begin();
+	for (size_t i = 0; i < VectorNNZ; i++){
+		posx = x.set_element(posx,10*i+1,0.5*i+1);
+		posr = result.set_element(posr,10*i+1,(0.5*i+1)/5.0);
+	}
+	checkSparseExpressionEquality(x/5.0,result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Abs )
+{
+	compressed_vector<double> x(SparseDimensions); 
+	compressed_vector<double> result(SparseDimensions);
 	
-	//~ for (size_t i = 0; i < VectorNNZ; i++)
-	//~ {
-		//~ x(i) = -double(i)+3.0;
-		//~ result(i)= std::abs(x(i));
-	//~ }
-	//~ checkSparseExpressionEquality(abs(x),result);
-//~ }
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Sqr )
-//~ {
-	//~ compressed_vector<double> x(SparseDimensions); 
-	//~ compressed_vector<double> result(SparseDimensions);
+	auto posx = x.begin();
+	auto posr = result.begin();
+	for (size_t i = 0; i < VectorNNZ; i++){
+		posx = x.set_element(posx,10*i+1,-0.5*i+1);
+		posr = result.set_element(posr,10*i+1,std::abs(-0.5*i+1));
+	}
+	checkSparseExpressionEquality(abs(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Sqr )
+{
+	compressed_vector<double> x(SparseDimensions); 
+	compressed_vector<double> result(SparseDimensions);
 	
-	//~ for (size_t i = 0; i < VectorNNZ; i++)
-	//~ {
-		//~ x(i) = -double(i)+3.0;
-		//~ result(i)= x(i)*x(i);
-	//~ }
-	//~ checkSparseExpressionEquality(sqr(x),result);
-//~ }
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Sqrt )
-//~ {
-	//~ compressed_vector<double> x(SparseDimensions); 
-	//~ compressed_vector<double> result(SparseDimensions);
+	auto posx = x.begin();
+	auto posr = result.begin();
+	for (size_t i = 0; i < VectorNNZ; i++){
+		posx = x.set_element(posx,10*i+1,-0.5*i+1);
+		posr = result.set_element(posr,10*i+1,(-0.5*i+1)*(-0.5*i+1));
+	}
+	checkSparseExpressionEquality(sqr(x),result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Sqrt )
+{
+	compressed_vector<double> x(SparseDimensions); 
+	compressed_vector<double> result(SparseDimensions);
 	
-	//~ for (size_t i = 0; i < VectorNNZ; i++)
-	//~ {
-		//~ x(i) = i;
-		//~ result(i)= sqrt(x(i));
-	//~ }
-	//~ checkSparseExpressionEquality(sqrt(x),result);
-//~ }
+	auto posx = x.begin();
+	auto posr = result.begin();
+	for (size_t i = 0; i < VectorNNZ; i++){
+		posx = x.set_element(posx,10*i+1,0.5*i+1);
+		posr = result.set_element(posr,10*i+1,std::sqrt(0.5*i+1));
+	}
+	checkSparseExpressionEquality(sqrt(x),result);
+}
 
 //////////////////////////////////////////////////////////////
 //////BINARY TRANSFORMATIONS///////
 /////////////////////////////////////////////////////////////
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Binary_Plus)
-//~ {
-	//~ compressed_vector<double> x(SparseDimensions); 
-	//~ compressed_vector<double> y(SparseDimensions); 
-	//~ compressed_vector<double> result(SparseDimensions);
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Binary_Plus)
+{
+	compressed_vector<double> x(SparseDimensions); 
+	compressed_vector<double> y(SparseDimensions); 
+	compressed_vector<double> result(SparseDimensions);
 	
-	//~ for (size_t i = 0; i < VectorNNZ; i++)
-	//~ {
-		//~ x(10*i+1) = 0.5*i;
-		//~ x(10*i+2) = i;
+	auto posx = x.begin();
+	auto posy = y.begin();
+	auto posr = result.begin();
+	for (size_t i = 0; i < VectorNNZ; i++){
+		posy = y.set_element(posy,10*i,0.5*i+1);
+		posy = y.set_element(posy,10*i+1,2*i+1);
 		
-		//~ y(10*i) = 0.5*i;
-		//~ y(10*i+1) = 2*i;
-		//~ result(10*i) = y(10*i);
-		//~ result(10*i+1) = x(10*i+1)+y(10*i+1);
-		//~ result(10*i+2) = x(10*i+2);
-	//~ }
-	//~ checkSparseExpressionEquality(x+y,result);
-//~ }
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Binary_Minus)
-//~ {
-	//~ compressed_vector<double> x(SparseDimensions); 
-	//~ compressed_vector<double> y(SparseDimensions); 
-	//~ compressed_vector<double> result(SparseDimensions);
-	
-	//~ for (size_t i = 0; i < VectorNNZ; i++)
-	//~ {
-		//~ x(10*i+1) = 0.5*i;
-		//~ x(10*i+2) = i;
+		posx = x.set_element(posx,10*i+1,0.5*i+1);
+		posx = x.set_element(posx,10*i+2,i+1);
 		
-		//~ y(10*i) = 0.5*i;
-		//~ y(10*i+1) = 2*i;
-		//~ result(10*i) = -y(10*i);
-		//~ result(10*i+1) = x(10*i+1)-y(10*i+1);
-		//~ result(10*i+2) = x(10*i+2);
-	//~ }
-	//~ checkSparseExpressionEquality(x-y,result);
-//~ }
-
-//~ BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Binary_Multiply)
-//~ {
-	//~ compressed_vector<double> x(SparseDimensions); 
-	//~ compressed_vector<double> y(SparseDimensions); 
-	//~ compressed_vector<double> result(SparseDimensions);
+		posr = result.set_element(posr,10*i, (0.5*i+1));
+		posr = result.set_element(posr,10*i+1,(0.5*i+1) + (2*i+1));
+		posr = result.set_element(posr,10*i+2,i+1);
+	}
+	checkSparseExpressionEquality(x+y,result);
+}
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Binary_Minus)
+{
+	compressed_vector<double> x(SparseDimensions); 
+	compressed_vector<double> y(SparseDimensions); 
+	compressed_vector<double> result(SparseDimensions);
 	
-	//~ for (size_t i = 0; i < VectorNNZ; i++)
-	//~ {
-		//~ y(10*i) = 0.5*i+1;
-		//~ y(10*i+1) = 2*i+1;
+	auto posx = x.begin();
+	auto posy = y.begin();
+	auto posr = result.begin();
+	for (size_t i = 0; i < VectorNNZ; i++){
+		posy = y.set_element(posy,10*i,0.5*i+1);
+		posy = y.set_element(posy,10*i+1,2*i+1);
+		
+		posx = x.set_element(posx,10*i+1,0.5*i+1);
+		posx = x.set_element(posx,10*i+2,i+1);
+		
+		posr = result.set_element(posr,10*i, -(0.5*i+1));
+		posr = result.set_element(posr,10*i+1,(0.5*i+1) - (2*i+1));
+		posr = result.set_element(posr,10*i+2,i+1);
+	}
+	checkSparseExpressionEquality(x-y,result);
+}
 
-		//~ x(10*i+1) = 0.5*i+1;
-		//~ x(10*i+2) = i+1;
-		//~ result(10*i+1) = x(10*i+1)*y(10*i+1);
-	//~ }
-	//~ checkSparseExpressionEquality(x*y,result);
-//~ }
+BOOST_AUTO_TEST_CASE( Remora_Sparse_Vector_Binary_Multiply)
+{
+	compressed_vector<double> x(SparseDimensions); 
+	compressed_vector<double> y(SparseDimensions); 
+	compressed_vector<double> result(SparseDimensions);
+	
+	
+	auto posx = x.begin();
+	auto posy = y.begin();
+	auto posr = result.begin();
+	for (size_t i = 0; i < VectorNNZ; i++){
+		posy = y.set_element(posy,10*i,0.5*i+1);
+		posy = y.set_element(posy,10*i+1,2*i+1);
+		
+		posx = x.set_element(posx,10*i+1,0.5*i+1);
+		posx = x.set_element(posx,10*i+2,i+1);
+		
+		posr = result.set_element(posr,10*i+1,(0.5*i+1) * (2*i+1));
+	}
+	checkSparseExpressionEquality(x*y,result);
+}
 
 //////////////////////////////DENSE-SPARSE TESTS//////////////////////////////
 
@@ -839,47 +855,52 @@ std::size_t VectorNNZ = 10;
 //////BINARY TRANSFORMATIONS///////
 /////////////////////////////////////////////////////////////
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Dense_Sparse_Vector_Binary_Plus)
-//~ {
-	//~ vector<double> x(SparseDimensions); 
-	//~ compressed_vector<double> y(SparseDimensions); 
-	//~ vector<double> result(SparseDimensions);
+BOOST_AUTO_TEST_CASE( Remora_Dense_Sparse_Vector_Binary_Plus)
+{
+	vector<double> x(SparseDimensions); 
+	compressed_vector<double> y(SparseDimensions); 
+	vector<double> result(SparseDimensions);
 	
 	
-	//~ for (size_t i = 0; i < SparseDimensions; i++)
-	//~ {
-		//~ x(i) = 0.5*i+2;
-		//~ result(i) = x(i);
-	//~ }
+	for (size_t i = 0; i < SparseDimensions; i++)
+	{
+		x(i) = 0.5*i+2;
+		result(i) = x(i);
+	}
 	
-	//~ for (size_t i = 0; i < VectorNNZ; i++)
-	//~ {
-		//~ y(10*i+1) = 0.5*i;
-		//~ result(10*i+1) += y(10*i+1);
-	//~ }
-	//~ checkDenseExpressionEquality(x+y,result);
-	//~ checkDenseExpressionEquality(y+x,result);
-//~ }
+	auto pos = y.begin();
+	for (size_t i = 0; i < VectorNNZ; i++)
+	{
+		std::size_t j = 10*i+1; 
+		pos = y.set_element(pos,j,0.5*i);
+		result(j) += 0.5*i;
+	}
+	checkSparseExpressionEquality(x+y,result);
+	checkSparseExpressionEquality(y+x,result);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Dense_Sparse_Vector_Binary_Multiply)
-//~ {
-	//~ vector<double> x(SparseDimensions); 
-	//~ compressed_vector<double> y(SparseDimensions); 
-	//~ compressed_vector<double> result(SparseDimensions);
+BOOST_AUTO_TEST_CASE( Remora_Dense_Sparse_Vector_Binary_Multiply)
+{
+	vector<double> x(SparseDimensions); 
+	compressed_vector<double> y(SparseDimensions); 
+	compressed_vector<double> result(SparseDimensions);
 	
-	//~ for (size_t i = 0; i < SparseDimensions; i++)
-	//~ {
-		//~ x(i) = 0.5*i+2;
-	//~ }
+	for (size_t i = 0; i < SparseDimensions; i++)
+	{
+		x(i) = 0.5*i+2;
+	}
 	
-	//~ for (size_t i = 0; i < VectorNNZ; i++)
-	//~ {
-		//~ y(10*i+1) = 0.5*i;
-		//~ result(10*i+1) = x(10*i+1)*y(10*i+1);
-	//~ }
-	//~ checkSparseExpressionEquality(x*y,result);
-	//~ checkSparseExpressionEquality(y*x,result);
-//~ }
+	auto pos = y.begin();
+	auto posR = result.begin();
+	for (size_t i = 0; i < VectorNNZ; i++)
+	{
+		std::size_t j = 10*i+1; 
+		pos = y.set_element(pos,j,0.5*i);
+		posR = result.set_element(posR,j,x(10*i+1)*(0.5*i));
+	}
+	checkSparseExpressionEquality(x*y,result);
+	checkSparseExpressionEquality(y*x,result);
+}
 
 
 BOOST_AUTO_TEST_SUITE_END()
