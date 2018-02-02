@@ -52,7 +52,7 @@ void gemm(
 ){
 	for (std::size_t i = 0; i != e1().size1(); ++i) {
 		auto row_m = row(m,i);
-		kernels::gemv(trans(e2),row(e1),row_m,alpha);
+		kernels::gemv(trans(e2),row(e1,i),row_m,alpha);
 	}
 }
 
@@ -100,7 +100,7 @@ void gemm(
 ){
 	for (std::size_t i = 0; i != e1().size1(); ++i) {
 		auto row_m = row(m,i);
-		kernels::gemv(trans(e2),row(e1),row_m,alpha);
+		kernels::gemv(trans(e2),row(e1,i),row_m,alpha);
 	}
 }
 

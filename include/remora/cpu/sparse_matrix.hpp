@@ -52,11 +52,11 @@ struct MatrixStorage{
 		return {m_values.data(), m_indices.data(), m_major_indices_begin.data(), m_major_indices_end.data(), m_indices.size()};
 	}
 	
-	std::size_t major_size()const{
+	size_type major_size()const{
 		return m_major_indices_end.size();
 	}
 	
-	std::size_t minor_size()const{
+	size_type minor_size()const{
 		return m_minor_size;
 	}
 	
@@ -73,7 +73,7 @@ private:
 	std::vector<I> m_major_indices_end;
 	std::vector<T> m_values;
 	std::vector<I> m_indices;
-	std::size_t m_minor_size;
+	size_type m_minor_size;
 };
 template<class StorageManager>
 class compressed_matrix_impl{
@@ -82,7 +82,7 @@ public:
 	typedef typename StorageManager::size_type size_type;
 	typedef typename StorageManager::value_type value_type;
 
-	compressed_matrix_impl(StorageManager const& manager, std::size_t nnz = 0)
+	compressed_matrix_impl(StorageManager const& manager, size_type nnz = 0)
 	: m_manager(manager)
 	, m_storage(m_manager.reserve(nnz)){};
 	
@@ -103,46 +103,46 @@ public:
 	}
 	
 	/// \brief Maximum number of non-zeros that the matrix can store or reserve before memory needs to be reallocated
-	std::size_t nnz_capacity() const{
+	size_type nnz_capacity() const{
 		return m_storage.capacity;
 	}
 	/// \brief Size of reserved storage in the matrix (> number of nonzeros stored)
-	std::size_t nnz_reserved() const {
+	size_type nnz_reserved() const {
 		return m_storage.major_indices_begin[major_size()];
 	}
 	/// \brief Number of nonzeros the major index (a major or column depending on orientation) can maximally store before a resize
-	std::size_t major_capacity(size_type i)const{
+	size_type major_capacity(size_type i)const{
 		REMORA_RANGE_CHECK(i < major_size());
 		return m_storage.major_indices_begin[i+1] - m_storage.major_indices_begin[i];
 	}
 	/// \brief Number of nonzeros the major index (a major or column depending on orientation) currently stores
-	std::size_t major_nnz(size_type i) const {
+	size_type major_nnz(size_type i) const {
 		return m_storage.major_indices_end[i] - m_storage.major_indices_begin[i];
 	}
 
 	/// \brief Set the number of nonzeros stored in the major index (a major or column depending on orientation)
-	void set_major_nnz(size_type i,std::size_t non_zeros) {
+	void set_major_nnz(size_type i,size_type non_zeros) {
 		REMORA_SIZE_CHECK(i < major_size());
 		REMORA_SIZE_CHECK(non_zeros <= major_capacity(i));
 		m_storage.major_indices_end[i] = m_storage.major_indices_begin[i]+non_zeros;
 	}
 	
-	void reserve(std::size_t non_zeros) {
+	void reserve(size_type non_zeros) {
 		if (non_zeros < nnz_capacity()) return;
 		m_storage = m_manager.reserve(non_zeros);
 	}
 
-	void major_reserve(size_type i, std::size_t non_zeros, bool exact_size = false) {
+	void major_reserve(size_type i, size_type non_zeros, bool exact_size = false) {
 		REMORA_RANGE_CHECK(i < major_size());
 		non_zeros = std::min(minor_size(),non_zeros);
-		std::size_t current_capacity = major_capacity(i);
+		size_type current_capacity = major_capacity(i);
 		if (non_zeros <= current_capacity) return;
-		std::size_t space_difference = non_zeros - current_capacity;
+		size_type space_difference = non_zeros - current_capacity;
 
 		//check if there is place in the end of the container to store the elements
 		if (space_difference > nnz_capacity() - nnz_reserved()){
-			std::size_t exact = nnz_capacity() + space_difference;
-			std::size_t spaceous = std::max(2*nnz_capacity(),nnz_capacity() + 2*space_difference);
+			size_type exact = nnz_capacity() + space_difference;
+			size_type spaceous = std::max(2*nnz_capacity(),nnz_capacity() + 2*space_difference);
 			reserve(exact_size? exact:spaceous);
 		}
 		//move the elements of the next majors to make room for the reserved space
@@ -192,10 +192,11 @@ public:
 	}
 	
 	major_iterator set_element(major_iterator pos, size_type index, value_type value) {
-		std::size_t major_index = pos.major_index();
-		std::size_t line_pos = pos - major_begin(major_index);
+		size_type major_index = pos.major_index();
+		size_type line_pos = pos - major_begin(major_index);
 		REMORA_RANGE_CHECK(major_index < major_size());
 		REMORA_RANGE_CHECK(size_type(pos - major_begin(major_index)) <= major_nnz(major_index));
+		REMORA_RANGE_CHECK(pos == major_end(major_index) || pos.index() >= index);//correct ordering
 
 		//shortcut: element already exists.
 		if (pos != major_end(major_index) && pos.index() == index) {
@@ -205,10 +206,11 @@ public:
 		
 		//get position of the element in the array.
 		std::ptrdiff_t arrayPos = line_pos + m_storage.major_indices_begin[major_index];
+		
 
 		//check that there is enough space in the major. this invalidates pos.
 		if (major_capacity(major_index) ==  major_nnz(major_index))
-			major_reserve(major_index,std::max<std::size_t>(2*major_capacity(major_index),5));
+			major_reserve(major_index,std::max<size_type>(2*major_capacity(major_index),5));
 
 		//copy the remaining elements further to make room for the new element
 		std::copy_backward(
@@ -224,17 +226,17 @@ public:
 		m_storage.indices[arrayPos] = index;
 		++m_storage.major_indices_end[major_index];
 
-		//return new iterator to the inserted element.
+		//return new iterator behind the inserted element.
 		return major_begin(major_index) + (line_pos + 1);
 
 	}
 
 	major_iterator clear_range(major_iterator start, major_iterator end) {
 		REMORA_RANGE_CHECK(start.major_index() == end.major_index());
-		std::size_t major_index = start.major_index();
-		std::size_t range_size = end - start;
-		std::size_t range_start = start - major_begin(major_index);
-		std::size_t range_end = range_start + range_size;
+		size_type major_index = start.major_index();
+		size_type range_size = end - start;
+		size_type range_start = start - major_begin(major_index);
+		size_type range_end = range_start + range_size;
 		
 		//get start of the storage of the row/column we are going to change
 		auto values = m_storage.values + m_storage.major_indices_begin[major_index];
@@ -323,11 +325,11 @@ public:
 	}
 
 	/// \brief Number of nonzeros the major index (a row or column depending on orientation) can maximally store before a resize
-	std::size_t major_capacity(size_type i)const{
+	size_type major_capacity(size_type i)const{
 		return m_matrix->major_capacity(m_major_start + i);
 	}
 	/// \brief Number of nonzeros the major index (a row or column depending on orientation) currently stores
-	std::size_t major_nnz(size_type i) const {
+	size_type major_nnz(size_type i) const {
 		return m_matrix->major_nnz(m_major_start + i);
 	}
 	
@@ -339,7 +341,7 @@ public:
 		return m_matrix->queue();
 	}
 
-	void major_reserve(size_type i, std::size_t non_zeros, bool exact_size = false) {
+	void major_reserve(size_type i, size_type non_zeros, bool exact_size = false) {
 		m_matrix->major_reserve(m_major_start + i, non_zeros, exact_size);
 	}
 	
@@ -365,7 +367,7 @@ public:
 	void clear() {
 		if(m_major_start == 0 && m_major_end == major_size(*m_matrix))
 			m_matrix->clear();
-		else for(std::size_t i = m_major_start; i != m_major_end; ++i)
+		else for(size_type i = m_major_start; i != m_major_end; ++i)
 			m_matrix->clear_range(m_matrix -> major_begin(i), m_matrix -> major_end(i));
 	}
 private:

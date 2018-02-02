@@ -355,6 +355,14 @@ public:
 		}
 	}
 	
+	major_iterator set_element(major_iterator pos, size_type index, value_type value) {
+		REMORA_RANGE_CHECK(index == pos.index());
+		*pos = value;
+		//return the iterator to the next element
+		++pos;
+		return pos;
+	}
+	
 		
 	void clear(){
 		for(size_type i = 0; i != major_size(*this); ++i){
@@ -618,6 +626,14 @@ public:
 	}
 	major_iterator major_end(size_type i){
 		return major_iterator(m_data.data() + i * leading_dimension() + minor_size(*this), minor_size(*this), 1);
+	}
+	
+	major_iterator set_element(major_iterator pos, size_type index, value_type value) {
+		REMORA_RANGE_CHECK(index == pos.index());
+		*pos = value;
+		//return the iterator to the next element
+		++pos;
+		return pos;
 	}
 
 	// Serialization

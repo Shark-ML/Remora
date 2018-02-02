@@ -31,7 +31,6 @@
 #include "iterator.hpp"
 
 #include <vector>
-#include <iostream>
 
 #include <boost/serialization/collection_size_type.hpp>
 #include <boost/serialization/nvp.hpp>
