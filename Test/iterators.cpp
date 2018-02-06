@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE( Remora_Compressed_Storage_Iterator)
 		iterators::compressed_storage_iterator<const double,const std::size_t> iter(values,indizes,1,2);
 		iterators::compressed_storage_iterator<const double,const std::size_t> start=iter;
 		iterators::compressed_storage_iterator<const double,const std::size_t> end(values,indizes,5,2);
-		BOOST_REQUIRE_EQUAL(start.row(), 2);
+		BOOST_REQUIRE_EQUAL(start.major_index(), 2);
 		BOOST_REQUIRE_EQUAL(start-iter, 0);
 		BOOST_REQUIRE_EQUAL(end-start, 4);
 		BOOST_REQUIRE(start == iter);

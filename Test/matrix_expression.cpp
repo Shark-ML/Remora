@@ -5,6 +5,7 @@
 
 #include <remora/matrix_expression.hpp>
 #include <remora/dense.hpp>
+#include <remora/sparse.hpp>
 #include <boost/mpl/list.hpp>
 
 using namespace remora;

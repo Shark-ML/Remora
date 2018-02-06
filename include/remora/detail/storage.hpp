@@ -131,17 +131,18 @@ struct sparse_vector_storage{
 	typedef sparse_tag storage_tag;
 	T* values;
 	I* indices;
-	std::size_t* start;
-	std::size_t* end;
-	std::size_t* storage_end;
+	std::size_t nnz;
+	std::size_t capacity;
 	
 	sparse_vector_storage(){}
-	sparse_vector_storage(T* values, I* indices, std::size_t* start,  std::size_t* end, std::size_t* storage_end)
-	:values(values), indices(indices), start(start), end(end), storage_end(storage_end){}
+	sparse_vector_storage(T* values, I* indices, std::size_t nnz, std::size_t capacity)
+	:values(values), indices(indices), nnz(nnz), capacity(capacity){}
 	template<class U, class J>
 	sparse_vector_storage(sparse_vector_storage<U, J> const& storage)
-	: values(storage.values), indices(storage.indices), start(storage.start)
-	, end(storage.end), storage_end(storage.storage_end){}
+	: values(storage.values)
+	, indices(storage.indices)
+	, nnz(storage.nnz)
+	, capacity(storage.capacity){}
 };
 
 template<class T>

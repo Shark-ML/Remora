@@ -48,16 +48,12 @@ template<class T, class I = std::size_t, class Orientation = row_major> class co
  * a sparse vector of values of type T of variable size. The non zero values are stored as
  * two seperate arrays: an index array and a value array. The index array is always sorted
  * and there is at most one entry for each index. Inserting an element can be time consuming.
- * If the vector contains a few zero entries, then it is better to have a normal vector.
  * If the vector has a very high dimension with a few non-zero values, then this vector is
- * very memory efficient (at the cost of a few more computations).
+ * very time and memory efficient.
  *
  * For a \f$n\f$-dimensional compressed vector and \f$0 \leq i < n\f$ the non-zero elements
  * \f$v_i\f$ are mapped to consecutive elements of the index and value container, i.e. for
  * elements \f$k = v_{i_1}\f$ and \f$k + 1 = v_{i_2}\f$ of these containers holds \f$i_1 < i_2\f$.
- *
- * Supported parameters for the adapted array (indices and values) are \c unbounded_array<> ,
- * \c bounded_array<> and \c std::vector<>.
  *
  * \tparam T the type of object stored in the vector (like double, float, complex, etc...)
  * \tparam I the indices stored in the vector
@@ -101,12 +97,12 @@ public:
 	
 	///\brief Returns the underlying storage structure for low level access
 	storage_type raw_storage(){
-		return this->m_storage;
+		return this->m_manager.m_storage;
 	}
 	
 	///\brief Returns the underlying storage structure for low level access
 	const_storage_type raw_storage() const{
-		return this->m_storage;
+		return this->m_manager.m_storage;
 	}
 	
 	typename device_traits<cpu_tag>::queue_type& queue() const{
@@ -143,6 +139,74 @@ public:
 		if (Archive::is_loading::value) {
 			this->m_storage = this->m_impl.reserve(this->nnz());
 		}
+	}
+};
+
+
+/** \brief Wraps external memory compatible to the format of a compressed vector
+ *
+ * For a \f$n\f$-dimensional compressed vector and \f$0 \leq i < n\f$ the non-zero elements
+ * \f$v_i\f$ are mapped to consecutive elements of the index and value container, i.e. for
+ * elements \f$k = v_{i_1}\f$ and \f$k + 1 = v_{i_2}\f$ of these containers holds \f$i_1 < i_2\f$.
+ *
+ * There are 4 values needed: the address of the arrays of indices and values, the number of nonzero elements
+ * and the size of the arrays (which can be larger than the number of noznero elements to allow for insertion).
+ *
+ * \tparam T the type of object stored in the vector (like double, float, complex, etc...)
+ * \tparam I the indices stored in the vector
+ */
+template<class T, class I>
+class sparse_vector_adaptor
+: public vector_expression<sparse_vector_adaptor<T, I>, cpu_tag>
+,public detail::BaseSparseVector<detail::VectorStorageReference<T,I > >{
+public:
+	typedef T value_type;
+	typedef I size_type;
+	typedef T const& const_reference;
+	typedef T& reference;
+	
+	typedef detail::compressed_vector_reference<sparse_vector_adaptor const> const_closure_type;
+	typedef detail::compressed_vector_reference<sparse_vector_adaptor> closure_type;
+	typedef sparse_vector_storage<T,I> storage_type;
+	typedef sparse_vector_storage<T const,I const> const_storage_type;
+	typedef elementwise<sparse_tag> evaluation_category;
+
+	// Construction and destruction
+
+	/// \brief Constructs the adaptor from external storage
+	explicit sparse_vector_adaptor(size_type size, storage_type storage)
+	: detail::BaseSparseVector<detail::VectorStorageReference<T,I> >(
+		detail::VectorStorageReference<T,I>(storage), size, storage.nnz
+	){}
+	
+	/// \brief Covnerts an expression into an adaptor
+	template<class E>
+	sparse_vector_adaptor(vector_expression<E, cpu_tag> const& e)
+	: detail::BaseSparseVector<detail::VectorStorageReference<T,I> >(
+		detail::VectorStorageReference<T,I>(e().raw_storage()), e().size(), e().raw_storage().nnz
+	){}
+	
+	///\brief Returns the underlying storage structure for low level access
+	storage_type raw_storage(){
+		return this->m_manager.m_storage;
+	}
+	
+	///\brief Returns the underlying storage structure for low level access
+	const_storage_type raw_storage() const{
+		return this->m_manager.m_storage;
+	}
+	
+	typename device_traits<cpu_tag>::queue_type& queue() const{
+		return device_traits<cpu_tag>::default_queue();
+	}
+
+	// Assignment
+	sparse_vector_adaptor& operator = (sparse_vector_adaptor const& v) {
+		return kernels::assign(*this, typename vector_temporary<sparse_vector_adaptor>::type(v));
+	}
+	template<class AE>
+	sparse_vector_adaptor& operator = (vector_expression<AE, cpu_tag> const& ae) {
+		return kernels::assign(*this, typename vector_temporary<AE>::type(ae));
 	}
 };
 
@@ -287,6 +351,131 @@ public:
 private:
 	detail::compressed_matrix_impl<detail::MatrixStorage<T,I> > m_impl;
 };
+
+
+
+//~ ///\brief Wraps externally provided storage into a sparse matrix interface
+//~ ///
+//~ /// Note that for this class, storage is limited and if an insertion operation takes more space than available, it will throw an exception
+//~ template<class T, class I, class Orientation>
+//~ class compressed_matrix_adaptor:public matrix_container<compressed_matrix_adaptor<T, I, Orientation>, cpu_tag >{
+//~ public:
+	//~ typedef I size_type;
+	//~ typedef T value_type;
+	//~ typedef T const& const_reference;
+	//~ typedef T& reference;
+	
+	//~ typedef detail::compressed_matrix_proxy<compressed_matrix<T, I, Orientation> const, Orientation> const_closure_type;
+	//~ typedef detail::compressed_matrix_proxy<compressed_matrix<T, I, Orientation>, Orientation> closure_type;
+	//~ typedef sparse_matrix_storage<T, I> storage_type;
+	//~ typedef sparse_matrix_storage<T const, I const> const_storage_type;
+	//~ typedef elementwise<sparse_tag> evaluation_category;
+	//~ typedef Orientation orientation;
+	
+	//~ compressed_matrix_adaptor(size_type rows, size_type cols, storage_type storage)
+	//~ :m_impl(detail::MatrixStorageAdaptor<T,I>(orientation::index_M(rows,cols),orientation::index_m(rows,cols)),storage){}
+	
+	//~ template<class E>
+	//~ compressed_matrix operator=(matrix_container<E, cpu_tag> const& m){
+		//~ return assign(*this,m);
+	//~ }
+	//~ template<class E>
+	//~ compressed_matrix& operator=(matrix_expression<E, cpu_tag> const& m){
+		//~ compressed_matrix temporary(m);
+		//~ swap(*this,temporary);
+		//~ return *this;
+	//~ }
+	
+	//~ ///\brief Number of rows of the matrix
+	//~ size_type size1() const {
+		//~ return orientation::index_M(m_impl.major_size(), m_impl.minor_size());
+	//~ }
+	
+	//~ ///\brief Number of columns of the matrix
+	//~ size_type size2() const {
+		//~ return orientation::index_m(m_impl.major_size(), m_impl.minor_size());
+	//~ }
+
+	//~ /// \brief Number of nonzeros this matrix can maximally store before memory is exhausted
+	//~ std::size_t nnz_capacity() const{
+		//~ return m_impl.nnz_capacity();
+	//~ }
+	//~ /// \brief Number of reserved elements in the matrix (> number of nonzeros stored, < nnz_capacity)
+	//~ std::size_t nnz_reserved() const {
+		//~ return m_impl.nnz_reserved();
+	//~ }
+	//~ /// \brief Number of nonzeros the major index (a row or column depending on orientation) can maximally store before a resize
+	//~ std::size_t major_capacity(size_type i)const{
+		//~ return m_impl.major_capacity(i);
+	//~ }
+	//~ /// \brief Number of nonzeros the major index (a row or column depending on orientation) currently stores
+	//~ std::size_t major_nnz(size_type i) const {
+		//~ return m_impl.major_nnz(i);
+	//~ }
+
+	//~ /// \brief Set the total number of nonzeros stored by the matrix
+	//~ void set_nnz(std::size_t non_zeros) {
+		//~ m_impl.set_nnz(non_zeros);
+	//~ }
+	//~ /// \brief Set the number of nonzeros stored in the major index (a row or column depending on orientation)
+	//~ void set_major_nnz(size_type i,std::size_t non_zeros) {
+		//~ m_impl.set_major_nnz(i,non_zeros);
+	//~ }
+	
+	//~ const_storage_type raw_storage()const{
+		//~ return m_impl.raw_storage();
+	//~ }
+	//~ storage_type raw_storage(){
+		//~ return m_impl.raw_storage();
+	//~ }
+	
+	//~ typename device_traits<cpu_tag>::queue_type& queue() const{
+		//~ return device_traits<cpu_tag>::default_queue();
+	//~ }
+	
+	//~ void reserve(std::size_t non_zeros) {
+		//~ m_impl.reserve(non_zeros);
+	//~ }
+
+	//~ void major_reserve(size_type i, std::size_t non_zeros) {
+		//~ m_impl.major_reserve(i, non_zeros, true);
+	//~ }
+	
+	//~ typedef typename detail::compressed_matrix_impl<detail::MatrixStorage<T,I> >::const_major_iterator const_major_iterator;
+	//~ typedef typename detail::compressed_matrix_impl<detail::MatrixStorage<T,I> >::major_iterator major_iterator;
+
+	//~ const_major_iterator major_begin(size_type i) const {
+		//~ return m_impl.cmajor_begin(i);
+	//~ }
+
+	//~ const_major_iterator major_end(size_type i) const{
+		//~ return m_impl.cmajor_end(i);
+	//~ }
+
+	//~ major_iterator major_begin(size_type i) {
+		//~ return m_impl.major_begin(i);
+	//~ }
+
+	//~ major_iterator major_end(size_type i) {
+		//~ return m_impl.major_end(i);
+	//~ }
+	
+	//~ major_iterator set_element(major_iterator pos, size_type index, value_type value){
+		//~ return m_impl.set_element(pos, index, value);
+	//~ }
+
+	//~ major_iterator clear_range(major_iterator start, major_iterator end) {
+		//~ return m_impl.clear_range(start,end);
+	//~ }
+	
+	//~ void clear() {
+		//~ for(std::size_t i = 0; i != m_impl.major_size(); ++i){
+			//~ clear_range(major_begin(i),major_end(i));
+		//~ }
+	//~ }
+//~ private:
+	//~ detail::compressed_matrix_impl<detail::MatrixStorage<T,I> > m_impl;
+//~ };
 
 namespace detail{
 ////////////////////////MATRIX ROW//////////////////////

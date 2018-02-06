@@ -39,32 +39,59 @@
 namespace remora{ namespace detail{ 
 
 template<class T, class I>
+struct VectorStorageReference{
+	typedef sparse_vector_storage<T,I> storage_type;
+	typedef I size_type;
+	typedef T value_type;
+	
+	std::size_t max_capacity() const{
+		return m_storage.capacity;
+	}
+	
+	void reserve(size_type non_zeros){
+		assert(non_zeros <= max_capacity());
+	}
+	
+	VectorStorageReference(storage_type const& storage)
+	: m_storage(storage){}
+	
+	storage_type m_storage;
+};
+
+
+template<class T, class I>
 struct VectorStorage{
 	typedef sparse_vector_storage<T,I> storage_type;
 	typedef I size_type;
 	typedef T value_type;
 	
-	storage_type reserve(size_type non_zeros){
-		if(non_zeros > m_capacity){
-			m_indices.resize(non_zeros);
-			m_values.resize(non_zeros);
-			m_capacity = non_zeros;
-		}
-		return {m_values.data(), m_indices.data(), &m_start, &m_nnz, &m_capacity};
+	std::size_t max_capacity() const{
+		return std::numeric_limits<std::size_t>::max()/sizeof(T);
 	}
 	
-	VectorStorage(): m_start(0), m_nnz(0), m_capacity(0){}
+	void reserve(size_type non_zeros){
+		if(non_zeros > m_storage.capacity){
+			m_indices.resize(non_zeros);
+			m_values.resize(non_zeros);
+		}
+		m_storage.values = m_values.data();
+		m_storage.indices = m_indices.data();
+		m_storage.capacity = non_zeros;
+	}
+	
+	VectorStorage(): m_storage({nullptr,nullptr,0,0}){}
 	
 	template<class Archive>
 	void serialize(Archive& ar, const unsigned int /* file_version */) {
-		ar & boost::serialization::make_nvp("nnz", m_nnz);
+		ar & boost::serialization::make_nvp("nnz", m_storage.nnz);
+		ar & boost::serialization::make_nvp("capacity", m_storage.capacity);
 		ar & boost::serialization::make_nvp("indices", m_indices);
 		ar & boost::serialization::make_nvp("values", m_values);
+		m_storage.values = m_values.data();
+		m_storage.indices = m_indices.data();
 	}
+	storage_type m_storage;
 private:
-	std::size_t m_start;
-	std::size_t m_nnz;
-	std::size_t m_capacity;
 	std::vector<T> m_values;
 	std::vector<I> m_indices;
 };
@@ -77,7 +104,6 @@ struct BaseSparseVector{
 	
 	BaseSparseVector(StorageManager const& manager, std::size_t size, std::size_t nnz)
 	: m_manager(manager)
-	, m_storage(m_manager.reserve(nnz))
 	, m_size(size){};
 	
 	/// \brief Return the size of the vector
@@ -85,22 +111,27 @@ struct BaseSparseVector{
 		return m_size;
 	}
 	
+	/// \brief number of non-zeros currently stored in the vector
 	size_type nnz() const {
-		return *m_storage.end - *m_storage.start;
+		return m_manager.m_storage.nnz;
 	}
 	
+	/// \brief number of nnz that can be stored before more memory needs to be allocated
 	size_type nnz_capacity() const{
-		return *m_storage.storage_end - *m_storage.start;
+		return m_manager.m_storage.capacity;
 	}
 	
+	/// \brief upper bound for nnz capacity
+	size_type max_nnz_capacity() const{
+		return std::min(size(), m_manager.max_capacity());
+	}
+	
+	/// \brief reserve space for more non-zero elements
 	void reserve(size_type non_zeros) {
 		if(non_zeros <= nnz_capacity()) return;
-		m_storage = m_manager.reserve(non_zeros);
+		m_manager.reserve(non_zeros);
 	}
 	
-	typename device_traits<cpu_tag>::queue_type& queue(){
-		return device_traits<cpu_tag>::default_queue();
-	}
 	
 	// --------------
 	// ITERATORS
@@ -111,22 +142,22 @@ struct BaseSparseVector{
 
 	/// \brief return an iterator behind the last non-zero element of the vector
 	const_iterator begin() const {
-		return const_iterator(m_storage.values + start_index(), m_storage.indices + start_index(), 0);
+		return const_iterator(m_manager.m_storage.values, m_manager.m_storage.indices, 0);
 	}
 
 	/// \brief return an iterator behind the last non-zero element of the vector
 	const_iterator end() const {
-		return const_iterator(m_storage.values + start_index(), m_storage.indices + start_index(), nnz());
+		return const_iterator(m_manager.m_storage.values, m_manager.m_storage.indices, nnz());
 	}
 	
 	/// \brief return an iterator behind the last non-zero element of the vector
 	iterator begin() {
-		return iterator(m_storage.values + start_index(), m_storage.indices + start_index(), 0);
+		return iterator(m_manager.m_storage.values, m_manager.m_storage.indices, 0);
 	}
 
 	/// \brief return an iterator behind the last non-zero element of the vector
 	iterator end() {
-		return iterator(m_storage.values + start_index(), m_storage.indices + start_index(), nnz());
+		return iterator(m_manager.m_storage.values, m_manager.m_storage.indices, nnz());
 	}
 	
 	iterator set_element(iterator pos, size_type index, value_type value) {
@@ -139,19 +170,19 @@ struct BaseSparseVector{
 		//get position of the new element in the array.
 		std::ptrdiff_t arrayPos = pos - begin();
 		if(nnz() == nnz_capacity())//reserve more space if needed, this invalidates pos.
-			reserve(std::min(std::max<size_type>(5,2 * nnz_capacity()),size()));
+			reserve(std::min(std::max<size_type>(5,2 * nnz_capacity()),max_nnz_capacity()));
 		
 		//copy the remaining elements to make space for the new ones
-		auto values = m_storage.values + start_index();
-		auto indices = m_storage.indices + start_index();
+		auto values = m_manager.m_storage.values;
+		auto indices = m_manager.m_storage.indices;
 		std::copy_backward(values + arrayPos, values + nnz() , values + nnz() +1);
 		std::copy_backward(indices + arrayPos, indices + nnz(), indices + nnz() +1);
 		//insert new element
 		values[arrayPos] = value;
 		indices[arrayPos] = index;
-		*m_storage.end += 1;
+		m_manager.m_storage.nnz += 1;
 		
-		//return new iterator to the inserted element.
+		//return new iterator to the next element.
 		return iterator(values,indices,arrayPos+1);
 	}
 	
@@ -161,11 +192,11 @@ struct BaseSparseVector{
 		std::ptrdiff_t endPos = end - begin();
 		
 		//remove the elements in the range
-		auto values = m_storage.values + start_index();
-		auto indices = m_storage.indices + start_index();
+		auto values = m_manager.m_storage.values;
+		auto indices = m_manager.m_storage.indices;
 		std::copy(values + endPos, values + nnz(), values + startPos);
 		std::copy(indices + endPos, indices + nnz() , indices + startPos);
-		*m_storage.end -= endPos - startPos;
+		m_manager.m_storage.nnz -= endPos - startPos;
 		//return new iterator to the next element
 		return iterator(values, indices, startPos);
 	}
@@ -180,7 +211,6 @@ struct BaseSparseVector{
 	}
 protected:
 	StorageManager m_manager;
-	storage_type m_storage;
 	std::size_t m_size;
 
 	void do_resize(size_type size, bool keep){
@@ -197,10 +227,6 @@ protected:
 			clear_range(pos,end());
 		}
 		m_size = size;
-	}
-	
-	size_type start_index() const{
-		return *m_storage.start;
 	}
 };
 
