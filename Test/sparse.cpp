@@ -53,7 +53,6 @@ BOOST_AUTO_TEST_CASE( compressed_vector_set_element){
 	}
 }
 
-
 BOOST_AUTO_TEST_CASE( compressed_vector_clear){
 	std::size_t index[]={1,2,4,7,8, 9,11,16,21};
 	unsigned int data[]={2,4,1,8,1,3,5,13,2};
@@ -211,6 +210,83 @@ BOOST_AUTO_TEST_CASE( compressed_vector_const_reference){
 		for(auto it = ref.begin(); it != ref.end(); ++it,++i){
 			BOOST_CHECK_EQUAL(*it,data[i]);
 			BOOST_CHECK_EQUAL(it.index(),index[i]);
+		}
+	}
+}
+
+BOOST_AUTO_TEST_CASE( compressed_vector_adaptor_test){
+
+	std::size_t index[]={1,2,7,9,11,21};
+	unsigned int data[]={2,4,8,3,5,2};
+	compressed_vector<unsigned int> vec(30);
+	auto pos = vec.begin();
+	for(int i = 0; i != 6; ++i)
+		pos = vec.set_element(pos,index[i],data[i]);
+	
+	//test linear insertion and check iterators/storage
+	{
+		std::size_t index_storage[16];
+		unsigned int data_storage[16];
+		compressed_vector_adaptor<unsigned int> v(30,{data_storage, index_storage,0,16});
+		BOOST_REQUIRE_EQUAL(v.nnz(),0);
+		BOOST_REQUIRE_EQUAL(v.size(),30);
+		BOOST_REQUIRE_EQUAL(v.nnz_capacity(),16);
+		BOOST_REQUIRE_EQUAL(v.max_nnz_capacity(),16);
+		auto pos = v.begin();
+		for(int i = 0; i != 6; ++i)
+			pos = v.set_element(pos,index[i],data[i]);
+
+		BOOST_REQUIRE_EQUAL(v.nnz(),6);
+		BOOST_REQUIRE_EQUAL(v.end() - v.begin(),6);
+		BOOST_REQUIRE_EQUAL(v.nnz_capacity(),16);
+		
+		int i = 0;
+		for(auto it = v.begin(); it != v.end(); ++it,++i){
+			BOOST_CHECK_EQUAL(*it,data[i]);
+			BOOST_CHECK_EQUAL(data_storage[i],data[i]);
+			BOOST_CHECK_EQUAL(it.index(),index[i]);
+			BOOST_CHECK_EQUAL(index_storage[i],index[i]);
+		}
+	}
+	
+	//test assignment
+	{
+		std::size_t index_storage[16];
+		unsigned int data_storage[16];
+		compressed_vector_adaptor<unsigned int> v(30,{data_storage, index_storage,0,16});
+		v = vec;
+		BOOST_REQUIRE_EQUAL(v.nnz(),6);
+		BOOST_REQUIRE_EQUAL(v.end() - v.begin(),6);
+		BOOST_REQUIRE_EQUAL(v.nnz_capacity(),16);
+		
+		int i = 0;
+		for(auto it = v.begin(); it != v.end(); ++it,++i){
+			BOOST_CHECK_EQUAL(*it,data[i]);
+			BOOST_CHECK_EQUAL(data_storage[i],data[i]);
+			BOOST_CHECK_EQUAL(it.index(),index[i]);
+			BOOST_CHECK_EQUAL(index_storage[i],index[i]);
+		}
+	}
+	
+	//test assignment from adaptor
+	{
+		std::size_t index_storage[16];
+		unsigned int data_storage[16];
+		compressed_vector_adaptor<unsigned int> vinit(30,{data_storage, index_storage,0,16});
+		auto pos = vinit.begin();
+		for(int i = 0; i != 6; ++i)
+			pos = vinit.set_element(pos,index[i],data[i]);
+		
+		std::size_t index_storage2[22];
+		unsigned int data_storage2[22];
+		compressed_vector_adaptor<unsigned int> v(30,{data_storage2, index_storage2,0,22});
+		v = vinit;
+		int i = 0;
+		for(auto it = v.begin(); it != v.end(); ++it,++i){
+			BOOST_CHECK_EQUAL(*it,data[i]);
+			BOOST_CHECK_EQUAL(data_storage[i],data[i]);
+			BOOST_CHECK_EQUAL(it.index(),index[i]);
+			BOOST_CHECK_EQUAL(index_storage[i],index[i]);
 		}
 	}
 }
@@ -384,4 +460,5 @@ BOOST_AUTO_TEST_CASE( Remora_sparse_matrix_insert_random ){
 		}
 	}
 }
+
 BOOST_AUTO_TEST_SUITE_END();

@@ -40,6 +40,7 @@
 namespace remora{
 
 template<class T, class I = std::size_t> class compressed_vector;
+template<class T, class I = std::size_t> class compressed_vector_adaptor;
 template<class T, class I = std::size_t, class Orientation = row_major> class compressed_matrix;
 
 
@@ -86,7 +87,7 @@ public:
 	template<class E>
 	compressed_vector(vector_expression<E, cpu_tag> const& e, size_type non_zeros = 0)
 	: detail::BaseSparseVector<detail::VectorStorage<T,I> >(
-		detail::VectorStorage<T, I>(),e.size(),non_zeros
+		detail::VectorStorage<T, I>(),e().size(),non_zeros
 	){
 		assign(*this,e);
 	}
@@ -156,8 +157,8 @@ public:
  * \tparam I the indices stored in the vector
  */
 template<class T, class I>
-class sparse_vector_adaptor
-: public vector_expression<sparse_vector_adaptor<T, I>, cpu_tag>
+class compressed_vector_adaptor
+: public vector_expression<compressed_vector_adaptor<T, I>, cpu_tag>
 ,public detail::BaseSparseVector<detail::VectorStorageReference<T,I > >{
 public:
 	typedef T value_type;
@@ -165,8 +166,8 @@ public:
 	typedef T const& const_reference;
 	typedef T& reference;
 	
-	typedef detail::compressed_vector_reference<sparse_vector_adaptor const> const_closure_type;
-	typedef detail::compressed_vector_reference<sparse_vector_adaptor> closure_type;
+	typedef detail::compressed_vector_reference<compressed_vector_adaptor const> const_closure_type;
+	typedef detail::compressed_vector_reference<compressed_vector_adaptor> closure_type;
 	typedef sparse_vector_storage<T,I> storage_type;
 	typedef sparse_vector_storage<T const,I const> const_storage_type;
 	typedef elementwise<sparse_tag> evaluation_category;
@@ -174,14 +175,14 @@ public:
 	// Construction and destruction
 
 	/// \brief Constructs the adaptor from external storage
-	explicit sparse_vector_adaptor(size_type size, storage_type storage)
+	explicit compressed_vector_adaptor(size_type size, storage_type storage)
 	: detail::BaseSparseVector<detail::VectorStorageReference<T,I> >(
 		detail::VectorStorageReference<T,I>(storage), size, storage.nnz
 	){}
 	
 	/// \brief Covnerts an expression into an adaptor
 	template<class E>
-	sparse_vector_adaptor(vector_expression<E, cpu_tag> const& e)
+	compressed_vector_adaptor(vector_expression<E, cpu_tag> const& e)
 	: detail::BaseSparseVector<detail::VectorStorageReference<T,I> >(
 		detail::VectorStorageReference<T,I>(e().raw_storage()), e().size(), e().raw_storage().nnz
 	){}
@@ -201,12 +202,14 @@ public:
 	}
 
 	// Assignment
-	sparse_vector_adaptor& operator = (sparse_vector_adaptor const& v) {
-		return kernels::assign(*this, typename vector_temporary<sparse_vector_adaptor>::type(v));
+	compressed_vector_adaptor& operator = (compressed_vector_adaptor const& v) {
+		kernels::assign(*this, typename vector_temporary<compressed_vector_adaptor>::type(v));
+		return *this;
 	}
 	template<class AE>
-	sparse_vector_adaptor& operator = (vector_expression<AE, cpu_tag> const& ae) {
-		return kernels::assign(*this, typename vector_temporary<AE>::type(ae));
+	compressed_vector_adaptor& operator = (vector_expression<AE, cpu_tag> const& ae) {
+		kernels::assign(*this, typename vector_temporary<AE>::type(ae));
+		return *this;
 	}
 };
 
