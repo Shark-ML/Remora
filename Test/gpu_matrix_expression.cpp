@@ -680,6 +680,40 @@ BOOST_AUTO_TEST_CASE( Remora_sum_columns){
 	checkDenseExpressionEquality(sum_columns(x_col),result);
 }
 
+BOOST_AUTO_TEST_CASE( Remora_min_max_rows )
+{
+	matrix<float> x_cpu(Dimension1, Dimension2,0.0); 
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x_cpu(i,j) = -3.0+i-j;
+		}
+	}
+	vector<float> result_max = max_rows(x_cpu);
+	vector<float> result_min = min_rows(x_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(max_rows(x_row),result_max);
+	checkDenseExpressionEquality(min_rows(x_col),result_min);
+}
+
+BOOST_AUTO_TEST_CASE( Remora_min_max_columns )
+{
+	matrix<float> x_cpu(Dimension1, Dimension2,0.0); 
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x_cpu(i,j) = -3.0+i-j;
+		}
+	}
+	vector<float> result_max = max_columns(x_cpu);
+	vector<float> result_min = min_columns(x_cpu);
+	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
+	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
+	checkDenseExpressionEquality(max_columns(x_row),result_max);
+	checkDenseExpressionEquality(min_columns(x_col),result_min);
+}
+
 ////////////////////////////////////////////////////////////////////////
 ////////////REDUCTIONS
 ////////////////////////////////////////////////////////////////////////

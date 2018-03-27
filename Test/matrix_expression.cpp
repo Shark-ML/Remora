@@ -834,6 +834,40 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_sum_columns, Orientation, result_orientati
 	checkDenseBlockAssign(sum_columns(x),result);
 }
 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_min_max_rows, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
+	vector<double> result_max(Dimension2,-1.e100);
+	vector<double> result_min(Dimension2,1.e100);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = i-3.0-j;
+			result_max(j) = std::max(result_max(j), x(i,j));
+			result_min(j) = std::min(result_min(j), x(i,j));
+		}
+	}
+	
+	checkDenseBlockAssign(max_rows(x),result_max);
+	checkDenseBlockAssign(min_rows(x),result_min);
+}
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_min_max_columns, Orientation, result_orientations )
+{
+	matrix<double, Orientation> x(Dimension1, Dimension2); 
+	vector<double> result_max(Dimension1,-1.e100);
+	vector<double> result_min(Dimension1,1.e100);
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension2; j++){
+			x(i,j) = i-3.0-j;
+			result_max(i) = std::max(result_max(i), x(i,j));
+			result_min(i) = std::min(result_min(i), x(i,j));
+		}
+	}
+	checkDenseBlockAssign(max_columns(x),result_max);
+	checkDenseBlockAssign(min_columns(x),result_min);
+}
+
 ////////////////////////////////////////////////////////////////////////
 ////////////REDUCTIONS
 ////////////////////////////////////////////////////////////////////////
