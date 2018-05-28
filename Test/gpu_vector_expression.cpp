@@ -24,13 +24,13 @@ void checkDenseExpressionEquality(
 	//test block assignment operators
 	vector<float, gpu_tag> res1_gpu(result.size(),0.01f);
 	vector<float, gpu_tag> res2_gpu(result.size(),0.01f);
-	op_gpu.assign_to(res1_gpu,2.0f);
-	op_gpu.plus_assign_to(res2_gpu,2.0f);
+	op_gpu.assign_to(res1_gpu);
+	op_gpu.plus_assign_to(res2_gpu);
 	vector<float> res1 = copy_to_cpu(res1_gpu);
 	vector<float> res2 = copy_to_cpu(res2_gpu);
 	for(std::size_t i = 0; i != op.size(); ++i){
-		BOOST_CHECK_CLOSE(2.0f * result(i), res1(i),1.e-3);
-		BOOST_CHECK_CLOSE(2.0f * result(i) + 0.01f, res2(i),1.e-2);
+		BOOST_CHECK_CLOSE(result(i), res1(i),1.e-3);
+		BOOST_CHECK_CLOSE(result(i) + 0.01f, res2(i),1.e-2);
 	}
 }
 

@@ -17,12 +17,12 @@ void checkDenseBlockAssign(
 ){
 	remora::vector<typename Result::value_type> res1(result.size(),1.0);
 	remora::vector<typename Result::value_type> res2(result.size(),1.0);
-	op().assign_to(res1,2);
-	op().plus_assign_to(res2,2);
+	op().assign_to(res1, op);
+	op().plus_assign_to(res2);
 	
 	for(std::size_t i = 0; i != op().size(); ++i){
-		BOOST_CHECK_SMALL(res1(i) - 2*result(i),typename Result::value_type(1.e-7));
-		BOOST_CHECK_SMALL(res2(i) - 2*result(i) - 1,typename Result::value_type(1.e-7));
+		BOOST_CHECK_SMALL(res1(i) - result(i),typename Result::value_type(1.e-7));
+		BOOST_CHECK_SMALL(res2(i) - result(i) - 1,typename Result::value_type(1.e-7));
 	}
 }
 
@@ -32,13 +32,13 @@ void checkDenseBlockAssign(
 ){
 	remora::matrix<typename Result::value_type> res1(result.size1(),result.size2(),1.0);
 	remora::matrix<typename Result::value_type> res2(result.size1(),result.size2(),1.0);
-	op().assign_to(res1,2);
-	op().plus_assign_to(res2,2);
+	op().assign_to(res1);
+	op().plus_assign_to(res2);
 	
 	for(std::size_t i = 0; i != op().size1(); ++i){
 		for(std::size_t j = 0; j != op().size2(); ++j){
-			BOOST_CHECK_SMALL(res1(i,j) - 2*result(i,j),typename Result::value_type(1.e-7));
-			BOOST_CHECK_SMALL(res2(i,j) - 2*result(i,j) - 1,typename Result::value_type(1.e-7));
+			BOOST_CHECK_SMALL(res1(i,j) - result(i,j),typename Result::value_type(1.e-7));
+			BOOST_CHECK_SMALL(res2(i,j) - result(i,j) - 1,typename Result::value_type(1.e-7));
 		}
 	}
 }
@@ -803,70 +803,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Scalar_Top, Orientation, res
 	checkDenseBlockAssign(x & t,result2);
 }
 
-////////////////////////////////////////////////////////////////////////
-////////////ROW-WISE REDUCTIONS
-////////////////////////////////////////////////////////////////////////
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_sum_rows, Orientation, result_orientations )
-{
-	matrix<double, Orientation> x(Dimension1, Dimension2); 
-	vector<double> result(Dimension2,0.0);
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x(i,j) = i-3.0-j;
-			result(j) += x(i,j);
-		}
-	}
-	
-	checkDenseBlockAssign(sum_rows(x),result);
-}
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_sum_columns, Orientation, result_orientations )
-{
-	matrix<double, Orientation> x(Dimension1, Dimension2); 
-	vector<double> result(Dimension1,0.0);
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x(i,j) = i-3.0-j;
-			result(i) += x(i,j);
-		}
-	}
-	checkDenseBlockAssign(sum_columns(x),result);
-}
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_min_max_rows, Orientation, result_orientations )
-{
-	matrix<double, Orientation> x(Dimension1, Dimension2); 
-	vector<double> result_max(Dimension2,-1.e100);
-	vector<double> result_min(Dimension2,1.e100);
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x(i,j) = i-3.0-j;
-			result_max(j) = std::max(result_max(j), x(i,j));
-			result_min(j) = std::min(result_min(j), x(i,j));
-		}
-	}
-	
-	checkDenseBlockAssign(max_rows(x),result_max);
-	checkDenseBlockAssign(min_rows(x),result_min);
-}
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_min_max_columns, Orientation, result_orientations )
-{
-	matrix<double, Orientation> x(Dimension1, Dimension2); 
-	vector<double> result_max(Dimension1,-1.e100);
-	vector<double> result_min(Dimension1,1.e100);
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x(i,j) = i-3.0-j;
-			result_max(i) = std::max(result_max(i), x(i,j));
-			result_min(i) = std::min(result_min(i), x(i,j));
-		}
-	}
-	checkDenseBlockAssign(max_columns(x),result_max);
-	checkDenseBlockAssign(min_columns(x),result_min);
-}
 
 ////////////////////////////////////////////////////////////////////////
 ////////////REDUCTIONS

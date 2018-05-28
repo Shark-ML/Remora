@@ -29,14 +29,14 @@ void checkDenseExpressionEquality(
 	{
 		matrix<float, row_major, gpu_tag> res1_gpu(result.size1(),result.size2(),0.1f);
 		matrix<float, row_major, gpu_tag> res2_gpu(result.size1(),result.size2(),0.1f);
-		op_gpu().assign_to(res1_gpu,2.0f);
-		op_gpu().plus_assign_to(res2_gpu,2.0f);
+		op_gpu().assign_to(res1_gpu);
+		op_gpu().plus_assign_to(res2_gpu);
 		matrix<float> res1 = copy_to_cpu(res1_gpu);
 		matrix<float> res2 = copy_to_cpu(res2_gpu);
 		for(std::size_t i = 0; i != op.size1(); ++i){
 			for(std::size_t j = 0; j != op.size2(); ++j){
-				BOOST_CHECK_CLOSE(2.0f * result(i,j), res1(i,j),1.e-3);
-				BOOST_CHECK_CLOSE(2.0f * result(i,j) + 0.1f, res2(i,j),1.e-2);
+				BOOST_CHECK_CLOSE(result(i,j), res1(i,j),1.e-3);
+				BOOST_CHECK_CLOSE(result(i,j) + 0.1f, res2(i,j),1.e-2);
 			}
 		}
 	}
@@ -44,14 +44,14 @@ void checkDenseExpressionEquality(
 	{
 		matrix<float, column_major, gpu_tag> res1_gpu(result.size1(),result.size2(),0.1f);
 		matrix<float, column_major, gpu_tag> res2_gpu(result.size1(),result.size2(),0.1f);
-		op_gpu().assign_to(res1_gpu,2.0f);
-		op_gpu().plus_assign_to(res2_gpu,2.0f);
+		op_gpu().assign_to(res1_gpu);
+		op_gpu().plus_assign_to(res2_gpu);
 		matrix<float, column_major> res1 = copy_to_cpu(res1_gpu);
 		matrix<float, column_major> res2 = copy_to_cpu(res2_gpu);
 		for(std::size_t i = 0; i != op.size1(); ++i){
 			for(std::size_t j = 0; j != op.size2(); ++j){
-				BOOST_CHECK_CLOSE(2.0f * result(i,j), res1(i,j),1.e-3);
-				BOOST_CHECK_CLOSE(2.0f * result(i,j) + 0.1f, res2(i,j),1.e-2);
+				BOOST_CHECK_CLOSE(result(i,j), res1(i,j),1.e-3);
+				BOOST_CHECK_CLOSE(result(i,j) + 0.1f, res2(i,j),1.e-2);
 			}
 		}
 	}
@@ -647,72 +647,6 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Min)
 	checkDenseExpressionEquality(min(x,y),result);
 }
 
-
-////////////////////////////////////////////////////////////////////////
-////////////ROW-WISE REDUCTIONS
-////////////////////////////////////////////////////////////////////////
-BOOST_AUTO_TEST_CASE( Remora_sum_rows){
-	matrix<float> x_cpu(Dimension1, Dimension2,0.0); 
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x_cpu(i,j) = -3.0+i-j;
-		}
-	}
-	vector<float> result = sum_rows(x_cpu);
-	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
-	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
-	checkDenseExpressionEquality(sum_rows(x_row),result);
-	checkDenseExpressionEquality(sum_rows(x_col),result);
-}
-BOOST_AUTO_TEST_CASE( Remora_sum_columns){
-	matrix<float> x_cpu(Dimension1, Dimension2,0.0); 
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x_cpu(i,j) = -3.0+i-j;
-		}
-	}
-	vector<float> result = sum_columns(x_cpu);
-	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
-	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
-	checkDenseExpressionEquality(sum_columns(x_row),result);
-	checkDenseExpressionEquality(sum_columns(x_col),result);
-}
-
-BOOST_AUTO_TEST_CASE( Remora_min_max_rows )
-{
-	matrix<float> x_cpu(Dimension1, Dimension2,0.0); 
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x_cpu(i,j) = -3.0+i-j;
-		}
-	}
-	vector<float> result_max = max_rows(x_cpu);
-	vector<float> result_min = min_rows(x_cpu);
-	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
-	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
-	checkDenseExpressionEquality(max_rows(x_row),result_max);
-	checkDenseExpressionEquality(min_rows(x_col),result_min);
-}
-
-BOOST_AUTO_TEST_CASE( Remora_min_max_columns )
-{
-	matrix<float> x_cpu(Dimension1, Dimension2,0.0); 
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			x_cpu(i,j) = -3.0+i-j;
-		}
-	}
-	vector<float> result_max = max_columns(x_cpu);
-	vector<float> result_min = min_columns(x_cpu);
-	matrix<float, row_major, gpu_tag> x_row = copy_to_gpu(x_cpu);
-	matrix<float, column_major, gpu_tag> x_col = copy_to_gpu(x_cpu);
-	checkDenseExpressionEquality(max_columns(x_row),result_max);
-	checkDenseExpressionEquality(min_columns(x_col),result_min);
-}
 
 ////////////////////////////////////////////////////////////////////////
 ////////////REDUCTIONS

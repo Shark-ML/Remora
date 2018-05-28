@@ -29,12 +29,12 @@ void checkDenseExpressionEquality(
 	//test block eval
 	remora::vector<typename Result::value_type> res1(result.size(),1.0);
 	remora::vector<typename Result::value_type> res2(result.size(),1.0);
-	op().assign_to(res1,2);
-	op().plus_assign_to(res2,2);
+	op().assign_to(res1);
+	op().plus_assign_to(res2);
 	
 	for(std::size_t i = 0; i != op().size(); ++i,++pos){
-		BOOST_CHECK_SMALL(res1(i) - 2*op()(i),typename Result::value_type(1.e-7));
-		BOOST_CHECK_SMALL(res2(i) - 2*op()(i) - 1,typename Result::value_type(1.e-7));
+		BOOST_CHECK_SMALL(res1(i) - op()(i),typename Result::value_type(1.e-7));
+		BOOST_CHECK_SMALL(res2(i) - op()(i) - 1,typename Result::value_type(1.e-7));
 	}
 	
 }
@@ -410,13 +410,13 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Scalar_Concat )
 	
 	for (size_t i = 0; i < Dimensions; i++){
 		x(i) = exp(-(i-5.0)*(i-5.0));
-		result(i) = 2*x(i);
-		result2(i) += 2*x(i);
+		result(i) = x(i);
+		result2(i) += x(i);
 	}
 	vector<double> test_assign(Dimensions+1,1.0);
 	vector<double> test_plus_assign(Dimensions+1,1.0); 
-	(x|alpha).assign_to(test_assign,2);
-	(x|alpha).plus_assign_to(test_plus_assign,2);
+	(x|alpha).assign_to(test_assign);
+	(x|alpha).plus_assign_to(test_plus_assign);
 	
 	for (size_t i = 0; i < Dimensions; i++){
 		BOOST_CHECK_SMALL(test_assign(i) - result(i),1.e-7);
@@ -429,18 +429,18 @@ BOOST_AUTO_TEST_CASE( Remora_Scalar_Vector_Concat )
 	double alpha = 2.0;
 	vector<double> result(Dimensions+1,1.0);
 	vector<double> result2(Dimensions+1,1.0);
-	result(0) = 2*alpha;
-	result2(0) += 2*alpha;
+	result(0) = alpha;
+	result2(0) += alpha;
 	
 	for (size_t i = 0; i < Dimensions; i++){
 		x(i) = exp(-(i-5.0)*(i-5.0));
-		result(i+1) = 2*x(i);
-		result2(i+1) += 2*x(i);
+		result(i+1) = x(i);
+		result2(i+1) += x(i);
 	}
 	vector<double> test_assign(Dimensions+1,1.0);
 	vector<double> test_plus_assign(Dimensions+1,1.0); 
-	(alpha|x).assign_to(test_assign,2);
-	(alpha|x).plus_assign_to(test_plus_assign,2);
+	(alpha|x).assign_to(test_assign);
+	(alpha|x).plus_assign_to(test_plus_assign);
 	
 	for (size_t i = 0; i < Dimensions; i++){
 		BOOST_CHECK_SMALL(test_assign(i) - result(i),1.e-7);
@@ -457,15 +457,15 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Vector_Concat )
 	for (size_t i = 0; i < Dimensions; i++){
 		x(i) = exp(-(i-5.0)*(i-5.0));
 		y(i) = exp(-(i-3.0)*(i-3.0));
-		result(i) = 2*x(i);
-		result(i+Dimensions) = 2*y(i);
-		result2(i) += 2*x(i);
-		result2(i+Dimensions) += 2*y(i);
+		result(i) = x(i);
+		result(i+Dimensions) = y(i);
+		result2(i) += x(i);
+		result2(i+Dimensions) += y(i);
 	}
 	vector<double> test_assign(Dimensions*2,1.0);
 	vector<double> test_plus_assign(Dimensions*2,1.0); 
-	(x|y).assign_to(test_assign,2);
-	(x|y).plus_assign_to(test_plus_assign,2);
+	(x|y).assign_to(test_assign);
+	(x|y).plus_assign_to(test_plus_assign);
 	
 	for (size_t i = 0; i < Dimensions; i++){
 		BOOST_CHECK_SMALL(test_assign(i) - result(i),1.e-7);
