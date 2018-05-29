@@ -204,7 +204,7 @@ struct vector_scalar_multiply_optimizer<random_vector<Distribution, Device> >{
 template<class Distribution, class Device>
 struct vector_range_optimizer<random_vector<Distribution, Device> >{
 	typedef random_vector<Distribution, Device> type;
-	static type create(type const& m, std::size_t start, std::size_t end){
+	static type create(type const& v, std::size_t start, std::size_t end){
 		return type(v.dist(), v.queue(), end - start, v.alpha());
 	}
 };

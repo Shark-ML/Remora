@@ -146,24 +146,24 @@ typename std::enable_if<
 template<class VecV, class T, class Device>
 typename std::enable_if<
 	std::is_convertible<T, typename VecV::value_type>::value ,
-	vector_addition<VecV, vector_scalar_multiply<scalar_vector<T, Device> > >
+	decltype(std::declval<VecV const&>() + T())
 >::type operator- (
 	vector_expression<VecV, Device> const& v,
 	T t
 ){
-	return v - scalar_vector<T, Device>(v().size(),t);
+	return v + (-t);
 }
 
 ///\brief Subtracts a vector from a scalar which is interpreted as a constant vector
 template<class VecV, class T, class Device>
 typename std::enable_if<
 	std::is_convertible<T, typename VecV::value_type>::value,
-	vector_addition<scalar_vector<T, Device>, vector_scalar_multiply<VecV> >
+	decltype(T() + (-std::declval<VecV const&>()))
 >::type operator- (
 	T t,
 	vector_expression<VecV, Device> const& v
 ){
-	return scalar_vector<T, Device>(v().size(),t) - v;
+	return t + (-v);
 }
 
 #define REMORA_BINARY_VECTOR_EXPRESSION(name, F)\

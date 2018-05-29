@@ -771,7 +771,7 @@ struct vector_scalar_multiply_optimizer<vector_scalar_multiply<V> >{
 // alpha * (v + w) = alpha * v + alpha * w
 template<class V1, class V2>
 struct vector_scalar_multiply_optimizer<vector_addition<V1, V2> >{
-	typedef typename matrix_addition<V1, V2>::value_type value_type;
+	typedef typename vector_addition<V1, V2>::value_type value_type;
 	typedef vector_scalar_multiply_optimizer<V1> opt1;
 	typedef vector_scalar_multiply_optimizer<V2> opt2;
 	typedef vector_addition<typename opt1::type, typename opt2::type> type;
@@ -784,7 +784,7 @@ struct vector_scalar_multiply_optimizer<vector_addition<V1, V2> >{
 template<class V, class F>
 struct vector_scalar_multiply_optimizer<vector_unary<V, F> >{
 	typedef typename V::device_type device_type;
-	typedef typename F::value_type value_type;
+	typedef typename vector_unary<V, F>::value_type value_type;
 	typedef typename device_traits<device_type>::template multiply_scalar<value_type> Multiplier;
 	typedef vector_unary_optimizer <vector_unary<V, F>, Multiplier > opt;
 	typedef typename opt::type type;
@@ -797,7 +797,7 @@ struct vector_scalar_multiply_optimizer<vector_unary<V, F> >{
 template<class V1, class V2, class F>
 struct vector_scalar_multiply_optimizer<vector_binary<V1, V2, F> >{
 	typedef typename V1::device_type device_type;
-	typedef typename F::value_type value_type;
+	typedef typename vector_binary<V1, V2, F>::value_type value_type;
 	typedef typename device_traits<device_type>::template multiply_scalar<value_type> Multiplier;
 	typedef vector_unary_optimizer <vector_binary<V1, V2, F>, Multiplier > opt;
 	typedef typename opt::type type;
@@ -873,7 +873,7 @@ struct matrix_scalar_multiply_optimizer<matrix_addition<E1, E2> >{
 // alpha * repeat(v,n) = repeat(alpha * v, n)
 template<class V, class O>
 struct matrix_scalar_multiply_optimizer<vector_repeater<V, O> >{
-	typedef matrix_scalar_multiply_optimizer<V> opt;
+	typedef vector_scalar_multiply_optimizer<V> opt;
 	typedef vector_repeater<typename opt::type, O> type;
 	static type create(vector_repeater<V, O> const& m, typename V::value_type alpha){
 		return type(opt::create(m.expression(), alpha), m.num_repetitions());
@@ -884,7 +884,7 @@ struct matrix_scalar_multiply_optimizer<vector_repeater<V, O> >{
 template<class M, class F>
 struct matrix_scalar_multiply_optimizer<matrix_unary<M, F> >{
 	typedef typename M::device_type device_type;
-	typedef typename F::value_type value_type;
+	typedef typename F::result_type value_type;
 	typedef typename device_traits<device_type>::template multiply_scalar<value_type> Multiplier;
 	typedef matrix_unary_optimizer <matrix_unary<M, F>, Multiplier > opt;
 	typedef typename opt::type type;
@@ -897,7 +897,7 @@ struct matrix_scalar_multiply_optimizer<matrix_unary<M, F> >{
 template<class M1, class M2, class F>
 struct matrix_scalar_multiply_optimizer<matrix_binary<M1, M2, F> >{
 	typedef typename M1::device_type device_type;
-	typedef typename F::value_type value_type;
+	typedef typename F::result_type value_type;
 	typedef typename device_traits<device_type>::template multiply_scalar<value_type> Multiplier;
 	typedef matrix_unary_optimizer <matrix_binary<M1, M2, F>, Multiplier > opt;
 	typedef typename opt::type type;
@@ -995,14 +995,14 @@ struct matrix_vector_prod_optimizer<matrix_matrix_prod<M1,M2>,V>{
 private:
 	typedef matrix_vector_prod_optimizer<M2,V> inner_opt;
 	typedef matrix_vector_prod_optimizer<M1, typename inner_opt::type> outer_opt;
-	typedef matrix_scalar_multiply_optimizer<typename outer_opt::type> scalar_opt;
+	typedef vector_scalar_multiply_optimizer<typename outer_opt::type> scalar_opt;
 public:
 	typedef typename scalar_opt::type type;
 	
 	static type create(matrix_matrix_prod<M1,M2> const& m, typename V::const_closure_type const& v){
 		auto inner_result = inner_opt::create(m.rhs(),v);
-		auto outer_result = inner_opt::create(m.lhs(),inner_result);
-		return scalar_opt::create(outer_result, m.scalar());
+		auto outer_result = outer_opt::create(m.lhs(),inner_result);
+		return scalar_opt::create(outer_result, m.alpha());
 	}
 };
 

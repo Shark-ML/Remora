@@ -214,24 +214,24 @@ typename std::enable_if<
 template<class MatA, class T, class Device>
 typename std::enable_if<
 	std::is_convertible<T, typename MatA::value_type>::value ,
-	matrix_addition<MatA, matrix_scalar_multiply<scalar_matrix<T,Device, typename MatA::orientation> > >
+	decltype(std::declval<MatA const&>() + T())
 >::type operator- (
 	matrix_expression<MatA, Device> const& A,
 	T t
 ){
-	return A - scalar_matrix<T,Device, typename MatA::orientation>(A().size1(),A().size2(),t);
+	return A + (-t);
 }
 
 ///\brief Subtracts a matrix from a scalar which is interpreted as a constant matrix
 template<class MatA, class T, class Device>
 typename std::enable_if<
 	std::is_convertible<T, typename MatA::value_type>::value,
-	matrix_addition<scalar_matrix<T,Device, typename MatA::orientation>, matrix_scalar_multiply<MatA> >
+	decltype(T() + (-std::declval<MatA const&>()))
 >::type operator- (
 	T t,
 	matrix_expression<MatA, Device> const& A
 ){
-	return scalar_matrix<T,Device, typename MatA::orientation>(A().size1(),A().size2(),t) - A;
+	return t + (-A);
 }
 
 #define REMORA_MATRIX_SCALAR_TRANSFORMATION(name, F)\

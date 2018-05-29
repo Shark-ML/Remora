@@ -123,9 +123,12 @@ BOOST_AUTO_TEST_SUITE (Remora_matrix_expression)
 ////////////////////////////////////////////////////////////
 
 BOOST_AUTO_TEST_CASE( Remora_matrix_Outer_Prod ){
+	std::size_t Dimension2 = 50;
 	vector<double> x(Dimension1); 
 	vector<double> y(Dimension2); 
 	matrix<double> result(Dimension1, Dimension2);
+	matrix<double> result2(Dimension1, Dimension2);
+	
 	
 	for (size_t i = 0; i < Dimension1; i++)
 		x(i) = i-3.0;
@@ -135,9 +138,12 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Outer_Prod ){
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
 			result(i,j)= x(i)*y(j);
+			result2(i,j)= 2.0*x(i)*y(j) +6*result(i,j);
 		}
 	}
+
 	checkDenseExpressionEquality(outer_prod(x,y),result);
+	checkDenseExpressionEquality(2.0 * ( outer_prod( x, y ) + 3.0 * result),result2);
 }
 
 BOOST_AUTO_TEST_CASE( Remora_matrix_Vector_Repeater){
