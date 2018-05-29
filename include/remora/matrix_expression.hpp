@@ -339,54 +339,6 @@ REMORA_BINARY_MATRIX_EXPRESSION(min,min)
 REMORA_BINARY_MATRIX_EXPRESSION(max,max)
 #undef REMORA_BINARY_MATRIX_EXPRESSION
 
-
-//~ #define REMORA_BINARY_VECTOR_SET_OPERATION(name)\
-//~ template<class S1, class S2, class Device>\
-//~ auto name(\
-	//~ vector_set_expression<S1, Device> const& set1,\
-	//~ vector_set_xpression<S2, Device> const& set2\
-//~ ) -> decltype(as_set(\
-	//~ name(set1().expression(), set2().expression()),\
-	//~ typename S1::point_orientation()\
-//~ )){\
-	//~ REMORA_SIZE_CHECK(v().size() == set().point_size());\
-	//~ typedef typename S1::point_orientation PO;\
-	//~ static_assert(std::is_same<>::value, "Can not mix row-sets with column sets in operations")\
-	//~ return as_set(name(set1().expression(), set2.expression(), PO());\
-//~ }\
-//~ template<class S, class V, class Device>\
-//~ auto name(\
-	//~ vector_set_expression<S, Device> const& set,\
-	//~ vector_expression<V, Device> const& v\
-//~ ) -> decltype(name(set,vector_repeater<V,typename S::point_orientation>(v(), set().size()))){\
-	//~ return name(set,vector_repeater<V,typename S::point_orientation>(v(), set().size()));\
-//~ }\
-//~ template<class S, class V, class Device>\
-//~ auto name(\
-	//~ vector_expression<V, Device> const& v,\
-	//~ vector_set_expression<S, Device> const& set\
-//~ ) -> decltype(name(vector_repeater<V,typename S::point_orientation>(v(), set().size()), set)){\
-	//~ return name(vector_repeater<V,typename S::point_orientation>(v(), set().size()), set);\
-//~ }
-//~ REMORA_BINARY_VECTOR_SET_OPERATION(operator+)
-//~ REMORA_BINARY_VECTOR_SET_OPERATION(operator-)
-//~ REMORA_BINARY_VECTOR_EXPRESSION(operator*)
-//~ REMORA_BINARY_VECTOR_EXPRESSION(element_prod)
-//~ REMORA_BINARY_VECTOR_EXPRESSION(operator/)
-//~ REMORA_BINARY_VECTOR_EXPRESSION(element_div)
-//~ REMORA_BINARY_VECTOR_SET_OPERATION(operator<)
-//~ REMORA_BINARY_VECTOR_SET_OPERATION(operator<=)
-//~ REMORA_BINARY_VECTOR_SET_OPERATION(operator>)
-//~ REMORA_BINARY_VECTOR_SET_OPERATION(operator>=)
-//~ REMORA_BINARY_VECTOR_SET_OPERATION(operator==)
-//~ REMORA_BINARY_VECTOR_SET_OPERATION(operator!=)
-//~ REMORA_BINARY_VECTOR_EXPRESSION(safe_div)
-//~ REMORA_BINARY_VECTOR_EXPRESSION(pow)
-//~ REMORA_BINARY_VECTOR_EXPRESSION(min)
-//~ REMORA_BINARY_VECTOR_EXPRESSION(max)
-//~ #undef REMORA_BINARY_VECTOR_SET_OPERATION
-
-
 /////////////////////////////////////////
 /////////Matrix-Products
 /////////////////////////////////////////
