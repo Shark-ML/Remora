@@ -429,7 +429,7 @@ operator-=(vector_expression<VecX, Device>& x, T t){
 template<class VecX, class T, class Device>
 typename std::enable_if<std::is_convertible<T, typename VecX::value_type>::value,typename VecX::closure_type>::type
 operator-=(vector_expression<VecX, Device>&& x, T t){
-	kernels::assign<typename device_traits<Device>:: template subtract<typename VecX::value_type> > (x, typename VecX::value_type(t)t);
+	kernels::assign<typename device_traits<Device>:: template subtract<typename VecX::value_type> > (x, typename VecX::value_type(t));
 	return x();
 }
 
