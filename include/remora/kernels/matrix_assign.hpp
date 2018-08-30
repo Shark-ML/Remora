@@ -29,8 +29,8 @@
 #define REMORA_KERNELS_MATRIX_ASSIGN_HPP
 
 #include "default/matrix_assign.hpp"
-#ifdef REMORA_USE_GPU
-#include "gpu/matrix_assign.hpp"
+#ifdef REMORA_USE_OPENCL
+#include "opencl/matrix_assign.hpp"
 #endif
 #include <type_traits>
 

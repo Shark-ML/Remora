@@ -198,8 +198,8 @@ typename M::size_type minor_size(matrix_expression<M, Device> const& m){
 }
 
 #include "../cpu/traits.hpp"
-#ifdef REMORA_USE_GPU
-#include "../gpu/traits.hpp"
+#ifdef REMORA_USE_OPENCL
+#include "../opencl/traits.hpp"
 #endif
 
 #endif

@@ -68,8 +68,8 @@ void trsm(
 
 #ifdef REMORA_USE_CLBLAST
 #include "clBlast/trsm.hpp"
-#elif defined REMORA_USE_GPU
-#include "gpu/trsm.hpp"
+#elif defined REMORA_USE_OPENCL
+#include "opencl/trsm.hpp"
 #endif
 
 #endif

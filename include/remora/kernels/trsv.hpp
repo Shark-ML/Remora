@@ -67,8 +67,8 @@ void trsv(
 
 #ifdef REMORA_USE_CLBLAST
 #include "clBlast/trsv.hpp"
-#elif defined REMORA_USE_GPU
-#include "gpu/trsv.hpp"
+#elif defined REMORA_USE_OPENCL
+#include "opencl/trsv.hpp"
 #endif
 
 #endif

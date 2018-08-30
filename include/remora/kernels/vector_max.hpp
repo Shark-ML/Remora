@@ -31,8 +31,8 @@
 #define REMORA_KERNELS_VECTOR_MAX_HPP
 
 #include "default/vector_max.hpp"
-#ifdef REMORA_USE_GPU
-#include "gpu/vector_max.hpp"
+#ifdef REMORA_USE_OPENCL
+#include "opencl/vector_max.hpp"
 #endif
 	
 namespace remora { namespace kernels{

@@ -61,7 +61,7 @@ std::size_t potrf(
 
 }}
 
-#ifdef REMORA_USE_GPU
-#include "gpu/potrf.hpp"
+#ifdef REMORA_USE_OPENCL
+#include "opencl/potrf.hpp"
 #endif
 #endif

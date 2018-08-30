@@ -1072,7 +1072,7 @@ private:
 	matrix_closure_typeB m_rhs;
 };
 
-//traits for transforming an expression into a functor for gpu usage
+//traits for transforming an expression into a functor for opencl usage
 
 template<class E>
 struct ExpressionToFunctor<matrix_scalar_multiply<E> >{

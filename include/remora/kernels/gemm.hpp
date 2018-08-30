@@ -109,7 +109,7 @@ void gemm(
 
 #ifdef REMORA_USE_CLBLAST
 #include "clBlast/gemm.hpp"
-#elif defined REMORA_USE_GPU
-#include "gpu/gemm.hpp"
+#elif defined REMORA_USE_OPENCL
+#include "opencl/gemm.hpp"
 #endif
 #endif

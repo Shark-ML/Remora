@@ -19,16 +19,16 @@ void benchmark(
 	std::size_t output_size2 = image_size2 - filter_size +1;
 	typedef typename E1::value_type value_type;
 
-	remora::matrix<value_type, row_major, gpu_tag> image_gpu = copy_to_gpu(image);
-	remora::vector<value_type, gpu_tag> filter_gpu = copy_to_gpu(filter);
-	remora::matrix<value_type, row_major, gpu_tag> out_gpu(image().size1(), output_size1 * num_filters * output_size2, 0.0);
-	kernels::conv2d(image_gpu,filter_gpu,out_gpu, num_channels, num_filters, image_size1, image_size2, filter_size, filter_size,0,0);
-	out_gpu.queue().finish();
+	remora::matrix<value_type, row_major, opencl_tag> image_opencl = copy_to_opencl(image);
+	remora::vector<value_type, opencl_tag> filter_opencl = copy_to_opencl(filter);
+	remora::matrix<value_type, row_major, opencl_tag> out_opencl(image().size1(), output_size1 * num_filters * output_size2, 0.0);
+	kernels::conv2d(image_opencl,filter_opencl,out_opencl, num_channels, num_filters, image_size1, image_size2, filter_size, filter_size,0,0);
+	out_opencl.queue().finish();
 	double minOptTime = std::numeric_limits<double>::max();
 	for(std::size_t i = 0; i != 10; ++i){
 		Timer time;
-		kernels::conv2d(image_gpu,filter_gpu,out_gpu, num_channels, num_filters, image_size1, image_size2, filter_size, filter_size,0,0);
-		out_gpu.queue().finish();
+		kernels::conv2d(image_opencl,filter_opencl,out_opencl, num_channels, num_filters, image_size1, image_size2, filter_size, filter_size,0,0);
+		out_opencl.queue().finish();
 		minOptTime = std::min(minOptTime,time.stop());
 	}
 

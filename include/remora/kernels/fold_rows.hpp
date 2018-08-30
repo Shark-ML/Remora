@@ -32,8 +32,8 @@
 #define REMORA_KERNELS_FOLD_ROWS_HPP
 
 #include "default/fold_rows.hpp"
-#ifdef REMORA_USE_GPU
-#include "gpu/fold_rows.hpp"
+#ifdef REMORA_USE_OPENCL
+#include "opencl/fold_rows.hpp"
 #endif
 
 namespace remora {namespace bindings{

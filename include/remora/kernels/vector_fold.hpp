@@ -30,8 +30,8 @@
 
 #include "../detail/traits.hpp"
 #include "default/vector_fold.hpp"
-#ifdef REMORA_USE_GPU
-#include "gpu/vector_fold.hpp"
+#ifdef REMORA_USE_OPENCL
+#include "opencl/vector_fold.hpp"
 #endif
 
 namespace remora{namespace kernels {

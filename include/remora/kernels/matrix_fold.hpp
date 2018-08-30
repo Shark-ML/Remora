@@ -30,8 +30,8 @@
 
 #include "../detail/traits.hpp"
 #include "default/matrix_fold.hpp"
-#ifdef REMORA_USE_GPU
-#include "gpu/matrix_fold.hpp"
+#ifdef REMORA_USE_OPENCL
+#include "opencl/matrix_fold.hpp"
 #endif
 
 namespace remora{namespace kernels {

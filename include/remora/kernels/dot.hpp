@@ -31,8 +31,8 @@
 #define REMORA_KERNELS_DOT_HPP
 
 #include "default/dot.hpp"
-#ifdef REMORA_USE_GPU
-#include "gpu/dot.hpp"
+#ifdef REMORA_USE_OPENCL
+#include "opencl/dot.hpp"
 #endif
 	
 namespace remora{namespace kernels{
