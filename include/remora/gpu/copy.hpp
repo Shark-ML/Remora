@@ -32,14 +32,14 @@
 #include "../dense.hpp" //required for vector proxy on cpu
 #include "../assignment.hpp"
 
-namespace remora{
+namespace remora{namespace gpu{
 
 ///////////////////////////////////////
 //////// Vector Transport
 ///////////////////////////////////////	
 
 template<class E>
-class vector_transport_to_cpu: public vector_expression<vector_transport_to_cpu<E>, cpu_tag>{
+class vector_transport_to_host: public vector_expression<vector_transport_to_host<E>, cpu_tag>{
 public:
 	typedef typename E::const_closure_type expression_closure_type;
 
@@ -48,8 +48,8 @@ public:
 	typedef value_type const& const_reference;
 	typedef const_reference reference;
 
-	typedef vector_transport_to_cpu const_closure_type;
-	typedef vector_transport_to_cpu closure_type;
+	typedef vector_transport_to_host const_closure_type;
+	typedef vector_transport_to_host closure_type;
 	typedef unknown_storage storage_type;
 	typedef unknown_storage const_storage_type;
 	typedef blockwise<typename E::evaluation_category::tag> evaluation_category;
@@ -60,7 +60,7 @@ public:
 	typedef const_iterator iterator;
 
 	// Construction and destruction
-	explicit vector_transport_to_cpu(
+	explicit vector_transport_to_host(
 		expression_closure_type const& expression
 	):m_expression(expression){}
 
@@ -121,7 +121,7 @@ private:
 };
 
 template<class E>
-class vector_transport_to_gpu: public vector_expression<vector_transport_to_gpu<E>, gpu_tag>{
+class vector_transport_to_device: public vector_expression<vector_transport_to_device<E>, gpu_tag>{
 public:
 	typedef typename E::const_closure_type expression_closure_type;
 
@@ -130,8 +130,8 @@ public:
 	typedef value_type const& const_reference;
 	typedef const_reference reference;
 
-	typedef vector_transport_to_gpu const_closure_type;
-	typedef vector_transport_to_gpu closure_type;
+	typedef vector_transport_to_device const_closure_type;
+	typedef vector_transport_to_device closure_type;
 	typedef unknown_storage storage_type;
 	typedef unknown_storage const_storage_type;
 	typedef blockwise<typename E::evaluation_category::tag> evaluation_category;
@@ -142,7 +142,7 @@ public:
 	typedef const_iterator iterator;
 
 	// Construction and destruction
-	explicit vector_transport_to_gpu(
+	explicit vector_transport_to_device(
 		expression_closure_type const& expression,
 		boost::compute::command_queue& queue
 	):m_expression(expression), m_queue(&queue){}
@@ -367,42 +367,44 @@ private:
 	boost::compute::command_queue* m_queue;
 };
 
+}
+
 ///////////////////////////////////////////////
 //////// Expression Optimizers
 ///////////////////////////////////////////////
 
 namespace detail{
 template<class E>
-struct matrix_scalar_multiply_optimizer<vector_transport_to_gpu<E> >{
+struct matrix_scalar_multiply_optimizer<gpu::vector_transport_to_device<E> >{
 	typedef vector_scalar_multiply_optimizer<E> opt;
-	typedef vector_transport_to_gpu<typename opt::type> type;
-	static type create(vector_transport_to_gpu<E> const& v, typename type::value_type alpha){
+	typedef gpu::vector_transport_to_device<typename opt::type> type;
+	static type create(gpu::vector_transport_to_device<E> const& v, typename type::value_type alpha){
 		return type(opt::create(v.expression(), alpha), v.queue());
 	}
 };
 template<class E>
-struct matrix_scalar_multiply_optimizer<vector_transport_to_cpu<E> >{
+struct matrix_scalar_multiply_optimizer<gpu::vector_transport_to_host<E> >{
 	typedef vector_scalar_multiply_optimizer<E> opt;
-	typedef vector_transport_to_cpu<typename opt::type> type;
-	static type create(vector_transport_to_cpu<E> const& v, typename type::value_type alpha){
+	typedef gpu::vector_transport_to_host<typename opt::type> type;
+	static type create(gpu::vector_transport_to_host<E> const& v, typename type::value_type alpha){
 		return type(opt::create(v.expression(), alpha));
 	}
 };
 
 template<class E>
-struct matrix_scalar_multiply_optimizer<matrix_transport_to_gpu<E> >{
+struct matrix_scalar_multiply_optimizer<gpu::matrix_transport_to_gpu<E> >{
 	typedef matrix_scalar_multiply_optimizer<E> opt;
-	typedef matrix_transport_to_gpu<typename opt::type> type;
-	static type create(matrix_transport_to_gpu<E> const& m, typename type::value_type alpha){
+	typedef gpu::matrix_transport_to_gpu<typename opt::type> type;
+	static type create(gpu::matrix_transport_to_gpu<E> const& m, typename type::value_type alpha){
 		return type(opt::create(m.expression(), alpha), m.queue());
 	}
 };
 
 template<class E>
-struct matrix_scalar_multiply_optimizer<matrix_transport_to_cpu<E> >{
+struct matrix_scalar_multiply_optimizer<gpu::matrix_transport_to_cpu<E> >{
 	typedef matrix_scalar_multiply_optimizer<E> opt;
-	typedef matrix_transport_to_cpu<typename opt::type> type;
-	static type create(matrix_transport_to_cpu<E> const& m, typename type::value_type alpha){
+	typedef gpu::matrix_transport_to_cpu<typename opt::type> type;
+	static type create(gpu::matrix_transport_to_cpu<E> const& m, typename type::value_type alpha){
 		return type(opt::create(m.expression(), alpha));
 	}
 };
@@ -415,28 +417,28 @@ struct matrix_scalar_multiply_optimizer<matrix_transport_to_cpu<E> >{
 ///////////////////////////////////////////////
 
 template<class E>
-vector_transport_to_cpu<E> copy_to_cpu(vector_expression<E, gpu_tag> const& e){
-	return vector_transport_to_cpu<E>(e());
+gpu::vector_transport_to_host<E> copy_to_cpu(vector_expression<E, gpu_tag> const& e){
+	return gpu::vector_transport_to_host<E>(e());
 }
 
 template<class E>
-matrix_transport_to_cpu<E> copy_to_cpu(matrix_expression<E, gpu_tag> const& e){
-	return matrix_transport_to_cpu<E>(e());
+gpu::matrix_transport_to_cpu<E> copy_to_cpu(matrix_expression<E, gpu_tag> const& e){
+	return gpu::matrix_transport_to_cpu<E>(e());
 }
 template<class E>
-vector_transport_to_gpu<E> copy_to_gpu(
+gpu::vector_transport_to_device<E> copy_to_gpu(
 	vector_expression<E, cpu_tag> const& e,
 	boost::compute::command_queue& queue = boost::compute::system::default_queue()
 ){
-	return vector_transport_to_gpu<E>(e(), queue);
+	return gpu::vector_transport_to_device<E>(e(), queue);
 }
 
 template<class E>
-matrix_transport_to_gpu<E> copy_to_gpu(
+gpu::matrix_transport_to_gpu<E> copy_to_gpu(
 	matrix_expression<E, cpu_tag> const& e,
 	boost::compute::command_queue& queue = boost::compute::system::default_queue()
 ){
-	return matrix_transport_to_gpu<E>(e(),queue);
+	return gpu::matrix_transport_to_gpu<E>(e(),queue);
 }
 
 //moving gpu->gpu is for free
