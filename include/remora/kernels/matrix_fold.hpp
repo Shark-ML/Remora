@@ -33,6 +33,10 @@
 #ifdef REMORA_USE_OPENCL
 #include "opencl/matrix_fold.hpp"
 #endif
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/matrix_fold.hpp"
+#endif
+
 
 namespace remora{namespace kernels {
 

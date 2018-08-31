@@ -34,7 +34,10 @@
 #ifdef REMORA_USE_OPENCL
 #include "opencl/vector_max.hpp"
 #endif
-	
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/vector_max.hpp"
+#endif
+
 namespace remora { namespace kernels{
 	
 ///\brief Computes the index of the maximum element of a vector

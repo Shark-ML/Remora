@@ -32,7 +32,7 @@
 
 #include "../../detail/traits.hpp" //structure tags, expression types etc
 #include "../../assignment.hpp" //plus_assign
-#include "../dot.hpp" //dot kernel
+#include "../default/dot.hpp" //inner product
 #include "../../proxy_expressions.hpp" //range, row, transpose
 
 #include <stdexcept> //exception when matrix is singular
@@ -82,7 +82,11 @@ void trsv_impl(
 	std::size_t size = b().size();
 	for (std::size_t n = 0; n < size; ++ n) {
 		value_type value;
-		kernels::dot(subrange(b,0,n),subrange(row(A,n),0,n),value);
+		bindings::dot(
+			subrange(b,0,n), subrange(row(A,n),0,n), value, 
+			typename MatA::evaluation_category::tag(),
+			typename V::evaluation_category::tag()
+		);
 		b()(n) -= value;
 		if(!Unit){
 			if(A()(n, n) == value_type()){//matrix is singular
@@ -137,7 +141,11 @@ void trsv_impl(
 	for (std::size_t i = 0; i < size; ++ i) {
 		std::size_t n = size-i-1;
 		value_type value;
-		kernels::dot(subrange(b(),n+1,size),subrange(row(A,n),n+1,size),value);
+		bindings::dot(
+			subrange(b(),n+1,size), subrange(row(A,n),n+1,size), value, 
+			typename MatA::evaluation_category::tag(),
+			typename V::evaluation_category::tag()
+		);
 		b()(n) -= value;
 		if(!Unit){
 			if(A()(n, n) == value_type()){//matrix is singular

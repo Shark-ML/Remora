@@ -498,145 +498,145 @@ BOOST_AUTO_TEST_CASE( Remora_Vector_Greater_Equal ){
 	checkDenseExpressionEquality(x >= 0,result);
 }
 
-//~ /////////////////////////////////////////////////////
-//~ ///////////Vector Reductions///////////
-//~ /////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+///////////Vector Reductions///////////
+/////////////////////////////////////////////////////
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Vector_Max )
-//~ {
-	//~ vector<float> x_cpu(Dimensions); 
-	//~ float result = 1;
+BOOST_AUTO_TEST_CASE( Remora_Vector_Max )
+{
+	vector<float> x_cpu(Dimensions); 
+	float result = 1;
 	
-	//~ for (size_t i = 0; i < Dimensions; i++){
-		//~ x_cpu(i) = exp(-(i-5.0)*(i-5.0));//max at i = 5
-		//~ result = std::max(result,x_cpu(i));
-	//~ }
-	//~ vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(max(x),result,1.e-10);
-//~ }
-//~ BOOST_AUTO_TEST_CASE( Remora_Vector_Min )
-//~ {
-	//~ vector<float> x_cpu(Dimensions); 
-	//~ float result = -1;
+	for (size_t i = 0; i < Dimensions; i++){
+		x_cpu(i) = exp(-(i-5.0)*(i-5.0));//max at i = 5
+		result = std::max(result,x_cpu(i));
+	}
+	vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(max(x),result,1.e-10);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_Min )
+{
+	vector<float> x_cpu(Dimensions); 
+	float result = -1;
 	
-	//~ for (size_t i = 0; i < Dimensions; i++){
-		//~ x_cpu(i) = -std::exp(-(i-5.0)*(i-5.0));//min at i = 5
-		//~ result = std::min(result,x_cpu(i));
-	//~ }
-	//~ vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(min(x),result,1.e-10);
-//~ }
+	for (size_t i = 0; i < Dimensions; i++){
+		x_cpu(i) = -std::exp(-(i-5.0)*(i-5.0));//min at i = 5
+		result = std::min(result,x_cpu(i));
+	}
+	vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(min(x),result,1.e-10);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Vector_Arg_Max )
-//~ {
-	//~ vector<float> x_cpu(Dimensions); 
-	//~ unsigned int result = 5;
+BOOST_AUTO_TEST_CASE( Remora_Vector_Arg_Max )
+{
+	vector<float> x_cpu(Dimensions); 
+	unsigned int result = 5;
 	
-	//~ for (size_t i = 0; i < Dimensions; i++){
-		//~ x_cpu(i) = exp(-(i-5.0)*(i-5.0));//max at i = 5
-	//~ }
-	//~ vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_EQUAL(arg_max(x),result);
-//~ }
+	for (size_t i = 0; i < Dimensions; i++){
+		x_cpu(i) = exp(-(i-5.0)*(i-5.0));//max at i = 5
+	}
+	vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_EQUAL(arg_max(x),result);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Vector_Arg_Min )
-//~ {
-	//~ vector<float> x_cpu(Dimensions); 
-	//~ unsigned int result = 5;
+BOOST_AUTO_TEST_CASE( Remora_Vector_Arg_Min )
+{
+	vector<float> x_cpu(Dimensions); 
+	unsigned int result = 5;
 	
-	//~ for (size_t i = 0; i < Dimensions; i++){
-		//~ x_cpu(i) = -exp(-(i-5.0)*(i-5.0));//min at i = 5
-	//~ }
-	//~ vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_EQUAL(arg_min(x),result);
-//~ }
+	for (size_t i = 0; i < Dimensions; i++){
+		x_cpu(i) = -exp(-(i-5.0)*(i-5.0));//min at i = 5
+	}
+	vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_EQUAL(arg_min(x),result);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Vector_Sum )
-//~ {
-	//~ vector<float> x_cpu(Dimensions); 
-	//~ float result = 0;
+BOOST_AUTO_TEST_CASE( Remora_Vector_Sum )
+{
+	vector<float> x_cpu(Dimensions); 
+	float result = 0;
 	
-	//~ for (size_t i = 0; i < Dimensions; i++){
-		//~ x_cpu(i) = 2*i-5.0;
-		//~ result +=x_cpu(i);
-	//~ }
-	//~ vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(sum(x),result,1.e-10);
-//~ }
+	for (size_t i = 0; i < Dimensions; i++){
+		x_cpu(i) = 2*i-5.0;
+		result +=x_cpu(i);
+	}
+	vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(sum(x),result,1.e-10);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Vector_norm_1 )
-//~ {
-	//~ vector<float> x_cpu(Dimensions); 
-	//~ float result = 0;
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_1 )
+{
+	vector<float> x_cpu(Dimensions); 
+	float result = 0;
 	
-	//~ for (size_t i = 0; i < Dimensions; i++){
-		//~ x_cpu(i) = 2*i-5.0;
-		//~ result +=std::abs(x_cpu(i));
-	//~ }
-	//~ vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(norm_1(x),result,1.e-10);
-//~ }
+	for (size_t i = 0; i < Dimensions; i++){
+		x_cpu(i) = 2*i-5.0;
+		result +=std::abs(x_cpu(i));
+	}
+	vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(norm_1(x),result,1.e-10);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Vector_norm_sqr )
-//~ {
-	//~ vector<float> x_cpu(Dimensions); 
-	//~ float result = 0;
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_sqr )
+{
+	vector<float> x_cpu(Dimensions); 
+	float result = 0;
 	
-	//~ for (size_t i = 0; i < Dimensions; i++){
-		//~ x_cpu(i) = 0.1*(1.2*i-5.0);
-		//~ result +=x_cpu(i)*x_cpu(i);
-	//~ }
-	//~ vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(norm_sqr(x),result,1.e-4);
-//~ }
-//~ BOOST_AUTO_TEST_CASE( Remora_Vector_norm_2 )
-//~ {
-	//~ vector<float> x_cpu(Dimensions); 
-	//~ float result = 0;
-	//~ for (size_t i = 0; i < Dimensions; i++){
-		//~ x_cpu(i) = 0.1*(1.2*i-5.0);
-		//~ result += x_cpu(i)*x_cpu(i);
-	//~ }
-	//~ result = std::sqrt(result);
-	//~ vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(norm_2(x),result,1.e-4);
-//~ }
-//~ BOOST_AUTO_TEST_CASE( Remora_Vector_norm_inf )
-//~ {
-	//~ vector<float> x_cpu(Dimensions); 
-	//~ for (size_t i = 0; i < Dimensions; i++){
-		//~ x_cpu(i) = exp(-(i-5.0)*(i-5.0));
-	//~ }
-	//~ x_cpu(8)=-2;
-	//~ vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_EQUAL(norm_inf(x),2.0);
-//~ }
-//~ BOOST_AUTO_TEST_CASE( Remora_Vector_index_norm_inf )
-//~ {
-	//~ vector<float> x_cpu(Dimensions); 
+	for (size_t i = 0; i < Dimensions; i++){
+		x_cpu(i) = 0.1*(1.2*i-5.0);
+		result +=x_cpu(i)*x_cpu(i);
+	}
+	vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(norm_sqr(x),result,1.e-4);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_2 )
+{
+	vector<float> x_cpu(Dimensions); 
+	float result = 0;
+	for (size_t i = 0; i < Dimensions; i++){
+		x_cpu(i) = 0.1*(1.2*i-5.0);
+		result += x_cpu(i)*x_cpu(i);
+	}
+	result = std::sqrt(result);
+	vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(norm_2(x),result,1.e-4);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_norm_inf )
+{
+	vector<float> x_cpu(Dimensions); 
+	for (size_t i = 0; i < Dimensions; i++){
+		x_cpu(i) = exp(-(i-5.0)*(i-5.0));
+	}
+	x_cpu(8)=-2;
+	vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_EQUAL(norm_inf(x),2.0);
+}
+BOOST_AUTO_TEST_CASE( Remora_Vector_index_norm_inf )
+{
+	vector<float> x_cpu(Dimensions); 
 	
-	//~ for (size_t i = 0; i < Dimensions; i++){
-		//~ x_cpu(i) = exp(-(i-5.0)*(i-5.0));
-	//~ }
-	//~ x_cpu(8)=-2;
-	//~ vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_EQUAL(index_norm_inf(x),8);
-//~ }
+	for (size_t i = 0; i < Dimensions; i++){
+		x_cpu(i) = exp(-(i-5.0)*(i-5.0));
+	}
+	x_cpu(8)=-2;
+	vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_EQUAL(index_norm_inf(x),8);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_Vector_inner_prod )
-//~ {
-	//~ vector<float> x_cpu(Dimensions); 
-	//~ vector<float> y_cpu(Dimensions); 
-	//~ double result = 0;
-	//~ for (size_t i = 0; i < Dimensions; i++){
-		//~ x_cpu(i) = 0.1*i+3.0;
-		//~ y_cpu(i) = i+1.0;
-		//~ result += x_cpu(i) * y_cpu(i);
-	//~ }
-	//~ vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
-	//~ vector<float, hip_tag> y = copy_to_device(y_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(inner_prod(x,y),result,1.e-4);
-//~ }
+BOOST_AUTO_TEST_CASE( Remora_Vector_inner_prod )
+{
+	vector<float> x_cpu(Dimensions); 
+	vector<float> y_cpu(Dimensions); 
+	double result = 0;
+	for (size_t i = 0; i < Dimensions; i++){
+		x_cpu(i) = 0.1*i+3.0;
+		y_cpu(i) = i+1.0;
+		result += x_cpu(i) * y_cpu(i);
+	}
+	vector<float, hip_tag> x = copy_to_device(x_cpu, hip_tag());
+	vector<float, hip_tag> y = copy_to_device(y_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(inner_prod(x,y),result,1.e-4);
+}
 
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -36,7 +36,6 @@
 #include "../../assignment.hpp" //assignment
 #include "../../dense.hpp" //adapt_vector
 #include "../gemv.hpp" //gemv kernel
-#include "../dot.hpp" //dot kernel
 #include <type_traits> //std::false_type marker for unoptimized
 namespace remora{ namespace bindings{
 
@@ -98,8 +97,10 @@ void trmv_impl(
 		if(!Unit){
 			b()(i) *= A()(i,i);
 		}
-		typename V::value_type result;
-		kernels::dot(subrange(row(A,i),i+1,size),subrange(b(),i+1,size),result);
+		typename V::value_type result = 0;
+		for(std::size_t j = i + 1; j != size; ++j){
+			result += A()(i,j) * b()(j);
+		}
 		b()(i) += result;
 	}
 }
