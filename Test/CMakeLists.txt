@@ -15,10 +15,6 @@ find_package(
 
 macro(REMORA_ADD_TEST SRC NAME)
 
-	if( OPT_LOG_TEST_OUTPUT )
-		set( XML_LOGGING_COMMAND_LINE_ARGS "--log_level=test_suite --log_format=XML --log_sink=${NAME}_Log.xml --report_level=no" )
-	endif( OPT_LOG_TEST_OUTPUT )
-
 	# Create the test executable
 	# Add the test
 	add_executable( ${NAME} ${SRC} )
@@ -26,7 +22,22 @@ macro(REMORA_ADD_TEST SRC NAME)
 	if(ENABLE_CLBLAST)
 		target_link_libraries( ${NAME} clblast)
 	endif()
-	add_test( ${NAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${NAME} ${XML_LOGGING_COMMAND_LINE_ARGS} )
+	add_test( ${NAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${NAME} )
+	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD 11)
+	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
+	set_target_properties(${NAME} PROPERTIES FOLDER "Tests")
+endmacro()
+
+
+macro(REMORA_ADD_HIP_TEST SRC NAME)
+
+	# Create the test executable
+	# Add the test
+	set_source_files_properties(${SRC} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
+	
+	hip_add_executable(${NAME} ${SRC})
+	target_link_libraries( ${NAME} ${Boost_LIBRARIES} ${CBLAS_LIBRARIES})
+	add_test( ${NAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${NAME})
 	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD 11)
 	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
 	set_target_properties(${NAME} PROPERTIES FOLDER "Tests")
@@ -73,6 +84,13 @@ remora_add_test( opencl_cholesky.cpp OpenCL_Cholesky)
 remora_add_test( opencl_random.cpp OpenCL_Random)
 endif()
 
+if(ENABLE_HIP)
+remora_add_hip_test( hip_vector_assign.cpp HIP_Vector_Assign)
+remora_add_hip_test( hip_vector_expression.cpp HIP_Vector_Expression)
+remora_add_hip_test( hip_matrix_assign.cpp HIP_Matrix_Assign)
+remora_add_hip_test( hip_matrix_expression.cpp HIP_Matrix_Expression)
+remora_add_hip_test( hip_copy.cpp HIP_Copy)
+endif()
 
 if(ENABLE_CLBLAST)
     remora_add_test( opencl_conv2d.cpp OpenCL_Conv2D)

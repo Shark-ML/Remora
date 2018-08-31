@@ -39,6 +39,14 @@
 #include "../proxy_expressions.hpp"
 #include <type_traits>
 
+
+#if defined(__HCC__) || defined(__NVCC__)
+#define REMORA_CALL_PREFIX __host__ __device__
+#elif
+#define REMORA_CALL_PREFIX
+#endif
+
+
 namespace remora{
 
 template<class E>
@@ -63,10 +71,10 @@ public:
 	explicit matrix_scalar_multiply(expression_closure_type const& e, value_type scalar)
 	:m_expression(e), m_scalar(scalar){}
 
-	size_type size1() const{
+	REMORA_CALL_PREFIX size_type size1() const{
 		return m_expression.size1();
 	}
-	size_type size2() const{
+	REMORA_CALL_PREFIX size_type size2() const{
 		return m_expression.size2();
 	}
 	
@@ -81,7 +89,7 @@ public:
 	}
 
 	// Element access
-	const_reference operator()(std::size_t i, std::size_t j) const{
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
 		return m_scalar * m_expression(i,j);
 	}
 
@@ -152,10 +160,10 @@ public:
 		rhs_closure_type const& e2
 	): m_lhs (e1), m_rhs (e2){}
 
-        size_type size1() const{
+        REMORA_CALL_PREFIX size_type size1() const{
 		return m_lhs.size1();
         }
-        size_type size2() const{
+        REMORA_CALL_PREFIX size_type size2() const{
 		return m_lhs.size2();
         }
 	
@@ -171,8 +179,8 @@ public:
 	}
 
         // Element access
-	const_reference operator()(std::size_t i, std::size_t j) const{
-		return lhs()(i,j) + rhs()(i,j);
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
+		return m_lhs(i,j) + m_rhs(i,j);
 	}
 
 	//computation kernels
@@ -240,10 +248,10 @@ public:
 	explicit vector_repeater(expression_closure_type const& e, size_type elements):
 	m_vector(e), m_elements(elements){}
 
-	size_type size1() const{
+	REMORA_CALL_PREFIX size_type size1() const{
 		return orientation::index_M(m_elements,m_vector.size());
 	}
-	size_type size2() const{
+	REMORA_CALL_PREFIX size_type size2() const{
 		return orientation::index_m(m_elements,m_vector.size());
 	}
 	const expression_closure_type& expression() const{
@@ -255,7 +263,7 @@ public:
 	}
 	
 	// Element access
-	const_reference operator()(std::size_t i, std::size_t j) const{
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
 		return m_vector(orientation::index_m(i,j));
 	}
 
@@ -345,10 +353,10 @@ public:
 	scalar_matrix(const scalar_matrix& m):
 		m_size1(m.m_size1), m_size2(m.m_size2), m_value(m.m_value){}
 
-	size_type size1() const{
+	REMORA_CALL_PREFIX size_type size1() const{
 		return m_size1;
 	}
-	size_type size2() const{
+	REMORA_CALL_PREFIX size_type size2() const{
 		return m_size2;
 	}
 	
@@ -357,7 +365,7 @@ public:
 	}
 
 	// Element access
-	const_reference operator()(std::size_t i, std::size_t j) const{
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
 		return m_value;
 	}
     
@@ -411,10 +419,10 @@ public:
 	explicit matrix_unary(expression_closure_type const& e, functor_type const& functor):
 		m_expression(e), m_functor(functor){}
 
-	size_type size1() const{
+	REMORA_CALL_PREFIX size_type size1() const{
 		return m_expression.size1();
 	}
-	size_type size2() const{
+	REMORA_CALL_PREFIX size_type size2() const{
 		return m_expression.size2();
 	}
 	
@@ -431,7 +439,7 @@ public:
 	}
 	
 	// Element access
-	const_reference operator()(std::size_t i, std::size_t j) const{
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
 		return m_functor(m_expression(i,j));
 	}
 	
@@ -504,10 +512,10 @@ public:
 		lhs_closure_type const& e1,  rhs_closure_type const& e2, functor_type functor 
 	): m_lhs (e1), m_rhs (e2),m_functor(functor){}
 
-        size_type size1() const{
+        REMORA_CALL_PREFIX size_type size1() const{
 		return m_lhs.size1();
         }
-        size_type size2() const{
+        REMORA_CALL_PREFIX size_type size2() const{
 		return m_lhs.size2();
         }
 	
@@ -526,7 +534,7 @@ public:
 	}
 
 	// Element access
-	const_reference operator()(std::size_t i, std::size_t j) const{
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
 		return m_functor(m_lhs(i,j), m_rhs(i,j));
 	}
 
@@ -594,10 +602,10 @@ public:
 	explicit outer_product(lhs_closure_type const& e1, rhs_closure_type const& e2)
 	:m_lhs(e1), m_rhs(e2){}
 
-	size_type size1() const{
+	REMORA_CALL_PREFIX size_type size1() const{
 		return m_lhs.size();
 	}
-	size_type size2() const{
+	REMORA_CALL_PREFIX size_type size2() const{
 		return m_rhs.size();
 	}
 
@@ -613,7 +621,7 @@ public:
 	}
 
 	// Element access
-	const_reference operator()(std::size_t i, std::size_t j) const{
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
 		return m_lhs(i) * m_rhs(j);
 	}
 	
@@ -944,10 +952,10 @@ public:
 	// Construction and destruction
 	diagonal_matrix(vector_closure_type const& diagonal):m_diagonal(diagonal){}
 
-	size_type size1() const{
+	REMORA_CALL_PREFIX size_type size1() const{
 		return m_diagonal.size();
 	}
-	size_type size2() const{
+	REMORA_CALL_PREFIX size_type size2() const{
 		return m_diagonal.size();
 	}
 	
@@ -959,7 +967,7 @@ public:
 		return m_diagonal;
 	}
 	// Element access
-	const_reference operator()(size_type i, size_type j) const{
+	REMORA_CALL_PREFIX const_reference operator()(size_type i, size_type j) const{
 		if (i == j)
 			return m_diagonal(i);
 		else
@@ -1138,4 +1146,5 @@ struct ExpressionToFunctor<outer_product<E1, E2> >{
 };
 
 }
+#undef REMORA_CALL_PREFIX
 #endif

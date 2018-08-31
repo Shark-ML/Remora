@@ -32,6 +32,7 @@ namespace remora{
 
 struct cpu_tag{};
 struct opencl_tag{};
+struct hip_tag{};
 	
 	
 /// \brief Base class for Vector Expression models

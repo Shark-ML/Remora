@@ -32,6 +32,14 @@
 #include "../proxy_expressions.hpp"
 #include "traits.hpp"
 
+
+#if defined(__HCC__) || defined(__NVCC__)
+#define REMORA_CALL_PREFIX __host__ __device__
+#elif
+#define REMORA_CALL_PREFIX
+#endif
+
+
 namespace remora{
 
 ///\brief Implements multiplications of a vector by a scalar
@@ -59,7 +67,7 @@ public:
 		m_expression(e), m_scalar(scalar) {}
 
 	// to_functors
-	size_type size() const {
+	REMORA_CALL_PREFIX size_type size() const {
 		return m_expression.size();
 	}
 
@@ -80,7 +88,7 @@ public:
 	}
 
 	// Element access
-	const_reference operator()(std::size_t i) const {
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t i) const {
 		return m_scalar * m_expression(i);
 	}
 	
@@ -135,16 +143,16 @@ public:
 	:m_size(v.m_size), m_value(v.m_value) {}
 
 	// to_functors
-	size_type size() const {
+	REMORA_CALL_PREFIX size_type size() const {
 		return m_size;
 	}
     
-    T scalar() const {
+	T scalar() const {
 		return m_value;
 	}
 
 	// Element access
-	const_reference operator()(std::size_t) const {
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t) const {
 		return m_value;
 	}
 	
@@ -189,20 +197,20 @@ public:
 	explicit unit_vector(size_type size, size_type index, value_type value = value_type(1))
 	:m_size(size), m_index(index), m_value(value) {}
 
-	size_type size() const {
+	REMORA_CALL_PREFIX size_type size() const {
 		return m_size;
 	}
 
-    value_type scalar() const {
+	value_type scalar() const {
 		return m_value;
 	}
     
-    size_type index() const {
+	size_type index() const {
 		return m_index;
 	}
     
 	// Element access
-	const_reference operator()(size_type const& i) const {
+	REMORA_CALL_PREFIX const_reference operator()(size_type const& i) const {
 		REMORA_SIZE_CHECK(i < m_size);
 		return (i == m_index)? m_value : value_type();
 	}
@@ -252,7 +260,7 @@ public:
 		m_expression(e), m_functor(functor) {}
 
 	// to_functors
-	size_type size() const {
+	REMORA_CALL_PREFIX size_type size() const {
 		return m_expression.size();
 	}
 
@@ -269,7 +277,7 @@ public:
 	}	
 	
 	// Element access
-	const_reference operator()(std::size_t i) const {
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t i) const {
 		return m_functor(m_expression(i));
 	}
 	
@@ -338,7 +346,7 @@ public:
 	}
 
 	// to_functors
-	size_type size() const {
+	REMORA_CALL_PREFIX size_type size() const {
 		return m_lhs.size();
 	}
 
@@ -355,7 +363,7 @@ public:
 	}
 
 	// Element access
-	const_reference operator()(std::size_t i) const {
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t i) const {
 		return m_lhs(i) + m_rhs(i);
 	}
 	
@@ -430,7 +438,7 @@ public:
 	}
 
 	// to_functors
-	size_type size() const {
+	REMORA_CALL_PREFIX size_type size() const {
 		return m_lhs.size ();
 	}
 
@@ -451,7 +459,7 @@ public:
 	}
 
 	// Element access
-	const_reference operator()(std::size_t i) const {
+	REMORA_CALL_PREFIX const_reference operator()(std::size_t i) const {
 		return m_functor(m_lhs(i), m_rhs(i));
 	}
 	
@@ -618,4 +626,6 @@ struct ExpressionToFunctor<scalar_vector<T, Device> >{
 
 
 }
+
+#undef REMORA_CALL_PREFIX
 #endif

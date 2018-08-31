@@ -279,5 +279,8 @@ struct triangular_proxy_optimizer<dense_matrix_adaptor<T,Orientation, Tag, Devic
 #ifdef REMORA_USE_OPENCL
 #include "opencl/dense.hpp"
 #endif
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/dense.hpp"
+#endif
 
 #endif

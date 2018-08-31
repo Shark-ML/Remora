@@ -32,6 +32,12 @@
 #ifdef REMORA_USE_OPENCL
 #include "opencl/matrix_assign.hpp"
 #endif
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/matrix_assign.hpp"
+#endif
+
+
+
 #include <type_traits>
 
 namespace remora {namespace kernels{

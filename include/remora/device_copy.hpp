@@ -60,4 +60,8 @@ E const&  copy_to_device(matrix_expression<E, cpu_tag> const& e, cpu_tag){
 #include "opencl/copy.hpp"
 #endif
 
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/copy.hpp"
+#endif
+
 #endif
