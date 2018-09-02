@@ -65,7 +65,7 @@ void vector_fold(vector_expression<V, hip_tag> const& v, typename F::result_type
 	hipMemcpy(result.get(), &value, sizeof(value), hipMemcpyHostToDevice);
 	
 	std::size_t blockSize = std::min(64, v().queue().warp_size());
-	std::size_t numBlocks = (v().size() + blockSize - 1) / blockSize;
+	std::size_t numBlocks = 1;
 	auto stream = hip::get_stream(v().queue()).handle();
 	hipLaunchKernel(
 		hip::vector_fold_kernel, 

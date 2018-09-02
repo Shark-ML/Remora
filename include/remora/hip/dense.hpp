@@ -35,6 +35,20 @@
 #include "buffer.hpp"
 namespace remora{
 	
+namespace hip{
+	template<class M>
+	__global__ void clear2d_proxy_kernel(hipLaunchParm lp, M m){
+		size_t row_start = (hipBlockIdx_x * 16);
+		size_t column_start = (hipBlockIdx_y * 16);
+		size_t row_end = min(row_start + 16, m.size1());
+		size_t column_end = min(column_start + 16, m.size2());
+		for(size_t i = row_start+ hipThreadIdx_x; i < row_end; i += hipBlockDim_x){
+			for(size_t j = column_start+ hipThreadIdx_y; j < column_end; j += hipBlockDim_y){
+				m(i, j) = 0;
+			}
+		}
+	}
+}
 	
 template<class T, class Tag>
 class dense_vector_adaptor<T, Tag, hip_tag>: public vector_expression<dense_vector_adaptor<T, Tag, hip_tag>, hip_tag > {
@@ -110,11 +124,11 @@ public:
 	}
 	
 	__device__ reference operator()(size_type i) const{
-		return m_storage.values[i];
+		return m_storage.values[i * m_storage.stride];
 	}
 	
 	void clear(){
-		hip::fill_buffer(m_storage.value, value_type(), size(), m_storage.stride, *m_queue);
+		hip::fill_buffer(m_storage.values, value_type(), size() * m_storage.stride, m_storage.stride, *m_queue);
 	}
 	
 	typedef no_iterator iterator;
@@ -231,9 +245,16 @@ public:
 	}
 	
 	void clear(){
-		std::size_t stride1 = orientation::stride1(m_storage.leading_dimension);
-		std::size_t stride2 = orientation::stride2(m_storage.leading_dimension);
-		hip::fill_buffer2d(m_storage.value, value_type(), size1(), size2(), stride1, stride2, *m_queue);
+		std::size_t blockSize1 = std::min<std::size_t>(16, m_queue->warp_size());
+		std::size_t blockSize2 = std::min<std::size_t>(16, m_queue->warp_size() / blockSize1);
+		std::size_t numBlocks1 = (m_size1 + 16 - 1) / 16;
+		std::size_t numBlocks2 = (m_size2  + 16 - 1) / 16;
+		auto stream = get_stream(*m_queue).handle();
+		hipLaunchKernel(
+			hip::clear2d_proxy_kernel, 
+			dim3(numBlocks1, numBlocks2), dim3(blockSize1, blockSize2), 0, stream,
+			*this
+		);
 	}
 	
 	// Iterator types
@@ -242,7 +263,6 @@ public:
 
 
 private:
-
 	storage_type m_storage;
 	hip::device* m_queue;
 	size_type m_size1;

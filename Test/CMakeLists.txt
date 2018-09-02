@@ -86,8 +86,10 @@ endif()
 
 if(ENABLE_HIP)
 remora_add_hip_test( hip_vector_assign.cpp HIP_Vector_Assign)
-remora_add_hip_test( hip_vector_expression.cpp HIP_Vector_Expression)
 remora_add_hip_test( hip_matrix_assign.cpp HIP_Matrix_Assign)
+remora_add_hip_test( hip_dense.cpp HIP_Dense)
+remora_add_hip_test( hip_vector_expression.cpp HIP_Vector_Expression)
+
 remora_add_hip_test( hip_matrix_expression.cpp HIP_Matrix_Expression)
 remora_add_hip_test( hip_copy.cpp HIP_Copy)
 endif()

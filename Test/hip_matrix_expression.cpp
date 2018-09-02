@@ -647,133 +647,133 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Min)
 }
 
 
-//~ ////////////////////////////////////////////////////////////////////////
-//~ ////////////REDUCTIONS
-//~ ////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+////////////REDUCTIONS
+////////////////////////////////////////////////////////////////////////
 
-//~ BOOST_AUTO_TEST_CASE( Remora_trace){
-	//~ matrix<float> x_cpu(Dimension1, Dimension1); 
-	//~ float result = 0.0f;
-	//~ for (size_t i = 0; i < Dimension1; i++){
-		//~ for (size_t j = 0; j < Dimension1; j++){
-			//~ x_cpu(i,j) = -3.0+2.0*i-j;
-		//~ }
-		//~ result += x_cpu(i,i);
-	//~ }
-	//~ matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
-	//~ matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(trace(x_row),result, 1.e-6);
-	//~ BOOST_CHECK_CLOSE(trace(x_col),result, 1.e-6);
-//~ }
+BOOST_AUTO_TEST_CASE( Remora_trace){
+	matrix<float> x_cpu(Dimension1, Dimension1); 
+	float result = 0.0f;
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension1; j++){
+			x_cpu(i,j) = -3.0+2.0*i-j;
+		}
+		result += x_cpu(i,i);
+	}
+	matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
+	matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(trace(x_row),result, 1.e-6);
+	BOOST_CHECK_CLOSE(trace(x_col),result, 1.e-6);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_norm_1){
-	//~ matrix<float> x_cpu(Dimension1, Dimension1); 
-	//~ for (size_t i = 0; i < Dimension1; i++){
-		//~ for (size_t j = 0; j < Dimension1; j++){
-			//~ x_cpu(i,j) = -3.0+2.0*i-j;
-		//~ }
-	//~ }
-	//~ float result = norm_1(x_cpu);
+BOOST_AUTO_TEST_CASE( Remora_norm_1){
+	matrix<float> x_cpu(Dimension1, Dimension1); 
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension1; j++){
+			x_cpu(i,j) = -3.0+2.0*i-j;
+		}
+	}
+	float result = norm_1(x_cpu);
 	
-	//~ matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
-	//~ matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(norm_1(x_row),result, 1.e-6);
-	//~ BOOST_CHECK_CLOSE(norm_1(x_col),result, 1.e-6);
-//~ }
-//~ BOOST_AUTO_TEST_CASE( Remora_norm_inf){
-	//~ matrix<float> x_cpu(Dimension1, Dimension1); 
-	//~ for (size_t i = 0; i < Dimension1; i++){
-		//~ for (size_t j = 0; j < Dimension1; j++){
-			//~ x_cpu(i,j) = -3.0+2.0*i-j;
-		//~ }
-	//~ }
-	//~ float result = norm_inf(x_cpu);
+	matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
+	matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(norm_1(x_row),result, 1.e-6);
+	BOOST_CHECK_CLOSE(norm_1(x_col),result, 1.e-6);
+}
+BOOST_AUTO_TEST_CASE( Remora_norm_inf){
+	matrix<float> x_cpu(Dimension1, Dimension1); 
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension1; j++){
+			x_cpu(i,j) = -3.0+2.0*i-j;
+		}
+	}
+	float result = norm_inf(x_cpu);
 	
-	//~ matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
-	//~ matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(norm_inf(x_row),result, 1.e-6);
-	//~ BOOST_CHECK_CLOSE(norm_inf(x_col),result, 1.e-6);
-//~ }
+	matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
+	matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(norm_inf(x_row),result, 1.e-6);
+	BOOST_CHECK_CLOSE(norm_inf(x_col),result, 1.e-6);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_norm_Frobenius){
-	//~ matrix<float> x_cpu(Dimension1, Dimension1); 
-	//~ for (size_t i = 0; i < Dimension1; i++){
-		//~ for (size_t j = 0; j < Dimension1; j++){
-			//~ x_cpu(i,j) = -3.0+2.0*i-j;
-		//~ }
-	//~ }
-	//~ float result = norm_frobenius(x_cpu);
+BOOST_AUTO_TEST_CASE( Remora_norm_Frobenius){
+	matrix<float> x_cpu(Dimension1, Dimension1); 
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension1; j++){
+			x_cpu(i,j) = -3.0+2.0*i-j;
+		}
+	}
+	float result = norm_frobenius(x_cpu);
 	
-	//~ matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
-	//~ matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(norm_frobenius(x_row),result, 1.e-6);
-	//~ BOOST_CHECK_CLOSE(norm_frobenius(x_col),result, 1.e-6);
-//~ }
+	matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
+	matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(norm_frobenius(x_row),result, 1.e-6);
+	BOOST_CHECK_CLOSE(norm_frobenius(x_col),result, 1.e-6);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_sum){
-	//~ matrix<float> x_cpu(Dimension1, Dimension1); 
-	//~ for (size_t i = 0; i < Dimension1; i++){
-		//~ for (size_t j = 0; j < Dimension1; j++){
-			//~ x_cpu(i,j) = -3.0+2.0*i-j;
-		//~ }
-	//~ }
-	//~ float result = sum(x_cpu);
+BOOST_AUTO_TEST_CASE( Remora_sum){
+	matrix<float> x_cpu(Dimension1, Dimension1); 
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension1; j++){
+			x_cpu(i,j) = -3.0+2.0*i-j;
+		}
+	}
+	float result = sum(x_cpu);
 	
-	//~ matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
-	//~ matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(sum(x_row),result, 1.e-6);
-	//~ BOOST_CHECK_CLOSE(sum(x_col),result, 1.e-6);
-//~ }
+	matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
+	matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(sum(x_row),result, 1.e-6);
+	BOOST_CHECK_CLOSE(sum(x_col),result, 1.e-6);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_max){
-	//~ matrix<float> x_cpu(Dimension1, Dimension1); 
-	//~ for (size_t i = 0; i < Dimension1; i++){
-		//~ for (size_t j = 0; j < Dimension1; j++){
-			//~ x_cpu(i,j) = -3.0+2.0*i-j;
-		//~ }
-	//~ }
-	//~ float result = max(x_cpu);
+BOOST_AUTO_TEST_CASE( Remora_max){
+	matrix<float> x_cpu(Dimension1, Dimension1); 
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension1; j++){
+			x_cpu(i,j) = -3.0+2.0*i-j;
+		}
+	}
+	float result = max(x_cpu);
 	
-	//~ matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
-	//~ matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(max(x_row),result, 1.e-6);
-	//~ BOOST_CHECK_CLOSE(max(x_col),result, 1.e-6);
-//~ }
+	matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
+	matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(max(x_row),result, 1.e-6);
+	BOOST_CHECK_CLOSE(max(x_col),result, 1.e-6);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_min){
-	//~ matrix<float> x_cpu(Dimension1, Dimension1); 
-	//~ for (size_t i = 0; i < Dimension1; i++){
-		//~ for (size_t j = 0; j < Dimension1; j++){
-			//~ x_cpu(i,j) = -3.0+2.0*i-j;
-		//~ }
-	//~ }
-	//~ float result = min(x_cpu);
+BOOST_AUTO_TEST_CASE( Remora_min){
+	matrix<float> x_cpu(Dimension1, Dimension1); 
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension1; j++){
+			x_cpu(i,j) = -3.0+2.0*i-j;
+		}
+	}
+	float result = min(x_cpu);
 	
-	//~ matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
-	//~ matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(min(x_row),result, 1.e-6);
-	//~ BOOST_CHECK_CLOSE(min(x_col),result, 1.e-6);
-//~ }
+	matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
+	matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(min(x_row),result, 1.e-6);
+	BOOST_CHECK_CLOSE(min(x_col),result, 1.e-6);
+}
 
-//~ BOOST_AUTO_TEST_CASE( Remora_frobenius_prod){
-	//~ matrix<float> x_cpu(Dimension1, Dimension2); 
-	//~ matrix<float> y_cpu(Dimension1, Dimension2); 
-	//~ for (size_t i = 0; i < Dimension1; i++){
-		//~ for (size_t j = 0; j < Dimension1; j++){
-			//~ x_cpu(i,j) = -3.0+2.0*i-j;
-			//~ y_cpu(i,j) = i+j+1;
-		//~ }
-	//~ }
-	//~ float result = frobenius_prod(x_cpu,y_cpu);
+BOOST_AUTO_TEST_CASE( Remora_frobenius_prod){
+	matrix<float> x_cpu(Dimension1, Dimension2); 
+	matrix<float> y_cpu(Dimension1, Dimension2); 
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < Dimension1; j++){
+			x_cpu(i,j) = -3.0+2.0*i-j;
+			y_cpu(i,j) = i+j+1;
+		}
+	}
+	float result = frobenius_prod(x_cpu,y_cpu);
 	
-	//~ matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
-	//~ matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
-	//~ matrix<float, row_major, hip_tag> y_row = copy_to_device(y_cpu, hip_tag());
-	//~ matrix<float, column_major, hip_tag> y_col = copy_to_device(y_cpu, hip_tag());
-	//~ BOOST_CHECK_CLOSE(frobenius_prod(x_row,y_row),result, 1.e-6);
-	//~ BOOST_CHECK_CLOSE(frobenius_prod(x_row,y_col),result, 1.e-6);
-	//~ BOOST_CHECK_CLOSE(frobenius_prod(x_col,y_row),result, 1.e-6);
-	//~ BOOST_CHECK_CLOSE(frobenius_prod(x_col,y_col),result, 1.e-6);
-//~ }
+	matrix<float, row_major, hip_tag> x_row = copy_to_device(x_cpu, hip_tag());
+	matrix<float, column_major, hip_tag> x_col = copy_to_device(x_cpu, hip_tag());
+	matrix<float, row_major, hip_tag> y_row = copy_to_device(y_cpu, hip_tag());
+	matrix<float, column_major, hip_tag> y_col = copy_to_device(y_cpu, hip_tag());
+	BOOST_CHECK_CLOSE(frobenius_prod(x_row,y_row),result, 1.e-6);
+	BOOST_CHECK_CLOSE(frobenius_prod(x_row,y_col),result, 1.e-6);
+	BOOST_CHECK_CLOSE(frobenius_prod(x_col,y_row),result, 1.e-6);
+	BOOST_CHECK_CLOSE(frobenius_prod(x_col,y_col),result, 1.e-6);
+}
 
 BOOST_AUTO_TEST_SUITE_END()

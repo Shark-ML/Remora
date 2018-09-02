@@ -40,11 +40,11 @@ namespace hip{
 template<class MatA, class VecV, class F, class G>
 __global__ void fold_rows_kernel(hipLaunchParm lp,MatA A, VecV v, F f, G g){
 	typedef typename MatA::value_type value_type;
-	__shared__ value_type folds[16][16+1];
+	__shared__ value_type folds[64];
 	size_t rowid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
 	size_t colid = hipThreadIdx_y;
-	value_type& entry = folds[hipThreadIdx_x][hipThreadIdx_y];
-	if(rowid < A.size1() && colid < A.size2()){
+	value_type& entry = folds[hipThreadIdx_y];
+	if(colid < A.size2()){
 		entry = A(rowid,colid);
 		colid += hipBlockDim_y;
 		for(;colid < A.size2(); colid += hipBlockDim_y){
@@ -52,11 +52,12 @@ __global__ void fold_rows_kernel(hipLaunchParm lp,MatA A, VecV v, F f, G g){
 		}
 	}
 	__threadfence_block();
-	if(hipThreadIdx_y == 0 && rowid < A.size1()){
-		for(size_t i = 1 ; i < min(16, A.size2()); ++i){
-			entry = f(entry, folds[hipThreadIdx_x][i]);
+	if(hipThreadIdx_y == 0){
+		value_type acc =  folds[0];
+		for(size_t i = 1 ; i < min(size_t(hipBlockDim_y), A.size2()); ++i){
+			acc = f(acc, folds[i]);
 		}
-		v(rowid) += g(folds[hipThreadIdx_x][0]);
+		v(rowid) += g(acc);
 	}
 }
 }
@@ -65,21 +66,21 @@ namespace bindings{
 
 template<class F, class G, class MatA, class VecV, class Orientation>
 void fold_rows(
-	matrix_expression<MatA, opencl_tag> const& A, 
-	vector_expression<VecV, opencl_tag>& v,
+	matrix_expression<MatA, hip_tag> const& A, 
+	vector_expression<VecV, hip_tag>& v,
 	F f,
 	G g,
 	Orientation
 ){
-	std::size_t blockSize2 = std::min(16, A().queue().warp_size());
-	std::size_t blockSize1 = std::min(16, A().queue().warp_size()/ blockSize2);
-	std::size_t numBlocks1 = (A().size1() + blockSize1 - 1) / blockSize1;
-	std::size_t numBlocks2 = (A().size2()  + blockSize2 - 1) / blockSize2;
+	std::size_t blockSize1 = 1;
+	std::size_t blockSize2 = std::min<std::size_t>(64, A().queue().warp_size());
+	std::size_t numBlocks1 = A().size1();
+	std::size_t numBlocks2 = 1;
 	auto stream = get_stream(A().queue()).handle();
 	hipLaunchKernel(
 		hip::fold_rows_kernel, 
 		dim3(numBlocks1, numBlocks2), dim3(blockSize1, blockSize2), 0, stream,
-		typename MatA::const_closure_type(A()), typename VecV::closure_type(A()), f
+		typename MatA::const_closure_type(A()), typename VecV::closure_type(v()), f, g
 	);
 }
 

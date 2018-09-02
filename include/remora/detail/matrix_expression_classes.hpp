@@ -689,7 +689,7 @@ public:
 		value_type const& alpha
 	):m_matrix(matrix), m_vector(vector), m_alpha(alpha){}
 
-	size_type size() const{
+	REMORA_CALL_PREFIX size_type size() const{
 		return m_matrix.size1();
 	}
 	
@@ -785,7 +785,7 @@ public:
 		matrix_closure_type const& matrix, F const& f, G const& g
 	):m_matrix(matrix), m_f(f), m_g(g){}
 
-	size_type size() const{
+	REMORA_CALL_PREFIX size_type size() const{
 		return m_matrix.size1();
 	}
 	
@@ -855,10 +855,10 @@ public:
 		value_type alpha
 	):m_lhs(lhs), m_rhs(rhs), m_alpha(alpha){}
 
-	size_type size1() const{
+	REMORA_CALL_PREFIX size_type size1() const{
 		return m_lhs.size1();
 	}
-	size_type size2() const{
+	REMORA_CALL_PREFIX size_type size2() const{
 		return m_rhs.size2();
 	}
 	
@@ -1025,10 +1025,10 @@ public:
 		matrix_closure_typeB const& rhs
 	):m_lhs(lhs), m_rhs(rhs){}
 
-	size_type size1() const{
+	REMORA_CALL_PREFIX size_type size1() const{
 		return add_right? m_lhs.size1() : m_lhs.size1() + m_rhs.size1();
 	}
-	size_type size2() const{
+	REMORA_CALL_PREFIX size_type size2() const{
 		return add_right? m_lhs.size2() + m_rhs.size2() : m_lhs.size2();
 	}
 	

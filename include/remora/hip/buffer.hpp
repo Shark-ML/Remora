@@ -48,7 +48,6 @@ public:
 	}
 	buffer(buffer && other){
 		m_device = other.m_device;
-		check_hip(hipFree(m_ptr));
 		m_size = other.size();
 		m_ptr = other.m_ptr;
 		other.m_ptr = nullptr;
@@ -58,7 +57,7 @@ public:
 		m_device = other.m_device;
 		m_device->set_device();
 		check_hip(hipMalloc(&m_ptr, m_size * sizeof(T)));
-		check_hip(hipMemcpy(m_ptr, other.m_ptr, other.m_size, hipMemcpyDeviceToDevice)); 
+		check_hip(hipMemcpy(m_ptr, other.m_ptr, other.m_size * sizeof(T), hipMemcpyDeviceToDevice)); 
 	}
 	
 	buffer operator = (buffer && other){
@@ -112,18 +111,7 @@ __global__ void fill_buffer_kernel(hipLaunchParm lp, T* buffer, T value, std::si
 		buffer[i] = value;
 	}
 }
-template<class T>
-__global__ void fill_buffer2d_kernel(hipLaunchParm lp, T* buffer, T value, std::size_t size1, std::size_t size2, std::size_t stride1, std::size_t stride2){
-	std::size_t row = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
-	if(row >= size1) return;
-	
-	std::size_t column = (hipBlockIdx_y * hipBlockDim_y + hipThreadIdx_y);
-	std::size_t offset = row * stride1 + column * stride2;
-	std::size_t stride = hipBlockDim_y * hipGridDim_y * stride2;
-	for (std::size_t i = offset; i < size2; i += stride) {
-		buffer[i] = value;
-	}
-}
+
 template<class T>
 void fill_buffer(T* buffer, T value, std::size_t size, std::size_t stride_elem, device& device){
 	device.set_device();
@@ -133,19 +121,6 @@ void fill_buffer(T* buffer, T value, std::size_t size, std::size_t stride_elem, 
 		fill_buffer_kernel, 
 		dim3(numBlocks), dim3(blockSize), 0, get_stream(device).handle(), 
 		buffer, value, size, stride_elem
-	);
-}
-template<class T>
-void fill_buffer2d(T* buffer, T value, std::size_t size1, std::size_t size2, std::size_t stride1, std::size_t stride2, device& device){
-	device.set_device();
-	std::size_t blockSize1 = 4;
-	std::size_t blockSize2 = device.warp_size()/4;
-	std::size_t numBlocks1 = (size1 + blockSize1 - 1) / blockSize1;
-	std::size_t numBlocks2 = 1;
-	hipLaunchKernel(
-		fill_buffer2d_kernel, 
-		dim3(numBlocks1, numBlocks2), dim3(blockSize1,blockSize2), 0, get_stream(device).handle(), 
-		buffer, value, size1, size2, stride1, stride2
 	);
 }
 }}
