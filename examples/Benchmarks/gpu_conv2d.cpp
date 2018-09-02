@@ -34,18 +34,19 @@ void benchmark(
 
 	double mults = output_size1 * output_size2 * filter_size * filter_size * num_filters * num_channels;
 	double flops = image().size1() * mults /1024/1024/minOptTime;
-
+	
+	double storage = double(out_gpu.size1() * out_gpu.size2())/1024/1024;
 	std::cout<<output_size1<<"\t"<<filter_size<<"\t"<<num_channels<<"\t"<< num_filters<<"\t";
-	std::cout<<"\t"<<flops<< std::endl;
+	std::cout<<storage<<"\t"<<flops<< std::endl;
 }
 
 template<class T>
 void benchmark(std::size_t num_channels, std::size_t num_outputs, std::size_t num_images){
-	std::cout<<"Flops"<<std::endl;
-	for(std::size_t filterSize = 4; filterSize != 32; filterSize *= 2){
-		for(std::size_t iter = 0; iter != 5; ++iter){
-			std::size_t sizeOut1 = 3 + 16 * (2<<iter);
-			std::size_t sizeOut2 = 3 + 16 * (2<<iter);
+	std::cout<<"im_size\tfiltpx\tincChan\tOutChan\tmemOut\tFlops"<<std::endl;
+	for(std::size_t filterSize = 4; filterSize != 16; filterSize *= 2){
+		for(std::size_t iter = 0; iter != 4; ++iter){
+			std::size_t sizeOut1 = 3 + 8 * (2<<iter);
+			std::size_t sizeOut2 = 3 + 8 * (2<<iter);
 			std::size_t sizeIm1 = sizeOut1 + filterSize-1;
 			std::size_t sizeIm2 = sizeOut2 + filterSize-1;
 
@@ -73,5 +74,5 @@ void benchmark(std::size_t num_channels, std::size_t num_outputs, std::size_t nu
 
 int main(int argc, char **argv) {
 	std::cout<<"performance float"<<std::endl;
-	benchmark<float>(8,32,16);
+	benchmark<float>(3,16,4);
 }
