@@ -112,4 +112,8 @@ void gemm(
 #elif defined REMORA_USE_OPENCL
 #include "opencl/gemm.hpp"
 #endif
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/gemm.hpp"
+#endif
+
 #endif

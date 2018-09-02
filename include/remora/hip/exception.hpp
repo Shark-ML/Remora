@@ -36,7 +36,6 @@
 #include <exception>
 #include <system_error>
 #include <hip/hip_runtime.h>
-//#include <hipblas.h>
 namespace remora{namespace hip{
 	
 class hip_error_category: public std::error_category{
@@ -53,60 +52,15 @@ public:
 	}
 };
 
-//~ class hipblas_error_category: public std::error_category{
-//~ public:
-	//~ const char* name() const noexcept{
-		//~ return "hipBLAS";
-	//~ }
-	//~ std::string message( int condition ) const{
-		//~ switch(condition){
-			//~ case HIPBLAS_STATUS_SUCCESS:
-				//~ return "Success";
-			//~ case HIPBLAS_STATUS_NOT_INITIALIZED:
-				//~ return "HIPBLAS library not initialized";
-			//~ case HIPBLAS_STATUS_ALLOC_FAILED:
-				//~ return "Resource allocation failed";
-			//~ case HIPBLAS_STATUS_INVALID_VALUE: 
-				//~ return "Unsupported numerical value was passed to function";
-			//~ case HIPBLAS_STATUS_MAPPING_ERROR:
-				//~ return "Access to OPENCL memory space failed";
-			//~ case HIPBLAS_STATUS_EXECUTION_FAILED:
-				//~ return "OPENCL program failed to execute";
-			//~ case HIPBLAS_STATUS_INTERNAL_ERROR:
-				//~ return "An internal HIPBLAS operation failed";
-			//~ case HIPBLAS_STATUS_NOT_SUPPORTED:
-				//~ return "Function not implemented";
-			//~ case HIPBLAS_STATUS_ARCH_MISMATCH:
-				//~ return "Arch mismatch";
-			//~ default:
-				//~ return "Unknown error code: "+std::to_string(condition);
-		//~ }
-	//~ }
-	//~ static hipblas_error_category&() category(){
-		//~ static hipblas_error_category cat;
-		//~ return cat;
-	//~ }
-//~ };
-
 class hip_exception:public std::system_error{
 public:
 	hip_exception(hipError_t code): std::system_error(code, hip_error_category::category()){}
 };
-//~ class hipblas_exception:public std::system_error{
-//~ public:
-	//~ hipblas_exception(hipblasStatus_t code): std::system_error(code, hipblas_error_category::category()){}
-//~ };
-
 
 inline void check_hip(hipError_t code){
 	if(code != hipSuccess)
 		throw hip_exception(code);
 }
-
-//~ inline void check_hipblas(hipblasStatus_t code){
-	//~ if(code != HIPBLAS_STATUS_SUCCESS)
-		//~ throw hipblas_exception(code);
-//~ }
 
 }}
 #endif

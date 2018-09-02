@@ -7,7 +7,6 @@
 #include <remora/dense.hpp>
 #include <remora/io.hpp>
 #include <remora/device_copy.hpp>
-#include <boost/mpl/vector.hpp>
 
 using namespace remora;
 

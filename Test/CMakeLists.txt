@@ -13,6 +13,8 @@ find_package(
 	unit_test_framework
 )
 
+find_package(CUDA)
+
 macro(REMORA_ADD_TEST SRC NAME)
 
 	# Create the test executable
@@ -36,7 +38,7 @@ macro(REMORA_ADD_HIP_TEST SRC NAME)
 	set_source_files_properties(${SRC} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
 	
 	hip_add_executable(${NAME} ${SRC})
-	target_link_libraries( ${NAME} ${Boost_LIBRARIES} ${CBLAS_LIBRARIES})
+	target_link_libraries( ${NAME} ${Boost_LIBRARIES} ${CBLAS_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES})
 	add_test( ${NAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${NAME})
 	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD 11)
 	set_property(TARGET ${NAME} PROPERTY CXX_STANDARD_REQUIRED ON)
@@ -88,10 +90,12 @@ if(ENABLE_HIP)
 remora_add_hip_test( hip_vector_assign.cpp HIP_Vector_Assign)
 remora_add_hip_test( hip_matrix_assign.cpp HIP_Matrix_Assign)
 remora_add_hip_test( hip_dense.cpp HIP_Dense)
+remora_add_hip_test( hip_copy.cpp HIP_Copy)
 remora_add_hip_test( hip_vector_expression.cpp HIP_Vector_Expression)
 
 remora_add_hip_test( hip_matrix_expression.cpp HIP_Matrix_Expression)
-remora_add_hip_test( hip_copy.cpp HIP_Copy)
+remora_add_hip_test( hip_prod.cpp HIP_Prod)
+
 endif()
 
 if(ENABLE_CLBLAST)
