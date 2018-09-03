@@ -44,7 +44,7 @@ template<class V,  class E, class F>
 __global__ void vector_assign_functor_kernel(hipLaunchParm lp, V v, E e, F f){
 	std::size_t i = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
 	if(i < v.size())
-		v(i) = e(i);
+		v(i) = f(v(i), e(i));
 }
 
 }
@@ -87,8 +87,6 @@ void vector_assign_functor(
 	v().queue().set_device();
 	std::size_t blockSize = v().queue().warp_size();
 	std::size_t numBlocks = (v().size() + blockSize - 1) / blockSize;
-	auto test = typename V::closure_type(v());
-	auto test2 = typename E::const_closure_type(e());
 	auto stream = hip::get_stream(v().queue()).handle();
 	hipLaunchKernel(
 		hip::vector_assign_functor_kernel, 

@@ -95,6 +95,7 @@ remora_add_hip_test( hip_vector_expression.cpp HIP_Vector_Expression)
 
 remora_add_hip_test( hip_matrix_expression.cpp HIP_Matrix_Expression)
 remora_add_hip_test( hip_prod.cpp HIP_Prod)
+remora_add_hip_test( hip_triangular_prod.cpp HIP_Triangular_Prod)
 
 endif()
 

@@ -754,9 +754,12 @@ private:
 	template<class VecX>
 	void plus_assign_to(vector_expression<VecX, device_type>& x, triangular_structure, dense_tag )const{
 		//computation of tpmv is in-place so we need a temporary for plus-assign.
-		typename vector_temporary<VecX>::type temp( eval_block(m_alpha * m_vector));
+		typename vector_temporary<VecX>::type temp = m_vector;
 		kernels::trmv<MatA::orientation::is_upper, MatA::orientation::is_unit>(m_matrix.to_dense(), temp);
-		noalias(x) += temp;
+		//~ noalias(x) += temp;
+		//perform plus-assignment of temporary
+		typename device_traits<device_type>:: template multiply_and_add<value_type> multiply(m_alpha);
+		kernels::assign(x, temp, multiply);
 	}
 	matrix_closure_type m_matrix;
 	vector_closure_type m_vector;

@@ -68,5 +68,8 @@ void trmm(
 #elif defined REMORA_USE_OPENCL
 #include "opencl/trmm.hpp"
 #endif
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/trmm.hpp"
+#endif
 
 #endif

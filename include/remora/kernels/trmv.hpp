@@ -69,5 +69,7 @@ void trmv(
 #elif defined REMORA_USE_OPENCL
 #include "opencl/trmv.hpp"
 #endif
-
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/trmv.hpp"
+#endif
 #endif

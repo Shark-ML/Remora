@@ -214,6 +214,94 @@ public:
 		));
 	}
 	
+	////////////TRMM////////////
+	
+	void trmm(
+		bool leftA, bool upperA, bool transA, bool unitA,
+		std::size_t m, std::size_t n,
+		float alpha, 
+		float const* A, std::size_t ldA,
+		float* B, std::size_t ldB,
+		stream const& s
+	){
+		prepare(s);
+		check_cublas(cublasStrmm(
+			m_handle,
+			leftA? CUBLAS_SIDE_LEFT : CUBLAS_SIDE_RIGHT,
+			upperA? CUBLAS_FILL_MODE_UPPER: CUBLAS_FILL_MODE_LOWER,
+			transA? CUBLAS_OP_T : CUBLAS_OP_N,
+			unitA? CUBLAS_DIAG_UNIT: CUBLAS_DIAG_NON_UNIT,
+			int(m), int(n),
+			&alpha,
+			A, int(ldA),
+			B, int(ldB),
+			B, int(ldB)
+		));
+	}
+	
+	void trmm(
+		bool leftA, bool upperA, bool transA, bool unitA,
+		std::size_t m, std::size_t n,
+		double alpha, 
+		double const* A, std::size_t ldA,
+		double* B, std::size_t ldB,
+		stream const& s
+	){
+		prepare(s);
+		check_cublas(cublasDtrmm(
+			m_handle,
+			leftA? CUBLAS_SIDE_LEFT : CUBLAS_SIDE_RIGHT,
+			upperA? CUBLAS_FILL_MODE_UPPER: CUBLAS_FILL_MODE_LOWER,
+			transA? CUBLAS_OP_T : CUBLAS_OP_N,
+			unitA? CUBLAS_DIAG_UNIT: CUBLAS_DIAG_NON_UNIT,
+			int(m), int(n),
+			&alpha,
+			A, int(ldA),
+			B, int(ldB),
+			B, int(ldB)
+		));
+	}
+	
+	////////////TRMV////////////
+	
+	void trmv(
+		bool upperA, bool transA, bool unitA,
+		std::size_t n,
+		float const* A, std::size_t ldA,
+		float* v, std::size_t stridev,
+		stream const& s
+	){
+		prepare(s);
+		check_cublas(cublasStrmv(
+			m_handle,
+			upperA? CUBLAS_FILL_MODE_UPPER: CUBLAS_FILL_MODE_LOWER,
+			transA? CUBLAS_OP_T : CUBLAS_OP_N,
+			unitA? CUBLAS_DIAG_UNIT: CUBLAS_DIAG_NON_UNIT,
+			int(n),
+			A, int(ldA),
+			v, int(stridev)
+		));
+	}
+	
+	void trmv(
+		bool upperA, bool transA, bool unitA,
+		std::size_t n,
+		double const* A, std::size_t ldA,
+		double* v, std::size_t stridev,
+		stream const& s
+	){
+		prepare(s);
+		check_cublas(cublasDtrmv(
+			m_handle,
+			upperA? CUBLAS_FILL_MODE_UPPER: CUBLAS_FILL_MODE_LOWER,
+			transA? CUBLAS_OP_T : CUBLAS_OP_N,
+			unitA? CUBLAS_DIAG_UNIT: CUBLAS_DIAG_NON_UNIT,
+			int(n),
+			A, int(ldA),
+			v, int(stridev)
+		));
+	}
+	
 private:
 	void prepare(stream const& s){
 		m_device->set_device();
