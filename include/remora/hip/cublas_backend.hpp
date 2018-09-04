@@ -141,7 +141,6 @@ public:
 			C, int(ldC)
 		));
 	}
-	
 	void gemm(
 		bool transA, bool transB,
 		std::size_t m, std::size_t n, std::size_t k,
@@ -190,7 +189,6 @@ public:
 			v, int(stridev)
 		));
 	}
-	
 	void gemv(
 		bool transA,
 		std::size_t m, std::size_t n,
@@ -238,7 +236,6 @@ public:
 			B, int(ldB)
 		));
 	}
-	
 	void trmm(
 		bool leftA, bool upperA, bool transA, bool unitA,
 		std::size_t m, std::size_t n,
@@ -282,7 +279,6 @@ public:
 			v, int(stridev)
 		));
 	}
-	
 	void trmv(
 		bool upperA, bool transA, bool unitA,
 		std::size_t n,
@@ -299,6 +295,138 @@ public:
 			int(n),
 			A, int(ldA),
 			v, int(stridev)
+		));
+	}
+	
+	////////////TRSM////////////
+	
+	void trsm(
+		bool leftA, bool upperA, bool transA, bool unitA,
+		std::size_t m, std::size_t n,
+		float alpha, 
+		float const* A, std::size_t ldA,
+		float* B, std::size_t ldB,
+		stream const& s
+	){
+		prepare(s);
+		check_cublas(cublasStrsm(
+			m_handle,
+			leftA? CUBLAS_SIDE_LEFT : CUBLAS_SIDE_RIGHT,
+			upperA? CUBLAS_FILL_MODE_UPPER: CUBLAS_FILL_MODE_LOWER,
+			transA? CUBLAS_OP_T : CUBLAS_OP_N,
+			unitA? CUBLAS_DIAG_UNIT: CUBLAS_DIAG_NON_UNIT,
+			int(m), int(n),
+			&alpha,
+			A, int(ldA),
+			B, int(ldB)
+		));
+	}
+	void trsm(
+		bool leftA, bool upperA, bool transA, bool unitA,
+		std::size_t m, std::size_t n,
+		double alpha, 
+		double const* A, std::size_t ldA,
+		double* B, std::size_t ldB,
+		stream const& s
+	){
+		prepare(s);
+		check_cublas(cublasDtrsm(
+			m_handle,
+			leftA? CUBLAS_SIDE_LEFT : CUBLAS_SIDE_RIGHT,
+			upperA? CUBLAS_FILL_MODE_UPPER: CUBLAS_FILL_MODE_LOWER,
+			transA? CUBLAS_OP_T : CUBLAS_OP_N,
+			unitA? CUBLAS_DIAG_UNIT: CUBLAS_DIAG_NON_UNIT,
+			int(m), int(n),
+			&alpha,
+			A, int(ldA),
+			B, int(ldB)
+		));
+	}
+	
+	////////////TRSV////////////
+	
+	void trsv(
+		bool upperA, bool transA, bool unitA,
+		std::size_t n,
+		float const* A, std::size_t ldA,
+		float* v, std::size_t stridev,
+		stream const& s
+	){
+		prepare(s);
+		check_cublas(cublasStrsv(
+			m_handle,
+			upperA? CUBLAS_FILL_MODE_UPPER: CUBLAS_FILL_MODE_LOWER,
+			transA? CUBLAS_OP_T : CUBLAS_OP_N,
+			unitA? CUBLAS_DIAG_UNIT: CUBLAS_DIAG_NON_UNIT,
+			int(n),
+			A, int(ldA),
+			v, int(stridev)
+		));
+	}
+	void trsv(
+		bool upperA, bool transA, bool unitA,
+		std::size_t n,
+		double const* A, std::size_t ldA,
+		double* v, std::size_t stridev,
+		stream const& s
+	){
+		prepare(s);
+		check_cublas(cublasDtrsv(
+			m_handle,
+			upperA? CUBLAS_FILL_MODE_UPPER: CUBLAS_FILL_MODE_LOWER,
+			transA? CUBLAS_OP_T : CUBLAS_OP_N,
+			unitA? CUBLAS_DIAG_UNIT: CUBLAS_DIAG_NON_UNIT,
+			int(n),
+			A, int(ldA),
+			v, int(stridev)
+		));
+	}
+	
+	
+	
+	////////////SYRK////////////
+	
+	void syrk(
+		bool upperA, bool transA,
+		std::size_t n, std::size_t k,
+		float alpha,
+		float const* A, std::size_t ldA,
+		float beta,
+		float* C, std::size_t ldC,
+		stream const& s
+	){
+		prepare(s);
+		check_cublas(cublasSsyrk(
+			m_handle,
+			upperA? CUBLAS_FILL_MODE_UPPER: CUBLAS_FILL_MODE_LOWER,
+			transA? CUBLAS_OP_T : CUBLAS_OP_N,
+			int(n), int(k),
+			&alpha,
+			A, int(ldA),
+			&beta,
+			C, int(ldC)
+		));
+	}
+	
+	void syrk(
+		bool upperA, bool transA,
+		std::size_t n, std::size_t k,
+		double alpha,
+		double const* A, std::size_t ldA,
+		double beta,
+		double* C, std::size_t ldC,
+		stream const& s
+	){
+		prepare(s);
+		check_cublas(cublasDsyrk(
+			m_handle,
+			upperA? CUBLAS_FILL_MODE_UPPER: CUBLAS_FILL_MODE_LOWER,
+			transA? CUBLAS_OP_T : CUBLAS_OP_N,
+			int(n), int(k),
+			&alpha,
+			A, int(ldA),
+			&beta,
+			C, int(ldC)
 		));
 	}
 	

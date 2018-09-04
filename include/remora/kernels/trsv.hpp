@@ -70,5 +70,8 @@ void trsv(
 #elif defined REMORA_USE_OPENCL
 #include "opencl/trsv.hpp"
 #endif
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/trsv.hpp"
+#endif
 
 #endif

@@ -29,8 +29,8 @@
  *
  */
 //===========================================================================
-#ifndef REMORA_KERNELS_HIP_TRMV_HPP
-#define REMORA_KERNELS_HIP_TRMV_HPP
+#ifndef REMORA_KERNELS_HIP_TRSV_HPP
+#define REMORA_KERNELS_HIP_TRSV_HPP
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
@@ -41,9 +41,9 @@
 #endif
 namespace remora{ namespace kernels{
 
-// v <- Av with A being triangular
-template <bool Upper,bool Unit,typename MatA, typename VecV>
-void trmv(
+// solve Ax = b or xA=b with A being triangular
+template <class Triangular,class Side, typename MatA, typename VecV>
+void trsv(
 	matrix_expression<MatA, hip_tag> const& A, 
 	vector_expression<VecV, hip_tag>& v
 ){
@@ -58,16 +58,22 @@ void trmv(
 	auto const& Aeval = eval_expression(A);
 
 	//obtain geometry information
-	auto transA = std::is_same<typename MatA::orientation::orientation, row_major>::value;
-	bool triangular = transA? !Upper : Upper;
+	auto transA = !std::is_same<typename MatA::orientation::orientation, column_major>::value;
+	bool upperA = transA? !Triangular::is_upper : Triangular::is_upper;
+	//transpose if side is right
+	if(!Side::is_left){
+		transA = !transA;
+	}
+	
 	std::size_t n = A().size1();
+	
 	
 	//obtain raw storage
 	auto storageA = Aeval.raw_storage();
 	auto storagev = v().raw_storage();
 	
-	hip::get_blas(v().queue()).trmv(
-		triangular, transA, Unit,
+	hip::get_blas(v().queue()).trsv(
+		upperA, transA, Triangular::is_unit,
 		n,
 		storageA.values, storageA.leading_dimension,
 		storagev.values, storagev.stride,

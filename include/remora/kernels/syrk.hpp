@@ -73,5 +73,8 @@ void syrk(
 #elif defined REMORA_USE_OPENCL
 #include "opencl/syrk.hpp"
 #endif
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/syrk.hpp"
+#endif
 
 #endif

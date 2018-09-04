@@ -35,7 +35,7 @@
 
 #include "exception.hpp"
 #include <hip/hip_runtime.h>
-//~ #include <hipblas.h>
+#include <vector>
 namespace remora{namespace hip{
 	
 class device{
@@ -43,19 +43,12 @@ public:
 	device(int id)
 	:m_id(id), m_use_stream_per_thread(true){
 		check_hip(hipGetDeviceProperties(&m_device_properties, m_id));
-		
-		//~ check_hipblas(hipblasCreate(&m_blas_handle));
-		m_owns_handle = true;
 	}
 	device(device const&) = delete;
 	device(device&& other){
 		m_id = other.m_id;
 		m_use_stream_per_thread = other.m_use_stream_per_thread;
 		m_device_properties = other.m_device_properties;
-		
-		//~ m_blas_handle = other.m_blas_handle;
-		m_owns_handle = other.m_owns_handle;
-		other.m_owns_handle = false;
 	}
 	
 	device& operator=(device const&) = delete;
@@ -73,15 +66,6 @@ public:
 		return m_use_stream_per_thread;
 	}
 	
-	//~ hipblasHandle_t blas_handle(){
-		//~ return m_blas_handle;
-	//~ }
-	~device(){
-		if(m_owns_handle){
-			//~ check_hipblas(hipblasDestroy(m_blas_handle));
-		}
-	}
-	
 	int device_id(){
 		return m_id;
 	}
@@ -94,8 +78,6 @@ private:
 	int m_id;
 	bool m_use_stream_per_thread;
 	hipDeviceProp_t m_device_properties;
-	//~ hipblasHandle_t m_blas_handle;
-	bool m_owns_handle;
 };
 
 class device_manager{

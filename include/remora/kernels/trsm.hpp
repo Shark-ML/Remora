@@ -71,5 +71,8 @@ void trsm(
 #elif defined REMORA_USE_OPENCL
 #include "opencl/trsm.hpp"
 #endif
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/trsm.hpp"
+#endif
 
 #endif
