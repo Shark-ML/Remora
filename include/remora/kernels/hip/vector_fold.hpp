@@ -34,21 +34,21 @@
 namespace remora{
 namespace hip{
 template<class VecV, class R, class F>
-__global__ void vector_fold_kernel(hipLaunchParm lp, VecV v, R* resultp, F f){
+__global__ void vector_fold_kernel(hipLaunchParm lp, VecV v, size_t size, R* resultp, F f){
 	__shared__ R folds[64];
 	R& entry = folds[hipThreadIdx_x];
 	size_t i = hipThreadIdx_x;
-	if(i < v.size()){
+	if(i < size){
 		entry = v(i);
 		i += hipBlockDim_x;
-		for(;i < v.size(); i +=  hipBlockDim_x){
+		for(;i < size; i +=  hipBlockDim_x){
 			entry = f(entry, v(i));
 		}
 	}
 	__threadfence();
 	
 	if(hipThreadIdx_x == 0){
-		for(size_t i = 0 ; i < min(size_t(hipBlockDim_x), v.size()); ++i){
+		for(size_t i = 0 ; i < min(size_t(hipBlockDim_x), size); ++i){
 			*resultp = f(*resultp, folds[i]);
 		}
 	}
@@ -58,7 +58,6 @@ namespace bindings{
 template<class F, class V>
 void vector_fold(vector_expression<V, hip_tag> const& v, typename F::result_type& value, dense_tag){
 	if(v().size() == 0) return;
-	 v().queue().set_device();
 	typedef typename F::result_type value_type;
 	hip::buffer<value_type> result(1, v().queue());
 	
@@ -70,7 +69,7 @@ void vector_fold(vector_expression<V, hip_tag> const& v, typename F::result_type
 	hipLaunchKernel(
 		hip::vector_fold_kernel, 
 		dim3(numBlocks), dim3(blockSize), 0, stream,
-		typename V::const_closure_type(v()), result.get(), F()
+		v().elements(), v().size(), result.get(), F()
 	);
 	hipMemcpy(&value, result.get(), sizeof(value), hipMemcpyDeviceToHost);
 }

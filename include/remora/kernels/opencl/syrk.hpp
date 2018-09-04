@@ -68,8 +68,8 @@ void syrk(
 	std::size_t K_index = k.add_arg<std::size_t>("K");
 	std::size_t upper_index = k.add_arg<std::size_t>("upper");
 	std::size_t alpha_index = k.add_arg<value_type>("alpha");
-	auto A = k.register_args(to_functor(A_unreg));
-	auto C = k.register_args(to_functor(C_unreg));
+	auto A = k.register_args(A_unreg().elements());
+	auto C = k.register_args(C_unreg().elements());
 	//check whether we are in a block that is not touched by syrk
 	k <<"if((upper && get_group_id(1) < get_group_id(0))) return;\n"; 
 	k <<"if((!upper && get_group_id(1) > get_group_id(0))) return;\n"; 

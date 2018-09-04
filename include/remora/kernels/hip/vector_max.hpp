@@ -34,15 +34,17 @@
 namespace remora{
 namespace hip{
 template<class VecV>
-__global__ void vector_max_kernel(hipLaunchParm lp, VecV v, size_t* max){
-	typedef typename VecV::value_type value_type;
+__global__ void vector_max_kernel(hipLaunchParm lp, VecV v, size_t size, size_t* max){
+	typedef typename std::remove_const<
+		typename std::remove_reference<typename VecV::result_type>::type 
+	> ::type value_type;
 	__shared__ value_type max_value[64];
 	__shared__ std::size_t max_index[64];
 	value_type& thread_max = max_value[hipThreadIdx_x];
 	std::size_t& thread_index = max_index[hipThreadIdx_x];
 	thread_max = 1.e-30;
 	thread_index = 0;
-	for(size_t i = hipThreadIdx_x; i < v.size(); i += hipBlockDim_x){
+	for(size_t i = hipThreadIdx_x; i < size; i += hipBlockDim_x){
 		if(thread_max < v(i)){
 			thread_max = v(i);
 			thread_index = i;
@@ -51,7 +53,7 @@ __global__ void vector_max_kernel(hipLaunchParm lp, VecV v, size_t* max){
 	__threadfence();
 	
 	if(hipThreadIdx_x == 0){
-		for(size_t i = 1 ; i < min(size_t(hipBlockDim_x), v.size()); ++i){
+		for(size_t i = 1 ; i < min(size_t(hipBlockDim_x), size); ++i){
 			if(thread_max < max_value[i]){
 				thread_max = max_value[i];
 				thread_index = max_index[i];
@@ -65,7 +67,6 @@ namespace bindings{
 template<class V>
 std::size_t vector_max(vector_expression<V, hip_tag> const& v, dense_tag){
 	if(v().size() == 0) return 0;
-	 v().queue().set_device();
 	hip::buffer<std::size_t> result(1, v().queue());
 	
 	std::size_t blockSize = std::min(64, v().queue().warp_size());
@@ -74,7 +75,7 @@ std::size_t vector_max(vector_expression<V, hip_tag> const& v, dense_tag){
 	hipLaunchKernel(
 		hip::vector_max_kernel, 
 		dim3(numBlocks), dim3(blockSize), 0, stream,
-		typename V::const_closure_type(v()), result.get()
+		v().elements(), v().size(), result.get()
 	);
 	std::size_t index;
 	hipMemcpy(&index, result.get(), sizeof(index), hipMemcpyDeviceToHost);

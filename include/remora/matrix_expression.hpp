@@ -31,7 +31,6 @@
 #include "detail/expression_optimizers.hpp"
 #include "proxy_expressions.hpp"
 #include "vector_expression.hpp"
-//~ #include "vector_set_expressions.hpp"
 
 namespace remora{
 	

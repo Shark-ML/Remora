@@ -58,10 +58,11 @@ void checkDenseExpressionEquality(
 	BOOST_REQUIRE_EQUAL(op().size1(), result.size1());
 	BOOST_REQUIRE_EQUAL(op().size2(), result.size2());
 	
-	//check that op(i,j) works
+	//check that elements works
+	auto op_elem = op().elements();
 	for(std::size_t i = 0; i != op().size1(); ++i){
 		for(std::size_t j = 0; j != op().size2(); ++j){
-			BOOST_CHECK_CLOSE(result(i,j), op()(i,j),1.e-5);
+			BOOST_CHECK_CLOSE(result(i,j), op_elem(i,j),1.e-5);
 		}
 	}
 	//check that iterators work

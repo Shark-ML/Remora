@@ -57,10 +57,11 @@ void checkDenseExpressionEquality(
 	BOOST_REQUIRE_EQUAL(op().size1(), result.size1());
 	BOOST_REQUIRE_EQUAL(op().size2(), result.size2());
 	
-	//check that op(i,j) works
+	//check that elements() works
+	auto op_elem = op().elements();
 	for(std::size_t i = 0; i != op().size1(); ++i){
 		for(std::size_t j = 0; j != op().size2(); ++j){
-			BOOST_CHECK_CLOSE(result(i,j), op()(i,j),1.e-5);
+			BOOST_CHECK_CLOSE(result(i,j), op_elem(i,j),1.e-5);
 		}
 	}
 	//check that iterators work
@@ -82,11 +83,12 @@ void checkDenseExpressionEquality(
 	BOOST_REQUIRE_EQUAL(op().size(), result.size());
 	
 	typename Operation::const_iterator pos = op().begin();
+	auto op_elem = op().elements();
 	for(std::size_t i = 0; i != op().size(); ++i,++pos){
 		BOOST_REQUIRE(pos != op().end());
 		BOOST_CHECK_EQUAL(pos.index(), i);
-		BOOST_CHECK_SMALL(result(i) - op()(i),typename Result::value_type(1.e-10));
-		BOOST_CHECK_SMALL(*pos - op()(i),typename Result::value_type(1.e-10));
+		BOOST_CHECK_SMALL(result(i) - op_elem(i),typename Result::value_type(1.e-10));
+		BOOST_CHECK_SMALL(*pos - op_elem(i),typename Result::value_type(1.e-10));
 	}
 	BOOST_REQUIRE(pos == op().end());
 
@@ -98,12 +100,13 @@ template<class M, class D>
 void checkDiagonalMatrix(M const& diagonal, D const& diagonalElements){
 	BOOST_REQUIRE_EQUAL(diagonal.size1(),diagonalElements.size());
 	BOOST_REQUIRE_EQUAL(diagonal.size2(),diagonalElements.size());
+	auto diag_elem = diagonal.elements();
 	for(std::size_t i = 0; i != diagonalElements.size(); ++i){
 		for(std::size_t j = 0; j != diagonalElements.size(); ++j){
 			if(i != j)
-				BOOST_CHECK_EQUAL(diagonal(i,j),0);
+				BOOST_CHECK_EQUAL(diag_elem(i,j),0);
 			else
-				BOOST_CHECK_EQUAL(diagonal(i,i),diagonalElements(i));
+				BOOST_CHECK_EQUAL(diag_elem(i,i),diagonalElements(i));
 		}
 		auto major_begin = diagonal.major_begin(i);
 		BOOST_CHECK_EQUAL(major_begin.index(),i);

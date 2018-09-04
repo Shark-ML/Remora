@@ -37,11 +37,11 @@ namespace remora{
 	
 namespace hip{
 	template<class M>
-	__global__ void clear2d_proxy_kernel(hipLaunchParm lp, M m){
+	__global__ void clear2d_proxy_kernel(hipLaunchParm lp, M m, size_t size1, size_t size2){
 		size_t row_start = (hipBlockIdx_x * 16);
 		size_t column_start = (hipBlockIdx_y * 16);
-		size_t row_end = min(row_start + 16, m.size1());
-		size_t column_end = min(column_start + 16, m.size2());
+		size_t row_end = min(row_start + 16, size1);
+		size_t column_end = min(column_start + 16, size2);
 		for(size_t i = row_start+ hipThreadIdx_x; i < row_end; i += hipBlockDim_x){
 			for(size_t j = column_start+ hipThreadIdx_y; j < column_end; j += hipBlockDim_y){
 				m(i, j) = 0;
@@ -110,7 +110,7 @@ public:
 	}
 	
 	/// \brief Return the size of the vector.
-	__host__ __device__ size_type size() const {
+	size_type size() const {
 		return m_size;
 	}
 	
@@ -123,8 +123,8 @@ public:
 		return *m_queue;
 	}
 	
-	__device__ reference operator()(size_type i) const{
-		return m_storage.values[i * m_storage.stride];
+	device_traits<hip_tag>::vector_element<T> elements() const{
+		return {raw_storage()};
 	}
 	
 	void clear(){
@@ -220,11 +220,11 @@ public:
 	// ---------
 	
 	///\brief Returns the number of rows of the matrix.
-	__host__ __device__ size_type size1() const {
+	size_type size1() const {
 		return m_size1;
 	}
 	///\brief Returns the number of columns of the matrix.
-	__host__ __device__ size_type size2() const {
+	size_type size2() const {
 		return m_size2;
 	}
 	
@@ -237,11 +237,8 @@ public:
 		return {m_storage.values, m_storage.leading_dimension};
 	}
 	
-	__device__ reference operator()(size_type i, size_type j){
-		return m_storage.values[orientation::element(i,j, m_storage.leading_dimension)];
-	}
-	__device__ const_reference operator()(size_type i, size_type j)const{
-		return m_storage.values[orientation::element(i,j, m_storage.leading_dimension)];
+	device_traits<hip_tag>::matrix_element<T, orientation> elements() const{
+		return {raw_storage()};
 	}
 	
 	void clear(){
@@ -253,7 +250,7 @@ public:
 		hipLaunchKernel(
 			hip::clear2d_proxy_kernel, 
 			dim3(numBlocks1, numBlocks2), dim3(blockSize1, blockSize2), 0, stream,
-			*this
+			elements(), m_size1, m_size2
 		);
 	}
 	
@@ -381,7 +378,7 @@ public:
 	// ---------
 	
 	/// \brief Return the size of the vector.
-	__host__ __device__ size_type size() const {
+	size_type size() const {
 		return m_storage.size();
 	}
 	
@@ -398,11 +395,11 @@ public:
 		return {m_storage.get(), 1};
 	}
 	
-	__device__ const_reference operator()(size_type i) const{
-		return m_storage.get()[i];
+	device_traits<hip_tag>::vector_element<T> elements(){
+		return {raw_storage()};
 	}
-	__device__ reference operator()(size_type i){
-		return m_storage.get()[i];
+	device_traits<hip_tag>::vector_element<T const> elements() const{
+		return {raw_storage()};
 	}
 	
 	/// \brief Resize the vector
@@ -593,11 +590,11 @@ public:
 	// ---------
 	
 	///\brief Returns the number of rows of the matrix.
-	__host__ __device__ size_type size1() const {
+	size_type size1() const {
 		return m_size1;
 	}
 	///\brief Returns the number of columns of the matrix.
-	__host__ __device__ size_type size2() const {
+	size_type size2() const {
 		return m_size2;
 	}
 	
@@ -614,11 +611,11 @@ public:
 		return {m_storage.get(), orientation::index_m(m_size1, m_size2)};
 	}
 	
-	__device__ reference operator()(size_type i, size_type j){
-		return m_storage.get()[orientation::element(i,j, raw_storage().leading_dimension)];
+	device_traits<hip_tag>::matrix_element<value_type, orientation> elements(){
+		return {raw_storage()};
 	}
-	__device__ const_reference operator()(size_type i, size_type j)const{
-		return m_storage.get()[orientation::element(i,j, raw_storage().leading_dimension)];
+	device_traits<hip_tag>::matrix_element<value_type const, orientation> elements() const{
+		return {raw_storage()};
 	}
 	
 	/// \brief Resize the matrix

@@ -18,11 +18,12 @@ void checkDenseExpressionEquality(
 	BOOST_REQUIRE_EQUAL(op().size(), result.size());
 	
 	typename Operation::const_iterator pos = op().begin();
+	auto op_elem = op().elements();
 	for(std::size_t i = 0; i != op().size(); ++i,++pos){
 		BOOST_REQUIRE(pos != op().end());
 		BOOST_CHECK_EQUAL(pos.index(), i);
-		BOOST_CHECK_SMALL(result(i) - op()(i),typename Result::value_type(1.e-10));
-		BOOST_CHECK_SMALL(*pos - op()(i),typename Result::value_type(1.e-10));
+		BOOST_CHECK_SMALL(result(i) - op_elem(i),typename Result::value_type(1.e-10));
+		BOOST_CHECK_SMALL(*pos - op_elem(i),typename Result::value_type(1.e-10));
 	}
 	BOOST_REQUIRE(pos == op().end());
 
@@ -33,8 +34,8 @@ void checkDenseExpressionEquality(
 	op().plus_assign_to(res2);
 	
 	for(std::size_t i = 0; i != op().size(); ++i,++pos){
-		BOOST_CHECK_SMALL(res1(i) - op()(i),typename Result::value_type(1.e-7));
-		BOOST_CHECK_SMALL(res2(i) - op()(i) - 1,typename Result::value_type(1.e-7));
+		BOOST_CHECK_SMALL(res1(i) - op_elem(i),typename Result::value_type(1.e-7));
+		BOOST_CHECK_SMALL(res2(i) - op_elem(i) - 1,typename Result::value_type(1.e-7));
 	}
 	
 }

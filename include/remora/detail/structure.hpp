@@ -40,8 +40,8 @@
 
 #if defined(__HCC__) || defined(__NVCC__)
 #define REMORA_CALL_PREFIX __host__ __device__
-#elif
-#define REMORA_CALL_PREFIX
+#else
+#define REMORA_CALL_PREFIX 
 #endif
 
 namespace remora{

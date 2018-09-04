@@ -53,7 +53,7 @@ potrf_kernel createPotrfDiagBlockKernel(
 	opencl::detail::meta_kernel k("blas_potrf");
 	std::size_t start_index = k.add_arg<std::size_t>("start");//start of block of A
 	std::size_t end_index = k.add_arg<std::size_t>("end");//end of Block of A
-	auto A = k.register_args(to_functor(A_unreg));
+	auto A = k.register_args(A_unreg().elements());
 	// Local memory to fit a tile of A and B
 	// we store B as column major in local memory
 	// we also allocate memory to store results of B

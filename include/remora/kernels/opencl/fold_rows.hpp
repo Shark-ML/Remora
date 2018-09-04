@@ -49,8 +49,8 @@ void fold_rows(
 	opencl::detail::meta_kernel k("remora_fold_rows");
 	std::size_t size1_index = k.add_arg<std::size_t>("size1");
 	std::size_t size2_index = k.add_arg<std::size_t>("size2");
-	auto A = k.register_args(to_functor(A_unreg));
-	auto v = k.register_args(to_functor(v_unreg));
+	auto A = k.register_args(A_unreg().elements());
+	auto v = k.register_args(v_unreg().elements());
 	auto f = k.register_args(f_unreg);
 	auto g = k.register_args(g_unreg);
 	//read all tiles in the assigned rows and sum them up

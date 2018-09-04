@@ -71,9 +71,9 @@ void gemm(
 	std::size_t N_index = k.add_arg<std::size_t>("N");
 	std::size_t K_index = k.add_arg<std::size_t>("K");
 	std::size_t alpha_index = k.add_arg<value_type>("alpha");
-	auto A = k.register_args(to_functor(A_unreg));
-	auto B = k.register_args(to_functor(B_unreg));
-	auto C = k.register_args(to_functor(C_unreg));
+	auto A = k.register_args(A_unreg().elements());
+	auto B = k.register_args(B_unreg().elements());
+	auto C = k.register_args(C_unreg().elements());
 	
 	
 	// Local memory to fit a tile of A and B

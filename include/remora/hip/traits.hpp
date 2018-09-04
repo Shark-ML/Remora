@@ -74,23 +74,6 @@ struct device_traits<hip_tag>{
 	
 	//functors
 	
-	template<class T>
-	struct constant{
-		typedef T result_type;
-		constant(T const& value): m_value(value){}
-		
-		template<class Arg>
-		__device__ T operator()(Arg const&) const{
-			return m_value;
-		}
-		template<class Arg1, class Arg2>
-		__device__ T operator()(Arg1 const&, Arg2 const&) const{
-			return m_value;
-		}
-		
-		T m_value;
-	};
-	
 #define REMORA_BINARY_FUNCTION(func, op, R)\
 	template<class T>\
 	struct func{\
@@ -124,7 +107,7 @@ struct device_traits<hip_tag>{
 		typedef T result_type;\
 		func(T scalar):m_scalar(scalar){}\
 		__device__ T operator()(T x) const{\
-			return call(x, m_scalar);\
+			return call;\
 		}\
 	private:\
 		T m_scalar;\
@@ -238,6 +221,73 @@ struct device_traits<hip_tag>{
 		__device__ T operator()(T x)const {
 			return x*x;
 		}
+	};
+	
+	//special element structure
+	template<class T>
+	struct constant{
+		typedef T result_type;
+		constant(T const& value): m_value(value){}
+		
+		template<class Arg>
+		__device__ T operator()(Arg const&) const{
+			return m_value;
+		}
+		template<class Arg1, class Arg2>
+		__device__ T operator()(Arg1 const&, Arg2 const&) const{
+			return m_value;
+		}
+		
+		T m_value;
+	};
+	template<class T>
+	struct unit{
+		typedef T result_type;
+		unit(T const& value, std::size_t index): m_value(value), m_index(index){}
+		
+		__device__ T operator()(std::size_t i) const{
+			return (i == m_index)? m_value : T();
+		}
+		
+		T m_value;
+		std::size_t m_index;
+	};
+	
+	template<class F>
+	struct diag{
+		typedef typename std::remove_reference<typename F::result_type>::type result_type;
+		diag(F const& functor): m_functor(functor){}
+		
+		__device__ result_type operator()(std::size_t i, std::size_t j) const{
+			return (i == j)? m_functor(i) : result_type();
+		}
+		
+		F m_functor;
+	};
+	
+	template<class T>
+	struct vector_element{
+		typedef T& result_type;
+		vector_element(dense_vector_storage<T, dense_tag> const& storage):m_storage(storage){}
+		
+		__device__ T& operator()(std::size_t i) const{
+			return m_storage.values[i * m_storage.stride];
+		}
+	private:
+		dense_vector_storage<T, dense_tag> m_storage;
+	};
+	template<class T, class Orientation>
+	struct matrix_element{
+		typedef T& result_type;
+		matrix_element(dense_matrix_storage<T, dense_tag> const& storage):m_storage(storage){}
+		
+		__device__ T& operator()(std::size_t i, std::size_t j) const{
+			std::size_t stride1 = Orientation::stride1(m_storage.leading_dimension);
+			std::size_t stride2 = Orientation::stride2(m_storage.leading_dimension);
+			return m_storage.values[i * stride1 + j * stride2];
+		}
+	private:
+		dense_matrix_storage<T, dense_tag> m_storage;
 	};
 
 	

@@ -566,8 +566,8 @@ BOOST_AUTO_TEST_CASE( Remora_matrix_Binary_Div)
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
-			x_cpu(i,j) = -3.0+i-j;
-			y_cpu(i,j) = i+j+1;
+			x_cpu(i,j) = -2.5+i-j;
+			y_cpu(i,j) = 0.1*(i+j+1);
 			result(i,j)= x_cpu(i,j)/y_cpu(i,j);
 		}
 	}

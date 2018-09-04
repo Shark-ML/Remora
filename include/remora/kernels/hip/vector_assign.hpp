@@ -34,16 +34,16 @@
 namespace remora{
 namespace hip{
 template<class V, class F>
-__global__ void vector_apply_kernel(hipLaunchParm lp, V v, F f){
+__global__ void vector_apply_kernel(hipLaunchParm lp, V v, size_t size, F f){
 	std::size_t i = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
-	if(i < v.size())
+	if(i < size)
 		v(i) = f(v(i));
 }
 
 template<class V,  class E, class F>
-__global__ void vector_assign_functor_kernel(hipLaunchParm lp, V v, E e, F f){
+__global__ void vector_assign_functor_kernel(hipLaunchParm lp, V v, size_t size, E e, F f){
 	std::size_t i = (hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x);
-	if(i < v.size())
+	if(i < size)
 		v(i) = f(v(i), e(i));
 }
 
@@ -61,7 +61,7 @@ void apply(vector_expression<V, hip_tag>& v, F const& f){
 	hipLaunchKernel(
 		hip::vector_apply_kernel, 
 		dim3(numBlocks), dim3(blockSize), 0, stream, 
-		typename V::closure_type(v()), f
+		v().elements(), v().size(), f
 	);
 }
 
@@ -91,7 +91,7 @@ void vector_assign_functor(
 	hipLaunchKernel(
 		hip::vector_assign_functor_kernel, 
 		dim3(numBlocks), dim3(blockSize), 0, stream,
-		typename V::closure_type(v()), typename E::const_closure_type(e()), f
+		v().elements(), v().size(), e().elements(), f
 	);
 }
 

@@ -48,7 +48,7 @@ void matrix_apply(
 ){
 	opencl::detail::meta_kernel k("blas_matrix_apply_dense");
 	
-	auto m = k.register_args(to_functor(m_unreg));
+	auto m = k.register_args(m_unreg().elements());
 	auto f = k.register_args(f_unreg);
 	
 	//create source
@@ -89,8 +89,8 @@ void matrix_assign_functor(
 ){
 	//create source
 	opencl::detail::meta_kernel k("blas_matrix_assign");
-	auto m = k.register_args(to_functor(m_unreg));
-	auto e = k.register_args(to_functor(e_unreg));
+	auto m = k.register_args(m_unreg().elements());
+	auto e = k.register_args(e_unreg().elements());
 	auto f = k.register_args(f_unreg);
 
 	auto id0 = k.expr<cl_uint>("get_global_id(0)");
@@ -121,8 +121,8 @@ void matrix_assign_functor(
 	
 	//create source
 	opencl::detail::meta_kernel k("blas_matrix_assign_row_col");
-	auto m = k.register_args(to_functor(m_unreg));
-	auto e = k.register_args(to_functor(e_unreg));
+	auto m = k.register_args(m_unreg().elements());
+	auto e = k.register_args(e_unreg().elements());
 	auto f = k.register_args(f_unreg);
 	//create local memory. we first copy a tile in local
 	// memory which gets the orientation right. Then we copy the tile

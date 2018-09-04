@@ -41,7 +41,7 @@ std::size_t vector_max(vector_expression<E, opencl_tag> const& v_unreg, dense_ta
 	typedef typename E::value_type value_type;
 	opencl::detail::meta_kernel k("blas_vector_fold");
 	std::size_t size_index = k.add_arg<std::size_t>("size");
-	auto v = k.register_args(to_functor(v_unreg));
+	auto v = k.register_args(v_unreg().elements());
 	
 	boost::compute::array<std::size_t,1> device_result;
 	auto exprMax = k.expr<value_type>("maximum[get_local_id(0)]");

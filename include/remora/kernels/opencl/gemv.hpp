@@ -56,9 +56,9 @@ void gemv(
 	std::size_t alpha_index = k.add_arg<value_type>("alpha");
 	std::size_t size1_index = k.add_arg<std::size_t>("size1");
 	std::size_t size2_index = k.add_arg<std::size_t>("size2");
-	auto A = k.register_args(to_functor(A_unreg));
-	auto x = k.register_args(to_functor(x_unreg));
-	auto v = k.register_args(to_functor(v_unreg));
+	auto A = k.register_args(A_unreg().elements());
+	auto x = k.register_args(x_unreg().elements());
+	auto v = k.register_args(v_unreg().elements());
 	//read all tiles in the assigned rows and compute the inner product
 	k << "__local " <<k.decl<value_type>("results")<< "[TILE_DIM][TILE_DIM+2];";
 	k << "uint rowid = get_global_id(0);";

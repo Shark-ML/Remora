@@ -53,12 +53,13 @@ void trsv_impl(
 	typedef typename MatA::value_type value_type;
 	typedef device_traits<cpu_tag>::multiply_and_add<value_type> MultAdd;
 	std::size_t size = b().size();
+	auto A_elem = A().elements();
 	for (std::size_t n = 0; n != size; ++ n) {
 		if(!Unit){
-			if(A()(n, n) == value_type()){//matrix is singular
+			if(A_elem(n, n) == value_type()){//matrix is singular
 				throw std::invalid_argument("[TRSV] Matrix is singular!");
 			}
-			b()(n) /= A()(n, n);
+			b()(n) /= A_elem(n, n);
 		}
 		if (b()(n) != value_type/*zero*/()){
 			auto blower = subrange(b,n+1,size);
@@ -78,7 +79,7 @@ void trsv_impl(
 	REMORA_SIZE_CHECK(A().size2() == b().size());
 
 	typedef typename V::value_type value_type;
-
+	auto A_elem = A().elements();
 	std::size_t size = b().size();
 	for (std::size_t n = 0; n < size; ++ n) {
 		value_type value;
@@ -89,10 +90,10 @@ void trsv_impl(
 		);
 		b()(n) -= value;
 		if(!Unit){
-			if(A()(n, n) == value_type()){//matrix is singular
+			if(A_elem(n, n) == value_type()){//matrix is singular
 				throw std::invalid_argument("[TRSV] Matrix is singular!");
 			}
-			b()(n) /= A()(n, n);
+			b()(n) /= A_elem(n, n);
 		}
 	}
 }
@@ -110,13 +111,14 @@ void trsv_impl(
 	typedef typename MatA::value_type value_type;
 	typedef device_traits<cpu_tag>::multiply_and_add<value_type> MultAdd;
 	std::size_t size = b().size();
+	auto A_elem = A().elements();
 	for (std::size_t i = 0; i < size; ++ i) {
 		std::size_t n = size-i-1;
 		if(!Unit){
-			if(A()(n, n) == value_type()){//matrix is singular
+			if(A_elem(n, n) == value_type()){//matrix is singular
 				throw std::invalid_argument("[TRSV] Matrix is singular!");
 			}
-			b()(n) /= A()(n, n);
+			b()(n) /= A_elem(n, n);
 		}
 		if (b()(n) != value_type/*zero*/()) {
 			auto blower = subrange(b(),0,n);
@@ -136,7 +138,7 @@ void trsv_impl(
 	REMORA_SIZE_CHECK(A().size2() == b().size());
 
 	typedef typename MatA::value_type value_type;
-
+	auto A_elem = A().elements();
 	std::size_t size = A().size1();
 	for (std::size_t i = 0; i < size; ++ i) {
 		std::size_t n = size-i-1;
@@ -148,10 +150,10 @@ void trsv_impl(
 		);
 		b()(n) -= value;
 		if(!Unit){
-			if(A()(n, n) == value_type()){//matrix is singular
+			if(A_elem(n, n) == value_type()){//matrix is singular
 				throw std::invalid_argument("[TRSV] Matrix is singular!");
 			}
-			b()(n) /= A()(n, n);
+			b()(n) /= A_elem(n, n);
 		}
 	}
 }

@@ -36,11 +36,11 @@ namespace remora{
 
 namespace hip{
 template<class M, class F>
-__global__ void matrix_apply_kernel(hipLaunchParm lp, M m, F f){
+__global__ void matrix_apply_kernel(hipLaunchParm lp, M m, size_t size1, size_t size2, F f){
 	size_t row_start = (hipBlockIdx_x * 16);
 	size_t column_start = (hipBlockIdx_y * 16);
-	size_t row_end = min(row_start + 16, m.size1());
-	size_t column_end = min(column_start + 16, m.size2());
+	size_t row_end = min(row_start + 16, size1);
+	size_t column_end = min(column_start + 16, size2);
 	for(size_t i = row_start+ hipThreadIdx_x; i < row_end; i += hipBlockDim_x){
 		for(size_t j = column_start+ hipThreadIdx_y; j < column_end; j += hipBlockDim_y){
 			m(i, j) = f(m(i, j));
@@ -50,26 +50,26 @@ __global__ void matrix_apply_kernel(hipLaunchParm lp, M m, F f){
 
 //kernel M row-major, E row-major
 template<class M, class E, class F>
-__global__ void matrix_assign_kernel_rowE(hipLaunchParm lp, M m, E e, F f){
+__global__ void matrix_assign_kernel_rowE(hipLaunchParm lp, M m, size_t size1, size_t size2, E e, F f){
 	size_t base_row = (hipBlockIdx_x * 16);
 	size_t base_column = (hipBlockIdx_y * 16);
-	size_t block_size1 = min(size_t(16), m.size1() - base_row);
-	size_t block_size2 = min(size_t(16), m.size2() - base_column);
+	size_t block_size1 = min(size_t(16), size1 - base_row);
+	size_t block_size2 = min(size_t(16), size2 - base_column);
 	for(size_t i = hipThreadIdx_x; i < block_size1; i += hipBlockDim_x){
 		for(size_t j = hipThreadIdx_y; j < block_size2; j += hipBlockDim_y){
-			typename M::value_type& val = m(base_row + i, base_column + j);
-			val = f(val, e(base_row + i, base_column + j));
+			m(base_row + i, base_column + j) = f(m(base_row + i, base_column + j), e(base_row + i, base_column + j));
 		}
 	}
 }
 //kernel M row-major, E column-major
 template<class M, class E, class F>
-__global__ void matrix_assign_kernel_colE(hipLaunchParm lp, M m, E e, F f){
+__global__ void matrix_assign_kernel_colE(hipLaunchParm lp, M m, size_t size1, size_t size2, E e, F f){
+	typedef typename std::remove_reference<typename M::result_type>::type value_type;
 	size_t base_row = (hipBlockIdx_x * 16);
 	size_t base_column = (hipBlockIdx_y * 16);
-	size_t block_size1 = min(size_t(16), m.size1() - base_row);
-	size_t block_size2 = min(size_t(16), m.size2() - base_column);
-	__shared__ typename M::value_type block[16][16 + 1];
+	size_t block_size1 = min(size_t(16), size1 - base_row);
+	size_t block_size2 = min(size_t(16), size2 - base_column);
+	__shared__ value_type block[16][16 + 1];
 	for(size_t j = hipThreadIdx_y; j < block_size2; j += hipBlockDim_y){
 		for(size_t i = hipThreadIdx_x; i < block_size1; i += hipBlockDim_x){
 			block[i][j] = e(base_row + i, base_column + j);
@@ -78,7 +78,7 @@ __global__ void matrix_assign_kernel_colE(hipLaunchParm lp, M m, E e, F f){
 	__threadfence_block();
 	for(size_t i = hipThreadIdx_x; i < block_size1; i += hipBlockDim_x){
 		for(size_t j = hipThreadIdx_y; j < block_size2; j += hipBlockDim_y){
-			typename M::value_type& val = m(base_row + i, base_column + j);
+			value_type& val = m(base_row + i, base_column + j);
 			val = f(val, block[i][j]);
 		}
 	}
@@ -113,7 +113,7 @@ void matrix_apply(
 	hipLaunchKernel(
 		hip::matrix_apply_kernel, 
 		dim3(numBlocks1, numBlocks2), dim3(blockSize1, blockSize2), 0, stream,
-		typename M::closure_type(m()), f
+		m().elements(), m().size1(), m().size2(), f
 	);
 }
 	
@@ -153,7 +153,8 @@ void matrix_assign_functor(
 	hipLaunchKernel(
 		hip::matrix_assign_kernel_rowE, 
 		dim3(numBlocks1, numBlocks2), dim3(blockSize1, blockSize2), 0, stream,
-		typename M::closure_type(m()), typename E::const_closure_type(e()), f
+		m().elements(), m().size1(), m().size2(), 
+		e().elements(), f
 	);
 }
 
@@ -174,7 +175,8 @@ void matrix_assign_functor(
 	hipLaunchKernel(
 		hip::matrix_assign_kernel_colE, 
 		dim3(numBlocks1, numBlocks2), dim3(blockSize1, blockSize2), 0, stream,
-		typename M::closure_type(m()), typename E::const_closure_type(e()), f
+		m().elements(), m().size1(), m().size2(), 
+		e().elements(), f
 	);
 }
 

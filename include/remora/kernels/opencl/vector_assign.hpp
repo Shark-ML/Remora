@@ -38,7 +38,7 @@ void apply(vector_expression<V, opencl_tag>& v_unreg, F const& f_unreg) {
 	if(v_unreg().size() == 0) return;
 	opencl::detail::meta_kernel k("blas_vector_apply_dense");
 	
-	auto v = k.register_args(to_functor(v_unreg));
+	auto v = k.register_args(v_unreg().elements());
 	auto f = k.register_args(f_unreg);
 	
 	//create source
@@ -72,8 +72,8 @@ void vector_assign_functor(
 	
 	opencl::detail::meta_kernel k("blas_vector_assign_functor_dense");
 	
-	auto v = k.register_args(to_functor(v_unreg));
-	auto e = k.register_args(to_functor(e_unreg));
+	auto v = k.register_args(v_unreg().elements());
+	auto e = k.register_args(e_unreg().elements());
 	auto f = k.register_args(f_unreg);
 	
 	//create source

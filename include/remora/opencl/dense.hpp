@@ -109,9 +109,14 @@ public:
 		return *m_queue;
 	}
 	
+	opencl::detail::dense_vector_element<T> elements()const{
+		auto const& storage = raw_storage(); 
+		return {storage.buffer, storage.stride, storage.offset}; 
+	}
+	
 	void clear(){
 		opencl::detail::meta_kernel k("vector_proxy_clear");
-		auto v = k.register_args(to_functor(*this));
+		auto v = k.register_args(elements());
 	
 		//create source
 		k<<v(k.get_global_id(0))<<" = 0;";
@@ -228,7 +233,7 @@ public:
 	
 	void clear(){
 		opencl::detail::meta_kernel k("matrix_proxy_clear");
-		auto m = k.register_args(to_functor(*this));
+		auto m = k.register_args(elements());
 	
 		//create source
 		k<<m(k.get_global_id(0),k.get_global_id(1))<<" = 0;";
@@ -236,6 +241,13 @@ public:
 		//enqueue kernel
 		std::size_t global_work_size[2] = {size1(), size2()};
 		queue().enqueue_nd_range_kernel(kernel, 2,nullptr, global_work_size, nullptr);
+	}
+	
+	opencl::detail::dense_matrix_element<T> elements() const{
+		auto const& storage = raw_storage(); 
+		std::size_t stride1 = Orientation::index_m(std::size_t(1), storage.leading_dimension);
+		std::size_t stride2 = Orientation::index_M(std::size_t(1), storage.leading_dimension);
+		return {storage.buffer, stride1, stride2, storage.offset}; 
 	}
 	
 	// Iterator types
@@ -317,8 +329,11 @@ public:
 	}
 	
 	// Element access
-	opencl::detail::dense_vector_element<value_type> to_functor() const{
-		return  {m_storage.get_buffer()}; 
+	opencl::detail::dense_vector_element<T const> elements()const{
+		return {m_storage.get_buffer(), 1, 0}; 
+	}
+	opencl::detail::dense_vector_element<T> elements(){
+		return {m_storage.get_buffer(), 1, 0}; 
 	}
 	
 	// -------------------
@@ -614,8 +629,7 @@ public:
 	storage_type raw_storage(){
 		return {m_storage.get_buffer(),0,leading_dimension()};
 	}
-	
-	
+
 	/// \brief Resize the matrix
 	///
 	/// This might erase all data stored in the matrix
@@ -646,6 +660,15 @@ public:
 	
 	void clear(){
 		boost::compute::fill(m_storage.begin(),m_storage.end(), value_type/*zero*/(), queue());
+	}
+	
+	opencl::detail::dense_matrix_element<T const> elements()const{
+		std::size_t leading = leading_dimension();
+		return {m_storage.get_buffer(), orientation::stride1(leading), orientation::stride2(leading),0}; 
+	}
+	opencl::detail::dense_matrix_element<T> elements(){
+		std::size_t leading = leading_dimension();
+		return {m_storage.get_buffer(), orientation::stride1(leading), orientation::stride2(leading),0}; 
 	}
 	
 	// Iterator types
@@ -729,10 +752,11 @@ public:
 		return m_storage;
 	}
 	
-	 boost::compute::command_queue& queue()const{
+	boost::compute::command_queue& queue()const{
 		return *m_queue;
 	}
-
+	
+	no_functor elements() const{return no_functor();}
 	typedef no_iterator major_iterator;
 	typedef no_iterator const_major_iterator;
 private:
@@ -745,41 +769,6 @@ private:
 //////////////////////////////////
 //////Expression Traits
 ///////////////////////////////////
-
-template<class T>
-struct ExpressionToFunctor<vector<T, opencl_tag> >{
-	static opencl::detail::dense_vector_element<T> transform(vector<T, opencl_tag> const& e){
-		return {e().raw_storage().buffer, 1, 0}; 
-	}
-};
-
-template<class T, class Orientation>
-struct ExpressionToFunctor<matrix<T, Orientation, opencl_tag> >{
-	static opencl::detail::dense_matrix_element<T> transform(matrix<T, Orientation, opencl_tag> const& e){
-		std::size_t leading = e().raw_storage().leading_dimension;
-		return {e().raw_storage().buffer, Orientation::stride1(leading), Orientation::stride2(leading),0}; 
-	}
-};
-
-
-
-template<class T, class Tag>
-struct ExpressionToFunctor<dense_vector_adaptor<T, Tag, opencl_tag> >{
-	static opencl::detail::dense_vector_element<T> transform(dense_vector_adaptor<T, Tag, opencl_tag> const& e){
-		auto const& storage = e().raw_storage(); 
-		return {storage.buffer, storage.stride, storage.offset}; 
-	}
-};
-
-template<class T, class Tag, class Orientation>
-struct ExpressionToFunctor<dense_matrix_adaptor<T, Orientation, Tag, opencl_tag> >{
-	static opencl::detail::dense_matrix_element<T> transform(dense_matrix_adaptor<T, Orientation, Tag, opencl_tag> const& e){
-		auto const& storage = e().raw_storage(); 
-		std::size_t stride1 = Orientation::index_m(std::size_t(1), storage.leading_dimension);
-		std::size_t stride2 = Orientation::index_M(std::size_t(1), storage.leading_dimension);
-		return {storage.buffer, stride1, stride2, storage.offset}; 
-	}
-};
 
 namespace detail{
 

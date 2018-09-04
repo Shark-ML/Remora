@@ -38,23 +38,23 @@ namespace remora{
 
 namespace hip{
 template<class MatA, class VecV, class F, class G>
-__global__ void fold_rows_kernel(hipLaunchParm lp,MatA A, VecV v, F f, G g){
-	typedef typename MatA::value_type value_type;
+__global__ void fold_rows_kernel(hipLaunchParm lp,MatA A, size_t size1, size_t size2, VecV v, F f, G g){
+	typedef typename std::remove_reference<typename VecV::result_type>::type value_type;
 	__shared__ value_type folds[64];
 	size_t rowid = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_x;
 	size_t colid = hipThreadIdx_y;
 	value_type& entry = folds[hipThreadIdx_y];
-	if(colid < A.size2()){
+	if(colid < size2){
 		entry = A(rowid,colid);
 		colid += hipBlockDim_y;
-		for(;colid < A.size2(); colid += hipBlockDim_y){
+		for(;colid < size2; colid += hipBlockDim_y){
 			entry = f(entry, A(rowid,colid));
 		}
 	}
 	__threadfence_block();
 	if(hipThreadIdx_y == 0){
 		value_type acc =  folds[0];
-		for(size_t i = 1 ; i < min(size_t(hipBlockDim_y), A.size2()); ++i){
+		for(size_t i = 1 ; i < min(size_t(hipBlockDim_y), size2); ++i){
 			acc = f(acc, folds[i]);
 		}
 		v(rowid) += g(acc);
@@ -80,7 +80,8 @@ void fold_rows(
 	hipLaunchKernel(
 		hip::fold_rows_kernel, 
 		dim3(numBlocks1, numBlocks2), dim3(blockSize1, blockSize2), 0, stream,
-		typename MatA::const_closure_type(A()), typename VecV::closure_type(v()), f, g
+		A().elements(), A().size1(), A().size2(),
+		v().elements(), f, g
 	);
 }
 

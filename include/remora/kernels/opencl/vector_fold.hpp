@@ -41,7 +41,7 @@ void vector_fold(vector_expression<V, opencl_tag> const& v_unreg, typename F::re
 	typedef typename F::result_type value_type;
 	opencl::detail::meta_kernel k("blas_vector_fold");
 	std::size_t size_index = k.add_arg<std::size_t>("size");
-	auto v = k.register_args(to_functor(v_unreg));
+	auto v = k.register_args(v_unreg().elements());
 	auto f = k.register_args(F());
 	
 	boost::compute::array<value_type,1> device_result;

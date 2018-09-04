@@ -39,14 +39,6 @@
 #include "../proxy_expressions.hpp"
 #include <type_traits>
 
-
-#if defined(__HCC__) || defined(__NVCC__)
-#define REMORA_CALL_PREFIX __host__ __device__
-#elif
-#define REMORA_CALL_PREFIX
-#endif
-
-
 namespace remora{
 
 template<class E>
@@ -67,17 +59,17 @@ public:
 	typedef typename E::evaluation_category evaluation_category;
 	typedef typename E::device_type device_type;
 
-	// Construction and destruction
+	// Construction
 	explicit matrix_scalar_multiply(expression_closure_type const& e, value_type scalar)
 	:m_expression(e), m_scalar(scalar){}
 
-	REMORA_CALL_PREFIX size_type size1() const{
+	//Accessors 
+	size_type size1() const{
 		return m_expression.size1();
 	}
-	REMORA_CALL_PREFIX size_type size2() const{
+	size_type size2() const{
 		return m_expression.size2();
 	}
-	
 	value_type scalar()const{
 		return m_scalar;
 	}
@@ -88,12 +80,32 @@ public:
 		return m_expression.queue();
 	}
 
-	// Element access
-	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
-		return m_scalar * m_expression(i,j);
+	// Element Functor
+	auto elements() const -> decltype(
+		device_traits<device_type>::make_compose(
+			std::declval<expression_closure_type const&>().elements(), std::declval<functor_type&>()
+		)
+	){
+		return device_traits<device_type>::make_compose(
+			m_expression.elements(), functor_type(m_scalar)
+		);
 	}
 
-	// Iterator types
+	// Computation Kernels
+	template<class MatX>
+	void assign_to(matrix_expression<MatX, device_type>& X)const{
+		auto eval_e = eval_block(m_expression);
+		typename device_traits<device_type>::template multiply_assign<value_type> f(m_scalar);
+		kernels::assign(X, eval_e, f);
+	}
+	template<class MatX>
+	void plus_assign_to(matrix_expression<MatX, device_type>& X)const{
+		auto eval_e = eval_block(m_expression);
+		typename device_traits<device_type>::template multiply_and_add<value_type> f(m_scalar);
+		kernels::assign(X, eval_e, f);
+	}
+	
+	// Iterator Access
 	typedef typename device_traits<device_type>:: template transform_iterator<
 		typename expression_closure_type::const_major_iterator, functor_type
 	>::type const_major_iterator;
@@ -104,18 +116,6 @@ public:
 	}
 	const_major_iterator major_end(size_type i) const{
 		return const_major_iterator(m_expression.major_end(i),functor_type(m_scalar));
-	}
-	
-	//computation kernels
-	template<class MatX>
-	void assign_to(matrix_expression<MatX, device_type>& X)const{
-		auto eval_e = eval_block(m_expression);
-		assign(X,matrix_scalar_multiply<decltype(eval_e)>(eval_e, m_scalar));
-	}
-	template<class MatX>
-	void plus_assign_to(matrix_expression<MatX, device_type>& X)const{
-		auto eval_e = eval_block(m_expression);
-		plus_assign(X,matrix_scalar_multiply<decltype(eval_e)>(eval_e, m_scalar));
 	}
 
 private:
@@ -159,31 +159,38 @@ public:
 		lhs_closure_type const& e1,
 		rhs_closure_type const& e2
 	): m_lhs (e1), m_rhs (e2){}
-
-        REMORA_CALL_PREFIX size_type size1() const{
+	
+	//Accessors
+	size_type size1() const{
 		return m_lhs.size1();
         }
-        REMORA_CALL_PREFIX size_type size2() const{
+	size_type size2() const{
 		return m_lhs.size2();
         }
-	
 	lhs_closure_type const& lhs()const{
 		return m_lhs;
 	}
-	
 	rhs_closure_type const& rhs()const{
 		return m_rhs;
 	}
 	typename device_traits<device_type>::queue_type& queue()const{
 		return m_lhs.queue();
 	}
-
-        // Element access
-	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
-		return m_lhs(i,j) + m_rhs(i,j);
+	
+	// Element Functor
+	auto elements() const -> decltype(
+		device_traits<device_type>::make_compose_binary(
+			std::declval<lhs_closure_type const&>().elements(),
+			std::declval<rhs_closure_type const&>().elements(),
+			std::declval<functor_type&>()
+		)
+	){
+		return device_traits<device_type>::make_compose_binary(
+			m_lhs.elements(), m_rhs.elements(), functor_type()
+		);
 	}
 
-	//computation kernels
+	//Computation Kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X)const{
 		//working around a bug in non-dense assign
@@ -201,6 +208,7 @@ public:
 		plus_assign(X,m_rhs);
 	}
 
+	//Iterator Access
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
 		typename lhs_closure_type::const_major_iterator,
 		typename rhs_closure_type::const_major_iterator,
@@ -244,29 +252,39 @@ public:
 	typedef typename V::evaluation_category evaluation_category;
 	typedef typename V::device_type device_type;
 
-	// Construction and destruction
+	// Construction
 	explicit vector_repeater(expression_closure_type const& e, size_type elements):
 	m_vector(e), m_elements(elements){}
 
-	REMORA_CALL_PREFIX size_type size1() const{
+	//Accessors
+	size_type size1() const{
 		return orientation::index_M(m_elements,m_vector.size());
 	}
-	REMORA_CALL_PREFIX size_type size2() const{
+	size_type size2() const{
 		return orientation::index_m(m_elements,m_vector.size());
 	}
 	const expression_closure_type& expression() const{
 		return m_vector;
 	}
-	
 	std::size_t num_repetitions()const{
 		return m_elements;
 	}
 	
-	// Element access
-	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
-		return m_vector(orientation::index_m(i,j));
+	// Element Functor
+private:
+	typedef typename std::conditional<
+		std::is_same<orientation, row_major>::value,
+		typename device_traits<device_type>::template right_arg<std::size_t>,
+		typename device_traits<device_type>::template left_arg<std::size_t>
+	>::type argument_functor;
+public:
+	auto elements() const -> decltype(
+		device_traits<device_type>::make_compose(argument_functor(), std::declval<expression_closure_type const&>().elements())
+	){
+		return device_traits<device_type>::make_compose(argument_functor(), m_vector.elements());
 	}
 
+	//Computation Kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X) const{
 		X().clear();
@@ -280,6 +298,8 @@ public:
 	typename device_traits<typename V::device_type>::queue_type& queue()const{
 		return m_vector.queue();
 	}
+	
+	//Iterator Access
 private:
 	typedef typename V::const_iterator vector_iterator;
 	typedef typename device_traits<typename V::device_type>:: template constant_iterator<value_type>::type constant_iterator;
@@ -297,20 +317,17 @@ private:
 		return constant_iterator(m_vector(i), m_elements);
 	}
 public:
-
-	// Iterator types
 	typedef typename std::conditional<std::is_same<Orientation, row_major>::value, vector_iterator, constant_iterator>::type const_major_iterator;
 	typedef const_major_iterator major_iterator;
 
-	// Element lookup
-	
+
 	const_major_iterator major_begin(size_type i) const{
 		REMORA_RANGE_CHECK( i < size1());
-		return m_vector.begin();
+		return begin(i, orientation());
 	}
 	const_major_iterator major_end(size_type i) const{
 		REMORA_RANGE_CHECK( i < size1());
-		return m_vector.end();
+		return end(i, orientation());
 	}
 private:
 	
@@ -345,34 +362,29 @@ public:
 	typedef Orientation orientation;
 	typedef elementwise<dense_tag> evaluation_category;
 
-	// Construction and destruction
-	scalar_matrix():
-		m_size1(0), m_size2(0), m_value(){}
+	// Construction
 	scalar_matrix(size_type size1, size_type size2, const value_type& value = value_type(1)):
 		m_size1(size1), m_size2(size2), m_value(value){}
-	scalar_matrix(const scalar_matrix& m):
-		m_size1(m.m_size1), m_size2(m.m_size2), m_value(m.m_value){}
-
-	REMORA_CALL_PREFIX size_type size1() const{
+	
+	//Accessors
+	size_type size1() const{
 		return m_size1;
 	}
-	REMORA_CALL_PREFIX size_type size2() const{
+	size_type size2() const{
 		return m_size2;
 	}
-	
-	typename device_traits<Device>::queue_type& queue()const{
-		return device_traits<Device>::default_queue();
-	}
-
-	// Element access
-	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
-		return m_value;
-	}
-    
 	T scalar() const{
 		return m_value;
 	}
+	typename device_traits<Device>::queue_type& queue()const{
+		return device_traits<Device>::default_queue();
+	}
 	
+	// Element Functor
+	typename device_traits<Device>:: template constant<value_type> elements() const{
+		return {m_value};
+	}
+    
 	//Iterators
 	typedef typename device_traits<Device>:: template constant_iterator<value_type>::type const_major_iterator;
 	typedef const_major_iterator major_iterator;
@@ -415,35 +427,38 @@ public:
 	typedef typename E::evaluation_category evaluation_category;
 	typedef typename E::device_type device_type;
 
-	// Construction and destruction
+	// Construction
 	explicit matrix_unary(expression_closure_type const& e, functor_type const& functor):
 		m_expression(e), m_functor(functor){}
-
-	REMORA_CALL_PREFIX size_type size1() const{
+		
+	// Accessors
+	size_type size1() const{
 		return m_expression.size1();
 	}
-	REMORA_CALL_PREFIX size_type size2() const{
+	size_type size2() const{
 		return m_expression.size2();
 	}
-	
 	expression_closure_type const& expression() const{
 		return m_expression;
 	}
-	
 	functor_type const& functor() const{
 		return m_functor;
 	}
-	
 	typename device_traits<device_type>::queue_type& queue()const{
 		return m_expression.queue();
 	}
 	
-	// Element access
-	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
-		return m_functor(m_expression(i,j));
+	// Element Functor
+	auto elements() const -> decltype(
+		device_traits<device_type>::make_compose(
+			std::declval<expression_closure_type const&>().elements(),
+			std::declval<functor_type&>()
+		)
+	){
+		return device_traits<device_type>::make_compose(m_expression.elements(), m_functor);
 	}
-	
-	//computation kernels
+
+	//Computation Kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X) const{
 		assign(X,m_expression);
@@ -461,7 +476,7 @@ public:
 		kernels::assign(X,eval_rhs, device_traits<device_type>::make_transform_arguments(identity,m_functor,add));
 	}
 
-	// Iterator types
+	// Iterator Access
 	typedef typename device_traits<device_type>:: template transform_iterator<typename expression_closure_type::const_major_iterator, F>::type const_major_iterator;
 	typedef const_major_iterator major_iterator;
 	
@@ -506,19 +521,18 @@ public:
 
 	typedef F functor_type;
 
-        // Construction and destruction
-
+        // Construction
         explicit matrix_binary (
 		lhs_closure_type const& e1,  rhs_closure_type const& e2, functor_type functor 
 	): m_lhs (e1), m_rhs (e2),m_functor(functor){}
-
-        REMORA_CALL_PREFIX size_type size1() const{
+	
+	//Accessors
+	size_type size1() const{
 		return m_lhs.size1();
         }
-        REMORA_CALL_PREFIX size_type size2() const{
+	size_type size2() const{
 		return m_lhs.size2();
         }
-	
 	lhs_closure_type const& lhs() const{
 		return m_lhs;
 	}
@@ -528,16 +542,24 @@ public:
 	functor_type const& functor() const{
 		return m_functor;
 	}
-
 	typename device_traits<device_type>::queue_type& queue()const{
 		return m_lhs.queue();
 	}
 
-	// Element access
-	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
-		return m_functor(m_lhs(i,j), m_rhs(i,j));
+	// Element Functor
+	auto elements() const -> decltype(
+		device_traits<device_type>::make_compose_binary(
+			std::declval<E1 const&>().elements(),
+			std::declval<E2 const&>().elements(),
+			std::declval<functor_type&>()
+		)
+	){
+		return device_traits<device_type>::make_compose_binary(
+			m_lhs.elements(), m_rhs.elements(), m_functor
+		);
 	}
-
+	
+	//Computation Kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X)const{
 		assign(X,m_lhs);
@@ -551,6 +573,7 @@ public:
 		plus_assign(X,e);		
 	}
 	
+	//Iterator Access
 	typedef typename device_traits<device_type>:: template binary_transform_iterator<
 		typename lhs_closure_type::const_major_iterator,typename rhs_closure_type::const_major_iterator,functor_type
 	>::type const_major_iterator;
@@ -597,35 +620,43 @@ public:
 	typedef row_major orientation;
 	typedef typename evaluation_restrict_traits<E1,E2>::type evaluation_category;
 	typedef typename E1::device_type device_type;
-	// Construction and destruction
-	
+
+
+	// Construction	
 	explicit outer_product(lhs_closure_type const& e1, rhs_closure_type const& e2)
 	:m_lhs(e1), m_rhs(e2){}
-
-	REMORA_CALL_PREFIX size_type size1() const{
+	
+	// Accessors
+	size_type size1() const{
 		return m_lhs.size();
 	}
-	REMORA_CALL_PREFIX size_type size2() const{
+	size_type size2() const{
 		return m_rhs.size();
 	}
-
 	lhs_closure_type const& lhs() const{
 		return m_lhs;
 	}
 	rhs_closure_type const& rhs() const{
 		return m_rhs;
 	}
-
 	typename device_traits<device_type>::queue_type& queue()const{
 		return m_lhs.queue();
 	}
 
-	// Element access
-	REMORA_CALL_PREFIX const_reference operator()(std::size_t i, std::size_t j) const{
-		return m_lhs(i) * m_rhs(j);
+	//Element Functor
+	auto elements() const -> decltype(
+		device_traits<device_type>::make_transform_arguments(
+			std::declval<E1 const&>().elements(),
+			std::declval<E2 const&>().elements(),
+			std::declval<functor_type_op&>()
+		)
+	){
+		return device_traits<device_type>::make_transform_arguments(
+			m_lhs.elements(), m_rhs.elements(), functor_type_op()
+		);
 	}
 	
-	
+	// Computation Kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X)const{
 		auto lhs_eval = eval_block(m_lhs);
@@ -640,23 +671,85 @@ public:
 		outer_product<decltype(lhs_eval), decltype(rhs_eval)> e(lhs_eval,rhs_eval); 
 		plus_assign(X, e);
 	}
-
+	
+	// Iterator Access
 	typedef typename device_traits<device_type>:: template transform_iterator<typename rhs_closure_type::const_iterator,functor_type>::type const_major_iterator;
 	typedef const_major_iterator major_iterator;
 	
 	const_major_iterator major_begin(size_type i) const{
 		return const_major_iterator(m_rhs.begin(),
-			functor_type(m_lhs(i))
+			functor_type(m_lhs.elements()(i))
 		);
 	}
 	const_major_iterator major_end(size_type i) const{
 		return const_major_iterator(m_rhs.end(),
-			functor_type(m_lhs(i))
+			functor_type(m_lhs.elements()(i))
 		);
 	}
 private:
 	lhs_closure_type m_lhs;
 	rhs_closure_type m_rhs;
+};
+
+
+/// \brief An diagonal matrix with values stored inside a diagonal vector
+///
+/// the matrix stores a Vector representing the diagonal.
+template<class V>
+class diagonal_matrix: public matrix_expression<diagonal_matrix< V >, typename V::device_type >{
+	typedef typename V::const_closure_type vector_closure_type;
+public:
+	typedef typename V::size_type size_type;
+	typedef typename V::value_type value_type;
+	typedef value_type const_reference;
+	typedef value_type reference;
+
+	typedef diagonal_matrix const_closure_type;
+	typedef diagonal_matrix closure_type;
+	typedef unknown_storage storage_type;
+	typedef unknown_storage const_storage_type;
+	typedef elementwise<dense_tag> evaluation_category;
+	typedef row_major orientation;
+	typedef typename V::device_type device_type;
+
+	// Construction
+	diagonal_matrix(vector_closure_type const& diagonal):m_diagonal(diagonal){}
+
+	// Accessors
+	size_type size1() const{
+		return m_diagonal.size();
+	}
+	size_type size2() const{
+		return m_diagonal.size();
+	}
+	typename device_traits<device_type>::queue_type& queue()const{
+		return m_diagonal.queue();
+	}
+	vector_closure_type const& expression()const{
+		return m_diagonal;
+	}
+	
+	// Element access
+	typename device_traits< device_type >:: template diag<
+		decltype(std::declval<vector_closure_type>().elements())
+	>
+	elements() const{
+		return {m_diagonal.elements()};
+	}
+	
+	// Iterators
+	typedef typename device_traits<device_type>:: template one_hot_iterator<value_type const>::type const_major_iterator;
+	typedef const_major_iterator major_iterator;
+
+	const_major_iterator major_begin(size_type i) const{
+		return const_major_iterator(i, m_diagonal.elements()(i),false);
+	}
+	const_major_iterator major_end(size_type i) const{
+		return const_major_iterator(i, value_type(),true);
+	}
+
+private:
+	vector_closure_type m_diagonal; 
 };
 
 template<class MatA, class VecV>
@@ -682,17 +775,18 @@ public:
 	>::type> evaluation_category;
 	typedef typename MatA::device_type device_type;
 
-	// Construction and destruction
+	// Construction
 	explicit matrix_vector_prod(
 		matrix_closure_type const& matrix,
 		vector_closure_type const& vector,
 		value_type const& alpha
 	):m_matrix(matrix), m_vector(vector), m_alpha(alpha){}
 
-	REMORA_CALL_PREFIX size_type size() const{
+	
+	// Accessors 
+	size_type size() const{
 		return m_matrix.size1();
 	}
-	
 	matrix_closure_type const& matrix() const{
 		return m_matrix;
 	}
@@ -702,16 +796,14 @@ public:
 	value_type alpha() const{
 		return m_alpha;
 	}
-	
-	typedef no_iterator const_iterator;
-	typedef no_iterator iterator;
-
-
 	typename device_traits<device_type>::queue_type& queue()const{
 		return m_matrix.queue();
 	}
 	
-	//dispatcher to computation kernels
+	//Element Functor
+	no_functor elements() const{return no_functor();}
+	
+	// Computation Kernels
 	template<class VecX>
 	void assign_to(vector_expression<VecX, device_type>& x)const{
 		assign_to(x, typename MatA::orientation(), typename MatA::evaluation_category::tag());
@@ -720,6 +812,10 @@ public:
 	void plus_assign_to(vector_expression<VecX, device_type>& x)const{
 		plus_assign_to(x, typename MatA::orientation(), typename MatA::evaluation_category::tag());
 	}
+	
+	// Iterator Access 
+	typedef no_iterator const_iterator;
+	typedef no_iterator iterator;
 	
 private:
 	//gemv
@@ -783,23 +879,21 @@ public:
 	typedef typename MatA::device_type device_type;
 	typedef blockwise<typename MatA::evaluation_category::tag> evaluation_category;
 	
-
+	// Construction
 	explicit matrix_row_transform(
 		matrix_closure_type const& matrix, F const& f, G const& g
 	):m_matrix(matrix), m_f(f), m_g(g){}
 
-	REMORA_CALL_PREFIX size_type size() const{
+	// Accessors 
+	size_type size() const{
 		return m_matrix.size1();
 	}
-	
 	matrix_closure_type const& matrix() const{
 		return m_matrix;
 	}
-	
 	F const& f() const{
 		return m_f;
 	}
-
 	G const& g() const{
 		return m_g;
 	}
@@ -807,10 +901,10 @@ public:
 		return m_matrix.queue();
 	}
 	
-	typedef no_iterator const_iterator;
-	typedef no_iterator iterator;
-
-	//dispatcher to computation kernels for blockwise case
+	//Element Functor
+	no_functor elements() const{return no_functor();}
+	
+	// Computation Kernels
 	template<class VecX>
 	void assign_to(vector_expression<VecX, device_type>& x)const{
 		x().clear();
@@ -820,6 +914,10 @@ public:
 	void plus_assign_to(vector_expression<VecX, device_type>& x)const{
 		kernels::fold_rows(eval_block(m_matrix), x, m_f, m_g);
 	}
+	
+	// Iterator Access 
+	typedef no_iterator const_iterator;
+	typedef no_iterator iterator;
 private:
 	matrix_closure_type m_matrix;
 	F m_f;
@@ -851,17 +949,18 @@ public:
 	typedef unknown_orientation orientation;
 	typedef typename MatA::device_type device_type;
 
-	// Construction and destruction
+	// Construction
 	explicit matrix_matrix_prod(
 		matrix_closure_typeA const& lhs,
 		matrix_closure_typeB const& rhs,
 		value_type alpha
 	):m_lhs(lhs), m_rhs(rhs), m_alpha(alpha){}
 
-	REMORA_CALL_PREFIX size_type size1() const{
+	// Accessors 
+	size_type size1() const{
 		return m_lhs.size1();
 	}
-	REMORA_CALL_PREFIX size_type size2() const{
+	size_type size2() const{
 		return m_rhs.size2();
 	}
 	
@@ -874,15 +973,15 @@ public:
 	value_type alpha() const{
 		return m_alpha;
 	}
-
+	
 	typename device_traits<device_type>::queue_type& queue()const{
 		return m_lhs.queue();
 	}
 	
-	typedef no_iterator const_major_iterator;
-	typedef no_iterator major_iterator;
+	//Element Functor
+	no_functor elements() const{return no_functor();}
 	
-	//dispatcher to computation kernels
+	// Computation Kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X)const{
 		assign_to(X, typename MatA::orientation(), typename MatA::storage_type::storage_tag());
@@ -891,6 +990,10 @@ public:
 	void plus_assign_to(matrix_expression<MatX, device_type>& X)const{
 		plus_assign_to(X, typename MatA::orientation(), typename MatA::storage_type::storage_tag());
 	}
+	
+	// Iterator Access 
+	typedef no_iterator const_major_iterator;
+	typedef no_iterator major_iterator;
 	
 private:
 	//gemm
@@ -932,66 +1035,6 @@ private:
 	value_type m_alpha;
 };
 
-/// \brief An diagonal matrix with values stored inside a diagonal vector
-///
-/// the matrix stores a Vector representing the diagonal.
-template<class V>
-class diagonal_matrix: public matrix_expression<diagonal_matrix< V >, typename V::device_type >{
-	typedef typename V::const_closure_type vector_closure_type;
-public:
-	typedef typename V::size_type size_type;
-	typedef typename V::value_type value_type;
-	typedef value_type  const_reference;
-	typedef value_type reference;
-
-	typedef diagonal_matrix const_closure_type;
-	typedef diagonal_matrix closure_type;
-	typedef unknown_storage storage_type;
-	typedef unknown_storage const_storage_type;
-	typedef elementwise<dense_tag> evaluation_category;
-	typedef row_major orientation;
-	typedef typename V::device_type device_type;
-
-	// Construction and destruction
-	diagonal_matrix(vector_closure_type const& diagonal):m_diagonal(diagonal){}
-
-	REMORA_CALL_PREFIX size_type size1() const{
-		return m_diagonal.size();
-	}
-	REMORA_CALL_PREFIX size_type size2() const{
-		return m_diagonal.size();
-	}
-	
-	typename device_traits<device_type>::queue_type& queue()const{
-		return m_diagonal.queue();
-	}
-	
-	vector_closure_type const& expression()const{
-		return m_diagonal;
-	}
-	// Element access
-	REMORA_CALL_PREFIX const_reference operator()(size_type i, size_type j) const{
-		if (i == j)
-			return m_diagonal(i);
-		else
-			return value_type();
-	}
-	
-	//Iterators
-	typedef typename device_traits<device_type>:: template one_hot_iterator<value_type const>::type const_major_iterator;
-	typedef const_major_iterator major_iterator;
-
-	const_major_iterator major_begin(size_type i) const{
-		return major_iterator(i, m_diagonal(i),false);
-	}
-	const_major_iterator major_end(size_type i) const{
-		return const_major_iterator(i, value_type(),true);
-	}
-
-private:
-	vector_closure_type m_diagonal; 
-};
-
 
 /// \brief Concatenates two matrices A and B.
 ///
@@ -1022,16 +1065,17 @@ public:
 	typedef unknown_orientation orientation;
 	typedef typename MatA::device_type device_type;
 
-	// Construction and destruction
+	// Construction
 	explicit matrix_concat(
 		matrix_closure_typeA const& lhs,
 		matrix_closure_typeB const& rhs
 	):m_lhs(lhs), m_rhs(rhs){}
 
-	REMORA_CALL_PREFIX size_type size1() const{
+	// Accessors 
+	size_type size1() const{
 		return add_right? m_lhs.size1() : m_lhs.size1() + m_rhs.size1();
 	}
-	REMORA_CALL_PREFIX size_type size2() const{
+	size_type size2() const{
 		return add_right? m_lhs.size2() + m_rhs.size2() : m_lhs.size2();
 	}
 	
@@ -1046,10 +1090,10 @@ public:
 		return m_lhs.queue();
 	}
 	
-	typedef no_iterator const_major_iterator;
-	typedef no_iterator major_iterator;
+	//Element Functor
+	no_functor elements() const{return no_functor();}
 	
-	//dispatcher to computation kernels
+	// Computation Kernels
 	template<class MatX>
 	void assign_to(matrix_expression<MatX, device_type>& X)const{
 		if(add_right){
@@ -1078,76 +1122,14 @@ public:
 			plus_assign(bottom,m_rhs);
 		}
 	}
+	
+	// Iterator Access 
+	typedef no_iterator const_major_iterator;
+	typedef no_iterator major_iterator;
 private:
 	matrix_closure_typeA m_lhs;
 	matrix_closure_typeB m_rhs;
 };
 
-//traits for transforming an expression into a functor for opencl usage
-
-template<class E>
-struct ExpressionToFunctor<matrix_scalar_multiply<E> >{
-	typedef typename E::device_type device_type;
-	typedef typename device_traits<device_type>::template multiply_scalar<typename E::value_type> functor_type;
-	static auto transform(matrix_scalar_multiply<E> const& e) -> decltype(device_traits<device_type>::make_compose(to_functor(e.expression()),functor_type(e.scalar()))){
-		return device_traits<device_type>::make_compose(to_functor(e.expression()), functor_type(e.scalar()));
-	}
-};
-template<class E1, class E2>
-struct ExpressionToFunctor<matrix_addition<E1, E2> >{
-	typedef typename E1::device_type device_type;
-	typedef typename device_traits<device_type>::template add<typename matrix_addition<E1, E2>::value_type> functor_type;
-	static auto transform(matrix_addition<E1, E2> const& e) -> decltype(device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()),functor_type())){
-		return device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()),functor_type());
-	}
-};
-
-template<class E, class F>
-struct ExpressionToFunctor<matrix_unary<E, F> >{
-	typedef typename E::device_type device_type;
-	static auto transform(matrix_unary<E, F> const& e) -> decltype(device_traits<device_type>::make_compose(to_functor(e.expression()),e.functor())){
-		return device_traits<device_type>::make_compose(to_functor(e.expression()),e.functor());
-	}
-};
-
-template<class E1, class E2, class F>
-struct ExpressionToFunctor<matrix_binary<E1, E2, F> >{
-	typedef typename E1::device_type device_type;
-	static auto transform(matrix_binary<E1, E2, F> const& e) -> decltype(device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor())){
-		return device_traits<device_type>::make_compose_binary(to_functor(e.lhs()),to_functor(e.rhs()), e.functor());
-	}
-};
-
-template<class T, class Device, class Orientation>
-struct ExpressionToFunctor<scalar_matrix<T, Device, Orientation> >{
-	static typename device_traits<Device>::template constant<T> transform(scalar_matrix<T, Device, Orientation> const& e){
-		return typename device_traits<Device>::template constant<T>(e.scalar());
-	}
-};
-
-template<class V, class Orientation>
-struct ExpressionToFunctor<vector_repeater<V, Orientation> >{
-	typedef typename V::device_type device_type;
-	typedef typename std::conditional<
-		std::is_same<Orientation, row_major>::value,
-		typename device_traits<device_type>::template right_arg<std::size_t>,
-		typename device_traits<device_type>::template left_arg<std::size_t>
-	>::type argument_functor;
-	static auto transform(vector_repeater<V, Orientation> const& e) 
-	-> decltype(device_traits<device_type>::make_compose(argument_functor(), to_functor(e.expression()))){
-		return device_traits<device_type>::make_compose(argument_functor(), to_functor(e.expression()));
-	}
-};
-
-template<class E1, class E2>
-struct ExpressionToFunctor<outer_product<E1, E2> >{
-	typedef typename E1::device_type device_type;
-	typedef typename device_traits<device_type>::template multiply<typename outer_product<E1, E2>::value_type> functor_type;
-	static auto transform(outer_product<E1, E2> const& e) -> decltype(device_traits<device_type>::make_transform_arguments(to_functor(e.lhs()),to_functor(e.rhs()),functor_type())){
-		return device_traits<device_type>::make_transform_arguments(to_functor(e.lhs()),to_functor(e.rhs()),functor_type());
-	}
-};
-
 }
-#undef REMORA_CALL_PREFIX
 #endif
