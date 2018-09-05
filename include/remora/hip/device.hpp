@@ -66,11 +66,11 @@ public:
 		return m_use_stream_per_thread;
 	}
 	
-	int device_id(){
+	int device_id() const{
 		return m_id;
 	}
 	
-	int warp_size(){
+	int warp_size() const{
 		return m_device_properties.warpSize;
 	}
 	

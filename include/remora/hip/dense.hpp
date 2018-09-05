@@ -477,7 +477,7 @@ public:
 	/// \param size2 number of columns
 	/// \param queue the hip queue to use by this matrix
 	explicit matrix(size_type size1, size_type size2, hip::device& queue = device_traits<hip_tag>::default_queue())
-	: m_storage(size1 * size2)
+	: m_storage(size1 * size2, queue)
 	, m_size1(size1)
 	, m_size2(size2){}
 

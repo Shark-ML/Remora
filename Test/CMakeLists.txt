@@ -99,7 +99,7 @@ remora_add_hip_test( hip_syrk.cpp HIP_Syrk)
 remora_add_hip_test( hip_triangular_prod.cpp HIP_Triangular_Prod)
 remora_add_hip_test( hip_triangular_solve.cpp HIP_Triangular_Solve)
 remora_add_hip_test( hip_cholesky.cpp HIP_Cholesky)
-
+remora_add_hip_test( hip_random.cpp HIP_Random)
 endif()
 
 if(ENABLE_CLBLAST)

@@ -34,6 +34,10 @@
 #ifdef REMORA_USE_OPENCL
 #include "opencl/random.hpp"
 #endif
+#if defined(__HCC__) || defined(__NVCC__)
+#include "hip/random.hpp"
+#endif
+
 	
 namespace remora{namespace kernels{
 	
