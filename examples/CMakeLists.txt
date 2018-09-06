@@ -65,5 +65,5 @@ REMORA_ADD_BENCHMARK(syrk Benchmark_Syrk)
 REMORA_ADD_BENCHMARK(potrf Benchmark_Potrf)
 
 if(ENABLE_CLBLAST)
-REMORA_ADD_BENCHMARK(gpu_conv2d Benchmark_GPU_Conv2D)
+REMORA_ADD_BENCHMARK(opencl_conv2d Benchmark_GPU_Conv2D)
 endif()

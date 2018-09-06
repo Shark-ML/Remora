@@ -136,18 +136,31 @@ if( ENABLE_GENERIC_CBLAS )
 	add_definitions(-DREMORA_USE_CBLAS)
 endif()
 
-option( ENABLE_CLBLAST "Use CLBlast as GPU backend" OFF )
+option( ENABLE_CLBLAST "Use CLBlast as OpenCL backend" OFF )
 if(ENABLE_CLBLAST)
 	find_package(CLBlast REQUIRED)
 	add_definitions(-DREMORA_USE_CLBLAST)	
 endif()
 
-option( ENABLE_GPU "Use OpenCL and boost.compute" OFF )
-if(ENABLE_GPU OR ENABLE_CLBLAST)
+#####################################################################
+#           OpenCL configuration
+#####################################################################
+
+option( ENABLE_OPENCL "Use OpenCL and boost.compute" OFF )
+if(ENABLE_OPENCL OR ENABLE_CLBLAST)
 	find_package(OpenCL REQUIRED)
 	include_directories(${OpenCL_INCLUDE_DIRS})
 	list( APPEND CBLAS_LIBRARIES ${OpenCL_LIBRARY})
-	add_definitions(-DREMORA_USE_GPU)
+	add_definitions(-DREMORA_USE_OPENCL )
+endif()
+
+#####################################################################
+#           HIP configuration
+#####################################################################
+
+option( ENABLE_HIP "Use HIP gpu backend" OFF )
+if(ENABLE_HIP)
+	find_package(HIP REQUIRED)
 endif()
 
 
