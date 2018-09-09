@@ -35,7 +35,7 @@ void benchmark(
 	double mults = output_size1 * output_size2 * filter_size * filter_size * num_filters * num_channels;
 	double flops = image().size1() * mults /1024/1024/minOptTime;
 	
-	double storage = double(out_gpu.size1() * out_gpu.size2())/1024/1024;
+	double storage = double(out_opencl.size1() * out_opencl.size2())/1024/1024;
 	std::cout<<output_size1<<"\t"<<filter_size<<"\t"<<num_channels<<"\t"<< num_filters<<"\t";
 	std::cout<<storage<<"\t"<<flops<< std::endl;
 }
