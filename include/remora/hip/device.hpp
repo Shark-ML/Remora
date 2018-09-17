@@ -42,6 +42,8 @@ class device{
 public:
 	device(int id)
 	:m_id(id), m_use_stream_per_thread(true){
+		hipSetDevice(m_id);
+		check_hip(hipSetDeviceFlags(hipDeviceMapHost));
 		check_hip(hipGetDeviceProperties(&m_device_properties, m_id));
 	}
 	device(device const&) = delete;

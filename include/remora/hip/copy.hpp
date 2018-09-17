@@ -273,9 +273,7 @@ public:
 		//map X to device memory
 		auto X_host = X().raw_storage().values;
 		std::size_t X_ld = X().raw_storage().leading_dimension;
-		std::size_t X_stride1 = MatX::orientation::stride1(X_ld);
-		std::size_t X_stride2 = MatX::orientation::stride2(X_ld);
-		std::size_t bytes = (size1() * X_stride1 + size2() * X_stride2) * sizeof(*X_host);
+		std::size_t bytes = orientation::index_M(size1(), size2()) * X_ld * sizeof(value_type);
 		hipHostRegister(X_host, bytes, 0);
 		
 		//acquire device ptr
@@ -298,9 +296,7 @@ public:
 		//map X to device memory
 		auto X_host = X().raw_storage().values;
 		std::size_t X_ld = X().raw_storage().leading_dimension;
-		std::size_t X_stride1 = MatX::orientation::stride1(X_ld);
-		std::size_t X_stride2 = MatX::orientation::stride2(X_ld);
-		std::size_t bytes = (size1() * X_stride1 + size2() * X_stride2) * sizeof(*X_host);
+		std::size_t bytes = orientation::index_M(size1(), size2()) * X_ld * sizeof(value_type);
 		hipHostRegister(X_host, bytes, 0);	
 		
 		//acquire device ptr
@@ -371,9 +367,7 @@ public:
 		//map X to device memory
 		auto e_host = e_eval.raw_storage().values;
 		std::size_t e_ld = e_eval.raw_storage().leading_dimension;
-		std::size_t e_stride1 = orientation::stride1(e_ld);
-		std::size_t e_stride2 = orientation::stride2(e_ld);
-		std::size_t bytes = (size1() * e_stride1 + size2() * e_stride2) * sizeof(value_type);
+		std::size_t bytes = orientation::index_M(size1(), size2()) * e_ld * sizeof(value_type);
 		hipHostRegister((void*)e_host, bytes, 0);
 		
 		//acquire device ptr
@@ -398,9 +392,7 @@ public:
 		//map X to device memory
 		auto e_host = e_eval.raw_storage().values;
 		std::size_t e_ld = e_eval.raw_storage().leading_dimension;
-		std::size_t e_stride1 = orientation::stride1(e_ld);
-		std::size_t e_stride2 = orientation::stride2(e_ld);
-		std::size_t bytes = (size1() * e_stride1 + size2() * e_stride2) * sizeof(value_type);
+		std::size_t bytes = orientation::index_M(size1(), size2()) * e_ld * sizeof(value_type);
 		hipHostRegister((void*)e_host, bytes, 0);
 		
 		//acquire device ptr

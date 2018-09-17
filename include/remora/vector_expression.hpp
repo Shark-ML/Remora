@@ -296,7 +296,8 @@ std::size_t arg_min(vector_expression<VecV, Device> const& v) {
 
 /// \brief soft_max v = ln(sum(exp(v)))
 ///
-/// Be aware that this is NOT the same function as used in machine learning: exp(v)/sum(exp(v))
+/// Be aware that this is NOT the same function as used in machine learning: exp(v_i)/sum(exp(v)), however it is a core building-block
+/// to compute the log of it as log(exp(v_i)/sum(exp(v))) = v_i - soft_max(v)
 ///
 /// The function is computed in an numerically stable way to prevent that too high values of v_i produce inf or nan.
 /// The name of the function comes from the fact that it behaves like a continuous version of max in the respect that soft_max v <= v.size()*max(v)
