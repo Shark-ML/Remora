@@ -34,7 +34,6 @@
 
 #include "../../expression_types.hpp"
 #include "../../detail/traits.hpp"
-#include <clblast.h>
 
 #ifdef __NVCC__
 #include "../../hip/cublas_backend.hpp"
