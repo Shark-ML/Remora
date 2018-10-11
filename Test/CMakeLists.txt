@@ -13,8 +13,6 @@ find_package(
 	unit_test_framework
 )
 
-find_package(CUDA)
-
 macro(REMORA_ADD_TEST SRC NAME)
 
 	# Create the test executable
@@ -71,6 +69,7 @@ endmacro()
 
 #OpenCL tests
 if(ENABLE_OPENCL)
+find_package(CUDA)
 remora_add_test( opencl_vector_assign.cpp OpenCL_Vector_Assign)
 remora_add_test( opencl_matrix_assign.cpp OpenCL_Matrix_Assign)
 remora_add_test( opencl_dense.cpp OpenCL_Dense)
