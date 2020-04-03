@@ -2,7 +2,7 @@
  * \brief       Defines the basic types of CRTP base-classes
  * 
  * \author      O. Krause
- * \date        2013
+ * \date        2020
  *
  *
  * \par Copyright 1995-2015 Shark Development Team
@@ -28,11 +28,28 @@
 #ifndef REMORA_EXPRESSION_TYPE_HPP
 #define REMORA_EXPRESSION_TYPE_HPP
 
+#include <array>
 namespace remora{
-
+	
+	
 struct cpu_tag{};
-struct opencl_tag{};
 struct hip_tag{};
+
+template<std::size_t Dim, class T, class Device>
+struct tensor_expression{
+	typedef Device device_type;
+	static constexpr std::size_t num_dims = Dim;
+	T const& operator()() const {
+		return *static_cast<T const*>(this);
+	}
+
+	T& operator()() {
+		return *static_cast<T*>(this);
+	}
+};
+
+template<std::size_t Dim, class T, class Device>
+struct tensor_container: public tensor_expression<Dim, T, Device>{};
 	
 	
 /// \brief Base class for Vector Expression models
@@ -41,27 +58,9 @@ struct hip_tag{};
 /// The class defines a common base type and some common interface for all
 /// statically derived Vector Expression classes.
 /// We implement the casts to the statically derived type.
+
 template<class V, class Device>
-struct vector_expression {
-	typedef Device device_type;
-	V const& operator()() const {
-		return *static_cast<V const*>(this);
-	}
-
-	V& operator()() {
-		return *static_cast<V*>(this);
-	}
-};
-
-/// \brief Base class for Vector container models
-///
-/// it does not model the Vector concept but all derived types should.
-/// The class defines a common base type and some common interface for all
-/// statically derived Vector classes
-/// We implement the casts to the statically derived type.
-template<class C, class Device>
-struct vector_container:public vector_expression<C, Device> {};
-
+using vector_expression = tensor_expression<1, V, Device>;
 
 /// \brief Base class for Matrix Expression models
 ///
@@ -70,49 +69,9 @@ struct vector_container:public vector_expression<C, Device> {};
 /// statically derived Matrix Expression classes
 /// We implement the casts to the statically derived type.
 template<class M, class Device>
-struct matrix_expression{
-	typedef Device device_type;
-	
-	M const& operator()() const {
-		return *static_cast<M const*>(this);
-	}
+using matrix_expression = tensor_expression<2, M, Device>;
 
-	M& operator()() {
-		return *static_cast<M*>(this);
-	}
-};
 
-/// \brief Base class for expressions of vector sets
-///
-/// The vector set expression type is similar to a matrix type. However it behaves
-/// like a vector of vectors with elements of the vector being vectors. Moreover
-/// all usual vector-space operations can be used . All vectors have the same number of elements
-///
-/// it does not model the Matrix Expression concept but all derived types should.
-/// The class defines a common base type and some common interface for all
-/// statically derived Matrix Expression classes
-/// We implement the casts to the statically derived type.
-template<class E, class Device>
-struct vector_set_expression{
-	typedef Device device_type;
-	
-	E const& operator()() const {
-		return *static_cast<E const*>(this);
-	}
-
-	E& operator()() {
-		return *static_cast<E*>(this);
-	}
-};
-
-/// \brief Base class for Matrix container models
-///
-/// it does not model the Matrix concept but all derived types should.
-/// The class defines a common base type and some common interface for all
-/// statically derived Matrix classes
-/// We implement the casts to the statically derived type.
-template<class C, class Device>
-struct matrix_container: public matrix_expression<C, Device> {};
 
 }
 

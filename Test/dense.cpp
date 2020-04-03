@@ -1,149 +1,123 @@
-#define BOOST_TEST_MODULE Remora_Vector_Proxy
-#include <boost/test/unit_test.hpp>
-
-#include <remora/proxy_expressions.hpp>
+#define BOOST_TEST_MODULE Remora_Dense
 #include <remora/dense.hpp>
+#include <remora/assignment.hpp>
+
+#include <vector>
+
+#include <boost/test/included/unit_test.hpp>
+#include <boost/mpl/list.hpp>
+#include <algorithm>
+
 
 using namespace remora;
 
-std::size_t Dimensions1 =20;
-std::size_t Dimensions2 = 10;
 struct ProxyFixture
 {
-	matrix<int> denseData;
-	vector<int> denseDataVec;
-	ProxyFixture():denseData(Dimensions1,Dimensions2),denseDataVec(Dimensions1){
-		for(std::size_t row=0;row!= Dimensions1;++row){
-			for(std::size_t col=0;col!=Dimensions2;++col){
-				denseData(row,col) = row*Dimensions2+col+5;
-			}
-			denseDataVec(row) = row*Dimensions2+6;
+	std::vector<unsigned> values;
+	ProxyFixture():values(3*20*7){
+		for(std::size_t i = 0; i != 3*20*7; ++i){
+			values[i] = i;
 		}
 	}
 };
 
-BOOST_FIXTURE_TEST_SUITE (Remora_vector_proxy, ProxyFixture);
+BOOST_FIXTURE_TEST_SUITE (Remora_Dense_Tensor_Test, ProxyFixture);
 
-BOOST_AUTO_TEST_CASE( Vector){
-	auto const& constDataVec = denseDataVec;
-	auto storageVec = denseDataVec.raw_storage();
-	BOOST_CHECK_EQUAL(denseDataVec.size(),Dimensions1);
-	BOOST_CHECK_EQUAL(storageVec.values,&denseDataVec(0));
-	BOOST_CHECK_EQUAL(storageVec.stride,1);
-	
-	//check that values are correctly aligned in memory
-	for(std::size_t i=0;i!= Dimensions1;++i){
-		BOOST_CHECK_EQUAL(storageVec.values[i], i*Dimensions2+6);
-	}
-	
-	//check that operator() works
-	for(std::size_t i=0;i!= Dimensions1;++i){
-		BOOST_CHECK_EQUAL(denseDataVec(i), i*Dimensions2+6);
-		BOOST_CHECK_EQUAL(constDataVec(i), i*Dimensions2+6);
-	}
-	//Check that iterators work
-	{
-		std::size_t pos = 0;
-		for(auto it = denseDataVec.begin();it != denseDataVec.end();++it, ++pos){
-			BOOST_CHECK_EQUAL(*it, pos*Dimensions2+6);
-			BOOST_CHECK_EQUAL(it.index(), pos);
-		}
-		BOOST_CHECK_EQUAL(pos, Dimensions1);
-	}
-	{
-		
-		std::size_t pos = 0;
-		for(auto it = constDataVec.begin();it != constDataVec.end();++it, ++pos){
-			BOOST_CHECK_EQUAL(*it, pos*Dimensions2+6);
-			BOOST_CHECK_EQUAL(it.index(), pos);
-		}
-		BOOST_CHECK_EQUAL(pos, Dimensions1);
+BOOST_AUTO_TEST_CASE( Tensor_Adaptor_1D){
+	dense_tensor_adaptor<unsigned, axis<0>, dense_tag, cpu_tag> adaptor({values.data(), {1}},no_queue(), 3*20*7);
+	BOOST_CHECK_EQUAL(adaptor.shape().size(), 1);
+	BOOST_CHECK_EQUAL(adaptor.shape()[0], 3*20*7);
+	BOOST_CHECK_EQUAL(adaptor.raw_storage().values, values.data());
+	BOOST_CHECK_EQUAL(adaptor.raw_storage().strides.size(), 1);
+	BOOST_CHECK_EQUAL(adaptor.raw_storage().strides[0], 1);
+	auto elem = adaptor.elements();
+	for(std::size_t i = 0; i != 3*20*7; ++i){
+		BOOST_CHECK_EQUAL(adaptor(i),values[i]);
+		BOOST_CHECK_EQUAL(elem(i),values[i]);
 	}
 }
 
-BOOST_AUTO_TEST_CASE( Vector_Closure){
-	auto storageVec = denseDataVec.raw_storage();
-	{
-		vector<int>::closure_type closure = denseDataVec;
-		BOOST_CHECK_EQUAL(closure.size(),denseDataVec.size());
-		auto storage = closure.raw_storage();
-		BOOST_CHECK_EQUAL(storage.values,storageVec.values);
-		BOOST_CHECK_EQUAL(storage.stride,1);
+
+
+typedef boost::mpl::list<axis<0,1,2>, axis<0,2,1>, axis<1,0,2>, axis<1,2,0>, axis<2,0,1>, axis<2,1,0> > axis_types;
+BOOST_AUTO_TEST_CASE_TEMPLATE( Tensor_Adaptor_3D, Axis, axis_types ){
+	std::array<std::size_t, 3> strides = {140, 7, 1};
+	strides = Axis::to_axis(strides);
+	tensor_shape<3> shape = {3, 20, 7};
+	shape = Axis::to_axis(shape);
+	
+	//check internal structure
+	dense_tensor_adaptor<unsigned, Axis, dense_tag, cpu_tag> adaptor({values.data(), strides},no_queue(), shape);
+	BOOST_CHECK_EQUAL(adaptor.shape().size(), 3);
+	BOOST_CHECK_EQUAL(adaptor.raw_storage().strides.size(), 3);
+	BOOST_CHECK_EQUAL(adaptor.raw_storage().values, values.data());
+	for(std::size_t dim = 0; dim != 3; ++dim){
+		BOOST_CHECK_EQUAL(adaptor.shape()[dim], shape[dim]);
+		BOOST_CHECK_EQUAL(adaptor.raw_storage().strides[dim], strides[dim]);
 	}
-	{
-		vector<int>::const_closure_type closure = (vector<int> const&) denseDataVec;
-		BOOST_CHECK_EQUAL(closure.size(),denseDataVec.size());
-		auto storage = closure.raw_storage();
-		BOOST_CHECK_EQUAL(storage.values,storageVec.values);
-		BOOST_CHECK_EQUAL(storage.stride,1);
-	}
-	{
-		vector<int>::const_closure_type closure = denseDataVec;
-		BOOST_CHECK_EQUAL(closure.size(),denseDataVec.size());
-		auto storage = closure.raw_storage();
-		BOOST_CHECK_EQUAL(storage.values,storageVec.values);
-		BOOST_CHECK_EQUAL(storage.stride,1);
+	
+	//check element access
+	auto elem = adaptor.elements();
+	for(std::size_t i = 0; i != shape[0]; ++i){
+		for(std::size_t j = 0; j != shape[1]; ++j){
+			for(std::size_t k = 0; k != shape[2]; ++k){
+				std::size_t pos = Axis::element(std::array<std::size_t, 3>{i,j,k}, strides);
+				BOOST_CHECK_EQUAL(adaptor(i,j,k),values[pos]);
+				BOOST_CHECK_EQUAL(elem(i,j,k),values[pos]);
+			}
+		}
 	}
 }
 
-// vector subrange
-BOOST_AUTO_TEST_CASE( Vector_Subrange){
-	auto storageVec = denseDataVec.raw_storage();
-	{
-		vector<int>::closure_type closure = subrange(denseDataVec,3,7);
-		BOOST_CHECK_EQUAL(closure.size(),4);
-		auto storage = closure.raw_storage();
-		BOOST_CHECK_EQUAL(storage.values,storageVec.values + 3);
-		BOOST_CHECK_EQUAL(storage.stride,1);
-	}
-	{
-		vector<int>::const_closure_type closure = subrange((vector<int> const&) denseDataVec, 3, 7);
-		BOOST_CHECK_EQUAL(closure.size(),4);
-		auto storage = closure.raw_storage();
-		BOOST_CHECK_EQUAL(storage.values,storageVec.values + 3);
-		BOOST_CHECK_EQUAL(storage.stride,1);
-	}
-	{
-		vector<int>::const_closure_type closure = subrange(denseDataVec,3,7);
-		BOOST_CHECK_EQUAL(closure.size(),4);
-		auto storage = closure.raw_storage();
-		BOOST_CHECK_EQUAL(storage.values,storageVec.values + 3);
-		BOOST_CHECK_EQUAL(storage.stride,1);
-	}
-	//now also check from non-trivial proxy
-	storageVec.values += 2;
-	storageVec.stride = 2;
-	vector<int>::closure_type proxy(storageVec, denseDataVec.queue(), (denseDataVec.size()-2)/2);
-	vector<int>::const_closure_type const_proxy = proxy;
-	{
-		vector<int>::closure_type closure = subrange(proxy,3,7);
-		BOOST_CHECK_EQUAL(closure.size(),4);
-		auto storage = closure.raw_storage();
-		BOOST_CHECK_EQUAL(storage.values,storageVec.values + 6);
-		BOOST_CHECK_EQUAL(storage.stride,2);
-	}
-	{
-		vector<int>::const_closure_type closure = subrange(const_proxy,3,7);
-		BOOST_CHECK_EQUAL(closure.size(),4);
-		auto storage = closure.raw_storage();
-		BOOST_CHECK_EQUAL(storage.values,storageVec.values + 6);
-		BOOST_CHECK_EQUAL(storage.stride,2);
+BOOST_AUTO_TEST_CASE_TEMPLATE( Tensor_3D, Axis, axis_types ){
+	//shape and stride in standard axis
+	std::array<std::size_t, 3> strides = {140, 7, 1};
+	tensor_shape<3> shape = {3, 20, 7};
+	//transform to current axis
+	strides = Axis::to_axis(strides);
+	shape = Axis::to_axis(shape);
+	
+	// construct a few tensors:
+	tensor<unsigned, Axis, cpu_tag> A(shape);
+	auto const& A_cnst = A;
+	tensor<unsigned, Axis, cpu_tag> Azero(shape, 0.0);
+	tensor<unsigned, Axis, cpu_tag> A_resize;
+	A_resize.resize(shape);
+	
+	// fill storage of A with values
+	std::copy(values.begin(), values.end(), A.raw_storage().values);
+	std::copy(values.begin(), values.end(), A_resize.raw_storage().values);
+	
+	//check internal structure
+	BOOST_CHECK_EQUAL(A.shape().size(), 3);
+	BOOST_CHECK_EQUAL(A.raw_storage().strides.size(), 3);
+	for(std::size_t dim = 0; dim != 3; ++dim){
+		BOOST_CHECK_EQUAL(A.shape()[dim], shape[dim]);
+		BOOST_CHECK_EQUAL(A.raw_storage().strides[dim], strides[dim]);
 	}
 	
-	//also check rvalue version
-	{
-		vector<int>::closure_type closure = subrange(vector<int>::closure_type(proxy),3,7);
-		BOOST_CHECK_EQUAL(closure.size(),4);
-		auto storage = closure.raw_storage();
-		BOOST_CHECK_EQUAL(storage.values,storageVec.values + 6);
-		BOOST_CHECK_EQUAL(storage.stride,2);
+	BOOST_CHECK_EQUAL(A_resize.shape().size(), 3);
+	BOOST_CHECK_EQUAL(A_resize.raw_storage().strides.size(), 3);
+	for(std::size_t dim = 0; dim != 3; ++dim){
+		BOOST_CHECK_EQUAL(A_resize.shape()[dim], shape[dim]);
+		BOOST_CHECK_EQUAL(A_resize.raw_storage().strides[dim], strides[dim]);
 	}
-	{
-		vector<int>::const_closure_type closure = subrange(vector<int>::const_closure_type(proxy),3,7);
-		BOOST_CHECK_EQUAL(closure.size(),4);
-		auto storage = closure.raw_storage();
-		BOOST_CHECK_EQUAL(storage.values,storageVec.values + 6);
-		BOOST_CHECK_EQUAL(storage.stride,2);
+	
+	
+	
+	//check element access
+	auto elem = A.elements();
+	for(std::size_t i = 0; i != shape[0]; ++i){
+		for(std::size_t j = 0; j != shape[1]; ++j){
+			for(std::size_t k = 0; k != shape[2]; ++k){
+				std::size_t pos = Axis::element(std::array<std::size_t, 3>{i,j,k}, strides);
+				BOOST_CHECK_EQUAL(Azero(i,j,k),0.0);
+				BOOST_CHECK_EQUAL(A(i,j,k),values[pos]);
+				BOOST_CHECK_EQUAL(A_resize(i,j,k),values[pos]);
+				BOOST_CHECK_EQUAL(A_cnst(i,j,k),values[pos]);
+				BOOST_CHECK_EQUAL(elem(i,j,k),values[pos]);
+			}
+		}
 	}
 }
 

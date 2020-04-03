@@ -175,7 +175,7 @@ add_subdirectory( include )
 #                       Include Examples
 #####################################################################
 option( BUILD_EXAMPLES "Build example programs." ON )
-add_subdirectory( examples )
+#add_subdirectory( examples )
 
 #####################################################################
 #                       Include Unit Tests

@@ -29,6 +29,7 @@
 #define REMORA_KERNELS_DEFAULT_VECTOR_ASSIGN_HPP
 
 #include "../../detail/traits.hpp"
+#include "../../cpu/traits.hpp"
 
 namespace remora{namespace bindings{
 

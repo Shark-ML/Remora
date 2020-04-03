@@ -2,10 +2,10 @@
 /*!
  * 
  *
- * \brief       Storage Types of matrix expressions
+ * \brief       Traits of matrix expressions
  *
  * \author      O. Krause
- * \date        2013
+ * \date        2020
  *
  *
  * \par Copyright 1995-2015 Shark Development Team
@@ -30,34 +30,26 @@
  */
 //===========================================================================
 
-#ifndef REMORA_DETAIL_STORAGE_HPP
-#define REMORA_DETAIL_STORAGE_HPP
+#ifndef REMORA_KERNELS_DEVICE_TRAITS_HPP
+#define REMORA_KERNELS_DEVICE_TRAITS_HPP
 
-#include "structure.hpp"
-#include <type_traits>
+#include "../expression_types.hpp"
 
-namespace remora{
+namespace remora {
 	
-struct unknown_storage{
-	typedef unknown_tag storage_tag;
-};
 
-template<std::size_t Dim, class T, class Tag>
-struct dense_tensor_storage{
-	typedef Tag storage_tag;
-	template<unsigned N>
-	using sub_tag = typename std::conditional< N == 0, Tag, dense_tag>::type;
-	
-	T* values;
-	std::array<std::size_t, Dim> strides;
-	
-	dense_tensor_storage(){}
-	dense_tensor_storage(T* values, std::array<std::size_t, Dim> const& strides):values(values),strides(strides){}
-	template<class U, class Tag2>
-	dense_tensor_storage(dense_tensor_storage<Dim, U, Tag2> const& storage): values(storage.values), strides(storage.strides){
-		static_assert(!(std::is_same<Tag,continuous_dense_tag>::value && std::is_same<Tag2,dense_tag>::value), "Trying to assign dense to continuous dense storage");
-	}
-};
+template<class Device>
+struct device_traits;
+
+//some devices do not need a queue but the interface still expects one.
+struct no_queue{};
+//for non-dense expression, the functor interface does not make sense but it is still expected to have elements()
+struct no_functor{};
+
 }
 
+#include "default/device_traits.hpp"
+
 #endif
+
+

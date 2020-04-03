@@ -2,10 +2,10 @@
 /*!
  * 
  *
- * \brief       Traits of matrix expressions
+ * \brief       Tesnro structure typedefs
  *
  * \author      O. Krause
- * \date        2013
+ * \date        2020
  *
  *
  * \par Copyright 1995-2015 Shark Development Team
@@ -34,9 +34,9 @@
 #define REMORA_DETAIL_STRUCTURE_HPP
 
 #include  "evaluation_tags.hpp"
-
-#include <cstddef>
-#include <cassert>
+#include "axis.hpp"
+#include "shape.hpp"
+#include <utility> 
 
 #if defined(__HCC__) || defined(__NVCC__)
 #define REMORA_CALL_PREFIX __host__ __device__
@@ -46,6 +46,11 @@
 
 namespace remora{
 	
+//structure types
+struct linear_structure{};
+struct triangular_structure{};
+
+/*
 template<bool Upper, bool Unit>
 struct triangular_tag{
 	static const bool is_upper = Upper;
@@ -84,106 +89,8 @@ typedef system_tag<true> left;
 ///\brief The system of equations has form xA=b
 typedef system_tag<false> right;
 	
-// forward declaration
-struct column_major;
 
-//structure types
-struct linear_structure{};
-struct triangular_structure{};
 
-// This traits class defines storage layout and it's properties
-// matrix (i,j) -> storage [i * size_i + j]
-struct row_major:public linear_structure{
-	typedef std::size_t size_type;
-	typedef std::ptrdiff_t difference_type;
-	typedef row_major orientation;
-	typedef column_major transposed_orientation;
-	template<class T>
-	struct sparse_element{
-		size_type i;
-		size_type j;
-		T value;
-		
-		bool operator<(sparse_element const& other)const{
-			if(i == other.i)
-				return j< other.j;
-			else
-				return i < other.i;
-		}
-		
-	};
-
-	// Indexing conversion to storage element
-	REMORA_CALL_PREFIX static size_type element(size_type i, size_type j, size_type leading_dimension) {
-		return i * leading_dimension + j;
-	}
-
-	// Major and minor indices
-	template<class Index1, class Index2>
-	REMORA_CALL_PREFIX static Index1 index_M(Index1 const& index1, Index2 const& /* index2 */) {
-		return index1;
-	}
-	template<class Index1, class Index2>
-	REMORA_CALL_PREFIX static Index2 index_m(Index1 const& /*index1*/, Index2 const& index2 ) {
-		return index2;
-	}
-	
-	REMORA_CALL_PREFIX static size_type stride1(size_type leading_dimension){
-		return leading_dimension;
-	}
-	REMORA_CALL_PREFIX static size_type stride2(size_type /*leading_dimension*/){
-		return 1;
-	}
-};
-
-// This traits class defines storage layout and it's properties
-// matrix (i,j) -> storage [i + j * size_i]
-struct column_major:public linear_structure{
-	typedef std::size_t size_type;
-	typedef std::ptrdiff_t difference_type;
-	typedef column_major orientation;
-	typedef row_major transposed_orientation;
-	template<class T>
-	struct sparse_element{
-		size_type i;
-		size_type j;
-		T value;
-		
-		bool operator<(sparse_element const& other)const{
-			if(j == other.j)
-				return i< other.i;
-			else
-				return j < other.j;
-		}
-		
-	};
-
-	// Indexing conversion to storage element
-	REMORA_CALL_PREFIX static size_type element(size_type i, size_type j, size_type leading_dimension) {
-		return i + j * leading_dimension;
-	}
-
-	// Major and minor indices
-	template<class Index1, class Index2>
-	REMORA_CALL_PREFIX static Index2 index_M(Index1 const& /*index1*/, Index2 const& index2 ) {
-		return index2;
-	}
-	template<class Index1, class Index2>
-	REMORA_CALL_PREFIX static Index1 index_m(Index1 const& index1, Index2 const& /* index2 */) {
-		return index1;
-	}
-	
-	REMORA_CALL_PREFIX static size_type stride1(size_type /*leading_dimension*/){
-		return 1;
-	}
-	REMORA_CALL_PREFIX static size_type stride2(size_type leading_dimension){
-		return leading_dimension;
-	}
-};
-struct unknown_orientation:public linear_structure{
-	typedef unknown_orientation orientation;
-	typedef unknown_orientation transposed_orientation;
-};
 
 //storage schemes for packed matrices
 template<class Orientation, class TriangularType>
@@ -225,7 +132,7 @@ private:
 		return triangular_index(j,i,size,typename TriangT::transposed_orientation(),row_major(), s);
 	}
 };
-
+*/
 }
 
 #undef REMORA_CALL_PREFIX

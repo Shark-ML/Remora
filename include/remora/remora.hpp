@@ -29,21 +29,14 @@
  *
  */
 
-#ifndef SHARK_LINALG_BLAS_REMORA_HPP
-#define SHARK_LINALG_BLAS_REMORA_HPP
+#ifndef REMORA_REMORA_HPP
+#define REMORA_REMORA_HPP
 
-//expressions
-#include "vector_expression.hpp"
-#include "matrix_expression.hpp"
-#include "solve.hpp"
+
 //containers
 #include "dense.hpp"
-#include "sparse.hpp"
-
-//misc
-#include "permutation.hpp"
-#include "io.hpp"
-#include "random.hpp"
-#include "device_copy.hpp"
+//expressions
+#include "expressions.hpp"
+#include "proxy_expressions.hpp"
 
 #endif

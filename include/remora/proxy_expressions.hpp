@@ -34,127 +34,333 @@
 #define REMORA_MATRIX_PROXY_HPP
 
 #include "detail/proxy_optimizers_fwd.hpp"
-#include "detail/vector_set.hpp"
 #include "expression_types.hpp"
 #include "detail/traits.hpp"
 #include "detail/check.hpp"
+#include <tuple> //std::make_tuple etc
+#include <array> //std::array
+#include <utility> //std::integer_sequence
 namespace remora{
 	
 	
-// ------------------
-// Vector subrange
-// ------------------
-
-/// \brief Return a subrange of a specified vector, forming a vector for the specified indices between start and stop index.
+/// \brief Defines a slice of a single dimension
 ///
-/// The vector starts with first index being 0 for the element that is indexed with start in the original vector.
-template<class V, class Device>
-typename detail::vector_range_optimizer<typename V::closure_type >::type
-subrange(vector_expression<V, Device>& v, std::size_t start, std::size_t stop){
-	return detail::vector_range_optimizer<typename V::closure_type>::create(v(), start, stop);
-}
+/// range{start,end} is used to pick a slice of a dimension of a tensor.
+struct range{
+	range(std::size_t start, std::size_t end): start(start), end(end){}
+	std::size_t start;
+	std::size_t end;
+	
+};
 
-template<class V, class Device>
-typename detail::vector_range_optimizer<typename V::const_closure_type>::type
-subrange(vector_expression<V, Device> const& v, std::size_t start, std::size_t stop){
-	return detail::vector_range_optimizer<typename V::const_closure_type>::create(v(), start, stop);
-}
+template<int N>
+struct merge{
+	static_assert(N != 0, "merge<0> has no meaning");
+	static constexpr unsigned num_input_axes = (N<0)? 0: N;
+	static constexpr unsigned num_output_axes = 1;
+};
 
-template<class V, class Device>
-typename detail::vector_range_optimizer<typename V::closure_type>::type
-subrange(vector_expression<V,Device>&& v, std::size_t start, std::size_t stop){
-	static_assert(!std::is_base_of<vector_container<V, Device>,V>::value, "It is unsafe to create a proxy from a temporary container");
-	return subrange(v(),start,stop);
-}
+template<std::size_t N>
+struct split{
+	static constexpr unsigned num_input_axes = 1;
+	static constexpr unsigned num_output_axes = N;
+	template<class ...Size, class = typename std::enable_if<sizeof...(Size) == N,void>::type >
+	constexpr split(Size... sizes): shape(std::size_t(sizes)...){}
+	
+	constexpr split(tensor_shape<N> shape): shape(shape){}
+	tensor_shape<N> shape;
+};
+
+
+///\brief tag object describing taking one complete axis
+///
+/// This is equivalent to merge<1> which is equivalent to ':' in tensorflow/pytorch.
+merge<1> all = merge<1>();
+
+///\brief tag object describing an axis that has a wildcard size and can span multiple axis
+///
+/// The semantic meaning is that of merge<N> where N is chosen apropriately to make the size fit.
+/// This is roughly equivalent to "-1" as an axis-dimension in tensorflow/pytorch.
+/// Only one fit tag is allowed in any reshape operation
+merge<-1> fit = merge<-1>();
+
+	
+////////////////////////////////////
+//// Tensor reshape
+////////////////////////////////////
+
+
+namespace detail{
+	template<class Arg, class... Args>
+	struct reshape_used_input_dims{
+		static constexpr unsigned value = Arg::num_input_axes + reshape_used_input_dims<Args...>::value;
+	};
+	template<class Arg>
+	struct reshape_used_input_dims<Arg>{
+		static constexpr unsigned value = Arg::num_input_axes;
+	};
+	
+	template<std::size_t N, class T>
+	T reshape_handle_fit(T t){
+		return t;
+	}
+	template<std::size_t N>
+	merge<N> reshape_handle_fit(merge<-1> t){
+		return merge<N>();
+	}
+	
+	template<std::size_t CurDim, class... Args>
+	struct reshape_dispatcher;
+	
+	//end of recursion
+	template<std::size_t CurDim>
+	struct reshape_dispatcher<CurDim>{
+		template<class TensorA>
+		static auto create(TensorA const& A){
+			static_assert(CurDim == TensorA::axis::num_dims, "reshape implementation Error!");
+			return A;
+		};
+	};
+	//implementation of all (Identity)
+	template<std::size_t CurDim, class... Args>
+	struct reshape_dispatcher<CurDim, merge<1>, Args... >{
+		template<class TensorA>
+		static auto create(TensorA const& A, merge<1>, Args... args){
+			return reshape_dispatcher<CurDim + 1, Args...>::create(A, args...);
+		};
+	};
+	
+	//implementation of split with two axes
+	template<std::size_t CurDim, class... Args>
+	struct reshape_dispatcher<CurDim, split<2>, Args... >{
+		template<class TensorA>
+		static auto create(TensorA const& A, split<2> arg, Args... args){
+			//check the split object fits the axis.
+			REMORA_SIZE_CHECK(arg.shape.num_elements() == A.shape()[CurDim]);
+			//split and recurse
+			auto Asplit = axis_split_optimizer<TensorA, CurDim>::create(A, arg.shape[0], arg.shape[1]);
+			return reshape_dispatcher<CurDim + 2, Args...>::create(Asplit, args...);
+		};
+	};
+	
+	//implementation of split with more than two axes
+	template<std::size_t CurDim, std::size_t K, class... Args>
+	struct reshape_dispatcher<CurDim, split<K>, Args... >{
+		template<class TensorA>
+		static auto create(TensorA const& A, split<K> arg, Args... args){
+			//check the split object fits the axis.
+			REMORA_SIZE_CHECK(arg.shape.num_elements() == A.shape()[CurDim]);
+			//split off the first new dimension from the axis
+			std::size_t tail_size = arg.shape.num_elements()/arg.shape[0];
+			auto Asplit = axis_split_optimizer<TensorA, CurDim>::create(A, arg.shape[0], tail_size);
+			//create a split-object for the remainder
+			tensor_shape<K - 1> tail_shape;
+			for (std::size_t i = 0; i != K - 1; ++i){
+				tail_shape[i] = arg.shape[i+1];
+			}
+			return reshape_dispatcher<CurDim + 1, split<K-1>, Args...>::create(Asplit,split<K-1>{tail_shape}, args...);
+		};
+	};
 	
 	
+	//implementation of merge with two axes
+	/*template <std::size_t CurDim, class TensorA, class... Args>
+	auto reshape_dispatcher(
+		TensorA const& A, merge<2>, Args...args
+	){
+		constexpr unsigned ax0 = TensorA::axis::element_v<CurDim>;
+		constexpr unsigned ax1 = TensorA::axis::element_v<CurDim + 1>;
+		static_assert ((ax0 + 1 = ax1) || (ax1 + 1 = ax0), "Not Implemented: merge with non-consecutive underlying axes. Workaround: create temporary tensor and than reshape.");
+		auto Amerged = axis_merge_optimizer<TensorA, (ax0<ax1? ax0: ax1), (ax0<ax1? ax1: ax0)>::create(A);
+		return reshape_dispatcher<CurDim + 1>(Amerged, args...);
+	}
+	//implementation of merge with more than two axes (use that a merge of N axis can be written as N-1 merges of 2 axes)
+	template <std::size_t CurDim, std::size_t N, class TensorA, class... Args>
+	auto reshape_dispatcher(
+		TensorA const& A, merge<N>, Args... args
+	){
+		constexpr unsigned ax0 = TensorA::axis::element_v<CurDim>;
+		constexpr unsigned ax1 = TensorA::axis::element_v<CurDim + 1>;
+		static_assert ((ax0 + 1 = ax1) || (ax1 + 1 = ax0), "Not Implemented: merge with non-consecutive underlying axes. Workaround: create temporary tensor and than reshape.");
+		auto Amerged = axis_merge_optimizer<TensorA, (ax0<ax1? ax0: ax1), (ax0<ax1? ax1: ax0)>::create(A);
+		return reshape_dispatcher<CurDim>(Amerged, merge<N-1>(), args...);
+	}*/
+}
+
+/// \brief Reshapes a tensor to a different shape
+///
+/// Reshapes a vector given a set of semantic axis arguments to a target size.
+/// The order of arguments is used to define which axis the arguments are applied to.
+/// There are four different arguments that can be provided,
+/// all, merge<N>, split and fit. 
+/// Their semantic meaning is as follows:
+///
+/// split<N> takes the next axis of  A and splits them into the next N axes by B.
+///     split takes N arguments which is the shape of the dimensions. Note that the
+///     split is taken using the default-order of axis<0,1,...,N-1>, that is the first axis is the
+///     leading dimension.
+/// all takes the next axis from A and maps it to the next axis of B without changing its shape. 
+///
+/// merge<N> takes the next N consecutive axes of A and maps them to the next single axis of B
+///
+/// fit is equivalent to merge<N> with N chosen such that all unused input axes are merged.
+///     fit can only be used once.
+///
+/// For a valid call to reshape, the number of axes in A and the number of used arguments by the operands must agree.
+/// When using fit, this is always the case.
+///
+/// An example (assuming namespace remora is included)
+/// A is a 6 dimensional tensor of shape (3,2,5,30,3,7)
+/// B=reshape(A, merge<2>(), all, split<3>(3,5,2), fit)
+/// will result in B with shape (6,5,3,5,2,21)
+/// merge takes the first two axes of A and merges them as first axis of B. 
+/// all takes the next axis (3) and maps it to the second axis of B.
+/// split<3> takes axis 4 and splits it into the next 3 axis of B.
+/// fit is replaced by merge<2> to take up the last unused axes of B which is then put at the last axis.
+///
+/// Todo: merge is not fully implemented and currently only allows merging of consecutive axes
+/// as indicated by the tensor layout. This only affects Tensors with more than 2 axes. Normally,
+/// A tensor does not have this issue, however when permuting axis, e.g. B= permute(A, 0,2,1)
+/// a following call to reshape(B,merge<2>(), all) will fail.
+/// 
+/// Further, note that split or merge can not be applied to structured tensors if the split/merge operation
+/// Destroys the structure.
+template <std::size_t Dim, class TensorA, class Device, class... Args>
+auto reshape(
+	tensor_expression<Dim, TensorA, Device>& A, Args... args
+){
+	// handle fit and ensure that arguments lead to correct number of axis
+	constexpr unsigned used_dims_pre_fill = detail::reshape_used_input_dims<Args...>::value;
+	static_assert(used_dims_pre_fill <= TensorA::axis::num_dims, "too many axes used by arguments.");
+	constexpr unsigned fill_size = TensorA::axis::num_dims - used_dims_pre_fill;
+	constexpr unsigned used_dims_post_fill = detail::reshape_used_input_dims<decltype(detail::reshape_handle_fit<fill_size>(args))...>::value;
+	static_assert(used_dims_post_fill == TensorA::axis::num_dims, "axis arguments do not lead to correct number of axis. Check that at most one fit argument is used");
+	
+	typename TensorA::closure_type Aclosure = A;
+	return detail::reshape_dispatcher<0, decltype(detail::reshape_handle_fit<fill_size>(args))...>::create(
+		Aclosure, detail::reshape_handle_fit<fill_size>(args)...
+	);
+}
+
+
+// template <std::size_t Dim, class TensorA, class Device, class Args...>
+// auto reshape(
+	// tensor_expression<Dim, TensorA, Device> const& A, Args... args
+// ){
+	// typename TensorA::const_closure_type Aclosure = A;
+	// return reshape(Aclosure, detail::reshape_handle_fit<fill_size>(args)...);
+// }
+
+/// \brief Reshapes a tensor to a different shape
+// template <std::size_t Dim, class TensorA, class Device, class Args...>
+// auto reshape(
+	// tensor_expression<Dim, TensorA, Device> && A, Args... args
+// ){
+	// static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
+	// return reshape(A, detail::reshape_handle_fit<fill_size>(args)...);
+// }
+
+
 ////////////////////////////////////
-//// Matrix Transpose
+//// Tensor Axis Permutation
 ////////////////////////////////////
 
-/// \brief Returns a proxy which transposes the matrix
-///
-/// given a matrix 
-/// A = (1 2 3)
-///     (4 5 6)
-///     (7 8 9)
-///
-/// the trans(A) operation results in
-/// trans(A) = (1 4 7)
-///            (2 5 8)
-///            (3 6 9)
-template<class M, class Device>
-typename detail::matrix_transpose_optimizer<typename M::closure_type>::type
-trans(matrix_expression<M, Device> & m){
-	return detail::matrix_transpose_optimizer<typename M::closure_type>::create(m());
-}
-template<class M, class Device>
-typename detail::matrix_transpose_optimizer<typename M::const_closure_type>::type
-trans(matrix_expression<M, Device> const& m){
-	return detail::matrix_transpose_optimizer<typename M::const_closure_type>::create(m());
+template <std::size_t Dim, class TensorA, class Device, unsigned... Axes>
+auto permute(tensor_expression<Dim, TensorA, Device>& A, axis<Axes...> permutation){
+	return detail::axis_permute_optimizer<typename TensorA::closure_type, axis<Axes...> >::create(A());
 }
 
-template<class M, class Device>
-typename detail::matrix_transpose_optimizer<typename M::closure_type>::type
-trans(matrix_expression<M, Device> && m){
-	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
-	return trans(m());
+template <std::size_t Dim, class TensorA, class Device, unsigned... Axes>
+auto permute(tensor_expression<Dim, TensorA, Device> const& A, axis<Axes...> permutation){
+	return detail::axis_permute_optimizer<typename TensorA::const_closure_type, axis<Axes...> >::create(A());
+}
+
+template <std::size_t Dim, class TensorA, class Device, unsigned... Axes>
+auto permute(tensor_expression<Dim, TensorA, Device> && A, axis<Axes...> permutation){
+	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
+	return permute(A, permutation);
 }
 
 ////////////////////////////////////
-//// Matrix Row and Column
+//// Tensor-slice
 ////////////////////////////////////
 
-/// \brief Returns a vector-proxy representing the i-th row of the Matrix
-///
-/// given a matrix 
-/// A = (1 2 3)
-///     (4 5 6)
-///     (7 8 9)
-///
-/// the row(A,1) operation results in
-/// row(A,1) = (4,5,6)
-template<class M, class Device>
-typename detail::matrix_row_optimizer<typename M::closure_type>::type
-row(matrix_expression<M, Device>& m, typename M::size_type i){
-	return detail::matrix_row_optimizer<typename M::closure_type>::create(m(), i);
-}
-template<class M, class Device>
-typename detail::matrix_row_optimizer<typename M::const_closure_type>::type
-row(matrix_expression<M, Device> const& m, typename M::size_type i){
-	return detail::matrix_row_optimizer<typename M::const_closure_type>::create(m(), i);
+namespace detail{
+	template <std::size_t N, std::size_t Dim, class TensorA, class Device>
+	typename TensorA::closure_type slice_helper(
+		tensor_expression<Dim, TensorA, Device> const& A, merge<1>
+	){
+		return A();
+	}
+
+	template <std::size_t N, class TensorA>
+	auto slice_helper(
+		TensorA const& A, range const& range
+	){
+		return detail::subrange_optimizer<typename TensorA::closure_type, N>::create(A, range.start, range.end);
+	}
+	
+	template <std::size_t N, class TensorA>
+	auto slice_helper(
+		TensorA const& A, std::size_t index
+	){
+		return detail::slice_optimizer<typename TensorA::closure_type, N>::create(A,index);
+	}
+	
+	
+	template <unsigned Nsliced, class TensorA, class... Args, unsigned N, unsigned I>
+	auto slice_dispatcher(
+		TensorA const& A, std::tuple<Args...> const& args, axis_set<N>, axis_set<I>
+	){
+		constexpr std::size_t slice_ax = TensorA::axis::template index_of_v<N-Nsliced>;
+		return slice_helper<slice_ax>(A, std::get<I>(args));
+	}
+	
+	template <unsigned Nsliced, class TensorA, class... Args, unsigned... Ns, unsigned... Is>
+	auto slice_dispatcher(
+		TensorA const& A, std::tuple<Args...> const& args, axis_set<Ns...>, axis_set<Is...>
+	){
+		// get the next axis to slice
+		constexpr unsigned ax = axis_set<Ns...>::min_element; //axis of original A to slice next
+		constexpr std::size_t ax_pos = axis_set<Ns...>::template index_of_v<ax>; //index of axis to slice next in the axis_set
+		constexpr std::size_t args_pos = axis_set<Is...>::template element_v<ax_pos>; //Argument to use next
+		constexpr std::size_t slice_ax = TensorA::axis::template index_of_v<ax-Nsliced>;
+		auto sliced_Ns = typename axis_set<Ns...>::template remove_t<ax_pos>(); //remove the index from the set
+		auto sliced_Is = typename axis_set<Is...>::template remove_t<ax_pos>(); //remove the index from the set
+		// slice tensor
+		auto Asliced = slice_helper<slice_ax>(A, std::get<args_pos>(args));
+		
+		//check if we sliced away a dimension
+		constexpr unsigned axDiff = TensorA::axis::num_dims - decltype(Asliced)::axis::num_dims;
+		return slice_dispatcher<Nsliced + axDiff>(Asliced, args, sliced_Ns, sliced_Is);
+	}
+	
 }
 
-template<class M, class Device>
-typename detail::matrix_row_optimizer<typename M::closure_type>::type
-row(matrix_expression<M, Device> && m, typename M::size_type i){
-	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
-	return row(m,i);
+
+
+template<std::size_t Dim, class TensorA, class Device, class... Args>
+auto slice(tensor_expression<Dim, TensorA, Device>& A, Args... args){
+	typename TensorA::closure_type Aclosure = A;
+	constexpr std::size_t num_slice = sizeof...(Args);
+	auto axis = typename TensorA::axis:: template front_t<num_slice>();
+	auto inds = default_axis<num_slice>();
+	return detail::slice_dispatcher<0>(Aclosure, std::make_tuple(args...), axis, inds);
 }
 
-/// \brief Returns a vector-proxy representing the j-th column of the Matrix
-///
-/// given a matrix 
-/// A = (1 2 3)
-///     (4 5 6)
-///     (7 8 9)
-///
-/// the column(A,1) operation results in
-/// column(A,1) = (2,5,8)
-template<class M, class Device>
-auto column(matrix_expression<M, Device>& m, typename M::size_type j) -> decltype(row(trans(m),j)){
-	return row(trans(m),j);
-}
-template<class M, class Device>
-auto column(matrix_expression<M, Device> const& m, typename M::size_type j) -> decltype(row(trans(m),j)){
-	return row(trans(m),j);
+template<std::size_t Dim, class TensorA, class Device, class... Args>
+auto slice(tensor_expression<Dim, TensorA, Device> const& A, Args... args){
+	typename TensorA::const_closure_type Aclosure = A;
+	return slice(Aclosure, args...);
 }
 
-template<class M, class Device>
-auto column(matrix_expression<M, Device> && m, typename M::size_type j) -> decltype(row(trans(m),j)){
-	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
-	return column(m());
+template<std::size_t Dim, class TensorA, class Device, class... Args>
+auto slice(tensor_expression<Dim, TensorA, Device> && A, Args... args){
+	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
+	return slice(A, args...);
 }
+
+/*
 
 ////////////////////////////////////
 //// Matrix Diagonal
@@ -190,143 +396,6 @@ diag(matrix_expression<M, Device> && m){
 	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return diag(m());
 }
-
-////////////////////////////////////
-//// Matrix Subranges
-////////////////////////////////////
-
-
-///\brief Returns a submatrix of a given matrix.
-///
-/// given a matrix 
-/// A = (1 2 3)
-///     (4 5 6)
-///     (7 8 9)
-///
-/// the subrange(A,0,2,1,3) operation results in
-/// subrange(A,0,2,1,3) = (4 5)
-///                       (7 8)
-template<class M, class Device>
-typename detail::matrix_range_optimizer<typename M::closure_type>::type subrange(
-	matrix_expression<M, Device>& m, 
-	std::size_t start1, std::size_t stop1,
-	std::size_t start2, std::size_t stop2
-){
-	REMORA_RANGE_CHECK(start1 <= stop1);
-	REMORA_RANGE_CHECK(start2 <= stop2);
-	REMORA_SIZE_CHECK(stop1 <= m().size1());
-	REMORA_SIZE_CHECK(stop2 <= m().size2());
-	return detail::matrix_range_optimizer<typename M::closure_type>::create(m(), start1, stop1, start2, stop2);
-}
-template<class M, class Device>
-typename detail::matrix_range_optimizer<typename M::const_closure_type>::type subrange(
-	matrix_expression<M, Device> const& m, 
-	std::size_t start1, std::size_t stop1,
-	std::size_t start2, std::size_t stop2
-){
-	REMORA_RANGE_CHECK(start1 <= stop1);
-	REMORA_RANGE_CHECK(start2 <= stop2);
-	REMORA_SIZE_CHECK(stop1 <= m().size1());
-	REMORA_SIZE_CHECK(stop2 <= m().size2());
-	return detail::matrix_range_optimizer<typename M::const_closure_type>::create(m(), start1, stop1, start2, stop2);
-}
-
-template<class M, class Device>
-typename detail::matrix_range_optimizer<typename M::closure_type>::type subrange(
-	matrix_expression<M, Device> && m, 
-	std::size_t start1, std::size_t stop1,
-	std::size_t start2, std::size_t stop2
-){
-	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
-	return subrange(m(),start1,stop1,start2,stop2);
-}
-
-template<class M, class Device>
-typename detail::matrix_rows_optimizer<typename M::closure_type>::type rows(
-	matrix_expression<M, Device>& m, 
-	std::size_t start, std::size_t stop
-){
-	REMORA_RANGE_CHECK(start <= stop);
-	REMORA_SIZE_CHECK(stop <= m().size1());
-	return detail::matrix_rows_optimizer<typename M::closure_type>::create(m(),start,stop);
-}
-
-template<class M, class Device>
-typename detail::matrix_rows_optimizer<typename M::const_closure_type >::type rows(
-	matrix_expression<M, Device> const& m, 
-	std::size_t start, std::size_t stop
-){
-	REMORA_RANGE_CHECK(start <= stop);
-	REMORA_SIZE_CHECK(stop <= m().size1());
-	return detail::matrix_rows_optimizer<typename M::const_closure_type >::create(m(),start,stop);
-}
-
-template<class M, class Device>
-typename detail::matrix_rows_optimizer<typename M::closure_type >::type rows(
-	matrix_expression<M, Device> && m, 
-	std::size_t start, std::size_t stop
-) {
-	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
-	return  detail::matrix_rows_optimizer<typename M::closure_type>::create(m(),start,stop);
-}
-
-template<class M, class Device>
-auto columns(
-	matrix_expression<M, Device>& m, 
-	typename M::size_type start, typename M::size_type stop
-) -> decltype(trans(rows(trans(m),start,stop))){
-	REMORA_RANGE_CHECK(start <= stop);
-	REMORA_SIZE_CHECK(stop <= m().size2());
-	return trans(rows(trans(m),start,stop));
-}
-
-template<class M, class Device>
-auto columns(
-	matrix_expression<M, Device> const& m, 
-	typename M::size_type start, typename M::size_type stop
-) -> decltype(trans(rows(trans(m),start,stop))){
-	REMORA_RANGE_CHECK(start <= stop);
-	REMORA_SIZE_CHECK(stop <= m().size2());
-	return trans(rows(trans(m),start,stop));
-}
-
-template<class M, class Device>
-auto columns(
-	matrix_expression<M, Device> && m, 
-	std::size_t start, std::size_t stop
-) -> decltype(trans(rows(trans(m),start,stop))){
-	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
-	return columns(m(),start,stop);
-}
-
-////////////////////////////////////
-//// Matrix to Vector
-////////////////////////////////////
-
-/// \brief Converts a dense matrix to a vector
-///
-/// The matrix is linearized along its fast index as indicated by the orientation.
-/// m.g. a row-major matrix is lienarized by concatenating its rows to one large vector.
-template<class M, class Device>
-typename detail::linearized_matrix_optimizer<typename M::closure_type>::type
-to_vector(matrix_expression<M, Device>& m){
-	return detail::linearized_matrix_optimizer<typename M::closure_type>::create(m());
-}
-
-template<class M, class Device>
-typename detail::linearized_matrix_optimizer<typename M::const_closure_type>::type
-to_vector(matrix_expression<M, Device> const& m){
-	return detail::linearized_matrix_optimizer<typename M::const_closure_type>::create(m());
-}
-
-template<class M, class Device>
-typename detail::linearized_matrix_optimizer<typename M::closure_type>::type
-to_vector(matrix_expression<M, Device> && m){
-	static_assert(!std::is_base_of<vector_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
-	return to_vector(m());
-}
-
-
 ////////////////////////////////////////////////
 //// Matrix to Triangular Matrix
 ////////////////////////////////////////////////
@@ -350,35 +419,6 @@ to_triangular(matrix_expression<M, Device>&& m, Tag){
 	return detail::triangular_proxy_optimizer<typename M::closure_type, Tag>::create(m());
 }
 
-////////////////////////////////////
-//// Matrix Adaptor
-////////////////////////////////////
-
-/// \brief Converts a dense vector to a matrix of a given size
-template <class V, class Device>
-typename detail::vector_to_matrix_optimizer<typename V::const_closure_type, row_major >::type to_matrix(
-	vector_expression<V, Device> const& v,std::size_t size1, std::size_t size2
-){
-	REMORA_SIZE_CHECK(size1 * size2 == v().size());
-	return detail::vector_to_matrix_optimizer<typename V::const_closure_type, row_major >::create(v(), size1, size2);
-}
-
-/// \brief Converts a dense vector to a matrix of a given size
-template <class V, class Device>
-typename detail::vector_to_matrix_optimizer<typename V::closure_type, row_major >::type to_matrix(
-	vector_expression<V, Device>& v,std::size_t size1, std::size_t size2
-){
-	REMORA_SIZE_CHECK(size1 * size2 == v().size());
-	return detail::vector_to_matrix_optimizer<typename V::closure_type, row_major >::create(v(), size1, size2);
-}
-
-template <class V, class Device>
-typename detail::vector_to_matrix_optimizer<typename V::closure_type, row_major >::type to_matrix(
-	vector_expression<V,Device> && v,std::size_t size1, std::size_t size2
-){
-	static_assert(!std::is_base_of<vector_container<V, Device>,V>::value, "It is unsafe to create a proxy from a temporary container");
-	return to_matrix(v, size1, size2);
-}
 
 ////////////////////////////////////
 //// Matrix to vector set
@@ -414,7 +454,7 @@ template <class M>
 auto as_columns(M&& m)-> decltype(as_set(std::forward<M>(m), column_major())){
 	return as_set(std::forward<M>(m), column_major());
 }
-
+*/
 }
 
 #endif
