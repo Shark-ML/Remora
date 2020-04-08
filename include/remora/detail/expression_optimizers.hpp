@@ -166,6 +166,147 @@ struct axis_permute_optimizer<matrix_concat<TensorA,TensorB,B> >{
 	}
 };*/
 
+
+
+////////////////////////////////////
+//// Merge
+////////////////////////////////////
+
+//slice(alpha A,i) = alpha slice(A,i)
+template<class Tensor, std::size_t N>
+struct axis_merge_optimizer<scalar_multiply<Tensor>, N >{
+	typedef axis_merge_optimizer<typename Tensor::const_closure_type, N> opt;
+	typedef scalar_multiply<typename opt::type> type;
+	
+	static type create(scalar_multiply<Tensor> const& E){
+		return type(opt::create(E.expression()), E.scalar());
+	}
+};
+
+// slice(A+B,i) = slice(A,i) + slice(B,i)
+template<class TensorA, class TensorB, std::size_t N>
+struct axis_merge_optimizer<tensor_addition<TensorA,TensorB>, N>{
+	typedef axis_merge_optimizer<typename TensorA::const_closure_type, N> left_opt;
+	typedef axis_merge_optimizer<typename TensorB::const_closure_type, N> right_opt;
+	typedef tensor_addition<typename left_opt::type,typename right_opt::type > type;
+	
+	static type create(tensor_addition<TensorA,TensorB> const& E){
+		return type(left_opt::create(E.lhs()),right_opt::create(E.rhs()));
+	}
+};
+
+//slice(constant,i) = constant
+template<class T, class Axis, class Device, std::size_t N>
+struct axis_merge_optimizer<scalar_tensor<T, Axis, Device>, N>{
+	typedef scalar_tensor<T, typename Axis::template slice_t<N>, Device> type;
+	
+	static type create(scalar_tensor<T, Axis, Device> const& E){
+		auto shape = E.shape();
+		tensor_shape<Axis::num_dims-1> new_shape;
+		for(unsigned i = 0; i != N; ++i){
+			new_shape[i] = shape[i];
+		}
+		new_shape[N] = shape[N] * shape[N+1];
+		for(unsigned i = N + 2; i != Axis::num_dims; ++i){
+			new_shape[i - 1] = shape[i];
+		}
+		return type(new_shape,E.scalar());
+	}
+};
+
+//slice(f(A),i) = f(slice(A,i))
+template<class Tensor, class F, std::size_t N>
+struct axis_merge_optimizer<tensor_unary<Tensor,F>, N>{
+	typedef axis_merge_optimizer<typename Tensor::const_closure_type, N> opt;
+	typedef tensor_unary<typename opt::type, F> type;
+	
+	static type create(tensor_unary<Tensor,F> const& E){
+		return type(opt::create(E.expression()),E.functor());
+	}
+};
+
+//slice(f(A,B),i)=f(slice(A,i),slice(B,i))
+template<class TensorA, class TensorB, class F, std::size_t N>
+struct axis_merge_optimizer<tensor_binary<TensorA,TensorB, F>, N>{
+	typedef axis_merge_optimizer<typename TensorA::const_closure_type, N> left_opt;
+	typedef axis_merge_optimizer<typename TensorB::const_closure_type, N> right_opt;
+	typedef tensor_binary<typename left_opt::type,typename right_opt::type, F > type;
+	
+	static type create(tensor_binary<TensorA,TensorB,F> const& E){
+		return type(left_opt::create(E.lhs()),right_opt::create(E.rhs()),E.functor());
+	}
+};
+
+////////////////////////////////////
+//// Split
+////////////////////////////////////
+
+//slice(alpha A,i) = alpha slice(A,i)
+template<class Tensor, std::size_t N>
+struct axis_split_optimizer<scalar_multiply<Tensor>, N >{
+	typedef axis_split_optimizer<typename Tensor::const_closure_type, N> opt;
+	typedef scalar_multiply<typename opt::type> type;
+	
+	static type create(scalar_multiply<Tensor> const& E, std::size_t size1, std::size_t size2){
+		return type(opt::create(E.expression(), size1, size2), E.scalar());
+	}
+};
+
+// slice(A+B,i) = slice(A,i) + slice(B,i)
+template<class TensorA, class TensorB, std::size_t N>
+struct axis_split_optimizer<tensor_addition<TensorA,TensorB>, N>{
+	typedef axis_split_optimizer<typename TensorA::const_closure_type, N> left_opt;
+	typedef axis_split_optimizer<typename TensorB::const_closure_type, N> right_opt;
+	typedef tensor_addition<typename left_opt::type,typename right_opt::type > type;
+	
+	static type create(tensor_addition<TensorA,TensorB> const& E, std::size_t size1, std::size_t size2){
+		return type(left_opt::create(E.lhs(), size1, size2),right_opt::create(E.rhs(), size1, size2));
+	}
+};
+
+//slice(constant,i) = constant
+template<class T, class Axis, class Device, std::size_t N>
+struct axis_split_optimizer<scalar_tensor<T, Axis, Device>, N>{
+	typedef scalar_tensor<T, typename Axis::template slice_t<N>, Device> type;
+	
+	static type create(scalar_tensor<T, Axis, Device> const& E, std::size_t size1, std::size_t size2){
+		auto shape = E.shape();
+		tensor_shape<Axis::num_dims+1> new_shape;
+		for(unsigned i = 0; i != N; ++i){
+			new_shape[i] = shape[i];
+		}
+		new_shape[N] = size1;
+		new_shape[N+1] = size2;
+		for(unsigned i = N + 1; i != Axis::num_dims; ++i){
+			new_shape[i + 1] = shape[i];
+		}
+		return type(new_shape,E.scalar());
+	}
+};
+
+//slice(f(A),i) = f(slice(A,i))
+template<class Tensor, class F, std::size_t N>
+struct axis_split_optimizer<tensor_unary<Tensor,F>, N>{
+	typedef axis_split_optimizer<typename Tensor::const_closure_type, N> opt;
+	typedef tensor_unary<typename opt::type, F> type;
+	
+	static type create(tensor_unary<Tensor,F> const& E, std::size_t size1, std::size_t size2){
+		return type(opt::create(E.expression(), size1, size2),E.functor());
+	}
+};
+
+//slice(f(A,B),i)=f(slice(A,i),slice(B,i))
+template<class TensorA, class TensorB, class F, std::size_t N>
+struct axis_split_optimizer<tensor_binary<TensorA,TensorB, F>, N>{
+	typedef axis_split_optimizer<typename TensorA::const_closure_type, N> left_opt;
+	typedef axis_split_optimizer<typename TensorB::const_closure_type, N> right_opt;
+	typedef tensor_binary<typename left_opt::type,typename right_opt::type, F > type;
+	
+	static type create(tensor_binary<TensorA,TensorB,F> const& E, std::size_t size1, std::size_t size2){
+		return type(left_opt::create(E.lhs(), size1, size2),right_opt::create(E.rhs(), size1, size2),E.functor());
+	}
+};
+
 ////////////////////////////////////
 //// Slice
 ////////////////////////////////////
@@ -194,12 +335,20 @@ struct slice_optimizer<tensor_addition<TensorA,TensorB>, N>{
 };
 
 //slice(constant,i) = constant
-template<class T, class OAxis, class Device, std::size_t N>
-struct slice_optimizer<scalar_tensor<T, OAxis, Device>, N>{
-	typedef scalar_tensor<T, typename OAxis::template slice_t<N>, Device> type;
+template<class T, class Axis, class Device, std::size_t N>
+struct slice_optimizer<scalar_tensor<T, Axis, Device>, N>{
+	typedef scalar_tensor<T, typename Axis::template slice_t<N>, Device> type;
 	
-	static type create(scalar_tensor<T, OAxis, Device> const& E, std::size_t){
-		return type(E.size2(),E.scalar());
+	static type create(scalar_tensor<T, Axis, Device> const& E, std::size_t){
+		auto shape = E.shape();
+		tensor_shape<Axis::num_dims-1> new_shape;
+		for(unsigned i = 0; i < N; ++i){
+			new_shape[i] = shape[i];
+		}
+		for(unsigned i = N + 1; i != Axis::num_dims; ++i){
+			new_shape[i - 1] = shape[i];
+		}
+		return type(new_shape,E.scalar());
 	}
 };
 
