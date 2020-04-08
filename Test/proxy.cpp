@@ -7,6 +7,7 @@
 #include <boost/mpl/list.hpp>
 #include <algorithm>
 using namespace remora;
+using namespace remora::ax;
 
 
 struct ProxyFixture

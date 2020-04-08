@@ -42,47 +42,49 @@
 #include <utility> //std::integer_sequence
 namespace remora{
 	
+namespace ax{
+	/// \brief Defines a slice of a single dimension
+	///
+	/// range{start,end} is used to pick a slice of a dimension of a tensor.
+	struct range{
+		range(std::size_t start, std::size_t end): start(start), end(end){}
+		std::size_t start;
+		std::size_t end;
+		
+	};
+
+	template<int N>
+	struct merge{
+		static_assert(N != 0, "merge<0> has no meaning");
+		static constexpr unsigned num_input_axes = (N<0)? 0: N;
+		static constexpr unsigned num_output_axes = 1;
+	};
+
+	template<std::size_t N>
+	struct split{
+		static constexpr unsigned num_input_axes = 1;
+		static constexpr unsigned num_output_axes = N;
+		template<class ...Size, class = typename std::enable_if<sizeof...(Size) == N,void>::type >
+		constexpr split(Size... sizes): shape(std::size_t(sizes)...){}
+		
+		constexpr split(tensor_shape<N> shape): shape(shape){}
+		tensor_shape<N> shape;
+	};
 	
-/// \brief Defines a slice of a single dimension
-///
-/// range{start,end} is used to pick a slice of a dimension of a tensor.
-struct range{
-	range(std::size_t start, std::size_t end): start(start), end(end){}
-	std::size_t start;
-	std::size_t end;
-	
-};
+	///\brief tag object describing taking one complete axis
+	///
+	/// This is equivalent to merge<1> which is equivalent to ':' in tensorflow/pytorch.
+	merge<1> all = merge<1>();
 
-template<int N>
-struct merge{
-	static_assert(N != 0, "merge<0> has no meaning");
-	static constexpr unsigned num_input_axes = (N<0)? 0: N;
-	static constexpr unsigned num_output_axes = 1;
-};
-
-template<std::size_t N>
-struct split{
-	static constexpr unsigned num_input_axes = 1;
-	static constexpr unsigned num_output_axes = N;
-	template<class ...Size, class = typename std::enable_if<sizeof...(Size) == N,void>::type >
-	constexpr split(Size... sizes): shape(std::size_t(sizes)...){}
-	
-	constexpr split(tensor_shape<N> shape): shape(shape){}
-	tensor_shape<N> shape;
-};
+	///\brief tag object describing an axis that has a wildcard size and can span multiple axis
+	///
+	/// The semantic meaning is that of merge<N> where N is chosen apropriately to make the size fit.
+	/// This is roughly equivalent to "-1" as an axis-dimension in tensorflow/pytorch.
+	/// Only one fit tag is allowed in any reshape operation
+	merge<-1> fit = merge<-1>();
+}
 
 
-///\brief tag object describing taking one complete axis
-///
-/// This is equivalent to merge<1> which is equivalent to ':' in tensorflow/pytorch.
-merge<1> all = merge<1>();
-
-///\brief tag object describing an axis that has a wildcard size and can span multiple axis
-///
-/// The semantic meaning is that of merge<N> where N is chosen apropriately to make the size fit.
-/// This is roughly equivalent to "-1" as an axis-dimension in tensorflow/pytorch.
-/// Only one fit tag is allowed in any reshape operation
-merge<-1> fit = merge<-1>();
 
 	
 ////////////////////////////////////
@@ -105,8 +107,8 @@ namespace detail{
 		return t;
 	}
 	template<std::size_t N>
-	merge<N> reshape_handle_fit(merge<-1> t){
-		return merge<N>();
+	ax::merge<N> reshape_handle_fit(ax::merge<-1> t){
+		return ax::merge<N>();
 	}
 	
 	template<std::size_t CurDim, class... Args>
@@ -123,18 +125,18 @@ namespace detail{
 	};
 	//implementation of all (Identity)
 	template<std::size_t CurDim, class... Args>
-	struct reshape_dispatcher<CurDim, merge<1>, Args... >{
+	struct reshape_dispatcher<CurDim, ax::merge<1>, Args... >{
 		template<class TensorA>
-		static auto create(TensorA const& A, merge<1>, Args... args){
+		static auto create(TensorA const& A, ax::merge<1>, Args... args){
 			return reshape_dispatcher<CurDim + 1, Args...>::create(A, args...);
 		}
 	};
 	
 	//implementation of split with two axes
 	template<std::size_t CurDim, class... Args>
-	struct reshape_dispatcher<CurDim, split<2>, Args... >{
+	struct reshape_dispatcher<CurDim, ax::split<2>, Args... >{
 		template<class TensorA>
-		static auto create(TensorA const& A, split<2> arg, Args... args){
+		static auto create(TensorA const& A, ax::split<2> arg, Args... args){
 			//check the split object fits the axis.
 			REMORA_SIZE_CHECK(arg.shape.num_elements() == A.shape()[CurDim]);
 			//split and recurse
@@ -145,9 +147,9 @@ namespace detail{
 	
 	//implementation of split with more than two axes
 	template<std::size_t CurDim, std::size_t K, class... Args>
-	struct reshape_dispatcher<CurDim, split<K>, Args... >{
+	struct reshape_dispatcher<CurDim, ax::split<K>, Args... >{
 		template<class TensorA>
-		static auto create(TensorA const& A, split<K> arg, Args... args){
+		static auto create(TensorA const& A, ax::split<K> arg, Args... args){
 			//check the split object fits the axis.
 			REMORA_SIZE_CHECK(arg.shape.num_elements() == A.shape()[CurDim]);
 			//split off the first new dimension from the axis
@@ -158,15 +160,15 @@ namespace detail{
 			for (std::size_t i = 0; i != K - 1; ++i){
 				tail_shape[i] = arg.shape[i+1];
 			}
-			return reshape_dispatcher<CurDim + 1, split<K-1>, Args...>::create(Asplit,split<K-1>{tail_shape}, args...);
+			return reshape_dispatcher<CurDim + 1, ax::split<K-1>, Args...>::create(Asplit,ax::split<K-1>{tail_shape}, args...);
 		}
 	};
 
 	//implementation of merge with two axes
 	template<std::size_t CurDim, class... Args>
-	struct reshape_dispatcher<CurDim, merge<2>, Args... >{
+	struct reshape_dispatcher<CurDim, ax::merge<2>, Args... >{
 		template<class TensorA>
-		static auto create(TensorA const& A, merge<2> arg, Args... args){
+		static auto create(TensorA const& A, ax::merge<2> arg, Args... args){
 			constexpr unsigned ax0 = TensorA::axis::template element_v<CurDim>;
 			constexpr unsigned ax1 = TensorA::axis::template element_v<CurDim + 1>;
 			static_assert (ax0 + 1 == ax1, "Not Implemented: merge with non-consecutive underlying axes.");
@@ -177,14 +179,14 @@ namespace detail{
 
 	//implementation of merge with more than two axes (use that a merge of N axis can be written as N-1 merges of 2 axes)
 	template<std::size_t CurDim, int K, class... Args>
-	struct reshape_dispatcher<CurDim, merge<K>, Args... >{
+	struct reshape_dispatcher<CurDim, ax::merge<K>, Args... >{
 		template<class TensorA>
-		static auto create(TensorA const& A, merge<K> arg, Args... args){
+		static auto create(TensorA const& A, ax::merge<K> arg, Args... args){
 			constexpr unsigned ax0 = TensorA::axis::template element_v<CurDim>;
 			constexpr unsigned ax1 = TensorA::axis::template element_v<CurDim + 1>;
 			static_assert (ax0 + 1 == ax1, "Not Implemented: merge with non-consecutive underlying axes.");
 			auto Amerged = axis_merge_optimizer<TensorA, CurDim>::create(A);
-			return reshape_dispatcher<CurDim, merge<K-1> , Args...>::create(Amerged, merge<K-1>(), args...);
+			return reshape_dispatcher<CurDim, ax::merge<K-1> , Args...>::create(Amerged, ax::merge<K-1>(), args...);
 		}
 	};
 	
@@ -195,7 +197,7 @@ namespace detail{
 /// Reshapes a vector given a set of semantic axis arguments to a target size.
 /// The order of arguments is used to define which axis the arguments are applied to.
 /// There are four different arguments that can be provided,
-/// all, merge<N>, split and fit. 
+/// ax::all, ax::merge<N>, ax::split and ax::fit. 
 /// Their semantic meaning is as follows:
 ///
 /// split<N> takes the next axis of  A and splits them into the next N axes by B.
@@ -244,24 +246,20 @@ auto reshape(
 		Aclosure, detail::reshape_handle_fit<fill_size>(args)...
 	);
 }
-
-
-// template <std::size_t Dim, class TensorA, class Device, class Args...>
-// auto reshape(
-	// tensor_expression<Dim, TensorA, Device> const& A, Args... args
-// ){
-	// typename TensorA::const_closure_type Aclosure = A;
-	// return reshape(Aclosure, detail::reshape_handle_fit<fill_size>(args)...);
-// }
-
-/// \brief Reshapes a tensor to a different shape
-// template <std::size_t Dim, class TensorA, class Device, class Args...>
-// auto reshape(
-	// tensor_expression<Dim, TensorA, Device> && A, Args... args
-// ){
-	// static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
-	// return reshape(A, detail::reshape_handle_fit<fill_size>(args)...);
-// }
+template <std::size_t Dim, class TensorA, class Device, class... Args>
+auto reshape(
+	tensor_expression<Dim, TensorA, Device> const& A, Args... args
+){
+	typename TensorA::const_closure_type Aclosure = A;
+	return reshape(Aclosure, args...);
+}
+template <std::size_t Dim, class TensorA, class Device, class... Args>
+auto reshape(
+	tensor_expression<Dim, TensorA, Device> && A, Args... args
+){
+	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
+	return reshape(A, args...);
+}
 
 
 ////////////////////////////////////
@@ -291,14 +289,14 @@ auto permute(tensor_expression<Dim, TensorA, Device> && A, axis<Axes...> permuta
 namespace detail{
 	template <std::size_t N, std::size_t Dim, class TensorA, class Device>
 	typename TensorA::closure_type slice_helper(
-		tensor_expression<Dim, TensorA, Device> const& A, merge<1>
+		tensor_expression<Dim, TensorA, Device> const& A, ax::merge<1>
 	){
 		return A();
 	}
 
 	template <std::size_t N, class TensorA>
 	auto slice_helper(
-		TensorA const& A, range const& range
+		TensorA const& A, ax::range const& range
 	){
 		return detail::subrange_optimizer<typename TensorA::closure_type, N>::create(A, range.start, range.end);
 	}
