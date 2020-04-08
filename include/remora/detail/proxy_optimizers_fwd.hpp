@@ -34,6 +34,9 @@ namespace remora{namespace detail{
 	
 template<class TensorA, std::size_t N>
 struct axis_split_optimizer;
+
+template<class TensorA, std::size_t N>
+struct axis_merge_optimizer;
 	
 template<class TensorA, std::size_t N>
 struct subrange_optimizer;

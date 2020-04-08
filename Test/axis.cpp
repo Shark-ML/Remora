@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE( Axis_Compile_Tests){
 
 
 BOOST_AUTO_TEST_CASE( Axis_to_array){
-	std::array<std::size_t, 4> arr = axis<2,0,3,1>::to_array();
+	auto arr = axis<2,0,3,1>::to_array();
 	BOOST_CHECK_EQUAL(arr[0],2);
 	BOOST_CHECK_EQUAL(arr[1],0);
 	BOOST_CHECK_EQUAL(arr[2],3);

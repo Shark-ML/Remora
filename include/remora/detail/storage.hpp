@@ -34,6 +34,7 @@
 #define REMORA_DETAIL_STORAGE_HPP
 
 #include "structure.hpp"
+#include "integer_list.hpp"
 #include <type_traits>
 
 namespace remora{
@@ -42,22 +43,47 @@ struct unknown_storage{
 	typedef unknown_tag storage_tag;
 };
 
-template<std::size_t Dim, class T, class Tag>
+namespace detail{
+	template<bool... First, bool... Second>
+	constexpr bool is_compatible_dense_storage_helper(integer_list<bool, First...>, integer_list<bool, Second...>){
+		bool arr1[]={First...};
+		bool arr2[]={Second...};
+		std::size_t N = sizeof...(First);
+		bool compatible = true;
+		for(std::size_t i = 0; i != N; ++i){
+			if(arr1[i] == true && arr2[i] == false){
+				compatible = false;
+				break;
+			}
+		}
+		return compatible;
+	};
+}
+
+template<class T, class DenseAxisTag>
 struct dense_tensor_storage{
-	typedef Tag storage_tag;
-	template<unsigned N>
-	using sub_tag = typename std::conditional< N == 0, Tag, dense_tag>::type;
+	typedef DenseAxisTag dense_axis_tag;
 	
 	T* values;
-	std::array<std::size_t, Dim> strides;
+	std::array<std::size_t, dense_axis_tag::num_dims> strides;
 	
 	dense_tensor_storage(){}
-	dense_tensor_storage(T* values, std::array<std::size_t, Dim> const& strides):values(values),strides(strides){}
-	template<class U, class Tag2>
-	dense_tensor_storage(dense_tensor_storage<Dim, U, Tag2> const& storage): values(storage.values), strides(storage.strides){
-		static_assert(!(std::is_same<Tag,continuous_dense_tag>::value && std::is_same<Tag2,dense_tag>::value), "Trying to assign dense to continuous dense storage");
+	dense_tensor_storage(T* values, std::array<std::size_t, dense_axis_tag::num_dims> const& strides):values(values),strides(strides){
 	}
+	template<class U, class Tag, class = typename std::enable_if<detail::is_compatible_dense_storage_helper(dense_axis_tag(), Tag()) , void>::type >
+	dense_tensor_storage(dense_tensor_storage<U, Tag> const& storage): values(storage.values), strides(storage.strides){}
 };
+
+namespace detail{
+	template<unsigned... Ns>
+	integer_list<bool, ((void)Ns,true)...> make_continuous_tensor_storage(std::integer_sequence<unsigned, Ns...>);
+}
+
+template<std::size_t N, class T>
+using continuous_tensor_storage = dense_tensor_storage<T,
+	decltype(detail::make_continuous_tensor_storage(std::make_integer_sequence<unsigned, N>()))
+>;
+
 }
 
 #endif

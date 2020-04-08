@@ -177,13 +177,29 @@ namespace detail{
 
 
 ////////////////////////TENSOR SUBRANGE//////////////////////
-template<class T, class Tag, class Axis, class Device, std::size_t N>
-struct subrange_optimizer<dense_tensor_adaptor<T, Axis, Tag, Device>, N >{
-	typedef typename std::conditional<Axis:: template element_v<N> == 0, Tag, dense_tag>::type proxy_tag;
-	typedef dense_tensor_adaptor<T, Axis, proxy_tag, Device> type;
+template<class T, class Axis, class TagList, class Device, std::size_t N>
+struct subrange_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N >{
+	//slicing an axis will cause the next axis in memory to not be dense any more
+	struct storage_tag_transform{
+		template<class Seq>
+		static constexpr Seq apply(Seq seq){
+			auto axes = Axis::to_array();
+			constexpr unsigned next_ax = Axis::template element_v<N> - 1;
+			//fint the position of the next axis in memory and set it to not-dense
+			for(std::size_t i = 0; i != Axis::num_dims; ++i){
+				if( axes[i] == next_ax){
+					seq.values[i] = 0;
+					break;
+				}
+			}
+			return seq;
+		}
+	};
+	typedef typename TagList::template transform_t<storage_tag_transform> proxy_tag_list;
+	typedef dense_tensor_adaptor<T, Axis, proxy_tag_list, Device> type;
 	
 	static type create(
-		dense_tensor_adaptor<T, Axis, Tag, Device> const& E,
+		dense_tensor_adaptor<T, Axis, TagList, Device> const& E,
 		std::size_t start, std::size_t end
 	){
 		//compute new shape
@@ -200,15 +216,33 @@ struct subrange_optimizer<dense_tensor_adaptor<T, Axis, Tag, Device>, N >{
 
 ////////////////////////TENSOR SLICE//////////////////////
 
-template<class T, class Axis, class Tag, class Device, std::size_t N>
-struct slice_optimizer<dense_tensor_adaptor<T, Axis, Tag, Device>, N>{
-	//rule: if we remove any axis except the major-dimension the tensor can no longer be contiguous
-	static constexpr unsigned ax = Axis:: template element_v<N>;
-	typedef typename std::conditional<ax == 0, Tag, dense_tag>::type proxy_tag;
-	typedef dense_tensor_adaptor<T, typename Axis::template slice_t<N>, proxy_tag, Device> type;
+template<class T, class Axis, class TagList, class Device, std::size_t N>
+struct slice_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
+	struct storage_tag_transform{
+		template<class Seq>
+		static constexpr Seq apply(Seq seq){
+			auto axes = Axis::to_array();
+			//update the next axis as it is not continuous anymore
+			//underflow of -1 is defined -> changes in the major axis don't affect any other axis
+			constexpr unsigned next_ax = unsigned(Axis::template element_v<N>) - 1;
+			for(std::size_t i = 0; i != Axis::num_dims; ++i){
+				if( axes[i] == next_ax){
+					seq.values[i] = 0;
+				}
+			}
+			//remove the nth axis
+			for(std::size_t i = N; i < Axis::num_dims - 1; ++i){
+				seq.values[i] = seq.values[i + 1];
+			}
+			//this will still give N elements, so after transform we have to cut off the last element
+			return seq;
+		}
+	};
+	typedef typename TagList::template transform_t<storage_tag_transform>::template front_t<Axis::num_dims - 1> proxy_tag_list;
+	typedef dense_tensor_adaptor<T, typename Axis::template slice_t<N>, proxy_tag_list, Device> type;
 	
 	static type create(
-		dense_tensor_adaptor<T, Axis, Tag, Device> const& E,
+		dense_tensor_adaptor<T, Axis, TagList, Device> const& E,
 		std::size_t index
 	){
 		//compute new shape by cutting out the selected Axis
@@ -245,12 +279,14 @@ struct slice_optimizer<dense_tensor_adaptor<T, axis<0>, Tag, Device>, N>{
 };
 
 ////////////////////////TENSOR AXIS SPLIT//////////////////////
-template<class T, class Axis, class Tag, class Device, std::size_t N>
-struct axis_split_optimizer<dense_tensor_adaptor<T, Axis, Tag, Device>, N>{
-	typedef dense_tensor_adaptor<T, typename Axis::template split_t<N>, Tag, Device> type;
+template<class T, class Axis, class TagList, class Device, std::size_t N>
+struct axis_split_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
+	//the newly created axis is always dense
+	typedef typename TagList::template insert_t<N, 1u > proxy_tag_list;
+	typedef dense_tensor_adaptor<T, typename Axis::template split_t<N>, proxy_tag_list, Device> type;
 	
 	static type create(
-		dense_tensor_adaptor<T, Axis, Tag, Device> const& E,
+		dense_tensor_adaptor<T, Axis, TagList, Device> const& E,
 		std::size_t size1, std::size_t size2
 	){
 		//compute new shape by cutting out the selected Axis
@@ -276,15 +312,16 @@ struct axis_split_optimizer<dense_tensor_adaptor<T, Axis, Tag, Device>, N>{
 };
 
 ////////////////////////TENSOR PERMUTE//////////////////////
-template<class T, class Axis, class Tag, class Device, unsigned... Permutation>
-struct axis_permute_optimizer<dense_tensor_adaptor<T,Axis, Tag, Device>, axis<Permutation...> >{
-	typedef dense_tensor_adaptor<T, typename Axis:: template permute_t<Permutation...>, Tag, Device> type;
+template<class T, class Axis, class TagList, class Device, unsigned... Permutation>
+struct axis_permute_optimizer<dense_tensor_adaptor<T,Axis, TagList, Device>, axis<Permutation...> >{
+	typedef typename TagList::template select_t<Permutation...> proxy_tag_list;
+	typedef dense_tensor_adaptor<T, typename Axis:: template permute_t<Permutation...>, proxy_tag_list, Device> type;
 	
-	static type create(dense_tensor_adaptor<T,Axis, Tag, Device> const& E){
+	static type create(dense_tensor_adaptor<T,Axis, TagList, Device> const& E){
 		auto storage = E.raw_storage();
-		storage.strides = axis<Permutation...>::to_axis(storage.strides);
+		auto permuted_strides = axis<Permutation...>::to_axis(storage.strides);
 		auto shape = axis<Permutation...>::to_axis(E.shape());
-		return type(storage, E.queue(), shape);
+		return type({storage.values, permuted_strides}, E.queue(), shape);
 	}
 };
 

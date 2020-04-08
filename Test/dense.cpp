@@ -24,7 +24,7 @@ struct ProxyFixture
 BOOST_FIXTURE_TEST_SUITE (Remora_Dense_Tensor_Test, ProxyFixture);
 
 BOOST_AUTO_TEST_CASE( Tensor_Adaptor_1D){
-	dense_tensor_adaptor<unsigned, axis<0>, dense_tag, cpu_tag> adaptor({values.data(), {1}},no_queue(), 3*20*7);
+	dense_tensor_adaptor<unsigned, axis<0>, integer_list<bool, 1>, cpu_tag> adaptor({values.data(), {1}},no_queue(), 3*20*7);
 	BOOST_CHECK_EQUAL(adaptor.shape().size(), 1);
 	BOOST_CHECK_EQUAL(adaptor.shape()[0], 3*20*7);
 	BOOST_CHECK_EQUAL(adaptor.raw_storage().values, values.data());
@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Tensor_Adaptor_3D, Axis, axis_types ){
 	shape = Axis::to_axis(shape);
 	
 	//check internal structure
-	dense_tensor_adaptor<unsigned, Axis, dense_tag, cpu_tag> adaptor({values.data(), strides},no_queue(), shape);
+	dense_tensor_adaptor<unsigned, Axis, integer_list<bool, 1, 1, 1>, cpu_tag> adaptor({values.data(), strides},no_queue(), shape);
 	BOOST_CHECK_EQUAL(adaptor.shape().size(), 3);
 	BOOST_CHECK_EQUAL(adaptor.raw_storage().strides.size(), 3);
 	BOOST_CHECK_EQUAL(adaptor.raw_storage().values, values.data());

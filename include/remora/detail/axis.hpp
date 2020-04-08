@@ -33,102 +33,23 @@
 #ifndef REMORA_DETAIL_AXIS_HPP
 #define REMORA_DETAIL_AXIS_HPP
 
+#include "integer_list.hpp"
 #include <utility> // index_sequence
-#include <array>
 namespace remora{
 
 
 template<unsigned... Seq>
-struct axis_set{
-private:
-	struct array_helper{unsigned values[sizeof...(Seq)];};
-	static constexpr unsigned Nth_integer_helper(unsigned N){
-		unsigned seq[] = {Seq...};
-		return seq[N];
-	}
-	static constexpr unsigned min_axis_helper(){
-		unsigned array[]={Seq...};
-		unsigned minv = array[0];
-		for(std::size_t i = 1; i != sizeof...(Seq); ++i){
-			minv = array[i] < minv? array[i]: minv;
-		}
-		return minv;
-	}
-	
-	static constexpr std::size_t index_of_helper(unsigned V, array_helper const& seq){
-		std::size_t j = 0;
-		for(std::size_t i = 0; i != sizeof...(Seq); ++i){
-			if (seq.values[i] == V)
-				j = i;
-		}
-		return j;
-	}
-	
-	template<std::size_t N>
-	struct remove_helper{
-		static constexpr array_helper apply(array_helper seq0){
-			array_helper seq={0};
-			for(std::size_t i = 0, j = 0; i != sizeof...(Seq); ++i){
-				if (i == N)
-					continue;
-				seq.values[j] = seq0.values[i];
-				++j;
-			}
-			return seq;
-		}
-	};
-	struct identity_helper{
-		static constexpr array_helper apply(array_helper seq){
-			return seq;
-		}
-	};
-	
-	//taking a constrexpr functor F with a static apply function, computes an axis transformation as array
-	//and converts the array to an axis<...> object.
-	template<class F, std::size_t... Inds>
-	static constexpr axis_set<F::apply({Seq...}).values[Inds]...> apply(std::index_sequence<Inds...>);
-public:
-	/// \brief number of dimensions
-	static constexpr std::size_t num_dims = sizeof...(Seq);
-	/// \brief Returns the nth element.
-	template<std::size_t Axis>
-	static constexpr unsigned element_v = Nth_integer_helper(Axis);
-	
-	/// \brief Returns the index of the element Value.
-	template<unsigned Value>
-	static constexpr std::size_t index_of_v = index_of_helper(Value, {Seq...});
-	
-	/// \brief Value of the minimum element
-	static constexpr unsigned min_element = min_axis_helper();
-	
-	/// \brief Remove the Axis of choice
-	/// This removes the Nth element. The result is an axis_set object. 
-	template<std::size_t Axis>
-	using remove_t = decltype(apply<remove_helper<Axis> >(std::make_index_sequence<num_dims-1>()));
+using axis_set = integer_list<unsigned, Seq...>;
 
-	/// \brief Selects some axis.
-	/// the outcome is the mapping Selection_i -> axis[Selection[i]]
-	/// e.g.: axis_set<1,3,0,2>::select_t<2,0,3,1> = axis_set<0,1,2,3>
-	template<std::size_t... Selection>
-	using select_t = axis_set<element_v<Selection>...>;
-	
-	/// \brief Selects the first N elements
-	/// the outcome is equivalent to select_t<0,1,2,...,N-1> 
-	/// e.g.: axis_set<1,3,0,2>::front_t<2> = axis_set<1,3>
-	template<std::size_t N >
-	using front_t = decltype(apply<identity_helper >(std::make_index_sequence<N>()));
-
-	
-};
 
 template<unsigned... Seq>
 struct axis: public axis_set<Seq...>{
+public: 
+	typedef typename axis_set<Seq...>::array_type array_type;
 private:
-	struct array_helper{unsigned values[sizeof...(Seq) + 1];};//+1 for split
-	
 	struct invert_helper{
-		static constexpr array_helper apply(array_helper seq0){
-			array_helper seq={0};
+		static constexpr array_type apply(array_type seq0){
+			array_type seq={0};
 			for(std::size_t i = 0; i != sizeof...(Seq); ++i)
 				seq.values[seq0.values[i]] = i;
 			return seq;
@@ -137,8 +58,8 @@ private:
 	
 	template<std::size_t Axis>
 	struct slice_helper{
-		static constexpr array_helper apply(array_helper seq0){
-			array_helper seq={0};
+		static constexpr array_type apply(array_type seq0){
+			array_type seq={0};
 			for(std::size_t i = 0, j = 0; i != sizeof...(Seq); ++i){
 				if (i == Axis)
 					continue;
@@ -151,8 +72,8 @@ private:
 	
 	template<std::size_t Axis>
 	struct split_helper{
-		static constexpr array_helper apply(array_helper seq0){
-			array_helper seq={0};
+		static constexpr array_type apply(array_type seq0){
+			array_type seq={0};
 			for(std::size_t i = 0, j = 0; i != sizeof...(Seq); ++i, ++j){
 				if (i == Axis){
 					//copy axis and insert new element after the position
@@ -231,17 +152,11 @@ public:
 		return elem;
 	}
 	
-	
-	static constexpr auto to_array(){
-		std::array<size_type, sizeof...(Seq)> map = {Seq...};
-		return map;
-	}
-	
 	template<class Array>
 	static Array to_axis(Array const& arr){
 		
 		Array result;
-		auto map = to_array();
+		auto map = axis::to_array();
 		for(std::size_t i = 0; i != sizeof...(Seq); ++i){
 			size_type axis = map[i];
 			result[i] = arr[axis];
@@ -267,7 +182,6 @@ template<unsigned N>
 using default_axis = decltype(detail::make_default_axis_helper(std::make_integer_sequence<unsigned, N>()));
 typedef default_axis<2> row_major;
 typedef axis<1,0> column_major;
-
 
 template<std::size_t NumDims>
 struct unknown_axis{

@@ -60,8 +60,8 @@ public:
 
 	typedef dense_tensor_adaptor<value_type const, Axis, Tag, cpu_tag> const_closure_type;
 	typedef dense_tensor_adaptor closure_type;
-	typedef dense_tensor_storage<num_dims, T, Tag> storage_type;
-	typedef dense_tensor_storage<num_dims, value_type const, Tag> const_storage_type;
+	typedef dense_tensor_storage<T, Tag> storage_type;
+	typedef dense_tensor_storage<value_type const, Tag> const_storage_type;
 	typedef elementwise<dense_tag> evaluation_category;
 	typedef Axis axis;
 
@@ -72,22 +72,20 @@ public:
 	// construction from tensor expressions
 	template<class Tensor>
 	dense_tensor_adaptor(tensor_expression<num_dims, Tensor, cpu_tag> const& expression)
-	: m_values(expression().raw_storage().values)
-	, m_shape(expression().shape())
-	, m_strides(expression().raw_storage().strides){
+	: m_storage(expression().raw_storage())
+	, m_shape(expression().shape()){
 		static_assert(std::is_same<axis, typename Tensor::axis>::value, "Can only create adaptors from Tensors with same axis");
 	}
 	
 	template<class Tensor>
 	dense_tensor_adaptor(tensor_expression<num_dims, Tensor, cpu_tag>& expression)
-	: m_values(expression().raw_storage().values)
-	, m_shape(expression().shape())
-	, m_strides(expression().raw_storage().strides){
+	: m_storage(expression().raw_storage())
+	, m_shape(expression().shape()){
 		static_assert(std::is_same<axis, typename Tensor::axis>::value, "Can only create adaptors from Tensors with same axis");
 	}
 
 	dense_tensor_adaptor(storage_type const& storage, no_queue, tensor_shape<num_dims> const& size):
-		m_values(storage.values),m_shape(size),m_strides(storage.strides){}	
+		m_storage(storage),m_shape(size){}	
 
 	dense_tensor_adaptor& operator = (dense_tensor_adaptor const& e){
 		REMORA_SIZE_CHECK(shape() == e().shape());
@@ -110,7 +108,7 @@ public:
 	
 	///\brief Returns the underlying storage structure for low level access
 	storage_type raw_storage() const{
-		return {m_values,m_strides};
+		return m_storage;
 	}
 	
 	no_queue queue() const{
@@ -139,8 +137,8 @@ public:
 	template<class... Indices, class = typename std::enable_if<sizeof...(Indices) == num_dims,void>::type>
 	reference operator()(Indices... idx) const {
 		static_assert(sizeof...(idx) == axis::num_dims, "Must pass same amount of parameters as dimensions in the tensor");
-		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{idx...}, m_strides);
-		return m_values[elem];
+		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{idx...}, m_storage.strides);
+		return m_storage.values[elem];
 	}
 	
 	/// \brief Return a reference to the element \f$i\f$
@@ -148,8 +146,8 @@ public:
 	template<class... Indices, class = typename std::enable_if<sizeof...(Indices) == num_dims,void>::type>
 	reference operator()(Indices... idx){
 		static_assert(sizeof...(idx) == axis::num_dims, "Must pass same amount of parameters as dimensions in the tensor");
-		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{idx...}, m_strides);
-		return m_values[elem];
+		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{idx...}, m_storage.strides);
+		return m_storage.values[elem];
 	}
 	
 	
@@ -159,9 +157,8 @@ public:
 	}
 	
 private:
-	T* m_values;
+	storage_type m_storage;
 	tensor_shape<num_dims> m_shape;
-	std::array<std::size_t, num_dims> m_strides;
 };
 
 
@@ -177,14 +174,16 @@ public:
 	typedef typename array_type::const_reference const_reference;
 	typedef typename array_type::reference reference;
 	typedef typename array_type::size_type size_type;
-
-	typedef dense_tensor_adaptor<T const, Axis, continuous_dense_tag, cpu_tag> const_closure_type;
-	typedef dense_tensor_adaptor<T, Axis, continuous_dense_tag, cpu_tag> closure_type;
-	typedef typename closure_type::storage_type storage_type;
-	typedef typename closure_type::const_storage_type const_storage_type;
+	
+	static constexpr std::size_t num_dims = Axis::num_dims;
+	typedef continuous_tensor_storage<num_dims, T> storage_type;
+	typedef continuous_tensor_storage<num_dims, T const> const_storage_type;
+	typedef dense_tensor_adaptor<T const, Axis, typename storage_type::dense_axis_tag, cpu_tag> const_closure_type;
+	typedef dense_tensor_adaptor<T, Axis, typename storage_type::dense_axis_tag, cpu_tag> closure_type;
+	
 	typedef elementwise<dense_tag> evaluation_category;
 	typedef Axis axis;
-	static constexpr std::size_t num_dims = Axis::num_dims;
+	
 
 	tensor() = default;
 	tensor(tensor&&) = default;

@@ -31,6 +31,7 @@ typedef boost::mpl::list<axis<0,1,2,3>, axis<0,3,2,1>, axis<1,3,2,0>, axis<3,2,1
 BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Dense_Apply, Axis, axis_types_3d ){
 	std::array<std::size_t, 3> strides = {160, 8, 1};
 	tensor_shape<3> shape = {2, 10, 4};
+	typedef integer_list<bool, 0,0,0> storage_tag;
 	strides = Axis::to_axis(strides);
 	shape = Axis::to_axis(shape);
 	
@@ -40,7 +41,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Dense_Apply, Axis, axis_types_3d ){
 			for(std::size_t k = 0; k != 4; ++k)
 				target_results[i*160+j*8+k] *= 3;
 	
-	dense_tensor_adaptor<unsigned, Axis, dense_tag, cpu_tag> adaptor({values.data(), strides},no_queue(), shape);
+	dense_tensor_adaptor<unsigned, Axis, storage_tag, cpu_tag> adaptor({values.data(), strides},no_queue(), shape);
 	device_traits<cpu_tag>::multiply_scalar<unsigned> f(3);
 	kernels::apply(adaptor, f);
 	
@@ -59,6 +60,7 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Functor_Assign_1D){
 	tensor_shape<1> shape = {5};
 	std::array<std::size_t, 1> strides_rhs = {20};
 	std::array<std::size_t, 1> strides_lhs =  {10};
+	typedef integer_list<bool, 0> storage_tag;
 	//compute ground truth
 	std::vector<unsigned> target_results(50, 0);
 	for(std::size_t i = 0; i != 5; ++i){
@@ -66,8 +68,8 @@ BOOST_AUTO_TEST_CASE( Remora_Dense_Functor_Assign_1D){
 	}
 	
 	std::vector<unsigned> results(target_results.size(), 0);
-	dense_tensor_adaptor<unsigned, axis<0>, dense_tag, cpu_tag> lhs({results.data(), strides_lhs},no_queue(), shape);
-	dense_tensor_adaptor<unsigned, axis<0>, dense_tag, cpu_tag> rhs({values.data(), strides_rhs},no_queue(), shape);
+	dense_tensor_adaptor<unsigned, axis<0>, storage_tag, cpu_tag> lhs({results.data(), strides_lhs},no_queue(), shape);
+	dense_tensor_adaptor<unsigned, axis<0>, storage_tag, cpu_tag> rhs({values.data(), strides_rhs},no_queue(), shape);
 	device_traits<cpu_tag>::multiply_assign<unsigned> f(3);
 	kernels::assign(lhs, rhs, f);
 	
@@ -80,6 +82,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Dense_Functor_Assign_2D, Axis, axis_types_
 	// typedef axis<0,1,2,3> axis_permute;
 	tensor_shape<2> shape = {5, 3};
 	std::array<std::size_t, 2> strides_rhs = {20, 5};
+	typedef integer_list<bool, 0, 0> storage_tag;
 	auto strides_lhs = Axis::compute_dense_strides(shape).shape_array;
 	//compute ground truth
 	std::vector<unsigned> target_results(30, 0);
@@ -101,8 +104,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Dense_Functor_Assign_2D, Axis, axis_types_
 	shape = axis_permute::to_axis(shape);
 	
 	std::vector<unsigned> results(target_results.size(), 0);
-	dense_tensor_adaptor<unsigned, axis_lhs, dense_tag, cpu_tag> lhs({results.data(), strides_lhs},no_queue(), shape);
-	dense_tensor_adaptor<unsigned, axis_permute, dense_tag, cpu_tag> rhs({values.data(), strides_rhs},no_queue(), shape);
+	dense_tensor_adaptor<unsigned, axis_lhs, storage_tag, cpu_tag> lhs({results.data(), strides_lhs},no_queue(), shape);
+	dense_tensor_adaptor<unsigned, axis_permute, storage_tag, cpu_tag> rhs({values.data(), strides_rhs},no_queue(), shape);
 	device_traits<cpu_tag>::multiply_assign<unsigned> f(3);
 	kernels::assign(lhs, rhs, f);
 	
@@ -114,9 +117,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Dense_Functor_Assign_4D, Axis, axis_types_
 	typedef axis<3,1,2,0> axis_permute;
 	// typedef axis<0,1,2,3> axis_permute;
 	tensor_shape<4> shape = {5, 3, 2, 4};
-	std::array<std::size_t, 4> strides_rhs = {75, 16, 4, 1};
-	// std::array<std::size_t, 4> strides_rhs = {24, 8, 4, 1};
-	// std::array<std::size_t, 4> strides_lhs = {48, 16, 8, 2};
+	std::array<std::size_t, 4> strides_rhs = {75, 16, 5, 1};
+	typedef integer_list<bool, 0, 0, 0, 0> storage_tag;
 	auto strides_lhs = Axis::compute_dense_strides(shape).shape_array;
 	//compute ground truth
 	std::vector<unsigned> target_results(300, 0);
@@ -144,8 +146,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Dense_Functor_Assign_4D, Axis, axis_types_
 	shape = axis_permute::to_axis(shape);
 	
 	std::vector<unsigned> results(target_results.size(), 0);
-	dense_tensor_adaptor<unsigned, axis_lhs, dense_tag, cpu_tag> lhs({results.data(), strides_lhs},no_queue(), shape);
-	dense_tensor_adaptor<unsigned, axis_permute, dense_tag, cpu_tag> rhs({values.data(), strides_rhs},no_queue(), shape);
+	dense_tensor_adaptor<unsigned, axis_lhs, storage_tag, cpu_tag> lhs({results.data(), strides_lhs},no_queue(), shape);
+	dense_tensor_adaptor<unsigned, axis_permute, storage_tag, cpu_tag> rhs({values.data(), strides_rhs},no_queue(), shape);
 	device_traits<cpu_tag>::multiply_assign<unsigned> f(3);
 	kernels::assign(lhs, rhs, f);
 	
@@ -164,6 +166,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Dense_Assign_4D, Axis, axis_types_4d ){
 	// typedef axis<0,1,2,3> axis_permute;
 	tensor_shape<4> shape = {5, 3, 2, 4};
 	std::array<std::size_t, 4> strides_rhs = {75, 16, 4, 1};
+	typedef integer_list<bool, 0, 0, 0, 0> storage_tag;
 	auto strides_lhs = Axis::compute_dense_strides(shape).shape_array;
 	//compute ground truth
 	std::vector<unsigned> target_results(300, 0);
@@ -191,8 +194,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Dense_Assign_4D, Axis, axis_types_4d ){
 	shape = axis_permute::to_axis(shape);
 	
 	std::vector<unsigned> results(target_results.size(), 0);
-	dense_tensor_adaptor<unsigned, axis_lhs, dense_tag, cpu_tag> lhs({results.data(), strides_lhs},no_queue(), shape);
-	dense_tensor_adaptor<unsigned, axis_permute, dense_tag, cpu_tag> rhs({values.data(), strides_rhs},no_queue(), shape);
+	dense_tensor_adaptor<unsigned, axis_lhs, storage_tag, cpu_tag> lhs({results.data(), strides_lhs},no_queue(), shape);
+	dense_tensor_adaptor<unsigned, axis_permute, storage_tag, cpu_tag> rhs({values.data(), strides_rhs},no_queue(), shape);
 	kernels::assign(lhs, rhs);
 	
 	for(std::size_t i = 0; i != target_results.size(); ++i){
