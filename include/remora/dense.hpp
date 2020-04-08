@@ -202,6 +202,8 @@ struct subrange_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N >{
 		dense_tensor_adaptor<T, Axis, TagList, Device> const& E,
 		std::size_t start, std::size_t end
 	){
+		REMORA_SIZE_CHECK(start < E.shape()[N]);
+		REMORA_SIZE_CHECK(end < E.shape()[N]);
 		//compute new shape
 		auto new_shape = E.shape();
 		new_shape[N] = end - start;
@@ -245,6 +247,7 @@ struct slice_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
 		dense_tensor_adaptor<T, Axis, TagList, Device> const& E,
 		std::size_t index
 	){
+		REMORA_SIZE_CHECK(index < E.shape()[N]);
 		//compute new shape by cutting out the selected Axis
 		auto strides = E.raw_storage().strides;
 		auto shape = E.shape();
@@ -289,6 +292,7 @@ struct axis_split_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
 		dense_tensor_adaptor<T, Axis, TagList, Device> const& E,
 		std::size_t size1, std::size_t size2
 	){
+		REMORA_SIZE_CHECK(E.shape()[N] == size1 * size2);
 		//compute new shape by cutting out the selected Axis
 		auto strides = E.raw_storage().strides;
 		auto shape = E.shape();
@@ -305,6 +309,43 @@ struct axis_split_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
 		for(unsigned i = N + 1; i != Axis::num_dims; ++i){
 			new_shape[i + 1] = shape[i];
 			new_strides[i + 1] = strides[i];
+		}
+		//return the proxy
+		return type({E.raw_storage().values, new_strides}, E.queue(), new_shape);
+	}
+};
+
+////////////////////////TENSOR AXIS MERGE//////////////////////
+template<class T, class Axis, class TagList, class Device, std::size_t N>
+struct axis_merge_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
+	static_assert(N < Axis::num_dims - 1);
+	static_assert(Axis::template element_v<N> + 1 == Axis::template element_v<N + 1>, "Not implemented error: Can only merge consecutive axes.");
+	static_assert(TagList::template element_v<N>, "Not implemented error: The first axis merged must be dense");
+	
+	//the new axis has the same tag as the second of the two merged axis. 
+	//so we only have to remove the Nth tag
+	typedef typename TagList::template remove_t<N> proxy_tag_list;
+	typedef dense_tensor_adaptor<T, typename Axis::template slice_t<N>, proxy_tag_list, Device> type;
+	
+	static type create(
+		dense_tensor_adaptor<T, Axis, TagList, Device> const& E
+	){
+		//compute new shape by cutting out the selected Axis
+		auto strides = E.raw_storage().strides;
+		auto shape = E.shape();
+		REMORA_SIZE_CHECK(strides[N] == strides[N + 1] * shape[N+1]);
+		
+		tensor_shape<Axis::num_dims-1> new_shape;
+		std::array<std::size_t, Axis::num_dims-1> new_strides;
+		for(unsigned i = 0; i != N; ++i){
+			new_shape[i] = shape[i];
+			new_strides[i] = strides[i];
+		}
+		new_shape[N] = shape[N] * shape[N+1];
+		new_strides[N] = strides[N + 1];
+		for(unsigned i = N + 2; i != Axis::num_dims; ++i){
+			new_shape[i - 1] = shape[i];
+			new_strides[i - 1] = strides[i];
 		}
 		//return the proxy
 		return type({E.raw_storage().values, new_strides}, E.queue(), new_shape);

@@ -422,4 +422,56 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Dense_Split_3D, Axis, axis_types){
 		BOOST_CHECK_EQUAL(result.shape()[4], 3);
 	}
 }
+
+
+////////////////////////////////////////////////////
+//// MERGE
+////////////////////////////////////////////////////
+
+BOOST_AUTO_TEST_CASE( Dense_Merge_2){
+	{
+		typedef integer_list<bool, 0, 1, 0, 1> storage_tag;
+		dense_tensor_adaptor<unsigned, axis<3, 1, 2, 0>, storage_tag, cpu_tag> adaptor({values.data(), {4, 27,9,108}},no_queue(),  {2, 4,3,3});
+		typedef integer_list<bool, 0,0, 1> target_storage_tag;
+		dense_tensor_adaptor<unsigned, axis<2,1,0>, target_storage_tag, cpu_tag> result = reshape(adaptor, all, merge<2>(), all);
+		
+		BOOST_CHECK_EQUAL(result.raw_storage().values, values.data());
+		BOOST_CHECK_EQUAL(result.raw_storage().strides[0], 4);
+		BOOST_CHECK_EQUAL(result.raw_storage().strides[1], 9);
+		BOOST_CHECK_EQUAL(result.raw_storage().strides[2], 108);
+		BOOST_CHECK_EQUAL(result.shape()[0], 2);
+		BOOST_CHECK_EQUAL(result.shape()[1], 12);
+		BOOST_CHECK_EQUAL(result.shape()[2], 3);
+	}
+	{
+		typedef integer_list<bool, 0, 1, 1, 1> storage_tag;
+		dense_tensor_adaptor<unsigned, axis<3, 1,2, 0>, storage_tag, cpu_tag> adaptor({values.data(), {4, 24,8,96}},no_queue(),  {2, 4,3,3});
+		typedef integer_list<bool, 0,1, 1> target_storage_tag;
+		dense_tensor_adaptor<unsigned, axis<2,1,0>, target_storage_tag, cpu_tag> result = reshape(adaptor, all, merge<2>(), all);
+		
+		
+		BOOST_CHECK_EQUAL(result.raw_storage().values, values.data());
+		BOOST_CHECK_EQUAL(result.raw_storage().strides[0], 4);
+		BOOST_CHECK_EQUAL(result.raw_storage().strides[1], 8);
+		BOOST_CHECK_EQUAL(result.raw_storage().strides[2], 96);
+		BOOST_CHECK_EQUAL(result.shape()[0], 2);
+		BOOST_CHECK_EQUAL(result.shape()[1], 12);
+		BOOST_CHECK_EQUAL(result.shape()[2], 3);
+	}
+}
+
+BOOST_AUTO_TEST_CASE( Dense_Merge_3){
+	typedef integer_list<bool, 0, 1, 1, 0> storage_tag;
+	dense_tensor_adaptor<unsigned, axis<3, 0, 1, 2>, storage_tag, cpu_tag> adaptor({values.data(), {4, 108, 27,9}},no_queue(),  {2, 3, 4,3});
+	typedef integer_list<bool, 0,0> target_storage_tag;
+	dense_tensor_adaptor<unsigned, axis<1,0>, target_storage_tag, cpu_tag> result = reshape(adaptor, all, merge<3>());
+	
+	
+	BOOST_CHECK_EQUAL(result.raw_storage().values, values.data());
+	BOOST_CHECK_EQUAL(result.raw_storage().strides[0], 4);
+	BOOST_CHECK_EQUAL(result.raw_storage().strides[1], 9);
+	BOOST_CHECK_EQUAL(result.shape()[0], 2);
+	BOOST_CHECK_EQUAL(result.shape()[1], 36);
+}
+
 BOOST_AUTO_TEST_SUITE_END();

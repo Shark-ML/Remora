@@ -119,7 +119,7 @@ namespace detail{
 		static auto create(TensorA const& A){
 			static_assert(CurDim == TensorA::axis::num_dims, "reshape implementation Error!");
 			return A;
-		};
+		}
 	};
 	//implementation of all (Identity)
 	template<std::size_t CurDim, class... Args>
@@ -127,7 +127,7 @@ namespace detail{
 		template<class TensorA>
 		static auto create(TensorA const& A, merge<1>, Args... args){
 			return reshape_dispatcher<CurDim + 1, Args...>::create(A, args...);
-		};
+		}
 	};
 	
 	//implementation of split with two axes
@@ -140,7 +140,7 @@ namespace detail{
 			//split and recurse
 			auto Asplit = axis_split_optimizer<TensorA, CurDim>::create(A, arg.shape[0], arg.shape[1]);
 			return reshape_dispatcher<CurDim + 2, Args...>::create(Asplit, args...);
-		};
+		}
 	};
 	
 	//implementation of split with more than two axes
@@ -159,33 +159,34 @@ namespace detail{
 				tail_shape[i] = arg.shape[i+1];
 			}
 			return reshape_dispatcher<CurDim + 1, split<K-1>, Args...>::create(Asplit,split<K-1>{tail_shape}, args...);
-		};
+		}
 	};
-	/*
+
 	//implementation of merge with two axes
 	template<std::size_t CurDim, class... Args>
 	struct reshape_dispatcher<CurDim, merge<2>, Args... >{
 		template<class TensorA>
 		static auto create(TensorA const& A, merge<2> arg, Args... args){
-			constexpr unsigned ax0 = TensorA::axis::element_v<CurDim>;
-			constexpr unsigned ax1 = TensorA::axis::element_v<CurDim + 1>;
+			constexpr unsigned ax0 = TensorA::axis::template element_v<CurDim>;
+			constexpr unsigned ax1 = TensorA::axis::template element_v<CurDim + 1>;
 			static_assert (ax0 + 1 == ax1, "Not Implemented: merge with non-consecutive underlying axes.");
-			auto Amerged = axis_merge_optimizer<TensorA, ax0>::create(A);
+			auto Amerged = axis_merge_optimizer<TensorA, CurDim>::create(A);
 			return reshape_dispatcher<CurDim + 1, Args...>::create(Amerged, args...);
-		};
+		}
 	};
+
 	//implementation of merge with more than two axes (use that a merge of N axis can be written as N-1 merges of 2 axes)
-	template<std::size_t CurDim, std::size_t K, class... Args>
+	template<std::size_t CurDim, int K, class... Args>
 	struct reshape_dispatcher<CurDim, merge<K>, Args... >{
 		template<class TensorA>
 		static auto create(TensorA const& A, merge<K> arg, Args... args){
-			constexpr unsigned ax0 = TensorA::axis::element_v<CurDim>;
-			constexpr unsigned ax1 = TensorA::axis::element_v<CurDim + 1>;
+			constexpr unsigned ax0 = TensorA::axis::template element_v<CurDim>;
+			constexpr unsigned ax1 = TensorA::axis::template element_v<CurDim + 1>;
 			static_assert (ax0 + 1 == ax1, "Not Implemented: merge with non-consecutive underlying axes.");
-			auto Amerged = axis_merge_optimizer<TensorA, ax0>::create(A);
-			return reshape_dispatcher<CurDim>(Amerged, merge<N-1>(), args...);
-		};
-	};*/
+			auto Amerged = axis_merge_optimizer<TensorA, CurDim>::create(A);
+			return reshape_dispatcher<CurDim, merge<K-1> , Args...>::create(Amerged, merge<K-1>(), args...);
+		}
+	};
 	
 }
 

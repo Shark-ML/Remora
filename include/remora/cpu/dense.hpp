@@ -29,6 +29,7 @@
 #define REMORA_CPU_DENSE_HPP
 
 #include "../kernels/device_traits.hpp"
+#include "../detail/check.hpp"
 
 #include <boost/serialization/collection_size_type.hpp>
 #include <boost/serialization/array.hpp>
@@ -49,9 +50,10 @@ namespace kernels{
 
 
 	
-template<class T, class Tag, class Axis>
+template<class T, class Axis, class Tag>
 class dense_tensor_adaptor<T, Axis, Tag, cpu_tag>: public tensor_expression<Axis::num_dims, dense_tensor_adaptor<T, Axis, Tag, cpu_tag>, cpu_tag > {
 public:
+	static_assert(Tag::num_dims == Axis::num_dims);
 	static constexpr std::size_t num_dims = Axis::num_dims;
 	typedef std::size_t size_type;
 	typedef typename std::remove_const<T>::type value_type;
@@ -64,6 +66,31 @@ public:
 	typedef dense_tensor_storage<value_type const, Tag> const_storage_type;
 	typedef elementwise<dense_tag> evaluation_category;
 	typedef Axis axis;
+	
+	bool check_storage_invariants()const{
+		auto dense_tags = Tag::to_array();
+		auto axis_id = axis::to_array();
+		auto axis_id_pos = axis::inverse_t::to_array();
+		
+		for(std::size_t i = 0; i != axis::num_dims; ++i){
+			//nothing to do if axis is not dense
+			if(dense_tags[i] == 0)
+				continue;
+			//check if we are at the minor axis
+			unsigned next_id = axis_id[i] + 1;
+			if(next_id == axis::num_dims){
+				//dense minor axis must have stride 1
+				if (m_storage.strides[i] != 1)
+					return false;
+				continue;
+			}
+			
+			std::size_t pos = axis_id_pos[next_id];
+			if(m_storage.strides[i] != m_shape[pos] * m_storage.strides[pos])
+				return false;
+		}
+		return true;
+	}
 
 	// Construction and destruction
 	dense_tensor_adaptor(dense_tensor_adaptor const&) = default;
@@ -75,6 +102,7 @@ public:
 	: m_storage(expression().raw_storage())
 	, m_shape(expression().shape()){
 		static_assert(std::is_same<axis, typename Tensor::axis>::value, "Can only create adaptors from Tensors with same axis");
+		REMORA_SIZE_CHECK(check_storage_invariants());
 	}
 	
 	template<class Tensor>
@@ -82,10 +110,13 @@ public:
 	: m_storage(expression().raw_storage())
 	, m_shape(expression().shape()){
 		static_assert(std::is_same<axis, typename Tensor::axis>::value, "Can only create adaptors from Tensors with same axis");
+		REMORA_SIZE_CHECK(check_storage_invariants());
 	}
 
-	dense_tensor_adaptor(storage_type const& storage, no_queue, tensor_shape<num_dims> const& size):
-		m_storage(storage),m_shape(size){}	
+	dense_tensor_adaptor(storage_type const& storage, no_queue, tensor_shape<num_dims> const& size)
+	:m_storage(storage),m_shape(size){
+		REMORA_SIZE_CHECK(check_storage_invariants());
+	}	
 
 	dense_tensor_adaptor& operator = (dense_tensor_adaptor const& e){
 		REMORA_SIZE_CHECK(shape() == e().shape());
