@@ -176,6 +176,17 @@ public:
 namespace detail{
 	template<unsigned... Ns>
 	axis<Ns...> make_default_axis_helper(std::integer_sequence<unsigned, Ns...>);
+	
+	
+	template<class Axis, std::size_t Slice, std::size_t... Slices>
+	struct slice_multiple_axis{
+		typedef typename Axis::template slice_t<Slice> sliced_axis;
+		typedef typename slice_multiple_axis<sliced_axis, (Slices> Slice? Slices - 1: Slices)...>::type type;
+	};
+	template<class Axis, std::size_t Slice>
+	struct slice_multiple_axis<Axis, Slice>{
+		typedef typename Axis::template slice_t<Slice> type;
+	};
 }
 
 template<unsigned N>

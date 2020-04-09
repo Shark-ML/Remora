@@ -2,7 +2,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-
+#include <iostream> 
 #include <remora/expressions.hpp>
 #include <remora/dense.hpp>
 #include <boost/mpl/list.hpp>
@@ -179,9 +179,59 @@ BOOST_AUTO_TEST_CASE( Remora_Identity_Matrix ){
 //////UNARY TRANSFORMATIONS///////
 ////////////////////////////////////////////////////////////
 typedef boost::mpl::list<row_major,column_major> result_orientations;
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Unary_Minus, Orientation, result_orientations )
+
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_1, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<int, Axis> x({Dimension1, Dimension2}); 
+	tensorN<int, 4> result({Dimension1, 10,  Dimension2, 3});
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < 10; j++){
+			for(std::size_t k = 0; k != Dimension2; ++k){
+				x(i,k) = i-3+k;
+				for(std::size_t l = 0; l != 3; ++l){
+					result(i, j, k, l)= x(i,k);
+				}
+			}
+		}
+	}
+	
+	auto op =  broadcast(x, ax::same, 10, ax::same, 3);
+	BOOST_REQUIRE_EQUAL(op.shape().size(), 4);
+	BOOST_REQUIRE_EQUAL(op.shape()[0], Dimension1);
+	BOOST_REQUIRE_EQUAL(op.shape()[1], 10);
+	BOOST_REQUIRE_EQUAL(op.shape()[2], Dimension2);
+	BOOST_REQUIRE_EQUAL(op.shape()[3], 3);
+	auto elements = op.elements();
+	tensorN<int, 4> op_elem_assign = op; //difference to above: tests assignment using identity permute and slice
+	tensor<int,axis<2,0,1, 3>, cpu_tag > op_perm_elem_assignf = op; //permute moves broadcasted dimension to the front
+	tensor<int,axis<0,2,1, 3>, cpu_tag > op_perm_elem_assignb = op; //permute moves broadcasted dimension to the back
+	tensor<int,axis<3,1,2, 0>, cpu_tag > op_perm_elem_assignd = op; //permute moves both bc-dims to the front, slice will remove them.
+	tensorN<int,4> op_block_assign(op.shape(), 0);
+	tensorN<int,4> op_block_plus_assign(op.shape(), 1);
+	op.assign_to(op_block_assign);
+	op.plus_assign_to(op_block_plus_assign);
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < 10; j++){
+			for(std::size_t k = 0; k != Dimension2; ++k){
+				for(std::size_t l = 0; l != 3; ++l){
+					BOOST_CHECK_EQUAL(result(i, j, k, l), elements(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), op_elem_assign(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), op_perm_elem_assignf(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), op_perm_elem_assignb(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), op_perm_elem_assignd(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), op_block_assign(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l) + 1, op_block_plus_assign(i, j, k, l));
+				}
+			}
+		}
+	}
+}
+
+
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Unary_Minus, Axis, result_orientations )
+{
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -192,9 +242,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Unary_Minus, Orientation, res
 	}
 	checkDenseExpressionEquality(-x,result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Multiply, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Multiply, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -206,9 +256,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Multiply, Orientation,
 	checkDenseExpressionEquality(5.0*x,result);
 	checkDenseExpressionEquality(x*5.0,result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Add, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Add, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -220,9 +270,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Add, Orientation, resu
 	checkDenseExpressionEquality(5.0+x,result);
 	checkDenseExpressionEquality(x+5.0,result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Subtract, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Subtract, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result1({Dimension1, Dimension2});
 	matrix<double> result2({Dimension1, Dimension2});
 	
@@ -236,9 +286,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Subtract, Orientation,
 	checkDenseExpressionEquality(5.0- x,result1);
 	checkDenseExpressionEquality(x - 5.0,result2);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Div, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Div, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -249,9 +299,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_Div, Orientation, resu
 	}
 	checkDenseExpressionEquality(x/5.0f,result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_elem_inv, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_elem_inv, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -262,9 +312,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Scalar_elem_inv, Orientation,
 	}
 	checkDenseExpressionEquality(elem_inv(x),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Abs, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Abs, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -275,9 +325,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Abs, Orientation, result_orie
 	}
 	checkDenseExpressionEquality(abs(x),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Sqr, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Sqr, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
@@ -287,9 +337,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Sqr, Orientation, result_orie
 	}
 	checkDenseExpressionEquality(sqr(x),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Sqrt, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Sqrt, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -300,9 +350,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Sqrt, Orientation, result_ori
 	}
 	checkDenseExpressionEquality(sqrt(x),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Cbrt, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Cbrt, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -313,9 +363,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Cbrt, Orientation, result_ori
 	}
 	checkDenseExpressionEquality(cbrt(x),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Exp, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Exp, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -326,9 +376,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Exp, Orientation, result_orie
 	}
 	checkDenseExpressionEquality(exp(x),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Log, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Log, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -339,9 +389,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Log, Orientation, result_orie
 	}
 	checkDenseExpressionEquality(log(x),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_sin, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_sin, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -353,9 +403,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_sin, Orientation, result_orie
 	checkDenseExpressionEquality(sin(x),result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_cos, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_cos, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -367,9 +417,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_cos, Orientation, result_orie
 	checkDenseExpressionEquality(cos(x),result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_tan, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_tan, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -381,9 +431,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_tan, Orientation, result_orie
 	checkDenseExpressionEquality(tan(x),result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_asin, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_asin, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -395,9 +445,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_asin, Orientation, result_ori
 	checkDenseExpressionEquality(asin(x),result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_acos, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_acos, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -409,9 +459,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_acos, Orientation, result_ori
 	checkDenseExpressionEquality(acos(x),result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_atan, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_atan, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -423,9 +473,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_atan, Orientation, result_ori
 	checkDenseExpressionEquality(atan(x),result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_erf, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_erf, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -437,9 +487,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_erf, Orientation, result_orie
 	checkDenseExpressionEquality(erf(x),result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_erfc, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_erfc, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -451,9 +501,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_erfc, Orientation, result_ori
 	checkDenseExpressionEquality(erfc(x),result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Tanh, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Tanh, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -464,9 +514,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Tanh, Orientation, result_ori
 	}
 	checkDenseExpressionEquality(tanh(x),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Sigmoid, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Sigmoid, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -477,9 +527,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Sigmoid, Orientation, result_
 	}
 	checkDenseExpressionEquality(sigmoid(x),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_SoftPlus, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_SoftPlus, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -490,9 +540,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_SoftPlus, Orientation, result
 	}
 	checkDenseExpressionEquality(softPlus(x),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Pow, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Pow, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -504,9 +554,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Pow, Orientation, result_orie
 	checkDenseExpressionEquality(pow(x,3.2),result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Unary_Min, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Unary_Min, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -518,9 +568,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Unary_Min, Orientation, resul
 	checkDenseExpressionEquality(min(x,5.0),result);
 	checkDenseExpressionEquality(min(5.0,x),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Unary_Max, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Unary_Max, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -537,10 +587,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Unary_Max, Orientation, resul
 ///////BINARY OPERATIONS//////////
 /////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Plus, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Plus, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
-	matrix<double, Orientation> y({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> y({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -552,10 +602,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Plus, Orientation, res
 	}
 	checkDenseExpressionEquality(x+y,result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Minus, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Minus, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
-	matrix<double, Orientation> y({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> y({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -568,10 +618,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Minus, Orientation, re
 	checkDenseExpressionEquality(x-y,result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Multiply, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Multiply, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
-	matrix<double, Orientation> y({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> y({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -584,10 +634,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Multiply, Orientation,
 	checkDenseExpressionEquality(x*y,result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Div, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Div, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
-	matrix<double, Orientation> y({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> y({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -600,10 +650,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Div, Orientation, resu
 	checkDenseExpressionEquality(x/y,result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Safe_Div, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Safe_Div, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
-	matrix<double, Orientation> y({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> y({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension2; j++){
@@ -615,10 +665,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Safe_Div, Orientation, result
 	checkDenseExpressionEquality(safe_div(x,y,2.0),result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Pow, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Pow, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
-	matrix<double, Orientation> y({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> y({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -631,10 +681,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Pow, Orientation, resu
 	checkDenseExpressionEquality(pow(x,y),result);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Max, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Max, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
-	matrix<double, Orientation> y({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> y({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -646,10 +696,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Max, Orientation, resu
 	}
 	checkDenseExpressionEquality(max(x,y),result);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Min, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Min, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
-	matrix<double, Orientation> y({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> y({Dimension1, Dimension2}); 
 	matrix<double> result({Dimension1, Dimension2});
 	
 	for (size_t i = 0; i < Dimension1; i++){
@@ -667,10 +717,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Binary_Min, Orientation, resu
 //////MATRIX CONCATENATION
 /////////////////////////////////////////////////////////////
 /*
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Matrix_Right, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Matrix_Right, Axis, result_orientations )
 {
 	matrix<double> x({Dimension1, Dimension2}); 
-	matrix<double, Orientation> y(Dimension1,2 * Dimension2); 
+	matrix<double, Axis> y(Dimension1,2 * Dimension2); 
 	matrix<double> result(Dimension1, 3 * Dimension2);
 	matrix<double> result2(Dimension1, 3 * Dimension2);
 	
@@ -692,9 +742,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Matrix_Right, Orientation, r
 	checkDenseBlockAssign(y|x,result2);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Matrix_Bottom, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Matrix_Bottom, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> y(2 * Dimension1,Dimension2); 
 	matrix<double> result(3 *Dimension1, Dimension2);
 	matrix<double> result2(3 *Dimension1, Dimension2);
@@ -716,9 +766,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Matrix_Bottom, Orientation, 
 	checkDenseBlockAssign(y & x,result2);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Vector_Right, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Vector_Right, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	vector<double> y(Dimension1); 
 	matrix<double> result(Dimension1, Dimension2+1);
 	matrix<double> result2(Dimension1, Dimension2+1);
@@ -737,9 +787,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Vector_Right, Orientation, r
 	checkDenseBlockAssign(y | x,result2);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Vector_Bottom, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Vector_Bottom, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	vector<double> y(Dimension2); 
 	matrix<double> result(Dimension1 + 1, Dimension2);
 	matrix<double> result2(Dimension1 + 1, Dimension2);
@@ -760,9 +810,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Vector_Bottom, Orientation, 
 	checkDenseBlockAssign(y & x,result2);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Scalar_Left, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Scalar_Left, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	double t = 2.0;
 	matrix<double> result(Dimension1, Dimension2 + 1);
 	matrix<double> result2(Dimension1, Dimension2 + 1);
@@ -780,9 +830,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Scalar_Left, Orientation, re
 	checkDenseBlockAssign(x | t,result2);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Scalar_Top, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Scalar_Top, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	double t = 2.0;
 	matrix<double> result(Dimension1 + 1, Dimension2);
 	matrix<double> result2(Dimension1 + 1, Dimension2);
@@ -806,9 +856,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_Concat_Matrix_Scalar_Top, Orientation, res
 ////////////REDUCTIONS
 ////////////////////////////////////////////////////////////////////////
 /*
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_trace, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_trace, Axis, result_orientations )
 {
-	matrix<double, Orientation> x(Dimension1, Dimension1); 
+	matrix<double, Axis> x(Dimension1, Dimension1); 
 	double result = 0.0f;
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
@@ -819,9 +869,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_trace, Orientation, result_orientations )
 	BOOST_CHECK_CLOSE(trace(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_1, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_1, Axis, result_orientations )
 {
-	matrix<double, Orientation> x(Dimension1, Dimension1); 
+	matrix<double, Axis> x(Dimension1, Dimension1); 
 	vector<double> col_sum(Dimension2);
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
@@ -832,9 +882,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_1, Orientation, result_orientations )
 	double result = max(col_sum);
 	BOOST_CHECK_CLOSE(norm_1(x),result, 1.e-6);
 }
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_inf, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_inf, Axis, result_orientations )
 {
-	matrix<double, Orientation> x(Dimension1, Dimension1); 
+	matrix<double, Axis> x(Dimension1, Dimension1); 
 	vector<double> row_sum(Dimension2);
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
@@ -846,9 +896,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_inf, Orientation, result_orientations
 	BOOST_CHECK_CLOSE(norm_inf(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_Frobenius, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_Frobenius, Axis, result_orientations )
 {
-	matrix<double, Orientation> x(Dimension1, Dimension1); 
+	matrix<double, Axis> x(Dimension1, Dimension1); 
 	double result = 0;
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
@@ -860,9 +910,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_Frobenius, Orientation, result_orient
 	BOOST_CHECK_CLOSE(norm_frobenius(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_sum, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_sum, Axis, result_orientations )
 {
-	matrix<double, Orientation> x(Dimension1, Dimension1); 
+	matrix<double, Axis> x(Dimension1, Dimension1); 
 	double result = 0;
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
@@ -873,9 +923,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_sum, Orientation, result_orientations )
 	BOOST_CHECK_CLOSE(sum(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_max, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_max, Axis, result_orientations )
 {
-	matrix<double, Orientation> x(Dimension1, Dimension1); 
+	matrix<double, Axis> x(Dimension1, Dimension1); 
 	double result = std::numeric_limits<double>::min();
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
@@ -886,9 +936,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_max, Orientation, result_orientations )
 	BOOST_CHECK_CLOSE(max(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_min, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_min, Axis, result_orientations )
 {
-	matrix<double, Orientation> x(Dimension1, Dimension1); 
+	matrix<double, Axis> x(Dimension1, Dimension1); 
 	double result = std::numeric_limits<double>::max();
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < Dimension1; j++){
@@ -899,9 +949,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_min, Orientation, result_orientations )
 	BOOST_CHECK_CLOSE(min(x),result, 1.e-6);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_frobenius_prod, Orientation, result_orientations )
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_frobenius_prod, Axis, result_orientations )
 {
-	matrix<double, Orientation> x({Dimension1, Dimension2}); 
+	matrix<double, Axis> x({Dimension1, Dimension2}); 
 	matrix<double> y({Dimension1, Dimension2}); 
 	double result = 0;
 	for (size_t i = 0; i < Dimension1; i++){

@@ -62,7 +62,7 @@ struct axis_permute_optimizer<scalar_multiply<Tensor>, Axis >{
 	typedef scalar_multiply<typename opt::type> type;
 	
 	static type create(scalar_multiply<Tensor> const& E){
-		return type(opt::create(E.expression()), E.scalar());
+		return {opt::create(E.expression()), E.scalar()};
 	}
 };
 
@@ -74,7 +74,7 @@ struct axis_permute_optimizer<tensor_addition<TensorA,TensorB>, Axis >{
 	typedef tensor_addition<typename left_opt::type,typename right_opt::type > type;
 	
 	static type create(tensor_addition<TensorA,TensorB> const& E){
-		return type(left_opt::create(E.lhs()),right_opt::create(E.rhs()));
+		return {left_opt::create(E.lhs()),right_opt::create(E.rhs())};
 	}
 };
 
@@ -83,7 +83,7 @@ template<class T, class Device, class OAxis, unsigned... Ns>
 struct axis_permute_optimizer<scalar_tensor<T, OAxis, Device>, axis<Ns...> >{
 	typedef scalar_tensor<T, typename OAxis::template permute_t<Ns...>, Device > type;
 	static type create(scalar_tensor<T, OAxis, Device> const& E){
-		return type(axis<Ns...>::to_axis(E.shape()), E.scalar());
+		return {axis<Ns...>::to_axis(E.shape()), E.scalar()};
 	}
 };
 
@@ -94,7 +94,7 @@ struct axis_permute_optimizer<tensor_unary<Tensor,F>, Axis >{
 	typedef tensor_unary<typename opt::type, F> type;
 	
 	static type create(tensor_unary<Tensor,F> const& E){
-		return type(opt::create(E.expression()),E.functor());
+		return {opt::create(E.expression()),E.functor()};
 	}
 };
 
@@ -106,7 +106,24 @@ struct axis_permute_optimizer<tensor_binary<TensorA,TensorB, F>, Axis>{
 	typedef tensor_binary<typename left_opt::type,typename right_opt::type, F > type;
 	
 	static type create(tensor_binary<TensorA,TensorB,F> const& E){
-		return type(left_opt::create(E.lhs()),right_opt::create(E.rhs()),E.functor());
+		return {left_opt::create(E.lhs()),right_opt::create(E.rhs()),E.functor()};
+	}
+};
+
+//broadcasting
+template<class Tensor, class OAxis, unsigned... Drop, unsigned... Permutation>
+struct axis_permute_optimizer<tensor_broadcast<Tensor, OAxis, integer_list<unsigned, Drop...> >, axis<Permutation...> >{
+	typedef axis<Permutation...> Axis;
+	typedef typename OAxis::template permute_t<Permutation...> permuted_axis;
+	typedef typename Axis::inverse_t::template select_t<Drop...> permuted_drops;
+	typedef typename detail::slice_multiple_axis<Axis, Drop... >::type sliced_permutation;
+	
+	typedef axis_permute_optimizer<typename Tensor::const_closure_type, sliced_permutation> opt;
+	typedef tensor_broadcast<typename opt::type, permuted_axis, permuted_drops> type;
+	
+	static type create(tensor_broadcast<Tensor, OAxis, integer_list<unsigned, Drop...> > const& E){
+		auto shape = Axis::to_axis(E.shape());
+		return {opt::create(E.expression()), shape};
 	}
 };
 
@@ -202,14 +219,8 @@ struct axis_merge_optimizer<scalar_tensor<T, Axis, Device>, N>{
 	
 	static type create(scalar_tensor<T, Axis, Device> const& E){
 		auto shape = E.shape();
-		tensor_shape<Axis::num_dims-1> new_shape;
-		for(unsigned i = 0; i != N; ++i){
-			new_shape[i] = shape[i];
-		}
-		new_shape[N] = shape[N] * shape[N+1];
-		for(unsigned i = N + 2; i != Axis::num_dims; ++i){
-			new_shape[i - 1] = shape[i];
-		}
+		auto new_shape = shape.slice(N);
+		new_shape[N] *= shape[N];
 		return type(new_shape,E.scalar());
 	}
 };
@@ -340,15 +351,7 @@ struct slice_optimizer<scalar_tensor<T, Axis, Device>, N>{
 	typedef scalar_tensor<T, typename Axis::template slice_t<N>, Device> type;
 	
 	static type create(scalar_tensor<T, Axis, Device> const& E, std::size_t){
-		auto shape = E.shape();
-		tensor_shape<Axis::num_dims-1> new_shape;
-		for(unsigned i = 0; i < N; ++i){
-			new_shape[i] = shape[i];
-		}
-		for(unsigned i = N + 1; i != Axis::num_dims; ++i){
-			new_shape[i - 1] = shape[i];
-		}
-		return type(new_shape,E.scalar());
+		return type(E.shape().slice(N), E.scalar());
 	}
 };
 
@@ -372,6 +375,101 @@ struct slice_optimizer<tensor_binary<TensorA,TensorB, F>, N>{
 	
 	static type create(tensor_binary<TensorA,TensorB,F> const& E, std::size_t i){
 		return type(left_opt::create(E.lhs(),i),right_opt::create(E.rhs(),i),E.functor());
+	}
+};
+
+template<int /*0*/, class Tensor, class AxisTrans, class DropTrans, std::size_t N>
+struct slice_optimizer_broadcast{
+	//case where N is not dropped
+	static constexpr unsigned num_smaller(){
+		auto arr = DropTrans::to_array();
+		std::size_t count = 0;
+		for(std::size_t i = 0; i != DropTrans::num_dims; ++i){
+			count += (arr[i] <N );
+		}
+		return count;
+	}
+	typedef slice_optimizer<Tensor, N - num_smaller()> slice_opt;
+	typedef tensor_broadcast<typename slice_opt::type, AxisTrans, DropTrans > type;
+	
+	template<class TensorE>
+	static type create(TensorE const& E, std::size_t i){
+		return {slice_opt::create(E.expression(), i), E.shape().slice(N)};
+	}
+};
+
+template<class Tensor, class AxisTrans, class DropTrans, std::size_t N>
+struct slice_optimizer_broadcast<1,Tensor, AxisTrans, DropTrans, N>{
+	//case where N is dropped
+	typedef tensor_broadcast<Tensor, AxisTrans, DropTrans > type;
+	
+	template<class TensorE>
+	static type create(TensorE const& E, std::size_t i){
+		return {E.expression(), E.shape().slice(N)};
+	}
+};
+
+template<class Tensor, class AxisTrans, std::size_t N>
+struct slice_optimizer_broadcast<1, Tensor, AxisTrans, integer_list<unsigned>, N>{
+	//case where N is dropped and the resulting drop list is empty
+	typedef typename Tensor::const_closure_type type;
+	
+	template<class TensorE>
+	static type create(TensorE const& E, std::size_t i){
+		return E.expression();
+	}
+};
+
+
+//case where we remove the last axis of Tensor
+template<class Tensor, class AxisTrans, class DropTrans, std::size_t N>
+struct slice_optimizer_broadcast<2,Tensor, AxisTrans, DropTrans, N>{
+	typedef slice_optimizer<Tensor, 0> slice_opt;
+	typedef scalar_tensor<typename Tensor::value_type, AxisTrans, typename Tensor::device_type> type;
+	
+	template<class TensorE>
+	static type create(TensorE const& E, std::size_t i){
+		return {E.shape().slice(N), slice_opt::create(E.expression(), i)};
+	}
+};
+
+
+
+template<class Tensor, class Axis, unsigned... Drop, std::size_t N>
+struct slice_optimizer<tensor_broadcast<Tensor, Axis, integer_list<unsigned, Drop...> >, N>{
+	//check whether N is in the droplist
+	static constexpr std::size_t posN = integer_list<unsigned, Drop...>::template index_of_v<N>;
+	static constexpr std::size_t droppedN = (posN < sizeof...(Drop));
+	// check whether we are removing the last axis of the Tensor
+	static constexpr std::size_t lastAxis = (Tensor::num_dims == (1-droppedN));
+	
+	//transform the droplist
+	struct transform_helper{
+		template< class Seq>
+		static constexpr Seq apply(Seq seq0){
+			Seq seq={0};
+			for(std::size_t i = 0, j = 0; i != sizeof...(Drop); ++i){
+				if (seq0[i] == N)
+					continue;
+				seq[j] = seq0[i] - (seq0[i] > N);
+				++j;
+			}
+			return seq;
+		}
+	};
+	typedef typename integer_list<unsigned, Drop...>
+		::template transform_t<transform_helper>
+		::template front_t<sizeof...(Drop) - droppedN> 
+	drop_transformed;
+	//transform axis
+	typedef typename Axis::template slice_t<N> axis_transformed;
+	
+	//reference the optimizer implementation for normal/droppedN/lastAxis
+	typedef slice_optimizer_broadcast<droppedN+2*lastAxis, Tensor, axis_transformed, drop_transformed, N> opt;
+	typedef typename opt::type type;
+	
+	static type create(tensor_broadcast<Tensor, Axis, integer_list<unsigned, Drop...> > const& E, std::size_t i){
+		return opt::create(E, i);
 	}
 };
 
@@ -577,6 +675,50 @@ struct subrange_optimizer<diagonal_matrix<V> >{
 		return type(opt::create(E.expression(),startV, endV));
 	}
 };*/
+
+
+////////////////////////////////////
+//// Broadcasting
+////////////////////////////////////
+template<class Tensor, unsigned N>
+struct broadcast_optimizer{
+	typedef typename Tensor::axis::template split_t<(N == Tensor::axis::num_dims)? N - 1: N> Axis;
+	typedef tensor_broadcast<Tensor, Axis, integer_list<unsigned, N> > type;
+	
+	static type create(typename Tensor::const_closure_type const& E, std::size_t size){
+		auto shape = E.shape();
+		tensor_shape<Axis::num_dims> new_shape;
+		for(unsigned i = 0; i != N; ++i){
+			new_shape[i] = shape[i];
+		}
+		new_shape[N] = size;
+		for(unsigned i = N; i != Axis::num_dims - 1; ++i){
+			new_shape[i + 1] = shape[i];
+		}
+		return {E, new_shape};
+	}
+};
+
+
+template<class Tensor,class OAxis, unsigned N, unsigned...Ns >
+struct broadcast_optimizer<tensor_broadcast<Tensor, OAxis, integer_list<unsigned, Ns...> >, N >{
+	typedef typename OAxis::template split_t<(N == OAxis::num_dims)? N - 1: N> Axis;
+	typedef tensor_broadcast<Tensor, Axis, integer_list<unsigned, N, (Ns < N? Ns : Ns + 1)...> > type;
+	
+	static type create(tensor_broadcast<Tensor, OAxis, integer_list<unsigned, Ns...> > const& E, std::size_t size){
+		auto shape = E.shape();
+		tensor_shape<Axis::num_dims> new_shape;
+		for(unsigned i = 0; i != N; ++i){
+			new_shape[i] = shape[i];
+		}
+		new_shape[N] = size;
+		for(unsigned i = N; i != Axis::num_dims; ++i){
+			new_shape[i + 1] = shape[i];
+		}
+		return {E.expression(), new_shape};
+	}
+};
+
 
 
 ////////////////////////////////////

@@ -33,6 +33,7 @@
 #include "../kernels/device_traits.hpp"
 #include "../assignment.hpp"
 #include <type_traits>
+#include <tuple>
 
 namespace remora{
 
@@ -56,7 +57,7 @@ public:
 	static constexpr std::size_t num_dims = E::num_dims;
 
 	// Construction
-	explicit scalar_multiply(expression_closure_type const& e, value_type scalar)
+	scalar_multiply(expression_closure_type const& e, value_type scalar)
 	:m_expression(e), m_scalar(scalar){}
 
 	//Accessors 
@@ -97,7 +98,7 @@ public:
 private:
 	expression_closure_type m_expression;
 	value_type m_scalar;
-};	
+};
 	
 template<class E1, class E2>
 class tensor_addition: public tensor_expression<E1::num_dims, tensor_addition<E1, E2>, typename E1::device_type >{
@@ -132,7 +133,7 @@ public:
 	static constexpr std::size_t num_dims = E1::num_dims;
 
     // Construction
-    explicit tensor_addition(
+    tensor_addition(
 		lhs_closure_type const& e1,
 		rhs_closure_type const& e2
 	): m_lhs (e1), m_rhs (e2){}
@@ -227,6 +228,121 @@ private:
 	value_type m_value;
 };
 
+/// \brief A Tensor that broadcasts a Tensor to a different shape
+///
+/// Broadcasting is the operation of adding one or more additional axis to a tensor and copying
+/// the vector multiple times along those axes. 
+///
+/// Example:
+///  
+/// if we have a 3D tensor t_ijk that is broadcasted
+/// to a tensur u_mijnk, broadcasting represents u as u_mijnk = t_ijk 
+///
+/// \tparam E the expression to broadcast
+/// \tparam Axis the axis object of the tensor after broadcasting
+/// \tparam DropList the list of indices that are dropped
+template<class E, class Axis, class DropList>
+class tensor_broadcast:public tensor_expression<Axis::num_dims, tensor_broadcast<E, Axis, DropList>, typename E::device_type >{
+private:
+
+	//transform the drop list to a list of indices to keep
+	struct keep_list_helper{
+		template<class Seq>
+		static constexpr auto apply(Seq){
+			//mark all elements that are to be removed
+			Seq marker={0};
+			auto drop_list = DropList::to_array();
+			for(std::size_t i = 0; i != DropList::num_dims; ++i){
+				marker[drop_list[i]] = 1;
+			}
+			typename Axis::array_type result={0};
+			std::size_t pos = 0;
+			for(std::size_t i = 0; i != Axis::num_dims; ++i){
+				if(marker[i] == 0){
+					result[pos] = i;
+					++pos;
+				}
+			}
+			return result;
+		}
+	};
+public:
+	//we abuse transform_t of Axis to transform the array into an integer_list and only take the front elements
+	typedef typename Axis::template transform_t<keep_list_helper>::template front_t<Axis::num_dims - DropList::num_dims> keep_list;
+	
+	
+	//todo: move to device_traits once this works
+	//also figure out how to do this in cuda
+	template<class F>
+	struct broadcast_functor{
+		typedef typename F::result_type result_type;
+		template<std::size_t... Ns, class ArgTuple>
+		result_type apply(std::index_sequence<Ns...>, ArgTuple const& args){
+			auto constexpr keep_array = keep_list::to_array();
+			return f(std::get<keep_array[Ns]>(args)...);
+		}
+		template<class... Args>
+		result_type operator()(Args&&... args){
+			return apply(std::make_index_sequence<keep_list::num_dims>(),std::make_tuple(args...));
+		}
+		F f;
+	};
+
+	typedef typename E::const_closure_type expression_closure_type;
+	typedef typename E::size_type size_type;
+	typedef typename E::value_type value_type;
+	typedef typename E::value_type const_reference;
+	typedef const_reference reference;
+
+	typedef tensor_broadcast const_closure_type;
+	typedef tensor_broadcast closure_type;
+	typedef unknown_storage storage_type;
+	typedef unknown_storage const_storage_type;
+	typedef Axis  axis;
+	typedef typename E::evaluation_category evaluation_category;
+	typedef typename E::device_type device_type;
+	static constexpr std::size_t num_dims = Axis::num_dims;
+
+	// Construction
+	tensor_broadcast(expression_closure_type const& e, tensor_shape<num_dims> const& shape)
+	:m_expression(e), m_shape(shape){}
+
+	//Accessors 
+	auto const& shape()const{
+		return m_shape;
+	}
+	expression_closure_type const& expression() const{
+		return m_expression;
+	};
+	typename device_traits<device_type>::queue_type& queue()const{
+		return m_expression.queue();
+	}
+
+	// Element Functor
+	auto elements() const{
+		auto f = m_expression.elements();
+		return broadcast_functor<decltype(f)>{f};
+	}
+
+	// Computation Kernels
+	template<class TensorX>
+	void assign_to(tensor_expression<num_dims, TensorX, device_type>& X)const{
+		auto eval_e = eval_block(m_expression);
+		tensor_broadcast<decltype(eval_e), axis, DropList> broadcast_eval_e(eval_e, m_shape);
+		assign(X, broadcast_eval_e);
+	}
+	template<class TensorX>
+	void plus_assign_to(tensor_expression<num_dims, TensorX, device_type>& X)const{
+		auto eval_e = eval_block(m_expression);
+		tensor_broadcast<decltype(eval_e), axis, DropList> broadcast_eval_e(eval_e, m_shape);
+		plus_assign(X, broadcast_eval_e);
+	}
+
+private:
+	expression_closure_type m_expression;
+	tensor_shape<num_dims> m_shape;
+};
+
 ///\brief class which allows for tensor transformations
 ///
 ///transforms a tensor expression e of type E using a Function f of type F as an elementwise transformation f(e(i,j,...))
@@ -255,7 +371,7 @@ public:
 	static constexpr std::size_t num_dims = E::num_dims;
 
 	// Construction
-	explicit tensor_unary(expression_closure_type const& e, functor_type const& functor):
+	tensor_unary(expression_closure_type const& e, functor_type const& functor):
 		m_expression(e), m_functor(functor){}
 		
 	// Accessors
@@ -329,7 +445,7 @@ public:
 	static constexpr std::size_t num_dims = E1::num_dims;
 
 	typedef F functor_type;
-    explicit tensor_binary (
+    tensor_binary (
 		lhs_closure_type const& e1,  rhs_closure_type const& e2, functor_type functor 
 	): m_lhs(e1), m_rhs(e2),m_functor(functor){}
 	
@@ -396,7 +512,7 @@ public:
 	typedef blockwise<typename E::evaluation_category::tag> evaluation_category;
 	static constexpr std::size_t num_dims = E::num_dims - Axis::num_dims;
 	// Construction
-	explicit tensor_row_transform(
+	tensor_row_transform(
 		tensor_closure_type const& tensor, F const& f, G const& g
 	):m_expression(tensor), m_f(f), m_g(g){}
 

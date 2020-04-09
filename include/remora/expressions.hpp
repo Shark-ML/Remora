@@ -32,9 +32,65 @@
 #include "proxy_expressions.hpp"
 
 namespace remora{
+	
+/////////////////////////////////////////////
+/////Broadcast
+/////////////////////////////////////////////
+
+namespace detail{
+	template<unsigned N, class TensorA>
+	auto broadcast_impl(TensorA const& A, std::size_t size){
+		return detail::broadcast_optimizer<TensorA, N>::create(A, size);
+	}
+	template<unsigned N, class TensorA>
+	auto broadcast_impl(TensorA const& A, ax::merge<1>){
+		return A;
+	}
+	
+	template<unsigned N, class TensorA>
+	auto broadcast_dispatcher(TensorA const& A){
+		return A;
+	}
+	
+	template<unsigned N, class TensorA, class Arg, class... Args>
+	auto broadcast_dispatcher(TensorA const& A, Arg arg, Args... args){
+		auto Abc = broadcast_impl<N>(A,arg);
+		return broadcast_dispatcher<N + 1>(Abc, args...);
+	}
+}
+
+
+/// \brief Broadcast a tensor to a tensor with larger shape
+///
+/// Broadcasting is the operation of adding one or more additional axis to a tensor and copying
+/// the vector multiple times along those axes. Possible arguments for axis descriptions are ax::same and positive integer values.
+///
+/// Example:
+/// let A be a 3D tensor of shape (a,b,c) The call to
+/// B= broadcast(A,ax::same, N, ax::same, M, ax::same)
+///
+/// will result in B being a 5 dimensional tensor with shape (a, N, b, M, c)
+/// and behaviour B(i,j,k,l,m)=A(i,k,m)
+///
+/// ax::same arguments at the end can be discarded, therefore we could shorten the example above by:
+///
+/// B= broadcast(A,ax::same, N, ax::same, M)
+///
+/// Similarly, broadcasting a K dimensional vector as a matrix with N rows can be achieved via:
+/// B= broadcast(A,N)
+/// whereas we get a K xN matrix via
+/// B= broadcast(A,ax::same, N)
+///
+/// It is allowed to add multiple consecutive new axes:
+/// B= broadcast(A,N1, N2)
+/// Would lead to tensor with shape (N1, N2, K) 
+template<std::size_t Dim, class TensorA, class Device, class... Args>
+auto broadcast(tensor_expression<Dim, TensorA, Device> const& A, Args... args){
+	return detail::broadcast_dispatcher<0u>(typename TensorA::const_closure_type(A), args...);
+}
 
 /////////////////////////////////////////////
-//////////Tensor-Unary Operations
+/////Tensor-Unary Operations
 /////////////////////////////////////////////
 
 
@@ -72,7 +128,7 @@ REMORA_UNARY_TENSOR_TRANSFORMATION(elem_inv, inv)
 
 
 /////////////////////////////////////////////
-//////////Simple Matrix-Binary Operations
+/////Simple Matrix-Binary Operations
 /////////////////////////////////////////////
 
 
@@ -129,7 +185,7 @@ REMORA_BINARY_MATRIX_EXPRESSION(max,max)
 
 
 /////////////////////////////////////////////
-//////////Tensor-Scalar Operations
+/////Tensor-Scalar Operations
 /////////////////////////////////////////////
 
 /// \brief Computes the multiplication of a tensor-expression A with a scalar t.
@@ -248,7 +304,7 @@ REMORA_TENSOR_SCALAR_TRANSFORMATION_2(max, max)
 
 
 /////////////////////////////////////////
-//////////TENSOR REDUCTIONS
+/////TENSOR REDUCTIONS
 /////////////////////////////////////////
 /*
 /// \brief Computes the elementwise sum over all elements of A
