@@ -65,7 +65,7 @@ private:
 	}
 	
 	static constexpr std::size_t index_of_helper(T V, array_type const& seq){
-		std::size_t j = 0;
+		std::size_t j = sizeof...(Seq);
 		for(std::size_t i = 0; i != sizeof...(Seq); ++i){
 			if (seq.values[i] == V)
 				j = i;
@@ -118,11 +118,13 @@ public:
 	/// \brief number of dimensions
 	static constexpr std::size_t num_dims = sizeof...(Seq);
 	/// \brief Returns the nth element.
-	/// Note: if N= num_dims, the result is unspecified but will not lead to compile-errors.
+	/// Note: if N= num_dims, the value is undefined but will not lead to compile-errors.
 	template<std::size_t N>
 	static constexpr T element_v = Nth_integer_helper(N);
 	
 	/// \brief Returns the index of the element V.
+	///
+	/// If the element does not exist, the value is num_dims
 	template<T V>
 	static constexpr std::size_t index_of_v = index_of_helper(V, {Seq...});
 	

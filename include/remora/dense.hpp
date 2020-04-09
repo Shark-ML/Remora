@@ -251,19 +251,16 @@ struct slice_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
 		//compute new shape by cutting out the selected Axis
 		auto strides = E.raw_storage().strides;
 		auto shape = E.shape();
-		tensor_shape<Axis::num_dims-1> new_shape;
 		std::array<std::size_t, Axis::num_dims-1> new_strides;
 		for(unsigned i = 0; i != N; ++i){
-			new_shape[i] = shape[i];
 			new_strides[i] = strides[i];
 		}
 		for(unsigned i = N + 1; i != Axis::num_dims; ++i){
-			new_shape[i - 1] = shape[i];
 			new_strides[i - 1] = strides[i];
 		}
 		T* values = E.raw_storage().values + index * strides[N];
 		//return the proxy
-		return type({values, new_strides}, E.queue(), new_shape);
+		return type({values, new_strides}, E.queue(), shape.slice(N));
 	}
 };
 
@@ -334,17 +331,15 @@ struct axis_merge_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
 		auto strides = E.raw_storage().strides;
 		auto shape = E.shape();
 		REMORA_SIZE_CHECK(strides[N] == strides[N + 1] * shape[N+1]);
+		auto new_shape = shape.slice(N);
+		new_shape[N] *= shape[N];
 		
-		tensor_shape<Axis::num_dims-1> new_shape;
 		std::array<std::size_t, Axis::num_dims-1> new_strides;
 		for(unsigned i = 0; i != N; ++i){
-			new_shape[i] = shape[i];
 			new_strides[i] = strides[i];
 		}
-		new_shape[N] = shape[N] * shape[N+1];
 		new_strides[N] = strides[N + 1];
 		for(unsigned i = N + 2; i != Axis::num_dims; ++i){
-			new_shape[i - 1] = shape[i];
 			new_strides[i - 1] = strides[i];
 		}
 		//return the proxy

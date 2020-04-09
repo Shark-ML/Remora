@@ -63,8 +63,17 @@ public:
 		}
 		return num_elem;
 	}
-
 	
+	tensor_shape<Dim - 1> slice(std::size_t N)const{
+		tensor_shape<Dim-1> new_shape;
+		for(unsigned i = 0; i < N; ++i){
+			new_shape[i] = shape_array[i];
+		}
+		for(unsigned i = N + 1; i != Dim; ++i){
+			new_shape[i - 1] = shape_array[i];
+		}
+		return new_shape;
+	}
 	bool operator==(tensor_shape<Dim> const& other)const{
 		for (std::size_t i = 0; i != size(); ++i){
 			if (shape_array[i] != other[i]){

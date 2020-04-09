@@ -55,7 +55,6 @@ namespace ax{
 
 	template<int N>
 	struct merge{
-		static_assert(N != 0, "merge<0> has no meaning");
 		static constexpr unsigned num_input_axes = (N<0)? 0: N;
 		static constexpr unsigned num_output_axes = 1;
 	};
@@ -71,10 +70,10 @@ namespace ax{
 		tensor_shape<N> shape;
 	};
 	
-	///\brief tag object describing taking one complete axis
+	///\brief tag object describing taking one axis 1:1 from the original tensor
 	///
 	/// This is equivalent to merge<1> which is equivalent to ':' in tensorflow/pytorch.
-	merge<1> all = merge<1>();
+	merge<1> same = merge<1>();
 
 	///\brief tag object describing an axis that has a wildcard size and can span multiple axis
 	///
@@ -84,9 +83,6 @@ namespace ax{
 	merge<-1> fit = merge<-1>();
 }
 
-
-
-	
 ////////////////////////////////////
 //// Tensor reshape
 ////////////////////////////////////
@@ -123,7 +119,7 @@ namespace detail{
 			return A;
 		}
 	};
-	//implementation of all (Identity)
+	//implementation of same (Identity)
 	template<std::size_t CurDim, class... Args>
 	struct reshape_dispatcher<CurDim, ax::merge<1>, Args... >{
 		template<class TensorA>
@@ -197,14 +193,14 @@ namespace detail{
 /// Reshapes a vector given a set of semantic axis arguments to a target size.
 /// The order of arguments is used to define which axis the arguments are applied to.
 /// There are four different arguments that can be provided,
-/// ax::all, ax::merge<N>, ax::split and ax::fit. 
+/// ax::same, ax::merge<N>, ax::split and ax::fit. 
 /// Their semantic meaning is as follows:
 ///
 /// split<N> takes the next axis of  A and splits them into the next N axes by B.
 ///     split takes N arguments which is the shape of the dimensions. Note that the
 ///     split is taken using the default-order of axis<0,1,...,N-1>, that is the first axis is the
 ///     leading dimension.
-/// all takes the next axis from A and maps it to the next axis of B without changing its shape. 
+/// same takes the next axis from A and maps it to the next axis of B without changing its shape. 
 ///
 /// merge<N> takes the next N consecutive axes of A and maps them to the next single axis of B
 ///
@@ -216,17 +212,17 @@ namespace detail{
 ///
 /// An example (assuming namespace remora is included)
 /// A is a 6 dimensional tensor of shape (3,2,5,30,3,7)
-/// B=reshape(A, merge<2>(), all, split<3>(3,5,2), fit)
+/// B=reshape(A, merge<2>(), same, split<3>(3,5,2), fit)
 /// will result in B with shape (6,5,3,5,2,21)
 /// merge takes the first two axes of A and merges them as first axis of B. 
-/// all takes the next axis (3) and maps it to the second axis of B.
+/// same takes the next axis (3) and maps it to the second axis of B.
 /// split<3> takes axis 4 and splits it into the next 3 axis of B.
 /// fit is replaced by merge<2> to take up the last unused axes of B which is then put at the last axis.
 ///
 /// Todo: merge is not fully implemented and currently only allows merging of consecutive axes
 /// as indicated by the tensor layout. This only affects Tensors with more than 2 axes. Normally,
 /// A tensor does not have this issue, however when permuting axis, e.g. B= permute(A, 0,2,1)
-/// a following call to reshape(B,merge<2>(), all) will fail.
+/// a following call to reshape(B,merge<2>(), same) will fail.
 /// 
 /// Further, note that split or merge can not be applied to structured tensors if the split/merge operation
 /// Destroys the structure.
@@ -241,7 +237,7 @@ auto reshape(
 	constexpr unsigned used_dims_post_fill = detail::reshape_used_input_dims<decltype(detail::reshape_handle_fit<fill_size>(args))...>::value;
 	static_assert(used_dims_post_fill == TensorA::axis::num_dims, "axis arguments do not lead to correct number of axis. Check that at most one fit argument is used");
 	
-	typename TensorA::closure_type Aclosure = A;
+	typename TensorA::closure_type Aclosure = A();
 	return detail::reshape_dispatcher<0, decltype(detail::reshape_handle_fit<fill_size>(args))...>::create(
 		Aclosure, detail::reshape_handle_fit<fill_size>(args)...
 	);
@@ -250,7 +246,7 @@ template <std::size_t Dim, class TensorA, class Device, class... Args>
 auto reshape(
 	tensor_expression<Dim, TensorA, Device> const& A, Args... args
 ){
-	typename TensorA::const_closure_type Aclosure = A;
+	typename TensorA::const_closure_type Aclosure = A();
 	return reshape(Aclosure, args...);
 }
 template <std::size_t Dim, class TensorA, class Device, class... Args>
@@ -342,7 +338,7 @@ namespace detail{
 
 template<std::size_t Dim, class TensorA, class Device, class... Args>
 auto slice(tensor_expression<Dim, TensorA, Device>& A, Args... args){
-	typename TensorA::closure_type Aclosure = A;
+	typename TensorA::closure_type Aclosure = A();
 	constexpr std::size_t num_slice = sizeof...(Args);
 	auto axis = typename TensorA::axis:: template front_t<num_slice>();
 	auto inds = default_axis<num_slice>();
@@ -351,7 +347,7 @@ auto slice(tensor_expression<Dim, TensorA, Device>& A, Args... args){
 
 template<std::size_t Dim, class TensorA, class Device, class... Args>
 auto slice(tensor_expression<Dim, TensorA, Device> const& A, Args... args){
-	typename TensorA::const_closure_type Aclosure = A;
+	typename TensorA::const_closure_type Aclosure = A();
 	return slice(Aclosure, args...);
 }
 

@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Dense_Slice_First_3D, Axis, axis_types ){
 	static_assert(std::is_same<typename decltype(slice(adaptor, offset ))::storage_type::dense_axis_tag, storage_tag_target>::value);
 	dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result = slice(adaptor, offset );
 	//shoudl give the same result (just more verbose)
-	dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result1 = slice(adaptor, offset, all, all );
+	dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result1 = slice(adaptor, offset, same, same );
 	
 	BOOST_CHECK_EQUAL(result.shape().size(), 2);
 	BOOST_CHECK_EQUAL(result.raw_storage().strides.size(), 2);
@@ -142,9 +142,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Dense_Slice_Second_3D, Axis, axis_types ){
 	tensor_shape<2> target_shape = {shape[0], shape[2]};
 
 	
-	dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result = slice(adaptor, all, offset );
+	dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result = slice(adaptor, same, offset );
 	//shoudl give the same result (just more verbose)
-	dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result1 = slice(adaptor, all, offset, all );
+	dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result1 = slice(adaptor, same, offset, same );
 	
 	BOOST_CHECK_EQUAL(result.shape().size(), 2);
 	BOOST_CHECK_EQUAL(result.raw_storage().strides.size(), 2);
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Dense_Slice_01_3D, Axis, axis_types ){
 	
 	dense_tensor_adaptor<unsigned, axis<0>, storage_tag_target, cpu_tag> result = slice(adaptor, offset_0, offset_1 );
 	//shoudl give the same result (just more verbose)
-	dense_tensor_adaptor<unsigned, axis<0>, storage_tag_target, cpu_tag> result1 = slice(adaptor, offset_0, offset_1, all );
+	dense_tensor_adaptor<unsigned, axis<0>, storage_tag_target, cpu_tag> result1 = slice(adaptor, offset_0, offset_1, same );
 	
 	BOOST_CHECK_EQUAL(result.shape().size(), 1);
 	BOOST_CHECK_EQUAL(result.raw_storage().strides.size(), 1);
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Dense_Slice_02_3D, Axis, axis_types ){
 	target_storage.values = adaptor.raw_storage().values + offset_0 * strides[0] + offset_2 * strides[2];
 	tensor_shape<1> target_shape = {shape[1]};
 	
-	dense_tensor_adaptor<unsigned, axis<0>, storage_tag_target, cpu_tag> result = slice(adaptor, offset_0, all, offset_2 );
+	dense_tensor_adaptor<unsigned, axis<0>, storage_tag_target, cpu_tag> result = slice(adaptor, offset_0, same, offset_2 );
 	
 	BOOST_CHECK_EQUAL(result.shape().size(), 1);
 	BOOST_CHECK_EQUAL(result.raw_storage().strides.size(), 1);
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Dense_Slice_12_3D, Axis, axis_types ){
 	target_storage.values = adaptor.raw_storage().values + offset_1 * strides[1] + offset_2 * strides[2];
 	tensor_shape<1> target_shape = {shape[0]};
 	
-	dense_tensor_adaptor<unsigned, axis<0>, storage_tag_target, cpu_tag> result = slice(adaptor, all, offset_1, offset_2 );
+	dense_tensor_adaptor<unsigned, axis<0>, storage_tag_target, cpu_tag> result = slice(adaptor, same, offset_1, offset_2 );
 	
 	BOOST_CHECK_EQUAL(result.shape().size(), 1);
 	BOOST_CHECK_EQUAL(result.raw_storage().strides.size(), 1);
@@ -310,7 +310,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Dense_Subrange_First_3D, Axis, axis_types ){
 	
 	dense_tensor_adaptor<unsigned, Axis, storage_tag_target, cpu_tag> result = slice(adaptor, range(start,end) );
 	//shoudl give the same result (just more verbose)
-	dense_tensor_adaptor<unsigned, Axis, storage_tag_target, cpu_tag> result1 = slice(adaptor, range(start,end), all, all );
+	dense_tensor_adaptor<unsigned, Axis, storage_tag_target, cpu_tag> result1 = slice(adaptor, range(start,end), same, same );
 	
 	BOOST_CHECK_EQUAL(result.shape().size(), 3);
 	BOOST_CHECK_EQUAL(result.raw_storage().strides.size(), 3);
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Dense_Slice_Subrange, Axis, axis_types ){
 	tensor_shape<2> target_shape = {shape[1], end_2 - start_2};
 
 	
-	dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result = slice(adaptor, offset_0, all, range(start_2,end_2) );
+	dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result = slice(adaptor, offset_0, same, range(start_2,end_2) );
 	
 	BOOST_CHECK_EQUAL(result.shape().size(), 2);
 	BOOST_CHECK_EQUAL(result.raw_storage().strides.size(), 2);
@@ -409,7 +409,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Dense_Split_3D, Axis, axis_types){
 			Axis::template element_v<2> + 2 * (Axis::template element_v<2> > Axis::template element_v<1>)
 		> axis_target;
 		typedef integer_list<bool, 1, 1, 1, 1, 1> target_storage_tag;
-		dense_tensor_adaptor<unsigned, axis_target, target_storage_tag, cpu_tag> result = reshape(adaptor, all, split<3>(4,5,2), all);
+		dense_tensor_adaptor<unsigned, axis_target, target_storage_tag, cpu_tag> result = reshape(adaptor, same, split<3>(4,5,2), same);
 		BOOST_CHECK_EQUAL(result.raw_storage().values, values.data());
 		BOOST_CHECK_EQUAL(result.raw_storage().strides[0], adaptor.raw_storage().strides[0]);
 		BOOST_CHECK_EQUAL(result.raw_storage().strides[1], adaptor.raw_storage().strides[1] * 2 * 5);
@@ -434,7 +434,7 @@ BOOST_AUTO_TEST_CASE( Dense_Merge_2){
 		typedef integer_list<bool, 0, 1, 0, 1> storage_tag;
 		dense_tensor_adaptor<unsigned, axis<3, 1, 2, 0>, storage_tag, cpu_tag> adaptor({values.data(), {4, 27,9,108}},no_queue(),  {2, 4,3,3});
 		typedef integer_list<bool, 0,0, 1> target_storage_tag;
-		dense_tensor_adaptor<unsigned, axis<2,1,0>, target_storage_tag, cpu_tag> result = reshape(adaptor, all, merge<2>(), all);
+		dense_tensor_adaptor<unsigned, axis<2,1,0>, target_storage_tag, cpu_tag> result = reshape(adaptor, same, merge<2>(), same);
 		
 		BOOST_CHECK_EQUAL(result.raw_storage().values, values.data());
 		BOOST_CHECK_EQUAL(result.raw_storage().strides[0], 4);
@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE( Dense_Merge_2){
 		typedef integer_list<bool, 0, 1, 1, 1> storage_tag;
 		dense_tensor_adaptor<unsigned, axis<3, 1,2, 0>, storage_tag, cpu_tag> adaptor({values.data(), {4, 24,8,96}},no_queue(),  {2, 4,3,3});
 		typedef integer_list<bool, 0,1, 1> target_storage_tag;
-		dense_tensor_adaptor<unsigned, axis<2,1,0>, target_storage_tag, cpu_tag> result = reshape(adaptor, all, merge<2>(), all);
+		dense_tensor_adaptor<unsigned, axis<2,1,0>, target_storage_tag, cpu_tag> result = reshape(adaptor, same, merge<2>(), same);
 		
 		
 		BOOST_CHECK_EQUAL(result.raw_storage().values, values.data());
@@ -465,7 +465,7 @@ BOOST_AUTO_TEST_CASE( Dense_Merge_3){
 	typedef integer_list<bool, 0, 1, 1, 0> storage_tag;
 	dense_tensor_adaptor<unsigned, axis<3, 0, 1, 2>, storage_tag, cpu_tag> adaptor({values.data(), {4, 108, 27,9}},no_queue(),  {2, 3, 4,3});
 	typedef integer_list<bool, 0,0> target_storage_tag;
-	dense_tensor_adaptor<unsigned, axis<1,0>, target_storage_tag, cpu_tag> result = reshape(adaptor, all, merge<3>());
+	dense_tensor_adaptor<unsigned, axis<1,0>, target_storage_tag, cpu_tag> result = reshape(adaptor, same, merge<3>());
 	
 	
 	BOOST_CHECK_EQUAL(result.raw_storage().values, values.data());
