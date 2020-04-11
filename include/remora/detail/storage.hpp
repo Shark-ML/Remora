@@ -80,9 +80,7 @@ namespace detail{
 }
 
 template<std::size_t N, class T>
-using continuous_tensor_storage = dense_tensor_storage<T,
-	decltype(detail::make_continuous_tensor_storage(std::make_integer_sequence<unsigned, N>()))
->;
+using continuous_tensor_storage = dense_tensor_storage<T, constant_integer_list<bool, true, N> >;
 
 }
 

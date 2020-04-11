@@ -51,6 +51,7 @@ public:
 	
 	}; 
 private:
+
 	static constexpr T Nth_integer_helper(std::size_t N){
 		T seq[] = {Seq...};
 		return seq[N];
@@ -159,6 +160,15 @@ public:
 		return {Seq...};
 	}
 };
+
+
+namespace detail{
+	template<class T, T Value, unsigned... Ns>
+	integer_list<T, ((void)Ns,Value)...> make_constant_integer_list_helper(std::integer_sequence<unsigned, Ns...>);
+}
+
+template<class T, T Value, unsigned N>
+using constant_integer_list = decltype(detail::make_constant_integer_list_helper<T, Value>(std::make_integer_sequence<unsigned, N>()));
 
 }
 

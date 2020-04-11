@@ -177,15 +177,17 @@ namespace detail{
 	template<unsigned... Ns>
 	axis<Ns...> make_default_axis_helper(std::integer_sequence<unsigned, Ns...>);
 	
+	template<class Axis, class FilterList, std::size_t N = 0>
+	struct filter_slice;
 	
-	template<class Axis, std::size_t Slice, std::size_t... Slices>
-	struct slice_multiple_axis{
-		typedef typename Axis::template slice_t<Slice> sliced_axis;
-		typedef typename slice_multiple_axis<sliced_axis, (Slices> Slice? Slices - 1: Slices)...>::type type;
+	template<class Axis, bool Tag, bool... FilterTags, std::size_t N>
+	struct filter_slice<Axis, integer_list<bool, Tag, FilterTags...>, N >{
+		typedef typename std::conditional<Tag, typename Axis::template slice_t<N>, Axis>::type sliced_axis;
+		typedef typename filter_slice<sliced_axis, integer_list<bool, FilterTags...>, N + 1 - Tag>::type type;
 	};
-	template<class Axis, std::size_t Slice>
-	struct slice_multiple_axis<Axis, Slice>{
-		typedef typename Axis::template slice_t<Slice> type;
+	template<class Axis, std::size_t N>
+	struct filter_slice<Axis, integer_list<bool>, N >{
+		typedef Axis type;
 	};
 }
 

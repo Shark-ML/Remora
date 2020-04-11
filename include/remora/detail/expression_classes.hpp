@@ -246,19 +246,22 @@ class tensor_broadcast:public tensor_expression<Axis::num_dims, tensor_broadcast
 private:
 
 	//transform the drop list to a list of indices to keep
+	static constexpr std::size_t num_keep(){
+		auto drop_list = DropList::to_array();
+		std::size_t count = 0;
+		for(std::size_t i = 0; i != DropList::num_dims; ++i){
+			count += !drop_list[i];
+		}
+		return count;
+	}
 	struct keep_list_helper{
 		template<class Seq>
 		static constexpr auto apply(Seq){
-			//mark all elements that are to be removed
-			Seq marker={0};
 			auto drop_list = DropList::to_array();
-			for(std::size_t i = 0; i != DropList::num_dims; ++i){
-				marker[drop_list[i]] = 1;
-			}
 			typename Axis::array_type result={0};
 			std::size_t pos = 0;
 			for(std::size_t i = 0; i != Axis::num_dims; ++i){
-				if(marker[i] == 0){
+				if(drop_list[i] == 0){
 					result[pos] = i;
 					++pos;
 				}
@@ -268,7 +271,7 @@ private:
 	};
 public:
 	//we abuse transform_t of Axis to transform the array into an integer_list and only take the front elements
-	typedef typename Axis::template transform_t<keep_list_helper>::template front_t<Axis::num_dims - DropList::num_dims> keep_list;
+	typedef typename Axis::template transform_t<keep_list_helper>::template front_t<num_keep()> keep_list;
 	
 	
 	//todo: move to device_traits once this works
