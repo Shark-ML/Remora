@@ -281,17 +281,7 @@ struct axis_split_optimizer<scalar_tensor<T, Axis, Device>, N>{
 	typedef scalar_tensor<T, typename Axis::template slice_t<N>, Device> type;
 	
 	static type create(scalar_tensor<T, Axis, Device> const& E, std::size_t size1, std::size_t size2){
-		auto shape = E.shape();
-		tensor_shape<Axis::num_dims+1> new_shape;
-		for(unsigned i = 0; i != N; ++i){
-			new_shape[i] = shape[i];
-		}
-		new_shape[N] = size1;
-		new_shape[N+1] = size2;
-		for(unsigned i = N + 1; i != Axis::num_dims; ++i){
-			new_shape[i + 1] = shape[i];
-		}
-		return type(new_shape,E.scalar());
+		return type(E.shape().split(N, size1, size2), E.scalar());
 	}
 };
 
@@ -317,6 +307,49 @@ struct axis_split_optimizer<tensor_binary<TensorA,TensorB, F>, N>{
 		return type(left_opt::create(E.lhs(), size1, size2),right_opt::create(E.rhs(), size1, size2),E.functor());
 	}
 };
+
+//slice(f(A,B),i)=f(slice(A,i),slice(B,i))
+template<class Tensor, class Axis, class DropList, std::size_t N>
+struct axis_split_optimizer<tensor_broadcast<Tensor, Axis, DropList >, N>{
+	//check whether N is in the droplist
+	static constexpr std::size_t droppedN = DropList::template element_v<N>;
+	
+	//insert the new splitted Nth element into droplist and axis
+	typedef typename DropList::template insert_t<N, droppedN> drop_transformed;
+	typedef typename Axis::template split_t<N> axis_transformed;
+	
+	
+	static constexpr unsigned num_smaller(){
+		auto arr = drop_transformed::to_array();
+		std::size_t count = 0;
+		for(std::size_t i = 0; i != N; ++i){
+			count += arr[i];
+		}
+		return count;
+	}
+	//we also subtract droppedN to make sure that this does not fail if N is a dropped Axis
+	//this way we do not need a specialisation
+	typedef axis_split_optimizer<Tensor, N - num_smaller() - droppedN> split_opt;
+	typedef typename std::conditional<droppedN, Tensor, typename split_opt::type>::type inner_tensor_type;
+	typedef tensor_broadcast<inner_tensor_type, axis_transformed, drop_transformed > type;
+	
+	
+	template<class TensorA>
+	static auto split_inner(TensorA const& A, std::size_t size1, std::size_t size2, integer_list<bool,false>){
+		return split_opt::create(A,size1, size2);
+	}
+	template<class TensorA>
+	static auto split_inner(TensorA const& A, std::size_t, std::size_t, integer_list<bool,true>){
+		return A;
+	}
+	
+	static type create(tensor_broadcast<Tensor, Axis, DropList > const& E, std::size_t size1, std::size_t size2){
+		auto new_shape = E.shape().split(N, size1, size2);
+		auto Asplit = split_inner(E.expression(), size1, size2, integer_list<bool,droppedN>());
+		return {Asplit, new_shape};
+	}
+};
+
 
 ////////////////////////////////////
 //// Slice

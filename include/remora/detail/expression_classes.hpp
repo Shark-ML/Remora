@@ -244,7 +244,6 @@ private:
 template<class E, class Axis, class DropList>
 class tensor_broadcast:public tensor_expression<Axis::num_dims, tensor_broadcast<E, Axis, DropList>, typename E::device_type >{
 private:
-
 	//transform the drop list to a list of indices to keep
 	static constexpr std::size_t num_keep(){
 		auto drop_list = DropList::to_array();
@@ -254,6 +253,11 @@ private:
 		}
 		return count;
 	}
+	
+	//check invariants
+	static_assert(E::num_dims == num_keep(), "number of zeros in DropList must be equal to dimension of E");
+	static_assert(Axis::num_dims == DropList::num_dims, "DropList must have same length as Axis");
+	
 	struct keep_list_helper{
 		template<class Seq>
 		static constexpr auto apply(Seq){

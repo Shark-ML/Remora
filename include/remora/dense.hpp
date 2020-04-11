@@ -289,26 +289,19 @@ struct axis_split_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
 		dense_tensor_adaptor<T, Axis, TagList, Device> const& E,
 		std::size_t size1, std::size_t size2
 	){
-		REMORA_SIZE_CHECK(E.shape()[N] == size1 * size2);
 		//compute new shape by cutting out the selected Axis
 		auto strides = E.raw_storage().strides;
-		auto shape = E.shape();
-		tensor_shape<Axis::num_dims+1> new_shape;
 		std::array<std::size_t, Axis::num_dims+1> new_strides;
 		for(unsigned i = 0; i != N; ++i){
-			new_shape[i] = shape[i];
 			new_strides[i] = strides[i];
 		}
-		new_shape[N] = size1;
 		new_strides[N] = strides[N]* size2;
-		new_shape[N + 1] = size2;
 		new_strides[N + 1] = strides[N];
 		for(unsigned i = N + 1; i != Axis::num_dims; ++i){
-			new_shape[i + 1] = shape[i];
 			new_strides[i + 1] = strides[i];
 		}
 		//return the proxy
-		return type({E.raw_storage().values, new_strides}, E.queue(), new_shape);
+		return type({E.raw_storage().values, new_strides}, E.queue(), E.shape().split(N, size1, size2));
 	}
 };
 

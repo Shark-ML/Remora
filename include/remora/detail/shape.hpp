@@ -34,7 +34,7 @@
 #define REMORA_DETAIL_SHAPE_HPP
 
 #include <array>
-
+#include "check.hpp"
 namespace remora{
 
 template<std::size_t Dim>
@@ -74,6 +74,22 @@ public:
 		}
 		return new_shape;
 	}
+	
+	tensor_shape<Dim + 1> split(std::size_t N, std::size_t size1, std::size_t size2)const{
+		REMORA_SIZE_CHECK(shape_array[N] == size1 * size2);
+		tensor_shape<Dim+1> new_shape;
+		for(unsigned i = 0; i != N; ++i){
+			new_shape[i] = shape_array[i];
+		}
+		new_shape[N] = size1;
+		new_shape[N+1] = size2;
+		for(unsigned i = N + 1; i != Dim; ++i){
+			new_shape[i + 1] = shape_array[i];
+		}
+		return new_shape;
+	}
+	
+	
 	bool operator==(tensor_shape<Dim> const& other)const{
 		for (std::size_t i = 0; i != size(); ++i){
 			if (shape_array[i] != other[i]){

@@ -106,8 +106,8 @@ void checkDenseExpressionEquality(
 	
 // }
 
-std::size_t Dimension1 = 50;
-std::size_t Dimension2 = 100;
+std::size_t Dimension1 = 25;
+std::size_t Dimension2 = 50;
 
 BOOST_AUTO_TEST_SUITE (Remora_expressions_test)
 
@@ -183,25 +183,25 @@ typedef boost::mpl::list<row_major,column_major> result_orientations;
 BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_1, Axis, result_orientations )
 {
 	matrix<int, Axis> x({Dimension1, Dimension2}); 
-	tensorN<int, 4> result({Dimension1, 10,  Dimension2, 3});
+	tensorN<int, 4> result({Dimension1, 10,  Dimension2, 8});
 	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < 10; j++){
 			for(std::size_t k = 0; k != Dimension2; ++k){
 				x(i,k) = i-3+k;
-				for(std::size_t l = 0; l != 3; ++l){
+				for(std::size_t l = 0; l != 8; ++l){
 					result(i, j, k, l)= x(i,k);
 				}
 			}
 		}
 	}
 	
-	auto op =  broadcast(x, ax::same, 10, ax::same, 3);
+	auto op =  broadcast(x, ax::same, 10, ax::same, 8);
 	BOOST_REQUIRE_EQUAL(op.shape().size(), 4);
 	BOOST_REQUIRE_EQUAL(op.shape()[0], Dimension1);
 	BOOST_REQUIRE_EQUAL(op.shape()[1], 10);
 	BOOST_REQUIRE_EQUAL(op.shape()[2], Dimension2);
-	BOOST_REQUIRE_EQUAL(op.shape()[3], 3);
+	BOOST_REQUIRE_EQUAL(op.shape()[3], 8);
 	auto elements = op.elements();
 	tensorN<int, 4> op_elem_assign = op; //difference to above: tests assignment using identity permute and slice
 	tensor<int,axis<2,0,1, 3>, cpu_tag > op_perm_elem_assignf = op; //permute moves broadcasted dimension to the front
@@ -211,11 +211,32 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_1, Axis, result_ori
 	tensorN<int,4> op_block_plus_assign(op.shape(), 1);
 	op.assign_to(op_block_assign);
 	op.plus_assign_to(op_block_plus_assign);
+	
+	//split check
+	auto op_split1 = reshape(op, ax::same, ax::same, ax::split<2>(10,5), ax::same); 
+	auto op_split2 = reshape(op, ax::same, ax::same, ax::same, ax::split<2>(2,4)); 
+	auto split1_elem = op_split1.elements();
+	auto split2_elem = op_split2.elements();
+	BOOST_REQUIRE_EQUAL(op_split1.shape().size(), 5);
+	BOOST_REQUIRE_EQUAL(op_split1.shape()[0], Dimension1);
+	BOOST_REQUIRE_EQUAL(op_split1.shape()[1], 10);
+	BOOST_REQUIRE_EQUAL(op_split1.shape()[2], 10);
+	BOOST_REQUIRE_EQUAL(op_split1.shape()[3], 5);
+	BOOST_REQUIRE_EQUAL(op_split1.shape()[4], 8);
+	BOOST_REQUIRE_EQUAL(op_split2.shape().size(), 5);
+	BOOST_REQUIRE_EQUAL(op_split2.shape()[0], Dimension1);
+	BOOST_REQUIRE_EQUAL(op_split2.shape()[1], 10);
+	BOOST_REQUIRE_EQUAL(op_split2.shape()[2], Dimension2);
+	BOOST_REQUIRE_EQUAL(op_split2.shape()[3], 2);
+	BOOST_REQUIRE_EQUAL(op_split2.shape()[4], 4);
+	
 	for (size_t i = 0; i < Dimension1; i++){
 		for (size_t j = 0; j < 10; j++){
 			for(std::size_t k = 0; k != Dimension2; ++k){
-				for(std::size_t l = 0; l != 3; ++l){
+				for(std::size_t l = 0; l != 8; ++l){
 					BOOST_CHECK_EQUAL(result(i, j, k, l), elements(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), split1_elem(i, j, k / 5, k % 5, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), split2_elem(i, j, k, l / 4, l % 4));
 					BOOST_CHECK_EQUAL(result(i, j, k, l), op_elem_assign(i, j, k, l));
 					BOOST_CHECK_EQUAL(result(i, j, k, l), op_perm_elem_assignf(i, j, k, l));
 					BOOST_CHECK_EQUAL(result(i, j, k, l), op_perm_elem_assignb(i, j, k, l));
