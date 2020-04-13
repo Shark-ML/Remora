@@ -75,6 +75,12 @@ public:
 		return new_shape;
 	}
 	
+	tensor_shape<Dim - 1> merge(std::size_t N)const{
+		tensor_shape<Dim - 1> new_shape = slice(N);
+		new_shape[N] *= shape_array[N];
+		return new_shape;
+	}
+	
 	tensor_shape<Dim + 1> split(std::size_t N, std::size_t size1, std::size_t size2)const{
 		REMORA_SIZE_CHECK(shape_array[N] == size1 * size2);
 		tensor_shape<Dim+1> new_shape;

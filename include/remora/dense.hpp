@@ -31,6 +31,7 @@
 #include "expression_types.hpp"
 #include "detail/traits.hpp"
 #include "detail/proxy_optimizers_fwd.hpp"
+#include "detail/merge_proxy.hpp"
 namespace remora{
 	
 	
@@ -309,23 +310,20 @@ struct axis_split_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
 template<class T, class Axis, class TagList, class Device, std::size_t N>
 struct axis_merge_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
 	static_assert(N < Axis::num_dims - 1);
-	static_assert(Axis::template element_v<N> + 1 == Axis::template element_v<N + 1>, "Not implemented error: Can only merge consecutive axes.");
-	static_assert(TagList::template element_v<N>, "Not implemented error: The first axis merged must be dense");
-	
+	//check whether we need a proxy or not.
+	static constexpr std::size_t needs_proxy = !TagList::template element_v<N>
+		||(Axis::template element_v<N> + 1 != Axis::template element_v<N + 1>);
+	//case 1: needs_proxy = false
 	//the new axis has the same tag as the second of the two merged axis. 
 	//so we only have to remove the Nth tag
 	typedef typename TagList::template remove_t<N> proxy_tag_list;
-	typedef dense_tensor_adaptor<T, typename Axis::template slice_t<N>, proxy_tag_list, Device> type;
+	typedef dense_tensor_adaptor<T, typename Axis::template slice_t<N>, proxy_tag_list, Device> no_proxy_type;
 	
-	static type create(
-		dense_tensor_adaptor<T, Axis, TagList, Device> const& E
-	){
+	static no_proxy_type create(dense_tensor_adaptor<T, Axis, TagList, Device> const& E, integer_list<std::size_t, 0>){
 		//compute new shape by cutting out the selected Axis
 		auto strides = E.raw_storage().strides;
 		auto shape = E.shape();
 		REMORA_SIZE_CHECK(strides[N] == strides[N + 1] * shape[N+1]);
-		auto new_shape = shape.slice(N);
-		new_shape[N] *= shape[N];
 		
 		std::array<std::size_t, Axis::num_dims-1> new_strides;
 		for(unsigned i = 0; i != N; ++i){
@@ -336,7 +334,18 @@ struct axis_merge_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N>{
 			new_strides[i - 1] = strides[i];
 		}
 		//return the proxy
-		return type({E.raw_storage().values, new_strides}, E.queue(), new_shape);
+		return {{E.raw_storage().values, new_strides}, E.queue(), shape.merge(N)};
+	}
+	
+	//case 2: we need a proxy :-(
+	typedef merge_proxy<dense_tensor_adaptor<T, Axis, TagList, Device>, N> proxy_type;
+	static proxy_type create(dense_tensor_adaptor<T, Axis, TagList, Device> const& E, integer_list<std::size_t, 1>){
+		return E;
+	}
+	//dispatcher
+	typedef typename std::conditional<needs_proxy, proxy_type, no_proxy_type>::type type;
+	static type create(dense_tensor_adaptor<T, Axis, TagList, Device> const& E){
+		return create(E, integer_list<std::size_t, needs_proxy>());
 	}
 };
 

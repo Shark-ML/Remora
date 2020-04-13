@@ -1,5 +1,4 @@
 #define BOOST_TEST_MODULE Remora_Proxy
-#include <iostream>
 #include <remora/proxy_expressions.hpp>
 #include <remora/dense.hpp>
 
@@ -473,6 +472,76 @@ BOOST_AUTO_TEST_CASE( Dense_Merge_3){
 	BOOST_CHECK_EQUAL(result.raw_storage().strides[1], 9);
 	BOOST_CHECK_EQUAL(result.shape()[0], 2);
 	BOOST_CHECK_EQUAL(result.shape()[1], 36);
+}
+
+
+BOOST_AUTO_TEST_CASE( Dense_Merge_Proxy){
+	typedef dense_tensor_adaptor<unsigned, axis<3, 1, 2, 0>, integer_list<bool, 0, 1, 0, 1>, cpu_tag> tensor_type;
+	typedef dense_tensor_adaptor<unsigned, axis<1, 0>, integer_list<bool, 0, 0>, cpu_tag> sliced_tensor_type1;
+	typedef dense_tensor_adaptor<unsigned, axis<1, 2, 0>, integer_list<bool, 1, 0, 1>, cpu_tag> sliced_tensor_type2;
+	tensor_type adaptor({values.data(), {4, 27,9,108}},no_queue(),  {2, 4,3,2});
+	merge_proxy<tensor_type, 2> op = reshape(adaptor, same, same, merge<2>());
+	sliced_tensor_type1 op_sliced1 = slice(op,ax::same, ax::same, 5);
+	merge_proxy<sliced_tensor_type2, 1> op_sliced2 = slice(op,1);
+	BOOST_CHECK_EQUAL(op.shape()[0], 2);
+	BOOST_CHECK_EQUAL(op.shape()[1], 4);
+	BOOST_CHECK_EQUAL(op.shape()[2], 6);
+	
+	tensorN<int, 3> result({2,4,6},0);
+	tensorN<int, 3> result_plus({2,4,6},1);
+	assign(result, op);
+	plus_assign(result_plus, op);
+	
+	//test proxies
+	tensor<int, axis<2,0,1>, cpu_tag > result_permute = op;
+	tensor<int, axis<1,0>, cpu_tag > result_slice1 = op_sliced1;
+	tensor<int, axis<1,0>, cpu_tag > result_slice2 = op_sliced2;
+
+	for(std::size_t i = 0; i != 2; ++i){
+		for(std::size_t j = 0; j != 4; ++j){
+			for(std::size_t k = 0; k != 3; ++k){
+				for(std::size_t l = 0; l != 2; ++l){
+					BOOST_CHECK_EQUAL(adaptor(i,j,k,l), result(i,j, k * 2 + l));
+					BOOST_CHECK_EQUAL(adaptor(i,j,k,l)+1, result_plus(i,j, k * 2 + l));
+					BOOST_CHECK_EQUAL(adaptor(i,j,k,l), result_permute(i,j, k * 2 + l));
+					BOOST_CHECK_EQUAL(adaptor(1,j,k,l), result_slice2(j,k * 2 + l));
+				}
+			}
+			BOOST_CHECK_EQUAL(adaptor(i,j,2,1), result_slice1(i,j));
+		}
+	}
+}
+
+//testing split after merge
+BOOST_AUTO_TEST_CASE( Dense_Merge_Proxy_Split){
+	typedef dense_tensor_adaptor<unsigned, axis<0, 2, 1>, integer_list<bool, 1, 1, 1>, cpu_tag> tensor_type;
+	typedef dense_tensor_adaptor<unsigned, axis<0, 3, 1, 2>, integer_list<bool, 1, 1, 1, 1>, cpu_tag> result_tensor_type;
+	tensor_type adaptor({values.data(), {24, 1, 4}},no_queue(),  {2, 4,6});
+	merge_proxy<result_tensor_type, 0> op = reshape(adaptor, merge<2>(), split<2>(2,3));
+	//advanced check. we first permute adaptor to a different shape, than merge/split according to permutaton and permute back.
+	//this should give the same final type of expression as above and indeed everything should be equal.
+	//However, it goes through a different construction path, so testing this invariance is important
+	auto adapt_permuted = permute(adaptor, axis<2,0,1>());
+	auto merged = reshape(adapt_permuted, ax::same, merge<2>());
+	merge_proxy<result_tensor_type, 0> op2 = permute(reshape(merged, split<2>(2,3), ax::same),axis<2,0,1>());
+	
+	BOOST_CHECK_EQUAL(op.shape()[0], 8);
+	BOOST_CHECK_EQUAL(op.shape()[1], 2);
+	BOOST_CHECK_EQUAL(op.shape()[2], 3);
+	
+	tensorN<int, 3> result = op;
+	tensorN<int, 3> result2 = op2;
+
+	for(std::size_t i = 0; i != 2; ++i){
+		for(std::size_t j = 0; j != 4; ++j){
+			for(std::size_t k = 0; k != 2; ++k){
+				for(std::size_t l = 0; l != 3; ++l){
+					BOOST_CHECK_EQUAL(adaptor(i,j,k * 3 + l), result(i * 4 + j, k, l));
+					BOOST_CHECK_EQUAL(adaptor(i,j,k * 3 + l), result2(i * 4 + j, k, l));
+				}
+			}
+		}
+	}
 }
 
 BOOST_AUTO_TEST_SUITE_END();

@@ -168,7 +168,7 @@ public:
 	template<class... Indices, class = typename std::enable_if<sizeof...(Indices) == num_dims,void>::type>
 	reference operator()(Indices... idx) const {
 		static_assert(sizeof...(idx) == axis::num_dims, "Must pass same amount of parameters as dimensions in the tensor");
-		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{idx...}, m_storage.strides);
+		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{size_type(idx)...}, m_storage.strides);
 		return m_storage.values[elem];
 	}
 	
@@ -177,7 +177,7 @@ public:
 	template<class... Indices, class = typename std::enable_if<sizeof...(Indices) == num_dims,void>::type>
 	reference operator()(Indices... idx){
 		static_assert(sizeof...(idx) == axis::num_dims, "Must pass same amount of parameters as dimensions in the tensor");
-		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{idx...}, m_storage.strides);
+		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{size_type(idx)...}, m_storage.strides);
 		return m_storage.values[elem];
 	}
 	
@@ -335,7 +335,7 @@ public:
 	template<class... Indices, class = typename std::enable_if<sizeof...(Indices) == num_dims,void>::type>
 	const_reference operator()(Indices... idx) const {
 		static_assert(sizeof...(idx) == axis::num_dims, "Must pass same amount of parameters as dimensions in the tensor");
-		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{idx...}, m_strides);
+		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{size_type(idx)...}, m_strides);
 		return m_values[elem];
 	}
 	
@@ -344,7 +344,7 @@ public:
 	template<class... Indices, class = typename std::enable_if<sizeof...(Indices) == num_dims,void>::type>
 	reference operator()(Indices... idx){
 		static_assert(sizeof...(idx) == axis::num_dims, "Must pass same amount of parameters as dimensions in the tensor");
-		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{idx...}, m_strides);
+		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{size_type(idx)...}, m_strides);
 		return m_values[elem];
 	}
 	

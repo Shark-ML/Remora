@@ -218,10 +218,7 @@ struct axis_merge_optimizer<scalar_tensor<T, Axis, Device>, N>{
 	typedef scalar_tensor<T, typename Axis::template slice_t<N>, Device> type;
 	
 	static type create(scalar_tensor<T, Axis, Device> const& E){
-		auto shape = E.shape();
-		auto new_shape = shape.slice(N);
-		new_shape[N] *= shape[N];
-		return type(new_shape,E.scalar());
+		return type(E.shape().merge(N),E.scalar());
 	}
 };
 
