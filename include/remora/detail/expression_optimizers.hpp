@@ -50,6 +50,9 @@ namespace remora{namespace detail{
 template<class Tensor,  class F>
 struct tensor_unary_optimizer;
 
+template<class TensorA, class F>
+struct tensor_reduce_last_optimizer;
+
 
 ////////////////////////////////////
 //// Permute
@@ -127,16 +130,20 @@ struct axis_permute_optimizer<tensor_broadcast<Tensor, OAxis, DropList >, axis<P
 	}
 };
 
-/*
-//vector repeater behaves as outer product to: (v 1^T)^T = (1 v^T)
-template<class V, class OAxis>
-struct axis_permute_optimizer<vector_repeater<V,OAxis> >{
-	typedef vector_repeater<V,typename OAxis::transposed_orientation> type;
+//permute(reduce_last(A), p) = reduce_last(permute(A, expand(p) )) 
+template<class Tensor, class F, class Axis>
+struct axis_permute_optimizer<tensor_reduce_last<Tensor, F>, Axis >{
+	typedef axis_permute_optimizer<typename Tensor::const_closure_type, typename Axis::expand_t > opt;
+	typedef tensor_reduce_last<typename opt::type, F> type;
 	
-	static type create(vector_repeater<V,OAxis> const& E){
-		return type(E.expression(),E.num_repetitions());
+	static type create(tensor_reduce_last<Tensor, F> const& E){
+		return {opt::create(E.expression()), E.functor()};
 	}
 };
+
+
+
+/*
 
 //(v1 v2^T)^T = v2 v1^T
 template<class V1, class V2>
@@ -189,10 +196,14 @@ struct axis_permute_optimizer<matrix_concat<TensorA,TensorB,B> >{
 //// Merge
 ////////////////////////////////////
 
-//slice(alpha A,i) = alpha slice(A,i)
+//merge is slightly different from all other optimizers in the sense that you can ask it whether it will
+//require the use of merge_proxy at some point using the "needs_proxy" compile-time variable
+
+//merge(alpha A,i) = alpha merge(A,i)
 template<class Tensor, std::size_t N>
 struct axis_merge_optimizer<scalar_multiply<Tensor>, N >{
 	typedef axis_merge_optimizer<typename Tensor::const_closure_type, N> opt;
+	static constexpr std::size_t needs_proxy = opt::needs_proxy;
 	typedef scalar_multiply<typename opt::type> type;
 	
 	static type create(scalar_multiply<Tensor> const& E){
@@ -200,11 +211,12 @@ struct axis_merge_optimizer<scalar_multiply<Tensor>, N >{
 	}
 };
 
-// slice(A+B,i) = slice(A,i) + slice(B,i)
+// merge(A+B,i) = merge(A,i) + merge(B,i)
 template<class TensorA, class TensorB, std::size_t N>
 struct axis_merge_optimizer<tensor_addition<TensorA,TensorB>, N>{
 	typedef axis_merge_optimizer<typename TensorA::const_closure_type, N> left_opt;
 	typedef axis_merge_optimizer<typename TensorB::const_closure_type, N> right_opt;
+	static constexpr std::size_t needs_proxy = left_opt::needs_proxy || right_opt::needs_proxy;
 	typedef tensor_addition<typename left_opt::type,typename right_opt::type > type;
 	
 	static type create(tensor_addition<TensorA,TensorB> const& E){
@@ -212,20 +224,21 @@ struct axis_merge_optimizer<tensor_addition<TensorA,TensorB>, N>{
 	}
 };
 
-//slice(constant,i) = constant
+//merge(constant,i) = constant
 template<class T, class Axis, class Device, std::size_t N>
 struct axis_merge_optimizer<scalar_tensor<T, Axis, Device>, N>{
 	typedef scalar_tensor<T, typename Axis::template slice_t<N>, Device> type;
-	
+	static constexpr std::size_t needs_proxy = false;
 	static type create(scalar_tensor<T, Axis, Device> const& E){
 		return type(E.shape().merge(N),E.scalar());
 	}
 };
 
-//slice(f(A),i) = f(slice(A,i))
+//merge(f(A),i) = f(merge(A,i))
 template<class Tensor, class F, std::size_t N>
 struct axis_merge_optimizer<tensor_unary<Tensor,F>, N>{
 	typedef axis_merge_optimizer<typename Tensor::const_closure_type, N> opt;
+	static constexpr std::size_t needs_proxy = opt::needs_proxy;
 	typedef tensor_unary<typename opt::type, F> type;
 	
 	static type create(tensor_unary<Tensor,F> const& E){
@@ -233,11 +246,12 @@ struct axis_merge_optimizer<tensor_unary<Tensor,F>, N>{
 	}
 };
 
-//slice(f(A,B),i)=f(slice(A,i),slice(B,i))
+//merge(f(A,B),i)=f(merge(A,i),merge(B,i))
 template<class TensorA, class TensorB, class F, std::size_t N>
 struct axis_merge_optimizer<tensor_binary<TensorA,TensorB, F>, N>{
 	typedef axis_merge_optimizer<typename TensorA::const_closure_type, N> left_opt;
 	typedef axis_merge_optimizer<typename TensorB::const_closure_type, N> right_opt;
+	static constexpr std::size_t needs_proxy = left_opt::needs_proxy || right_opt::needs_proxy;
 	typedef tensor_binary<typename left_opt::type,typename right_opt::type, F > type;
 	
 	static type create(tensor_binary<TensorA,TensorB,F> const& E){
@@ -245,11 +259,23 @@ struct axis_merge_optimizer<tensor_binary<TensorA,TensorB, F>, N>{
 	}
 };
 
+//merge(reduce_last(A), N) = reduce_last(merge(A, N)) 
+template<class Tensor, class F, std::size_t N>
+struct axis_merge_optimizer<tensor_reduce_last<Tensor, F>, N >{
+	typedef axis_merge_optimizer<typename Tensor::const_closure_type, N > opt;
+	static constexpr std::size_t needs_proxy = opt::needs_proxy;
+	typedef tensor_reduce_last<typename opt::type, F> type;
+	
+	static type create(tensor_reduce_last<Tensor, F> const& E){
+		return type(opt::create(E.expression()), E.functor());
+	}
+};
+
 ////////////////////////////////////
 //// Split
 ////////////////////////////////////
 
-//slice(alpha A,i) = alpha slice(A,i)
+//split(alpha A,i) = alpha split(A,i)
 template<class Tensor, std::size_t N>
 struct axis_split_optimizer<scalar_multiply<Tensor>, N >{
 	typedef axis_split_optimizer<typename Tensor::const_closure_type, N> opt;
@@ -260,7 +286,7 @@ struct axis_split_optimizer<scalar_multiply<Tensor>, N >{
 	}
 };
 
-// slice(A+B,i) = slice(A,i) + slice(B,i)
+// split(A+B,i) = split(A,i) + split(B,i)
 template<class TensorA, class TensorB, std::size_t N>
 struct axis_split_optimizer<tensor_addition<TensorA,TensorB>, N>{
 	typedef axis_split_optimizer<typename TensorA::const_closure_type, N> left_opt;
@@ -272,7 +298,7 @@ struct axis_split_optimizer<tensor_addition<TensorA,TensorB>, N>{
 	}
 };
 
-//slice(constant,i) = constant
+//split(constant,i) = constant
 template<class T, class Axis, class Device, std::size_t N>
 struct axis_split_optimizer<scalar_tensor<T, Axis, Device>, N>{
 	typedef scalar_tensor<T, typename Axis::template slice_t<N>, Device> type;
@@ -282,7 +308,7 @@ struct axis_split_optimizer<scalar_tensor<T, Axis, Device>, N>{
 	}
 };
 
-//slice(f(A),i) = f(slice(A,i))
+//split(f(A),i) = f(split(A,i))
 template<class Tensor, class F, std::size_t N>
 struct axis_split_optimizer<tensor_unary<Tensor,F>, N>{
 	typedef axis_split_optimizer<typename Tensor::const_closure_type, N> opt;
@@ -293,7 +319,7 @@ struct axis_split_optimizer<tensor_unary<Tensor,F>, N>{
 	}
 };
 
-//slice(f(A,B),i)=f(slice(A,i),slice(B,i))
+//split(f(A,B),i)=f(split(A,i),split(B,i))
 template<class TensorA, class TensorB, class F, std::size_t N>
 struct axis_split_optimizer<tensor_binary<TensorA,TensorB, F>, N>{
 	typedef axis_split_optimizer<typename TensorA::const_closure_type, N> left_opt;
@@ -305,7 +331,7 @@ struct axis_split_optimizer<tensor_binary<TensorA,TensorB, F>, N>{
 	}
 };
 
-//slice(f(A,B),i)=f(slice(A,i),slice(B,i))
+//split(f(A,B),i)=f(split(A,i),split(B,i))
 template<class Tensor, class Axis, class DropList, std::size_t N>
 struct axis_split_optimizer<tensor_broadcast<Tensor, Axis, DropList >, N>{
 	//check whether N is in the droplist
@@ -344,6 +370,17 @@ struct axis_split_optimizer<tensor_broadcast<Tensor, Axis, DropList >, N>{
 		auto new_shape = E.shape().split(N, size1, size2);
 		auto Asplit = split_inner(E.expression(), size1, size2, integer_list<bool,droppedN>());
 		return {Asplit, new_shape};
+	}
+};
+
+//split(reduce_last(A), N) = reduce_last(split(A, N)) 
+template<class Tensor, class F, std::size_t N>
+struct axis_split_optimizer<tensor_reduce_last<Tensor, F>, N >{
+	typedef axis_split_optimizer<typename Tensor::const_closure_type, N > opt;
+	typedef tensor_reduce_last<typename opt::type, F> type;
+	
+	static type create(tensor_reduce_last<Tensor, F> const& E, std::size_t size1, std::size_t size2){
+		return {opt::create(E.expression(), size1, size2), E.functor()};
 	}
 };
 
@@ -488,25 +525,18 @@ struct slice_optimizer<tensor_broadcast<Tensor, Axis, DropList >, N>{
 	}
 };
 
+//slice(reduce_last(A), N) = reduce_last(slice(A, N)) 
+template<class Tensor, class F, std::size_t N>
+struct slice_optimizer<tensor_reduce_last<Tensor, F>, N >{
+	typedef slice_optimizer<typename Tensor::const_closure_type, N > opt;
+	typedef tensor_reduce_last<typename opt::type, F> type;
+	
+	static type create(tensor_reduce_last<Tensor, F> const& E, std::size_t i){
+		return {opt::create(E.expression(), i), E.functor()};
+	}
+};
+
 /*
-//slice(repeat(v),i) = v if repeat is row_major
-template<class V>
-struct slice_optimizer<vector_repeater<V, row_major> >{
-	typedef typename V::const_closure_type type;
-	
-	static type create(vector_repeater<V, row_major> const& E, std::size_t){
-		return E.expression();
-	}
-};
-//slice(repeat(v),i) = v(i) 1^T if repeat is column_major
-template<class V>
-struct slice_optimizer<vector_repeater<V, column_major> >{
-	typedef scalar_tensor<typename V::value_type, typename V::device_type> type;
-	
-	static type create(vector_repeater<V, column_major> const& E, std::size_t i){
-		return type(E.num_repetitions(), E.expression().elements()(i));
-	}
-};
 
 //slice(v1 v2^T,i)^T = v(i) v2 
 template<class V1, class V2>
@@ -617,30 +647,28 @@ struct subrange_optimizer<tensor_binary<TensorA,TensorB, F>, N>{
 		std::size_t start, std::size_t end
 	){
 		return type(
-			left_opt::create(E.lhs(),start,end),
-			right_opt::create(E.rhs(),start,end),
+			left_opt::create(E.lhs(), start, end),
+			right_opt::create(E.rhs(), start, end),
 			E.functor()
 		);
 	}
 };
-/*
-//repeater behaves like outer_product
-template<class V, class OAxis, std::size_t N>
-struct subrange_optimizer<vector_repeater<V, OAxis> >{
-	typedef vector_range_optimizer<typename V::const_closure_type > vector_opt;
-	typedef vector_repeater<typename vector_opt::type, OAxis> type;
+
+//range(reduce_last(A)) = reduce_last(range(A)) 
+template<class Tensor, class F, std::size_t N>
+struct subrange_optimizer<tensor_reduce_last<Tensor, F>, N >{
+	typedef subrange_optimizer<typename Tensor::const_closure_type, N > opt;
+	typedef tensor_reduce_last<typename opt::type, F> type;
 	
-	static type create(
-		vector_repeater<V, OAxis> const& E,
-		std::size_t start1, std::size_t end1, std::size_t start2, std::size_t end2
+	static type create(tensor_reduce_last<Tensor, F> const& E, 
+		std::size_t start, std::size_t end
 	){
-		return type( 
-			vector_opt::create(E.expression(),OAxis::index_m(start1,start2),OAxis::index_m(end1,end2)), 
-			OAxis::index_M(end1,end2) - OAxis::index_M(start1,start2)
-		);
+		return {opt::create(E.expression(), start, end), E.functor()};
 	}
 };
 
+
+/*
 
 //range( u v^T) = range(u) range(v)^T
 template<class V1, class V2>
@@ -978,6 +1006,91 @@ struct scalar_multiply_optimizer<matrix_concat<TensorA, TensorB, b> >{
 	}
 };*/
 
+
+////////////////////////////////////
+//// Tensor-Reduce
+////////////////////////////////////
+template<class TensorA, class F>
+struct tensor_reduce_last_optimizer{
+	typedef tensor_reduce_last<TensorA, F> type;
+	static type create(typename TensorA::const_closure_type const& A, F const& f){
+		return {A, f};
+	}
+};
+
+//special case for handling reductions of multiple consecutive axes
+// we have to check whether there are merged-axis possible.
+// this is more complicated than it sounds because by definition,
+// reduce(A, axis_set<2,1>) and reduce(A, axis_set<1,2>)
+// lead to the same result, but only one can be merged naively.
+// we try to handle this case by also checking for permutations.
+//
+// This is especially needed as humans tend to count ascending and write axis_set<0,1,2>
+// instead of axis_set<2,1,0> in sum/max/min etc if they want to reduce a number of consecutive
+// axes.
+//
+// Note: this is not perfect. in a higher dimensional tensor with many reductions
+// doing pairwise checks might not include the permutation needed to merge all axes
+// into a single reduce-operation.
+template<class TensorA, class F>
+struct tensor_reduce_last_optimizer<tensor_reduce_last<TensorA, F>, F>{
+	static constexpr std::size_t num_dims = TensorA::num_dims;
+	
+	//Case 1: try direct merge
+	typedef axis_merge_optimizer<TensorA, num_dims - 2> merge_opt;
+	static constexpr std::size_t use_direct_merge = !merge_opt::needs_proxy;
+	typedef tensor_reduce_last_optimizer<typename merge_opt::type, F> merged_reduce_opt;
+	typedef typename merged_reduce_opt::type merged_type;
+	template<class PMerge>
+	static merged_type create(typename TensorA::const_closure_type const& A, F const& f, 
+		integer_list<std::size_t, 1>, PMerge
+	){
+		return merged_reduce_opt::create(merge_opt::create(A),f);
+	}
+	
+	//Case 2: try merge of permutation
+	typedef typename default_axis<TensorA::num_dims>
+		::template swap_axes_t<num_dims - 2, num_dims - 1> axis_permute;
+	typedef axis_permute_optimizer<TensorA, axis_permute> permute_opt; //permute the inner tensor
+	typedef axis_merge_optimizer<typename permute_opt::type, num_dims - 2> permuted_merge_opt;//merge permutation
+	static constexpr std::size_t use_permute_merge = !permuted_merge_opt::needs_proxy; //Check if it is proxy-free
+	typedef tensor_reduce_last_optimizer<
+		typename permuted_merge_opt::type, F
+	> p_merged_reduce_opt;//construct tensor-reduction optimizer for the merged permuted expression
+	typedef typename p_merged_reduce_opt::type p_merged_type; //final type
+	//creation code for Case 2
+	static p_merged_type create(
+		typename TensorA::const_closure_type const& A, F const& f, 
+		integer_list<std::size_t, 0>, integer_list<std::size_t, 1>
+	){
+		auto perm_A = permute_opt::create(A);
+		auto merged_A = permuted_merge_opt::create(perm_A);
+		return p_merged_reduce_opt::create(merged_A, f);
+	}
+	
+	//Case 3: no merge possible
+	typedef tensor_reduce_last<tensor_reduce_last<TensorA, F>, F> unmerged_type;
+	static unmerged_type create(
+		typename TensorA::const_closure_type const& A, F const& f,
+		integer_list<std::size_t, 0>, integer_list<std::size_t, 0>
+	){
+		return {tensor_reduce_last<TensorA, F>(A, f), f};
+		
+	}
+	
+	//dispatcher
+	typedef typename std::conditional<use_direct_merge, 
+		merged_type,
+		typename std::conditional<use_permute_merge, p_merged_type, unmerged_type>::type
+	>::type type;
+	static type create(tensor_reduce_last<TensorA, F> const& A, F const& f){
+		return create(A.expression(), f, 
+			integer_list<std::size_t, use_direct_merge>(),
+			integer_list<std::size_t, use_permute_merge>()
+		);
+	}
+};
+
 /*
 ////////////////////////////////////
 //// Matrix Vector Product
@@ -1155,74 +1268,5 @@ struct matrix_matrix_prod_optimizer<scalar_multiply<TensorA>,scalar_multiply<Ten
 	}
 };*/
 
-/*
-////////////////////////////////////
-//// Vector-Set Fold
-////////////////////////////////////
-
-template<class S, class F, class G>
-struct fold_vector_set_optimizer;
-
-template<class Tensor, class F, class G>
-struct fold_vector_set_optimizer<vector_set<Tensor, row_major>, F, G>{
-	typedef matrix_row_transform<Tensor, F, G> type;
-	static type create(vector_set<Tensor, row_major> const& set, F const& f, G const& g){
-		return type(set.expression(), f, g);
-	}
-};
-
-template<class Tensor, class F, class G>
-struct fold_vector_set_optimizer<vector_set<Tensor, column_major>, F, G>{
-	typedef axis_permute_optimizer<Tensor> opt;
-	typedef matrix_row_transform<typename opt::type, F, G> type;
-	static type create(vector_set<Tensor, column_major> const& set, F const& f, G const& g){
-		return type(opt::create(set.expression()), f, g);
-	}
-};
-
-//~ template<class S, class Tensor>
-//~ struct vector_set_matrix_prod_optimizer;
-
-//~ template<class TensorA, class TensorB>
-//~ struct vector_set_matrix_prod_optimizer<vector_set<TensorA, row_major>, TensorB>{
-	//~ typedef matrix_matrix_prod_optimizer<TensorA, TensorB> opt;
-	//~ typedef vector_set<typename opt::type, row_major> type;
-	//~ static type create(vector_set<TensorA, row_major> const& set, typename TensorB::const_closure_type const& m2){
-		//~ return as_set(opt::create(set.expression(), m2), row_major());
-	//~ }
-//~ };
-
-//~ template<class TensorA, class TensorB>
-//~ struct vector_set_matrix_prod_optimizer<vector_set<TensorA, column_major>, TensorB>{
-	//~ typedef axis_permute_optimizer<TensorB> trans_opt;
-	//~ typedef matrix_matrix_prod_optimizer<typename trans_opt::type, TensorA> opt;
-	//~ typedef vector_set<typename opt::type, column_major> type;
-	//~ static type create(vector_set<TensorA, column_major> const& set, typename TensorB::const_closure_type const& m2){
-		//~ return as_set(opt::create(trans_opt::create(m2),set.expression()), column_major());
-	//~ }
-//~ };
-
-//~ template<class S, class V>
-//~ struct vector_set_inner_prod_optimizer;
-
-//~ template<class Tensor, class V>
-//~ struct vector_set_inner_prod_optimizer<vector_set<Tensor, row_major>, V>{
-	//~ typedef matrix_vector_prod_optimizer<Tensor, V> opt;
-	//~ typedef typename opt::type type;
-	//~ static type create(vector_set<Tensor, row_major> const& set, typename V::const_closure_type const& v){
-		//~ return opt::create(set.expression(), v);
-	//~ }
-//~ };
-//~ template<class Tensor, class V>
-//~ struct vector_set_inner_prod_optimizer<vector_set<Tensor, column_major>, V>{
-	//~ typedef axis_permute_optimizer<Tensor> trans_opt;
-	//~ typedef matrix_vector_prod_optimizer<typename trans_opt::type, V> opt;
-	//~ typedef typename opt::type type;
-	//~ static type create(vector_set<Tensor, column_major> const& set, typename V::const_closure_type const& v){
-		//~ return opt::create(trans_opt::create(set.expression()), v);
-	//~ }
-//~ };
-
-*/
 }}
 #endif

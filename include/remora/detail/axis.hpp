@@ -118,6 +118,24 @@ public:
 	template<std::size_t... Selection>
 	using permute_t = axis<axis::template element_v<Selection>...>;
 	
+	/// \brief Switches the order of two axes in the sequence.
+	template<std::size_t AxisI, std::size_t AxisJ>
+	using swap_axes_t = axis<   
+		(Seq == axis::template element_v<AxisI>? axis::template element_v<AxisJ> : 
+		(Seq == axis::template element_v<AxisJ>? axis::template element_v<AxisI>: Seq))
+	...>;
+	
+	/// \brief Adds a new axis to the end of the axis object. the new sequence has value N-1
+	///
+	/// This is value to expand permtuations of axis objects to larger sequences.
+	typedef axis<Seq...,sizeof...(Seq)> expand_t;
+	
+	
+	/// \brief Reverses the order of the axis object.
+	///
+	/// axis<0,1,2,3>::reverse_t = axis<3,2,1,0>
+	typedef axis<(sizeof...(Seq) - 1 - Seq)...> reverse_axis_t;
+	
 	
 	/// \brief Represents the inverted axis object. 
 	typedef decltype(apply<invert_helper>(std::make_index_sequence<sizeof...(Seq)>())) inverse_t;

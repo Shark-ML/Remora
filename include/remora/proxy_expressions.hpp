@@ -133,10 +133,20 @@ namespace detail{
 	struct reshape_dispatcher<CurDim, ax::split<2>, Args... >{
 		template<class TensorA>
 		static auto create(TensorA const& A, ax::split<2> arg, Args... args){
+			std::size_t head_size = arg.shape[0];
+			std::size_t tail_size = arg.shape.slice(0).num_elements();
+			REMORA_SIZE_CHECK(head_size > 0 || tail_size > 0); //only one zero allowed
+			
+			// handle 0
+			if (head_size == 0)
+				head_size = A.shape()[CurDim] / tail_size;
+			if (tail_size == 0)
+				tail_size = A.shape()[CurDim] / head_size;
+
 			//check the split object fits the axis.
-			REMORA_SIZE_CHECK(arg.shape.num_elements() == A.shape()[CurDim]);
+			REMORA_SIZE_CHECK(head_size * tail_size == A.shape()[CurDim]);
 			//split and recurse
-			auto Asplit = axis_split_optimizer<TensorA, CurDim>::create(A, arg.shape[0], arg.shape[1]);
+			auto Asplit = axis_split_optimizer<TensorA, CurDim>::create(A, head_size, tail_size);
 			return reshape_dispatcher<CurDim + 2, Args...>::create(Asplit, args...);
 		}
 	};
@@ -146,11 +156,22 @@ namespace detail{
 	struct reshape_dispatcher<CurDim, ax::split<K>, Args... >{
 		template<class TensorA>
 		static auto create(TensorA const& A, ax::split<K> arg, Args... args){
-			//check the split object fits the axis.
-			REMORA_SIZE_CHECK(arg.shape.num_elements() == A.shape()[CurDim]);
+			
 			//split off the first new dimension from the axis
-			std::size_t tail_size = arg.shape.num_elements()/arg.shape[0];
-			auto Asplit = axis_split_optimizer<TensorA, CurDim>::create(A, arg.shape[0], tail_size);
+			std::size_t head_size = arg.shape[0];
+			std::size_t tail_size = arg.shape.slice(0).num_elements();
+			REMORA_SIZE_CHECK(head_size > 0 || tail_size > 0); //only one zero allowed
+			
+			// handle 0
+			if (head_size == 0)
+				head_size = A.shape()[CurDim] / tail_size;
+			if (tail_size == 0)
+				tail_size = A.shape()[CurDim] / head_size;
+
+			//check the split object fits the axis.
+			REMORA_SIZE_CHECK(head_size * tail_size == A.shape()[CurDim]);
+			
+			auto Asplit = axis_split_optimizer<TensorA, CurDim>::create(A, head_size, tail_size);
 			//create a split-object for the remainder
 			tensor_shape<K - 1> tail_shape;
 			for (std::size_t i = 0; i != K - 1; ++i){
@@ -191,9 +212,10 @@ namespace detail{
 /// Their semantic meaning is as follows:
 ///
 /// split<N> takes the next axis of  A and splits them into the next N axes by B.
-///     split takes N arguments which is the shape of the dimensions. Note that the
-///     split is taken using the default-order of axis<0,1,...,N-1>, that is the first axis is the
-///     leading dimension.
+///     split takes N arguments which is the shape of the dimensions.
+///  	One of the arguments can be 0, indicating that the system should compute a proper value
+///     Note that thesplit is taken using the default-order of axis<0,1,...,N-1>, 
+///     that is the first axis is the leading dimension.
 /// same takes the next axis from A and maps it to the next axis of B without changing its shape. 
 ///
 /// merge<N> takes the next N consecutive axes of A and maps them to the next single axis of B
@@ -258,19 +280,56 @@ auto reshape(
 
 template <std::size_t Dim, class TensorA, class Device, unsigned... Axes>
 auto permute(tensor_expression<Dim, TensorA, Device>& A, axis<Axes...> permutation){
+	static_assert(sizeof...(Axes) == Dim);
 	return detail::axis_permute_optimizer<typename TensorA::closure_type, axis<Axes...> >::create(A());
 }
 
 template <std::size_t Dim, class TensorA, class Device, unsigned... Axes>
 auto permute(tensor_expression<Dim, TensorA, Device> const& A, axis<Axes...> permutation){
+	static_assert(sizeof...(Axes) == Dim);
 	return detail::axis_permute_optimizer<typename TensorA::const_closure_type, axis<Axes...> >::create(A());
 }
 
 template <std::size_t Dim, class TensorA, class Device, unsigned... Axes>
 auto permute(tensor_expression<Dim, TensorA, Device> && A, axis<Axes...> permutation){
+	static_assert(sizeof...(Axes) == Dim);
 	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
 	return permute(A, permutation);
 }
+
+namespace detail{
+	template<std::size_t N, std::size_t NEnd, class Axis>
+	struct permute_axis_back_helper{
+		typedef typename permute_axis_back_helper<N+1, NEnd, typename Axis::template swap_axes_t<N, N+1> >::type type;
+	};
+	template<std::size_t N, class Axis>
+	struct permute_axis_back_helper<N,N,Axis>{
+		typedef Axis type;
+	};
+}
+/// \brief Applies a permutation to A which moves an axis to the last index position without changing order of other axes
+///
+/// Example: a 4D tensor A A_ijkl with permute_axis_back(A,axis_set<1>) will be permuted to A_iklj
+template <std::size_t Dim, class TensorA, class Device, unsigned Axis>
+auto permute_axis_back(tensor_expression<Dim, TensorA, Device>& A, axis_set<Axis>){
+	static_assert(Axis < Dim);
+	typedef typename detail::permute_axis_back_helper< 
+		Axis, Dim - 1, default_axis<Dim>
+	>::type	permutation;
+	return permute(A, permutation());
+}
+
+template <std::size_t Dim, class TensorA, class Device, unsigned Axis>
+auto permute_axis_back(tensor_expression<Dim, TensorA, Device> const& A, axis_set<Axis> ax){
+	typename TensorA::const_closure_type Aclosure = A();
+	return permute_axis_back(Aclosure, ax);
+};
+
+template <std::size_t Dim, class TensorA, class Device, unsigned Axis>
+auto permute_axis_back(tensor_expression<Dim, TensorA, Device>&& A, axis_set<Axis> ax){
+	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
+	return permute_axis_back(A, ax);
+};
 
 ////////////////////////////////////
 //// Tensor-slice

@@ -50,6 +50,7 @@ remora_add_test( dense.cpp Dense)
 remora_add_test( proxy.cpp Proxy)
 remora_add_test( kernels_assign.cpp Kernels_Assign)
 remora_add_test( expressions.cpp Expressions)
+remora_add_test( reductions.cpp Reductions)
 
 
 #remora_add_test( matrix_expression.cpp Matrix_Expression)

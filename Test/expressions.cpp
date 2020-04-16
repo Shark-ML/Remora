@@ -2,7 +2,6 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <iostream> 
 #include <remora/expressions.hpp>
 #include <remora/dense.hpp>
 #include <boost/mpl/list.hpp>
@@ -109,6 +108,8 @@ void checkDenseExpressionEquality(
 std::size_t Dimension1 = 25;
 std::size_t Dimension2 = 50;
 
+typedef boost::mpl::list<row_major,column_major> result_orientations;
+
 BOOST_AUTO_TEST_SUITE (Remora_expressions_test)
 
 /////////////////////////////////////////////////////////////
@@ -139,21 +140,6 @@ BOOST_AUTO_TEST_CASE( Remora_dense_matrix_Outer_Prod ){
 	checkDenseExpressionEquality(2.0 * ( outer_prod( x, y ) + 3.0 * result),result2);
 }
 
-BOOST_AUTO_TEST_CASE( Remora_dense_matrix_Vector_Repeater){
-	vector<double> x(Dimension2); 
-	matrix<double> result({Dimension1, Dimension2});
-	
-	for (size_t i = 0; i < Dimension2; i++)
-		x(i) = i-3.0;
-	
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension2; j++){
-			result(i,j)= x(j);
-		}
-	}
-	checkDenseExpressionEquality(repeat(x,Dimension1),result);
-}
-
 BOOST_AUTO_TEST_CASE( Remora_Diagonal_Matrix ){
 	vector<double> diagonalElements(Dimension1);
 	matrix<double> result(Dimension1,Dimension2,0.0);
@@ -175,10 +161,7 @@ BOOST_AUTO_TEST_CASE( Remora_Identity_Matrix ){
 	checkDiagonalMatrix(diagonal,diagonalElements);
 }*/
 
-/////////////////////////////////////////////////////////////
-//////UNARY TRANSFORMATIONS///////
-////////////////////////////////////////////////////////////
-typedef boost::mpl::list<row_major,column_major> result_orientations;
+
 
 BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_1, Axis, result_orientations )
 {
@@ -248,6 +231,11 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_1, Axis, result_ori
 		}
 	}
 }
+
+/////////////////////////////////////////////////////////////
+//////UNARY TRANSFORMATIONS///////
+////////////////////////////////////////////////////////////
+
 
 
 BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_Unary_Minus, Axis, result_orientations )

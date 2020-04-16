@@ -29,7 +29,7 @@
 #define REMORA_TENSOR_EXPRESSION_CLASSES_HPP
 
 #include "traits.hpp"
-// #include "../kernels/fold_rows.hpp"
+#include "../kernels/reduce.hpp"
 #include "../kernels/device_traits.hpp"
 #include "../assignment.hpp"
 #include <type_traits>
@@ -500,41 +500,39 @@ private:
 	functor_type m_functor;
 };
 
-/*
-template<class E, class F, class G, class Axis>
-class tensor_row_transform:public tensor_expression<E::num_dims - Axis::num_dims, tensor_row_transform<E, F, G, Axis>, typename E::device_type >{
+
+template<class E, class F>
+class tensor_reduce_last:public tensor_expression<E::num_dims - 1, tensor_reduce_last<E, F>, typename E::device_type >{
 public:
-	typedef typename E::const_closure_type tensor_closure_type;
+	typedef typename E::const_closure_type expression_closure_type;
 public:
-	typedef typename G::result_type value_type;
+	typedef typename F::result_type value_type;
 	typedef typename E::size_type size_type;
 	typedef value_type const_reference;
 	typedef const_reference reference;
 
-	typedef tensor_row_transform const_closure_type;
+	typedef tensor_reduce_last const_closure_type;
 	typedef const_closure_type closure_type;
 	typedef unknown_storage storage_type;
 	typedef unknown_storage const_storage_type;
 	typedef typename E::device_type device_type;
 	typedef blockwise<typename E::evaluation_category::tag> evaluation_category;
-	static constexpr std::size_t num_dims = E::num_dims - Axis::num_dims;
+	static constexpr std::size_t num_dims = E::num_dims - 1;
+	typedef typename E::axis::template slice_t<num_dims> axis;
 	// Construction
-	tensor_row_transform(
-		tensor_closure_type const& tensor, F const& f, G const& g
-	):m_expression(tensor), m_f(f), m_g(g){}
+	tensor_reduce_last(
+		expression_closure_type const& expression, F const& f
+	):m_expression(expression), m_functor(f){}
 
 	// Accessors 
 	tensor_shape<num_dims> const shape()const{
-		return {m_expression.shape()[0]};
+		return m_expression.shape().slice(num_dims);
 	}
-	tensor_closure_type const& tensor() const{
+	expression_closure_type const& expression() const{
 		return m_expression;
 	}
-	F const& f() const{
-		return m_f;
-	}
-	G const& g() const{
-		return m_g;
+	F const& functor() const{
+		return m_functor;
 	}
 	typename device_traits<device_type>::queue_type& queue()const{
 		return m_expression.queue();
@@ -551,17 +549,17 @@ public:
 	}
 	template<class TensorX>
 	void plus_assign_to(tensor_expression<num_dims, TensorX, device_type>& X)const{
-		kernels::fold_rows(eval_block(m_expression), X, m_f, m_g);
+		auto E_eval = eval_block(m_expression);//TODO: check/ensure that this uses the same layout as X
+		kernels::reduce_last(E_eval, X, m_functor);
 	}
 	
 	// Iterator Access 
 	// typedef no_iterator const_iterator;
 	// typedef no_iterator iterator;
 private:
-	tensor_closure_type m_expression;
-	F m_f;
-	G m_g;
+	expression_closure_type m_expression;
+	F m_functor;
 };
-*/
+
 }
 #endif

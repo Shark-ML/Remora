@@ -56,13 +56,22 @@ private:
 		T seq[] = {Seq...};
 		return seq[N];
 	}
-	static constexpr unsigned min_integer_helper(){
+	static constexpr T min_integer_helper(){
 		T array[]={Seq...};
 		T minv = array[0];
 		for(std::size_t i = 1; i != sizeof...(Seq); ++i){
 			minv = array[i] < minv? array[i]: minv;
 		}
 		return minv;
+	}
+	
+	static constexpr std::size_t count_helper(T V){
+		T array[]={Seq...};
+		std::size_t count = 0;
+		for(std::size_t i = 0; i != sizeof...(Seq); ++i){
+			count += (array[i] == V);
+		}
+		return count;
 	}
 	
 	static constexpr std::size_t index_of_helper(T V, array_type const& seq){
@@ -131,6 +140,10 @@ public:
 	
 	/// \brief Value of the minimum element
 	static constexpr T min_element = min_integer_helper();
+	
+	/// \brief count the number of occurances of element Value
+	template<T V>
+	static constexpr std::size_t count_v = count_helper(V);
 	
 	/// \brief This removes the Nth element.
 	template<std::size_t N>

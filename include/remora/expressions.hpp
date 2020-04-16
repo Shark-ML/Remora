@@ -306,23 +306,49 @@ REMORA_TENSOR_SCALAR_TRANSFORMATION_2(max, max)
 /////////////////////////////////////////
 /////TENSOR REDUCTIONS
 /////////////////////////////////////////
-/*
-/// \brief Computes the elementwise sum over all elements of A
-///
-/// returns a scalar s = sum_ij A_ij
-template<class TensorA, class Device>
-typename TensorA::value_type sum(tensor_expression<TensorA, Device> const& A){
-	typedef typename std::conditional<
-		std::is_same<typename TensorA::axis , unknown_axis>::value,
-		row_major,
-		typename TensorA::axis 
-	>::type axis;
-	//sum first tensor-rows/columns together followed by summing those results
-	return sum(sum(as_set(A, axis())));
+
+
+namespace detail{
+	template<std::size_t Dim, class TensorA, class Device, unsigned N, class F>
+	auto reduce(tensor_expression<Dim, TensorA, Device> const& A, axis_set<N> ax, F f){
+		//permute the axis to the last position
+		auto A_last = permute_axis_back(A, ax);
+		return detail::tensor_reduce_last_optimizer<decltype(A_last), F>::create(A_last, f);
+	}
+
+	template<std::size_t Dim, class TensorA, class Device, unsigned N, unsigned... Ns, class F>
+	auto reduce(tensor_expression<Dim, TensorA, Device> const& A, axis_set<N, Ns...>, F f){
+		auto Areduced = reduce(A, axis_set<N>(), f);
+		return reduce(Areduced, axis_set<(Ns>N? Ns-1: Ns)...>(), f);
+	}
+}
+
+/// \brief Computes the elementwise sum over the elements of the chosen Axes of A
+template<std::size_t Dim, class TensorA, class Device, unsigned... Ns>
+auto sum(tensor_expression<Dim, TensorA, Device> const& A, axis_set<Ns...> ax){
+	typedef typename TensorA::value_type value_type;
+	typedef typename device_traits<Device>::template add<value_type> Add;
+	return detail::reduce(A, ax, Add());
+}
+
+/// \brief Computes the elementwise maximum over the elements of the chosen Axes of A
+template<std::size_t Dim, class TensorA, class Device, unsigned... Ns>
+auto max(tensor_expression<Dim, TensorA, Device> const& A, axis_set<Ns...> ax){
+	typedef typename TensorA::value_type value_type;
+	typedef typename device_traits<Device>::template max<value_type> Max;
+	return detail::reduce(A, ax, Max());
+}
+
+/// \brief Computes the elementwise minimum over the elements of the chosen Axes of A
+template<std::size_t Dim, class TensorA, class Device, unsigned... Ns>
+auto min(tensor_expression<Dim, TensorA, Device> const& A, axis_set<Ns...> ax){
+	typedef typename TensorA::value_type value_type;
+	typedef typename device_traits<Device>::template min<value_type> Min;
+	return detail::reduce(A, ax, Min());
 }
 
 
-
+/*
 /// \brief Computes the elementwise maximum over all elements of A
 ///
 /// returns a scalar s = max_ij A_ij

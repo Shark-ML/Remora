@@ -46,7 +46,7 @@ public:
 	typedef typename reference<TensorE>::type reference;
 	typedef typename TensorE::const_reference const_reference;
 
-	typedef merge_proxy<TensorE const, N> const_closure_type;
+	typedef merge_proxy<typename TensorE::const_closure_type, N> const_closure_type;
 	typedef merge_proxy closure_type;
 	typedef unknown_storage storage_type;
 	typedef unknown_storage const_storage_type;
@@ -173,7 +173,7 @@ struct axis_split_optimizer<merge_proxy<TensorE, NE>, N>{
 template<class TensorE, std::size_t NE, std::size_t N>
 struct axis_merge_optimizer<merge_proxy<TensorE, NE>, N>{
 	typedef merge_proxy<merge_proxy<TensorE, NE>, N> type;
-	
+	static constexpr std::size_t needs_proxy = true;
 	static type create(merge_proxy<TensorE, NE> const& E){
 		return E;
 	}
