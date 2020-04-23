@@ -44,13 +44,14 @@ macro(REMORA_ADD_HIP_TEST SRC NAME)
 endmacro()
 
 #CPU Tests
-remora_add_test( axis.cpp Axis)
-remora_add_test( shape.cpp Shape)
-remora_add_test( dense.cpp Dense)
-remora_add_test( proxy.cpp Proxy)
-remora_add_test( kernels_assign.cpp Kernels_Assign)
-remora_add_test( expressions.cpp Expressions)
-remora_add_test( reductions.cpp Reductions)
+remora_add_test( axis.cpp Axis_Test)
+remora_add_test( shape.cpp Shape_Test)
+remora_add_test( dense.cpp Dense_Test)
+remora_add_test( proxy.cpp Proxy_Test)
+remora_add_test( kernels_assign.cpp Kernels_Assign_Test)
+remora_add_test( expressions.cpp Expressions_Test)
+remora_add_test( reductions.cpp Reductions_Test)
+remora_add_test( prod.cpp Prod_Test)
 
 
 #remora_add_test( matrix_expression.cpp Matrix_Expression)

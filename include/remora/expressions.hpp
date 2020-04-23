@@ -433,5 +433,38 @@ typename TensorA::value_type trace(tensor_expression<TensorA, Device> const& A){
 }
 */
 
+
+/////////////////////////////////////////
+/////Matrix-Products
+/////////////////////////////////////////
+
+
+//todo: outer_product
+
+/// \brief Returns an expression that computes the matrix-vector product Av
+template<class MatA, class VecV, class Device>
+auto operator%(
+	matrix_expression<MatA, Device> const& A,vector_expression<VecV, Device> const& v
+) {
+	REMORA_SIZE_CHECK(A().shape()[1] == v().shape()[0]);
+	return detail::tensor_prod_reduce_optimizer<MatA,VecV, axis<0> >::create(A(), v(), 1);
+}
+
+/// \brief Returns an expression that computes the matrix-vector product v^TA
+template<class MatA, class VecV, class Device>
+auto operator%(vector_expression<VecV, Device> const& v,matrix_expression<MatA, Device> const& A){
+	REMORA_SIZE_CHECK(A().shape()[0] == v().shape()[0]);
+	return detail::tensor_prod_reduce_optimizer<VecV, MatA, axis<0> >::create(v(), A(), 1);
+}
+
+/// \brief Returns an expression that computes the matrix-vector product AB
+template<class MatA, class MatB, class Device>
+auto operator%(
+	matrix_expression<MatA, Device> const& A,matrix_expression<MatB, Device> const& B
+) {
+	REMORA_SIZE_CHECK(A().shape()[1] == B().shape()[0]);
+	return detail::tensor_prod_reduce_optimizer<MatA,MatB, axis<0,1> >::create(A(), B(), 1);
+}
+
 }
 #endif

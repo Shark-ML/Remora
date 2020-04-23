@@ -183,7 +183,7 @@ public:
 	
 	
 	void clear(){
-		typename device_traits<cpu_tag>:: template constant<value_type> Constant;
+		typedef typename device_traits<cpu_tag>::template constant<value_type> Constant;
 		kernels::apply(*this, Constant(value_type/*zero*/()));
 	}
 	

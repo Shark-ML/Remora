@@ -44,13 +44,14 @@ void dot(
 	dense_tag,
 	dense_tag
 ) {
+	typedef typename E1::size_type size_type;
 	result = result_type();
-	auto v1_end = v1().end();
-	auto v2_pos = v2().begin();
-	for(auto v1_pos = v1().begin(); v1_pos != v1_end; ++v1_pos, ++v2_pos){
-		result += (*v1_pos) * (*v2_pos);
+	size_type size = v1().shape()[0];
+	for(size_type i = 0; i != size; ++i){
+		result += v1()(i) * v2()(i);
 	}
 }
+/*
 // Sparse case
 template<class E1, class E2, class result_type>
 void dot(
@@ -113,6 +114,6 @@ void dot(
 	//use commutativity!
 	dot(v2,v1,result,t2,t1);
 }
-
+*/
 }}
 #endif

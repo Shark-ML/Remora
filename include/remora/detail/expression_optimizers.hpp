@@ -141,6 +141,18 @@ struct axis_permute_optimizer<tensor_reduce_last<Tensor, F>, Axis >{
 	}
 };
 
+//permute matrix-product
+template<class TensorA, class TensorB, class OPermutation, unsigned... Permutation>
+struct axis_permute_optimizer<tensor_prod_reduce<TensorA, TensorB, OPermutation>, axis<Permutation...> >{
+	typedef tensor_prod_reduce<
+		TensorA, TensorB, 
+		typename OPermutation::template permute_t<Permutation...>
+	> type;
+	static type create(tensor_prod_reduce<TensorA, TensorB, OPermutation> const& E){
+		return {E.lhs(), E.rhs(), E.scalar()};
+	}
+};
+
 
 
 /*
@@ -152,19 +164,6 @@ struct axis_permute_optimizer<outer_product<V1,V2> >{
 	
 	static type create(outer_product<V1,V2> const& E){
 		return type(E.rhs(),E.lhs());
-	}
-};
-
-//(A B)^T = A^T B^T
-template<class TensorA, class TensorB>
-struct axis_permute_optimizer<matrix_matrix_prod<TensorA,TensorB> >{
-	typedef axis_permute_optimizer<typename TensorB::const_closure_type> left_opt;
-	typedef axis_permute_optimizer<typename TensorA::const_closure_type> right_opt;
-	typedef matrix_matrix_prod_optimizer<typename left_opt::type,typename right_opt::type> opt;
-	typedef typename opt::type type;
-	
-	static type create(matrix_matrix_prod<TensorA,TensorB> const& E){
-		return opt::create(left_opt::create(E.rhs()),right_opt::create(E.lhs()));
 	}
 };
 
@@ -385,6 +384,55 @@ struct axis_split_optimizer<tensor_reduce_last<Tensor, F>, N >{
 };
 
 
+//split of a dimension in matrix-product
+template<class TensorA, class TensorB, class Permutation, std::size_t N>
+struct axis_split_optimizer<tensor_prod_reduce<TensorA, TensorB, Permutation>, N >{
+	static_assert (N < TensorA::num_dims + TensorB::num_dims - 2);
+	static constexpr unsigned NP = Permutation::template element_v<N>;
+	static constexpr unsigned will_split_A = NP < (TensorA::num_dims - 1);
+	typedef typename Permutation::template split_t<N> split_permutation;
+	
+	//slice the target tensor
+	typedef axis_split_optimizer<
+		typename std::conditional<will_split_A, TensorA, TensorB>::type,
+		NP - (!will_split_A)*(TensorA::num_dims - 2)
+	> split_opt;
+	
+	//case 1: we split A
+	typedef tensor_prod_reduce<typename split_opt::type, TensorB, split_permutation> split_A_type;
+	
+	template<class TensorE>
+	static split_A_type create(
+		TensorE const& E, std::size_t size1, std::size_t size2, axis_set<1>
+	){
+		auto split_A = split_opt::create(E.lhs(), size1, size2);
+		return {split_A, E.rhs(), E.scalar()};
+	}
+	
+	//case 2: we split B
+	typedef tensor_prod_reduce<TensorA, typename split_opt::type, split_permutation> split_B_type;
+	
+	template<class TensorE>
+	static split_B_type create(
+		TensorE const& E, std::size_t size1, std::size_t size2, axis_set<0>
+	){
+		auto split_B = split_opt::create(E.rhs(), size1, size2);
+		return {E.lhs(), split_B, E.scalar()};
+	}
+	
+	typedef typename std::conditional<
+		will_split_A, split_A_type, split_B_type
+	>::type type;
+	
+	static type create(
+		tensor_prod_reduce<TensorA, TensorB, Permutation> const& E,
+		std::size_t size1, std::size_t size2
+	){
+		return create(E, size1, size2, axis_set<will_split_A>());
+	}
+};
+
+
 ////////////////////////////////////
 //// Slice
 ////////////////////////////////////
@@ -536,6 +584,51 @@ struct slice_optimizer<tensor_reduce_last<Tensor, F>, N >{
 	}
 };
 
+
+//slice of a dimension in matrix-product
+template<class TensorA, class TensorB, class Permutation, std::size_t N>
+struct slice_optimizer<tensor_prod_reduce<TensorA, TensorB, Permutation>, N >{
+	static_assert (N < TensorA::num_dims + TensorB::num_dims - 2);
+	static constexpr unsigned NP = Permutation::template element_v<N>;
+	static constexpr unsigned will_slice_A = NP < (TensorA::num_dims - 1);
+	typedef typename Permutation::template slice_t<N> sliced_permutation;
+	
+	//slice the target tensor
+	typedef slice_optimizer<
+		typename std::conditional<will_slice_A, TensorA, TensorB>::type,
+		NP - (!will_slice_A)*(TensorA::num_dims - 2)
+	> slice_opt;
+
+	//case 1: we slice A
+	typedef tensor_prod_reduce<typename slice_opt::type, TensorB, sliced_permutation> slice_A_type;
+	
+	template<class TensorE>
+	static slice_A_type create(TensorE const& E, std::size_t i, axis_set<1>){
+		auto slice_A = slice_opt::create(E.lhs(), i);
+		return {slice_A, E.rhs(), E.scalar()};
+	}
+	
+	//case 2: we slice B
+	typedef tensor_prod_reduce<TensorA, typename slice_opt::type, sliced_permutation> slice_B_type;
+	
+	template<class TensorE>
+	static slice_B_type create(TensorE const& E, std::size_t i, axis_set<0>){
+		auto slice_B = slice_opt::create(E.rhs(), i);
+		return {E.lhs(), slice_B, E.scalar()};
+	}
+	
+	typedef typename std::conditional<
+		will_slice_A, slice_A_type, slice_B_type
+	>::type type;
+	
+	static type create(
+		tensor_prod_reduce<TensorA, TensorB, Permutation> const& E,
+		std::size_t i
+	){
+		return create(E, i, axis_set<will_slice_A>());
+	}
+};
+
 /*
 
 //slice(v1 v2^T,i)^T = v(i) v2 
@@ -545,22 +638,6 @@ struct slice_optimizer<outer_product<V1,V2> >{
 	
 	static type create(outer_product<V1,V2> const& E, std::size_t i){
 		return type(E.rhs(),E.lhs().elements()(i));
-	}
-};
-
-//slice(prod(A,B),i) = prod(slice(A),B) = prod(trans(B),slice(A)) 
-template<class TensorA, class TensorB>
-struct slice_optimizer<matrix_matrix_prod<TensorA,TensorB> >{
-	typedef slice_optimizer<typename TensorA::const_closure_type> left_opt;
-	typedef axis_permute_optimizer<typename TensorB::const_closure_type> right_opt;
-	typedef matrix_vector_prod_optimizer<typename right_opt::type, typename left_opt::type> opt;
-	typedef typename opt::type type;
-	
-	static type create(matrix_matrix_prod<TensorA,TensorB> const& E, std::size_t i){
-		return opt::create(
-			right_opt::create(E.rhs()),
-			left_opt::create(E.lhs(),i)
-		);
 	}
 };
 
@@ -667,6 +744,53 @@ struct subrange_optimizer<tensor_reduce_last<Tensor, F>, N >{
 	}
 };
 
+//subrange of a dimension in matrix-product
+template<class TensorA, class TensorB, class Permutation, std::size_t N>
+struct subrange_optimizer<tensor_prod_reduce<TensorA, TensorB, Permutation>, N >{
+	static_assert (N < TensorA::num_dims + TensorB::num_dims - 2);
+	static constexpr unsigned NP = Permutation::template element_v<N>;
+	static constexpr unsigned will_subrange_A = NP < (TensorA::num_dims - 1);
+	
+	//subrange of the target tensor
+	typedef subrange_optimizer<
+		typename std::conditional<will_subrange_A, TensorA, TensorB>::type,
+		NP - (!will_subrange_A)*(TensorA::num_dims - 2)
+	> subrange_opt;
+	
+	//case 1: we subrange A
+	typedef tensor_prod_reduce<typename subrange_opt::type, TensorB, Permutation> subrange_A_type;
+	
+	static subrange_A_type create(
+		tensor_prod_reduce<TensorA, TensorB, Permutation> const& E,
+		std::size_t start, std::size_t end, axis_set<1>
+	){
+		auto subrange_A = subrange_opt::create(E.lhs(), start, end);
+		return {subrange_A, E.rhs(), E.scalar()};
+	}
+	
+	//case 2: we subrange B
+	typedef tensor_prod_reduce<TensorA, typename subrange_opt::type, Permutation> subrange_B_type;
+	
+	static subrange_B_type create(
+		tensor_prod_reduce<TensorA, TensorB, Permutation> const& E,
+		std::size_t start, std::size_t end, axis_set<0>
+	){
+		auto subrange_B = subrange_opt::create(E.rhs(), start, end);
+		return {E.lhs(), subrange_B, E.scalar()};
+	}
+	
+	typedef typename std::conditional<
+		will_subrange_A, subrange_A_type, subrange_B_type
+	>::type type;
+	
+	static type create(
+		tensor_prod_reduce<TensorA, TensorB, Permutation> const& E,
+		std::size_t start, std::size_t end
+	){
+		return create(E, start, end, axis_set<will_subrange_A>());
+	}
+};
+
 
 /*
 
@@ -681,24 +805,6 @@ struct subrange_optimizer<outer_product<V1,V2> >{
 		std::size_t start1, std::size_t end1, std::size_t start2, std::size_t end2
 	){
 		return type( left_opt::create(E.lhs(),start1,end1), right_opt::create(E.rhs(),start2,end2));
-	}
-};
-
-//range(prod(A,B),i) = prod(range(B),range(A)) 
-template<class TensorA, class TensorB>
-struct subrange_optimizer<matrix_matrix_prod<TensorA,TensorB> >{
-	typedef subrange_optimizer<typename TensorA::const_closure_type> left_opt;
-	typedef subrange_optimizer<typename TensorB::const_closure_type> right_opt;
-	typedef matrix_matrix_prod_optimizer<typename left_opt::type, typename right_opt::type> opt;
-	typedef typename opt::type type;
-	
-	static type create(matrix_matrix_prod<TensorA,TensorB> const& E,
-		std::size_t start1, std::size_t end1, std::size_t start2, std::size_t end2
-	){
-		return opt::create(
-			left_opt::create(E.lhs(),start1,end1,0,E.lhs().size2()),
-			right_opt::create(E.rhs(),0,E.rhs().size1(),start2,end2)
-		);
 	}
 };
 
@@ -926,6 +1032,18 @@ struct scalar_multiply_optimizer<tensor_binary<TensorA, TensorB, F> >{
 	}
 };
 
+// alpha * prod(A, B, beta) = prod(A, B, alpha * beta)
+template<class TensorA, class TensorB, class Permutation>
+struct scalar_multiply_optimizer<tensor_prod_reduce<TensorA, TensorB, Permutation> >{
+	typedef tensor_prod_reduce<TensorA, TensorB, Permutation> type;
+	
+	static type create(
+		type const& E, typename type::value_type scalar
+	){
+		return {E.lhs(), E.rhs(), scalar * E.scalar()};
+	}
+};
+
 
 ////////////////////////////////////
 //// Matrix Unary
@@ -981,16 +1099,6 @@ struct scalar_multiply_optimizer<outer_product<V1, V2> >{
 	typedef typename type::value_type value_type;
 	static type create(outer_product<V1, V2> const& E, value_type alpha){
 		return type(opt::create(E.lhs(), alpha),E.rhs());
-	}
-};
-
-//alpha * (A * B) can be folded into matrix_vector_prod 
-template<class TensorA, class TensorB>
-struct scalar_multiply_optimizer<matrix_matrix_prod<TensorA, TensorB> >{
-	typedef matrix_matrix_prod<TensorA, TensorB> type;
-	typedef typename type::value_type value_type;
-	static type create(matrix_matrix_prod<TensorA, TensorB> const& E, value_type alpha){
-		return type(E.lhs(), E.rhs(), alpha * E.alpha());
 	}
 };
 
@@ -1106,42 +1214,6 @@ struct matrix_vector_prod_optimizer{
 	}
 };
 
-//(alpha Tensor)*v = alpha * (Tensor * v)
-template<class Tensor, class V>
-struct matrix_vector_prod_optimizer<scalar_multiply<Tensor>,V >{
-	typedef matrix_vector_prod_optimizer<Tensor, V> inner_opt;
-	typedef vector_scalar_multiply_optimizer<typename inner_opt::type> opt;
-	typedef typename opt::type type;
-	
-	static type create(scalar_multiply<Tensor> const& E, typename V::const_closure_type const& v){
-		return opt::create(inner_opt::create(E.expression(), v), E.scalar());
-	}
-};
-
-//Tensor*(alpha*v) = alpha * (Tensor * v)
-template<class Tensor, class V>
-struct matrix_vector_prod_optimizer<Tensor,scalar_multiply<V> >{
-	typedef matrix_vector_prod_optimizer<Tensor, V> inner_opt;
-	typedef vector_scalar_multiply_optimizer<typename inner_opt::type> opt;
-	typedef typename opt::type type;
-	
-	static type create(typename Tensor::const_closure_type const& E, scalar_multiply<V> const& v){
-		return opt::create(inner_opt::create(E, v.expression()), v.scalar());
-	}
-};
-
-//(alpha Tensor)*(beta*v) = (alpha*beta) (Tensor*v) can be folded into matrix-vector product
-template<class Tensor, class V>
-struct matrix_vector_prod_optimizer<scalar_multiply<Tensor>,scalar_multiply<V> >{
-	typedef matrix_vector_prod_optimizer<Tensor, V> inner_opt;
-	typedef vector_scalar_multiply_optimizer<typename inner_opt::type> opt;
-	typedef typename opt::type type;
-	
-	static type create(scalar_multiply<Tensor> const& E, scalar_multiply<V>const& v){
-		return opt::create(inner_opt::create(E.expression(), v.expression()), v.scalar() * E.scalar());
-	}
-};
-
 //(TensorA*TensorB)*V=TensorA*(TensorB*V)
 template<class TensorA,class TensorB, class V>
 struct matrix_vector_prod_optimizer<matrix_matrix_prod<TensorA,TensorB>,V>{
@@ -1215,58 +1287,159 @@ struct matrix_vector_prod_optimizer<diagonal_matrix<V1>,V2>{
 	static type create(diagonal_matrix<V1> const& E, typename V2::const_closure_type const& v){
 		return type(E.expression(),v, functor());
 	}
-};
+};*/
 
 
 ////////////////////////////////////
 //// Matrix Product
 ////////////////////////////////////
 
-template<class TensorA, class TensorB>
-struct matrix_matrix_prod_optimizer{
-	typedef matrix_matrix_prod<TensorA,TensorB> type;
+template<class TensorA, class TensorB, class Permutation>
+struct tensor_prod_reduce_optimizer;
+
+//first start with transformations of the lhs
+template<class TensorA, class TensorB, class Permutation>
+struct tensor_prod_reduce_optimizer_lhs{
+	typedef tensor_prod_reduce<TensorA, TensorB, Permutation> type;
 	
-	static type create(typename TensorA::const_closure_type const& lhs, typename TensorB::const_closure_type const& rhs){
-		return type(lhs, rhs, typename type::value_type(1));
+	static type create(
+		typename TensorA::const_closure_type const& lhs,
+		typename TensorB::const_closure_type const& rhs,
+		typename type::value_type scalar
+	){
+		return {lhs, rhs, scalar};
 	}
 };
 
 
-//(alpha TensorA)*B = alpha (TensorA*B)
-template<class TensorA, class TensorB>
-struct matrix_matrix_prod_optimizer<scalar_multiply<TensorA>,TensorB >{
-	typedef matrix_matrix_prod_optimizer<TensorA, TensorB> inner_opt;
-	typedef scalar_multiply<typename inner_opt::type> opt;
+template<class TensorA, class TensorB, class Permutation>
+struct tensor_prod_reduce_optimizer_lhs< scalar_multiply<TensorA>, TensorB, Permutation>{
+	typedef tensor_prod_reduce_optimizer_lhs<TensorA,TensorB, Permutation> opt;
 	typedef typename opt::type type;
 	
-	static type create(scalar_multiply<TensorA> const& A, typename TensorB::const_closure_type const& B){
-		return opt::create(inner_opt::create(A.expression(), B), A.scalar());
+	static type create(
+		scalar_multiply<TensorA> const& lhs,
+		typename TensorB::const_closure_type const& rhs,
+		typename type::value_type scalar
+	){
+		return opt::create(lhs.expression(), rhs, scalar * lhs.scalar());
 	}
 };
 
-//TensorA*(alpha*B) = alpha (TensorA*B)
-template<class TensorA, class TensorB>
-struct matrix_matrix_prod_optimizer<TensorA,scalar_multiply<TensorB> >{
-	typedef matrix_matrix_prod_optimizer<TensorA, TensorB> inner_opt;
-	typedef scalar_multiply<typename inner_opt::type> opt;
-	typedef typename opt::type type;
+/*
+//nested matrix-product
+//check if rhs is a vector and if yes, reorder.
+//we have to take into account the permutation of the nested product to figure out
+//which argument to use
+template<class TensorA1, class TensorA2, class TensorB, class PA, class P>
+struct tensor_prod_reduce_optimizer_lhs{
+	static constexpr std::size_t dims_A = TensorA1::num_dims + TensorA2::num_dims - 2;
+	static constexpr unsigned is_vector = (TensorB::num_dims == 1);
+	static constexpr unsigned is_A2_reduced = (PA::template element_v<dims_A - 1> >=  TensorA1::num_dims )
 	
-	static type create(typename TensorA::const_closure_type const& A, scalar_multiply<TensorB> const& B){
-		return opt::create(inner_opt::create(A, B.expression()), B.scalar());
+	//case 1: reorder
+	typedef tensor_prod_reduce_optimizer<TensorA2, TensorB> prod_A2B_opt;
+	typedef tensor_prod_reduce<typename subrange_A_opt::type, TensorB, Permutation> subrange_A_type;
+	
+	subrange_A_type create(
+		tensor_prod_reduce<TensorA, TensorB, OPermutation> const& E,
+		std::size_t start, std::size_t end, axis_set<1>
+	){
+		auto subrange_A = subrange_A_opt::create(E.lhs(), start, end);
+		return {subrange_A, E.rhs(), E.scalar()};
 	}
-};
-
-//(alpha TensorA)*(beta*B) = (alpha*beta) (TensorA*B)
-template<class TensorA, class TensorB>
-struct matrix_matrix_prod_optimizer<scalar_multiply<TensorA>,scalar_multiply<TensorB> >{
-	typedef matrix_matrix_prod_optimizer<TensorA, TensorB> inner_opt;
-	typedef scalar_multiply<typename inner_opt::type> opt;
-	typedef typename opt::type type;
 	
-	static type create(scalar_multiply<TensorA> const& A, scalar_multiply<TensorB>const& B){
-		return opt::create(inner_opt::create(A.expression(), B.expression()), A.scalar() * B.scalar());
+	//case 2: we subrange B
+	typedef subrange_optimizer<TensorB, NP - (TensorA::num_dims - 1)> subrange_B_opt;
+	typedef tensor_prod_reduce<TensorA, typename subrange_B_opt::type, Permutation> subrange_B_type;
+	
+	subrange_A_type create(
+		tensor_prod_reduce<TensorA, TensorB, OPermutation> const& E,
+		std::size_t start, std::size_t end, axis_set<0>
+	){
+		auto subrange_B = subrange_B_opt::create(E.rhs(), start, end);
+		return {E.lhs(), subrange_B, E.scalar()};
+	}
+	
+	typedef typename std::conditional<
+		will_subrange_A, subrange_A_type, subrange_B_type
+	>::type type
+	static type create(
+		tensor_prod_reduce<TensorA, TensorB, OPermutation> const& E,
+		std::size_t start, std::size_t end
+	){
+		return create(E, start, end, axis_set<will_subrange_A>());
+	}
+
+	typedef tensor_prod_reduce<tensor_prod_reduce<TensorA1, TensorA2, PA>, TensorB, P> type;
+	
+	static type create(
+		typename TensorA::const_closure_type const& lhs,
+		typename TensorB::const_closure_type const& rhs,
+		typename type::value_type scalar
+	){
+		return {lhs, rhs, scalar};
 	}
 };*/
+
+
+//now transformations of the rhs
+template<class TensorA, class TensorB, class Permutation>
+struct tensor_prod_reduce_optimizer_rhs{
+	typedef tensor_prod_reduce<TensorA, TensorB, Permutation> type;
+	
+	static type create(
+		typename TensorA::const_closure_type const& lhs,
+		typename TensorB::const_closure_type const& rhs,
+		typename type::value_type scalar
+	){
+		return {lhs, rhs, scalar};
+	}
+};
+
+template<class TensorA, class TensorB, class Permutation>
+struct tensor_prod_reduce_optimizer_rhs< TensorA, scalar_multiply<TensorB>, Permutation>{
+	typedef tensor_prod_reduce_optimizer_rhs<TensorA, TensorB, Permutation> opt;
+	typedef typename opt::type type;
+	
+	static type create(
+		typename TensorA::const_closure_type const& lhs,
+		scalar_multiply<TensorB> const& rhs,
+		typename type::value_type scalar
+	){
+		return opt::create(lhs, rhs.expression(), scalar * rhs.scalar());
+	}
+};
+
+//main rules
+
+
+//general case: first transform lhs, then rhs
+template<class TensorA, class TensorB, class Permutation>
+struct tensor_prod_reduce_optimizer{
+	
+	typedef tensor_prod_reduce_optimizer_lhs<
+		typename TensorA::const_closure_type,
+		typename TensorB::const_closure_type,
+		Permutation
+	> lhs_opt;
+	typedef typename lhs_opt::type lhs_type;
+	typedef tensor_prod_reduce_optimizer_rhs<
+		typename lhs_type::lhs_closure_type,
+		typename lhs_type::rhs_closure_type,
+		Permutation
+	> rhs_opt;
+	typedef typename rhs_opt::type type;
+	static type create(
+		typename TensorA::const_closure_type const& lhs,
+		typename TensorB::const_closure_type const& rhs,
+		typename type::value_type scalar
+	){
+		lhs_type expr = lhs_opt::create(lhs, rhs, scalar);
+		return rhs_opt::create(expr.lhs(), expr.rhs(), expr.scalar());
+	}
+};
+
 
 }}
 #endif

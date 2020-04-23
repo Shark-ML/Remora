@@ -55,8 +55,8 @@ namespace ax{
 
 	template<int N>
 	struct merge{
-		static constexpr unsigned num_input_axes = (N<0)? 0: N;
-		static constexpr unsigned num_output_axes = 1;
+		static constexpr unsigned num_input_axes = (N < 0)? 0: N;
+		static constexpr unsigned num_output_axes = (N > 0)? 1 : 0;
 	};
 
 	template<std::size_t N>
@@ -119,6 +119,16 @@ namespace detail{
 			return A;
 		}
 	};
+	
+	//merge<0> just skips this axis.
+	template<std::size_t CurDim, class... Args>
+	struct reshape_dispatcher<CurDim, ax::merge<0>, Args... >{
+		template<class TensorA>
+		static auto create(TensorA const& A, ax::merge<0>, Args... args){
+			return reshape_dispatcher<CurDim, Args...>::create(A, args...);
+		}
+	};
+	
 	//implementation of same (Identity)
 	template<std::size_t CurDim, class... Args>
 	struct reshape_dispatcher<CurDim, ax::merge<1>, Args... >{
@@ -296,6 +306,27 @@ auto permute(tensor_expression<Dim, TensorA, Device> && A, axis<Axes...> permuta
 	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
 	return permute(A, permutation);
 }
+
+
+
+/// \brief PErmutes the last two Axis of A. for a matrix, this is equivalent to matrix-transpose
+template <std::size_t Dim, class TensorA, class Device>
+auto trans(tensor_expression<Dim, TensorA, Device>& A){
+	static_assert(Dim >= 2);
+	return permute(A, typename default_axis<Dim>::template swap_axes_t<Dim - 2, Dim - 1>());
+}
+
+template <std::size_t Dim, class TensorA, class Device>
+auto trans(tensor_expression<Dim, TensorA, Device> const& A){
+	typename TensorA::const_closure_type Aclosure = A();
+	return trans(Aclosure);
+};
+
+template <std::size_t Dim, class TensorA, class Device>
+auto trans(tensor_expression<Dim, TensorA, Device>&& A){
+	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
+	return trans(A);
+};
 
 namespace detail{
 	template<std::size_t N, std::size_t NEnd, class Axis>

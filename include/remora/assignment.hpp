@@ -289,7 +289,7 @@ template<std::size_t N, class TensorX, class T, class Device>
 typename std::enable_if<std::is_convertible<T, typename TensorX::value_type>::value,TensorX&>::type
 operator-=(tensor_expression<N, TensorX, Device>& x, T t){
 	typedef typename TensorX::value_type value_type;
-	typename device_traits<Device>:: template add_scalar<value_type> Functor;
+	typedef typename device_traits<Device>:: template add_scalar<value_type> Functor;
 	kernels::apply(x, Functor(-value_type(t)));
 	return x();
 }
@@ -298,7 +298,7 @@ template<std::size_t N, class TensorX, class T, class Device>
 typename std::enable_if<std::is_convertible<T, typename TensorX::value_type>::value,typename TensorX::closure_type>::type
 operator-=(tensor_expression<N, TensorX, Device>&& x, T t){
 	typedef typename TensorX::value_type value_type;
-	typename device_traits<Device>:: template add_scalar<value_type> Functor;
+	typedef typename device_traits<Device>:: template add_scalar<value_type> Functor;
 	kernels::apply(x, Functor(-value_type(t)));
 	return x();
 }
@@ -310,7 +310,7 @@ template<std::size_t N, class TensorX, class T, class Device>
 typename std::enable_if<std::is_convertible<T, typename TensorX::value_type>::value,TensorX&>::type
 operator*=(tensor_expression<N, TensorX, Device>& x, T t){
 	typedef typename TensorX::value_type value_type;
-	typename device_traits<Device>:: template multiply_scalar<value_type> Functor;
+	typedef typename device_traits<Device>:: template multiply_scalar<value_type> Functor;
 	kernels::apply(x, Functor(value_type(t)));
 	return x();
 }
@@ -319,7 +319,7 @@ template<std::size_t N, class TensorX, class T, class Device>
 typename std::enable_if<std::is_convertible<T, typename TensorX::value_type>::value,typename TensorX::closure_type>::type
 operator*=(tensor_expression<N, TensorX, Device>&& x, T t){
 	typedef typename TensorX::value_type value_type;
-	typename device_traits<Device>:: template multiply_scalar<value_type> Functor;
+	typedef typename device_traits<Device>:: template multiply_scalar<value_type> Functor;
 	kernels::apply(x, Functor(value_type(t)));
 	return x();
 }

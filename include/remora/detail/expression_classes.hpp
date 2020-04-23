@@ -30,6 +30,8 @@
 
 #include "traits.hpp"
 #include "../kernels/reduce.hpp"
+#include "../kernels/gemm.hpp"
+#include "../kernels/gemv.hpp"
 #include "../kernels/device_traits.hpp"
 #include "../assignment.hpp"
 #include <type_traits>
@@ -560,6 +562,176 @@ private:
 	expression_closure_type m_expression;
 	F m_functor;
 };
+
+template<class TensorA, class TensorB, class Permutation>
+class tensor_prod_reduce;
+
+template<class TensorA, class TensorB, unsigned... Permutation>
+class tensor_prod_reduce<TensorA, TensorB, axis<Permutation...> >
+: public tensor_expression<
+	TensorA::num_dims + TensorB::num_dims - 2, 
+	tensor_prod_reduce<TensorA, TensorB, axis<Permutation...> >, 
+	typename TensorA::device_type
+>{
+private:
+	template<unsigned... Seq0, unsigned... Seq1>
+	static remora::axis<Seq0..., (Seq1+sizeof...(Seq0))...> concat_axes(remora::axis<Seq0...>, remora::axis<Seq1...>);
+public:
+	static_assert(sizeof...(Permutation) == TensorA::num_dims + TensorB::num_dims - 2);
+	typedef typename TensorA::const_closure_type lhs_closure_type;
+	typedef typename TensorB::const_closure_type rhs_closure_type;
+	
+	typedef typename TensorA::size_type size_type;
+	typedef decltype(
+		typename TensorA::value_type() * typename TensorB::value_type()
+	) value_type;
+	typedef value_type const& const_reference;
+	typedef const_reference reference;
+
+	typedef tensor_prod_reduce const_closure_type;
+	typedef const_closure_type closure_type;
+	typedef unknown_storage storage_type;
+	typedef unknown_storage const_storage_type;
+	typedef blockwise<typename evaluation_tag_restrict_traits<
+		typename TensorA::evaluation_category::tag,
+		typename TensorB::evaluation_category::tag
+	>::type> evaluation_category;
+	typedef typename TensorA::device_type device_type;
+	static constexpr std::size_t num_dims = TensorA::num_dims + TensorB::num_dims - 2;
+	//axis is created by slicing off the reduced axes from both tensors
+	//concatenating them together and than applying the permutation on the result.
+	typedef typename decltype(concat_axes(
+		typename TensorA::axis::template slice_t<TensorA::num_dims - 1>(),
+		typename TensorB::axis::template slice_t<0>()
+	))::template permute_t<Permutation...> axis;
+
+	// Construction
+	tensor_prod_reduce(
+		lhs_closure_type const& lhs,
+		rhs_closure_type const& rhs,
+		value_type scalar
+	):m_lhs(lhs), m_rhs(rhs), m_scalar(scalar){}
+
+	// Accessors 
+	tensor_shape<num_dims> shape() const{
+		auto shape_left = m_lhs.shape();
+		auto shape_right = m_rhs.shape();
+		tensor_shape<num_dims> result;
+		std::size_t dim_left = TensorA::num_dims - 1;
+		auto map = remora::axis<Permutation...>::inverse_t::to_array();
+		for(std::size_t i = 0; i != dim_left; ++i){
+			result[map[i]] = shape_left[i];
+		}
+		for(std::size_t i = 1; i != TensorB::num_dims; ++i){
+			result[map[dim_left + i - 1]] = shape_right[i];
+		}
+		return result;
+	}
+
+	lhs_closure_type const& lhs() const{
+		return m_lhs;
+	}
+	rhs_closure_type const& rhs() const{
+		return m_rhs;
+	}
+	value_type scalar() const{
+		return m_scalar;
+	}
+	
+	typename device_traits<device_type>::queue_type& queue()const{
+		return m_lhs.queue();
+	}
+	
+	//Element Functor
+	no_functor elements() const{return no_functor();}
+	
+	// Computation Kernels
+	template<class TensorX>
+	void assign_to(tensor_expression<num_dims, TensorX, device_type>& X)const{
+		X().clear();
+		//apply the inverse permutation on X instead of the result.
+		auto X_permuted = permute(X, typename remora::axis<Permutation...>::inverse_t());
+		//reshape X to matrix-form
+		auto X_mat = reshape(X_permuted,ax::merge<TensorA::num_dims - 1>(),ax::merge<TensorB::num_dims - 1>());
+		//reshape arguments into vector- or matrix-form
+		auto lhs_mat = reshape(m_lhs, ax::merge<TensorA::num_dims - 1>(), ax::same);
+		auto rhs_mat = reshape(m_rhs, ax::same, ax::merge<TensorB::num_dims - 1>());
+		//call the kernel-dispatcher
+		call_matmul(X_mat, lhs_mat, rhs_mat);
+	}
+	template<class TensorX>
+	void plus_assign_to(tensor_expression<num_dims, TensorX, device_type>& X)const{
+		//apply the inverse permutation on X instead of the result.
+		auto X_permuted = permute(X, typename remora::axis<Permutation...>::inverse_t());
+		//reshape X to matrix-form
+		auto X_mat = reshape(X_permuted,ax::merge<TensorA::num_dims - 1>(),ax::merge<TensorB::num_dims - 1>());
+		//reshape arguments into vector- or matrix-form
+		auto lhs_mat = reshape(m_lhs, ax::merge<TensorA::num_dims - 1>(), ax::same);
+		auto rhs_mat = reshape(m_rhs, ax::same, ax::merge<TensorB::num_dims - 1>());
+		//call the kernel-dispatcher
+		call_matmul(X_mat, lhs_mat, rhs_mat);
+	}
+	
+private:
+	//all the supported kernel operations
+
+	//gemm
+	template<class TensorX, class TensorL, class TensorR>
+	void call_matmul(
+		tensor_expression<2, TensorX, device_type>& X,
+		tensor_expression<2, TensorL, device_type>& lhs,
+		tensor_expression<2, TensorR, device_type>& rhs
+	)const{
+		kernels::gemm(eval_block(lhs), eval_block(rhs), X(), m_scalar);
+	}
+	//gemv, two versions base don position of vector.
+	template<class TensorX, class TensorL, class TensorR>
+	void call_matmul(
+		tensor_expression<1, TensorX, device_type>& X,
+		tensor_expression<2, TensorL, device_type>& lhs,
+		tensor_expression<1, TensorR, device_type>& rhs
+	)const{
+		kernels::gemv(eval_block(lhs), eval_block(rhs), X(), m_scalar);
+	}
+	template<class TensorX, class TensorL, class TensorR>
+	void call_matmul(
+		tensor_expression<1, TensorX, device_type>& X,
+		tensor_expression<1, TensorL, device_type>& lhs,
+		tensor_expression<2, TensorR, device_type>& rhs
+	)const{
+		kernels::gemv(eval_block(trans(rhs)), eval_block(lhs), X(), m_scalar);
+	}
+	
+/*	//trmv
+	template<class TensorX>
+	void assign_to(matrix_expression<TensorX, device_type>& X, triangular_structure, dense_tag)const{
+		//assign the rhs and multiply in-place
+		assign(X, m_rhs);
+		kernels::trmm<TensorA::orientation::is_upper, TensorA::orientation::is_unit>(m_lhs.to_dense(), X);
+		
+		//perform multiplication with alpha if necessary
+		if(m_scalar != value_type(1)){
+			typedef typename device_traits<device_type>:: template multiply<value_type> Multiply;
+			kernels::assign<Multiply>(X,m_scalar);
+		}
+	}
+	template<class TensorX>
+	void plus_assign_to(matrix_expression<TensorX, device_type>& X, triangular_structure, dense_tag )const{
+		//computation of trmm is in-place so we need a temporary for plus-assign.
+		typename matrix_temporary<TensorX>::type temp = m_rhs;
+		kernels::trmm<TensorA::orientation::is_upper, TensorA::orientation::is_unit>(m_lhs.to_dense(), temp);
+		
+		//perform plus-assignment of temporary
+		typename device_traits<device_type>:: template multiply_and_add<value_type> multiply(m_scalar);
+		kernels::assign(X, temp, multiply);
+	}*/
+private:
+	lhs_closure_type m_lhs;
+	rhs_closure_type m_rhs;
+	value_type m_scalar;
+};
+
+
 
 }
 #endif

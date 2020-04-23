@@ -27,79 +27,59 @@
  * along with Shark.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#ifndef REMORA_KERNELS_DEFAULT_GEMatAV_HPP
-#define REMORA_KERNELS_DEFAULT_GEMatAV_HPP
+#ifndef REMORA_KERNELS_DEFAULT_GEMatAVecV_HPP
+#define REMORA_KERNELS_DEFAULT_GEMatAVecV_HPP
 
 #include "../../expression_types.hpp" //matrix/vector_expression
-#include "../../proxy_expressions.hpp" //matrix row,, transpose
+#include "../../detail/proxy_optimizers_fwd.hpp"
 #include "../../detail/traits.hpp" //matrix orientations
-#include "../default/dot.hpp" //inner product
-#include "../vector_assign.hpp" //assignment of vectors
+#include "dot.hpp" //inner product
+#include "../assign.hpp" //assignment of vectors
 #include <type_traits> //std::false_type marker for unoptimized
 
 namespace remora{namespace bindings {
 	
 //row major can be further reduced to inner_prod()
-template<class ResultV, class MatA, class V>
-void gemv_impl(
+template<class VecX, class MatA, class VecV>
+void gemv(
 	matrix_expression<MatA, cpu_tag> const& A,
-	vector_expression<V, cpu_tag> const& x,
-	vector_expression<ResultV, cpu_tag>& result, 
-	typename ResultV::value_type alpha,
-	row_major
-) {
-	typedef typename ResultV::value_type value_type;
+	vector_expression<VecX, cpu_tag> const& x,
+	vector_expression<VecV, cpu_tag>& v, 
+	typename VecV::value_type alpha,
+	row_major,
+	std::false_type
+){
+	typedef typename VecX::value_type value_type;
+	typedef typename VecV::size_type size_type;
 	value_type value;
-	for(std::size_t i = 0; i != A().size1();++i){
-		bindings::dot(row(A,i), x, value,  typename MatA::evaluation_category::tag(), typename V::evaluation_category::tag());
-		if(value != value_type())//handling of sparse results.
-			result()(i) += alpha * value;
+	size_type size = A().shape()[0];
+	
+	for(size_type i = 0; i != size;++i){
+		auto A_i = detail::slice_optimizer<typename MatA::const_closure_type, 0>::create(A(), i);
+		bindings::dot(A_i, x, value,  typename MatA::evaluation_category::tag(), typename VecV::evaluation_category::tag());
+		if(value != value_type())//handling of sparse vs.
+			v()(i) += alpha * value;
 	}
 }
 
 //column major is implemented by computing a linear combination of matrix-rows 
-template<class ResultV, class MatA, class V>
-void gemv_impl(
-	matrix_expression<MatA, cpu_tag> const& A,
-	vector_expression<V, cpu_tag> const& x,
-	vector_expression<ResultV, cpu_tag>& result,
-	typename ResultV::value_type alpha,
-	column_major
-) {
-	typedef typename V::const_iterator iterator;
-	typedef typename ResultV::value_type value_type;
-	typedef device_traits<cpu_tag>::multiply_and_add<value_type> MultAdd;
-	iterator end = x().end();
-	for(iterator it = x().begin(); it != end; ++it) {
-		//FIXME: for sparse result vectors, this might hurt.
-		kernels::assign(result, column(A,it.index()), MultAdd(alpha * (*it)));
-	}
-}
-
-//unknown orientation is dispatched to row_major
-template<class ResultV, class MatA, class V>
-void gemv_impl(
-	matrix_expression<MatA, cpu_tag> const& A,
-	vector_expression<V, cpu_tag> const& x,
-	vector_expression<ResultV, cpu_tag>& result,
-	typename ResultV::value_type alpha,
-	unknown_orientation
-) {
-	gemv_impl(A,x,result,alpha,row_major());
-}
-
-// result += alpha * A * x
-template<class ResultV, class MatA, class V>
+template<class VecX, class MatA, class VecV>
 void gemv(
 	matrix_expression<MatA, cpu_tag> const& A,
-        vector_expression<V, cpu_tag> const& x,
-        vector_expression<ResultV, cpu_tag>& result, 
-	typename ResultV::value_type alpha,
+	vector_expression<VecX, cpu_tag> const& x,
+	vector_expression<VecV, cpu_tag>& v,
+	typename VecV::value_type alpha,
+	column_major,
 	std::false_type
 ) {
-	typedef typename MatA::orientation orientation;
-
-	gemv_impl(A, x, result, alpha, orientation());
+	typedef typename VecV::size_type size_type;
+	typedef typename VecX::value_type value_type;
+	typedef device_traits<cpu_tag>::multiply_and_add<value_type> MultAdd;
+	size_type size = A().shape()[1];
+	for(size_type j = 0; j != size; ++j){
+		auto A_j = detail::slice_optimizer<typename MatA::const_closure_type, 1>::create(A(), j);
+		kernels::assign(v, A_j, MultAdd(alpha * x()(j)));
+	}
 }
 
 }}

@@ -51,7 +51,7 @@ private:
 		static constexpr array_type apply(array_type seq0){
 			array_type seq={0};
 			for(std::size_t i = 0; i != sizeof...(Seq); ++i)
-				seq.values[seq0.values[i]] = i;
+				seq[seq0[i]] = i;
 			return seq;
 		}
 	};
@@ -63,7 +63,7 @@ private:
 			for(std::size_t i = 0, j = 0; i != sizeof...(Seq); ++i){
 				if (i == Axis)
 					continue;
-				seq.values[j] = seq0.values[i] - (seq0.values[i] > seq0.values[Axis]);
+				seq[j] = seq0[i] - (seq0[i] > seq0[Axis]);
 				++j;
 			}
 			return seq;
@@ -77,12 +77,12 @@ private:
 			for(std::size_t i = 0, j = 0; i != sizeof...(Seq); ++i, ++j){
 				if (i == Axis){
 					//copy axis and insert new element after the position
-					seq.values[j] = seq0.values[Axis];
+					seq[j] = seq0[Axis];
 					++j;
-					seq.values[j] = seq0.values[Axis] + 1;
+					seq[j] = seq0[Axis] + 1;
 				}else{
 					// all axes with value larger or equal the new axis id will be increased by one
-					seq.values[j] = seq0.values[i] + (seq0.values[i] > seq0.values[Axis]);
+					seq[j] = seq0[i] + (seq0[i] > seq0[Axis]);
 				}
 			}
 			return seq;
@@ -95,9 +95,6 @@ private:
 	static constexpr axis<F::apply({Seq...}).values[Inds]...> apply(std::index_sequence<Inds...>);
 		
 public:
-	typedef std::size_t size_type;
-	typedef std::ptrdiff_t difference_type;
-
 	/// \brief Compute the axis order of a tensor with the Nth axis sliced away.
 	/// This removes the Nth element and decrements all elements which have a larger value.
 	template<std::size_t Axis>
@@ -144,9 +141,9 @@ public:
 	static Array compute_dense_strides(Array const& shape){
 		constexpr auto map = inverse_t::to_array();
 		Array result;
-		size_type stride = 1;
+		std::size_t stride = 1;
 		for(std::size_t i = sizeof...(Seq); i > 0; --i){
-			size_type axis = map[i - 1];
+			std::size_t axis = map[i - 1];
 			result[axis] = stride;
 			stride *= shape[axis];
 		}
@@ -157,14 +154,14 @@ public:
 	///
 	/// N= 0 is equivalent to the major direction, i.e. the largest stride in the tensor.
 	template<std::size_t N, class Array>
-	static size_type leading(Array const& strides){
+	static std::size_t leading(Array const& strides){
 		return strides[inverse_t::template element_v<sizeof...(Seq) - 1 - N>];
 	}
 	
 	// Indexing conversion to storage element
 	template<class Array1, class Array2>
-	static size_type element(Array1 const& indices, Array2 const& strides) {
-		size_type elem = 0;
+	static std::size_t element(Array1 const& indices, Array2 const& strides) {
+		std::size_t elem = 0;
 		for (std::size_t i = 0; i != sizeof...(Seq); ++i)
 			elem += strides[i] * indices[i];
 		return elem;
@@ -176,7 +173,7 @@ public:
 		Array result;
 		auto map = axis::to_array();
 		for(std::size_t i = 0; i != sizeof...(Seq); ++i){
-			size_type axis = map[i];
+			std::size_t axis = map[i];
 			result[i] = arr[axis];
 		}
 		return result;
@@ -189,6 +186,13 @@ public:
 
 };
 
+//specialisation for empty axis object
+template<>
+struct axis<>: public axis_set<>{
+	typedef axis<1> expand_t;
+	typedef axis<> reverse_axis_t;
+	typedef axis<> inverse_t;
+};
 
 
 namespace detail{
@@ -216,9 +220,6 @@ typedef axis<1,0> column_major;
 
 template<std::size_t NumDims>
 struct unknown_axis{
-	typedef std::size_t size_type;
-	typedef std::ptrdiff_t difference_type;
-	
 	/// \brief number of dimensions
 	static constexpr std::size_t num_dims = NumDims;
 

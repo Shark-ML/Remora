@@ -203,8 +203,8 @@ struct subrange_optimizer<dense_tensor_adaptor<T, Axis, TagList, Device>, N >{
 		dense_tensor_adaptor<T, Axis, TagList, Device> const& E,
 		std::size_t start, std::size_t end
 	){
-		REMORA_SIZE_CHECK(start < E.shape()[N]);
-		REMORA_SIZE_CHECK(end < E.shape()[N]);
+		REMORA_SIZE_CHECK(start <= end);
+		REMORA_SIZE_CHECK(end <= E.shape()[N]);
 		//compute new shape
 		auto new_shape = E.shape();
 		new_shape[N] = end - start;

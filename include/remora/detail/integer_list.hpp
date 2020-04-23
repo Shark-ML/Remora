@@ -175,6 +175,32 @@ public:
 };
 
 
+template<class T>
+struct integer_list<T>{
+public:
+	struct array_type{}; 
+public:
+	/// \brief number of dimensions
+	static constexpr std::size_t num_dims = 0;
+
+	/// \brief count the number of occurances of element Value
+	template<T V>
+	static constexpr std::size_t count_v = 0;
+	
+	/// \brief Insert a new element at position N-1
+	/// All current elements at position [N, N+1,...,num_dims - 1] are moved by one to the right
+	template<std::size_t N, T V>
+	using insert_t = integer_list<T, V>;
+	
+	template<class F> 
+	using transform_t = integer_list<T>;
+	
+	static constexpr array_type to_array(){
+		return array_type{};
+	}
+};
+
+
 namespace detail{
 	template<class T, T Value, unsigned... Ns>
 	integer_list<T, ((void)Ns,Value)...> make_constant_integer_list_helper(std::integer_sequence<unsigned, Ns...>);
