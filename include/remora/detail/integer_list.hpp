@@ -202,12 +202,12 @@ public:
 
 
 namespace detail{
-	template<class T, T Value, unsigned... Ns>
-	integer_list<T, ((void)Ns,Value)...> make_constant_integer_list_helper(std::integer_sequence<unsigned, Ns...>);
+	template<class T, T Value, std::size_t... Ns>
+	integer_list<T, ((void)Ns,Value)...> make_constant_integer_list_helper(std::integer_sequence<std::size_t, Ns...>);
 }
 
-template<class T, T Value, unsigned N>
-using constant_integer_list = decltype(detail::make_constant_integer_list_helper<T, Value>(std::make_integer_sequence<unsigned, N>()));
+template<class T, T Value, std::size_t N>
+using constant_integer_list = decltype(detail::make_constant_integer_list_helper<T, Value>(std::make_integer_sequence<std::size_t, N>()));
 
 }
 

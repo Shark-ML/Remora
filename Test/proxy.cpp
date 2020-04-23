@@ -21,12 +21,15 @@ struct ProxyFixture
 
 BOOST_FIXTURE_TEST_SUITE (Remora_Proxy_Test, ProxyFixture);
 
+typedef boost::mpl::list<axis<0,1,2>, axis<0,2,1>, axis<1,0,2>, axis<1,2,0>, axis<2,0,1>, axis<2,1,0> > axis_types;
+typedef boost::mpl::list<axis<0,1>, axis<1,0> > axis_2d_types;
+
 
 ////////////////////////////////////////////////////
 //// PERMUTE
 ////////////////////////////////////////////////////
 
-typedef boost::mpl::list<axis<0,1,2>, axis<0,2,1>, axis<1,0,2>, axis<1,2,0>, axis<2,0,1>, axis<2,1,0> > axis_types;
+
 BOOST_AUTO_TEST_CASE_TEMPLATE( Dense_Permute, Axis, axis_types ){
 	typedef axis<2, 0, 1> axis0;
 	tensor_shape<3> shape = {3, 10, 7};
@@ -66,6 +69,182 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Dense_Permute, Axis, axis_types ){
 	}
 }
 
+////////////////////////////////////////////////////
+//// Diagonal
+////////////////////////////////////////////////////
+
+
+BOOST_AUTO_TEST_CASE( Dense_Diagonal2D ){
+	
+	std::array<std::size_t, 2> strides = {49, 7};
+	tensor_shape<2> shape = {20, 7};
+	typedef integer_list<bool, 1, 0> storage_tag;
+	dense_tensor_adaptor<unsigned, axis<0,1>, storage_tag, cpu_tag> adaptor({values.data(), strides},no_queue(), shape);
+	
+	//diagonal will have at most 7 elements, but the lower diagonals should be full size for longer.
+	{
+		// compute ground truth
+		typedef integer_list<bool, 0> storage_tag_target;
+		typedef axis<0> axis_target;
+		dense_tensor_storage<unsigned, storage_tag_target> target_storage;
+		
+		target_storage.strides[0] = strides[0]+strides[1];
+		target_storage.values = adaptor.raw_storage().values;
+		tensor_shape<1> target_shape = {7};
+
+		
+		dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result = diag(adaptor);
+		//shoudl give the same result (just more verbose)
+		dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result1 = diag(adaptor, axis<0,1>() );
+		dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result2 = diag(adaptor, axis<1,0>() );
+		
+		BOOST_CHECK_EQUAL(result.raw_storage().values, target_storage.values);
+		BOOST_CHECK_EQUAL(result.shape()[0], target_shape[0]);
+		BOOST_CHECK_EQUAL(result.raw_storage().strides[0], target_storage.strides[0]);
+		
+		BOOST_CHECK_EQUAL(result1.raw_storage().values, target_storage.values);
+		BOOST_CHECK_EQUAL(result1.shape()[0], target_shape[0]);
+		BOOST_CHECK_EQUAL(result1.raw_storage().strides[0], target_storage.strides[0]);
+		
+		BOOST_CHECK_EQUAL(result2.raw_storage().values, target_storage.values);
+		BOOST_CHECK_EQUAL(result2.shape()[0], target_shape[0]);
+		BOOST_CHECK_EQUAL(result2.raw_storage().strides[0], target_storage.strides[0]);
+		
+		
+		//check values because diagonal is a bit complicated
+		for(std::size_t i = 0; i != 7; ++i){
+			BOOST_CHECK_EQUAL(result(i), adaptor(i,i));
+			BOOST_CHECK_EQUAL(result1(i), adaptor(i,i));
+			BOOST_CHECK_EQUAL(result2(i), adaptor(i,i));
+		}
+	}
+	
+	{
+		// compute ground truth
+		typedef integer_list<bool, 0> storage_tag_target;
+		typedef axis<0> axis_target;
+		dense_tensor_storage<unsigned, storage_tag_target> target_storage;
+		
+		std::ptrdiff_t k = 3;
+		target_storage.strides[0] = strides[0]+strides[1];
+		target_storage.values = adaptor.raw_storage().values + k * strides[1];
+		tensor_shape<1> target_shape = {7 - k};
+		
+		
+		dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result = diag(adaptor, k);
+		//shoudl give the same result (just more verbose)
+		dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result1 = diag(adaptor, axis<0,1>(), k );
+		dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result2 = diag(adaptor, axis<1,0>(), -k );
+		
+		BOOST_CHECK_EQUAL(result.raw_storage().values, target_storage.values);
+		BOOST_CHECK_EQUAL(result.shape()[0], target_shape[0]);
+		BOOST_CHECK_EQUAL(result.raw_storage().strides[0], target_storage.strides[0]);
+		
+		BOOST_CHECK_EQUAL(result1.raw_storage().values, target_storage.values);
+		BOOST_CHECK_EQUAL(result1.shape()[0], target_shape[0]);
+		BOOST_CHECK_EQUAL(result1.raw_storage().strides[0], target_storage.strides[0]);
+		
+		BOOST_CHECK_EQUAL(result2.raw_storage().values, target_storage.values);
+		BOOST_CHECK_EQUAL(result2.shape()[0], target_shape[0]);
+		BOOST_CHECK_EQUAL(result2.raw_storage().strides[0], target_storage.strides[0]);
+		
+		
+		
+		//check values because diagonal is a bit complicated
+		for(std::size_t i = 0; i != 7; ++i){
+			BOOST_CHECK_EQUAL(result(i), adaptor(i, i + k));
+			BOOST_CHECK_EQUAL(result1(i), adaptor(i, i + k));
+			BOOST_CHECK_EQUAL(result2(i), adaptor(i, i + k));
+		}
+	}	
+	{
+		// compute ground truth
+		typedef integer_list<bool, 0> storage_tag_target;
+		typedef axis<0> axis_target;
+		dense_tensor_storage<unsigned, storage_tag_target> target_storage;
+		
+		std::ptrdiff_t k = -3;
+		target_storage.strides[0] = strides[0]+strides[1];
+		target_storage.values = adaptor.raw_storage().values - k * strides[0];
+		tensor_shape<1> target_shape = {7};
+		
+		
+		dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result = diag(adaptor, k);
+		//shoudl give the same result (just more verbose)
+		dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result1 = diag(adaptor, axis<0,1>(), k );
+		dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result2 = diag(adaptor, axis<1,0>(), -k );
+		
+		BOOST_CHECK_EQUAL(result.raw_storage().values, target_storage.values);
+		BOOST_CHECK_EQUAL(result.shape()[0], target_shape[0]);
+		BOOST_CHECK_EQUAL(result.raw_storage().strides[0], target_storage.strides[0]);
+		
+		BOOST_CHECK_EQUAL(result1.raw_storage().values, target_storage.values);
+		BOOST_CHECK_EQUAL(result1.shape()[0], target_shape[0]);
+		BOOST_CHECK_EQUAL(result1.raw_storage().strides[0], target_storage.strides[0]);
+		
+		BOOST_CHECK_EQUAL(result2.raw_storage().values, target_storage.values);
+		BOOST_CHECK_EQUAL(result2.shape()[0], target_shape[0]);
+		BOOST_CHECK_EQUAL(result2.raw_storage().strides[0], target_storage.strides[0]);
+		
+		
+		
+		//check values because diagonal is a bit complicated
+		for(std::size_t i = 0; i != 7; ++i){
+			BOOST_CHECK_EQUAL(result(i), adaptor(i - k, i));
+			BOOST_CHECK_EQUAL(result1(i), adaptor(i - k, i));
+			BOOST_CHECK_EQUAL(result2(i), adaptor(i - k, i));
+		}
+	}
+}
+
+
+
+BOOST_AUTO_TEST_CASE( Dense_Diagonal3D ){
+	
+	std::array<std::size_t, 3> strides = {14, 7, 1};
+	tensor_shape<3> shape = {10, 2, 7};
+	typedef integer_list<bool, 1, 1, 1> storage_tag;
+	dense_tensor_adaptor<unsigned, axis<0,1, 2>, storage_tag, cpu_tag> adaptor({values.data(), strides},no_queue(), shape);
+	
+	{
+		// compute ground truth
+		typedef integer_list<bool, 0, 0> storage_tag_target;
+		typedef axis<1, 0> axis_target;
+		dense_tensor_storage<unsigned, storage_tag_target> target_storage;
+		
+		std::ptrdiff_t k = 3;
+		target_storage.strides[0] = strides[1];
+		target_storage.strides[1] = strides[0]+strides[2];
+		target_storage.values = adaptor.raw_storage().values + k * strides[2];
+		tensor_shape<2> target_shape = {2, 7 - k};
+		
+		//shoudl give the same result (just more verbose)
+		dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result1 = diag(adaptor, axis_set<0,2>(), k );
+		dense_tensor_adaptor<unsigned, axis_target, storage_tag_target, cpu_tag> result2 = diag(adaptor, axis_set<2,0>(), -k );
+		
+		BOOST_CHECK_EQUAL(result1.raw_storage().values, target_storage.values);
+		BOOST_CHECK_EQUAL(result1.shape()[0], target_shape[0]);
+		BOOST_CHECK_EQUAL(result1.shape()[1], target_shape[1]);
+		BOOST_CHECK_EQUAL(result1.raw_storage().strides[0], target_storage.strides[0]);
+		BOOST_CHECK_EQUAL(result1.raw_storage().strides[1], target_storage.strides[1]);
+		
+		BOOST_CHECK_EQUAL(result2.raw_storage().values, target_storage.values);
+		BOOST_CHECK_EQUAL(result2.shape()[0], target_shape[0]);
+		BOOST_CHECK_EQUAL(result2.shape()[1], target_shape[1]);
+		BOOST_CHECK_EQUAL(result2.raw_storage().strides[0], target_storage.strides[0]);
+		BOOST_CHECK_EQUAL(result2.raw_storage().strides[1], target_storage.strides[1]);
+		
+		
+		
+		//check values because diagonal is a bit complicated
+		for(std::size_t i = 0; i != target_shape[0]; ++i){
+			for(std::size_t j = 0; j != target_shape[1]; ++j){
+				BOOST_CHECK_EQUAL(result1(i,j), adaptor(j, i, j + k));
+				BOOST_CHECK_EQUAL(result2(i, j), adaptor(j, i, j + k));
+			}
+		}
+	}	
+}
 
 ////////////////////////////////////////////////////
 //// SLICE

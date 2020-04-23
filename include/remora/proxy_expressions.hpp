@@ -320,13 +320,13 @@ template <std::size_t Dim, class TensorA, class Device>
 auto trans(tensor_expression<Dim, TensorA, Device> const& A){
 	typename TensorA::const_closure_type Aclosure = A();
 	return trans(Aclosure);
-};
+}
 
 template <std::size_t Dim, class TensorA, class Device>
 auto trans(tensor_expression<Dim, TensorA, Device>&& A){
 	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
 	return trans(A);
-};
+}
 
 namespace detail{
 	template<std::size_t N, std::size_t NEnd, class Axis>
@@ -354,13 +354,13 @@ template <std::size_t Dim, class TensorA, class Device, unsigned Axis>
 auto permute_axis_back(tensor_expression<Dim, TensorA, Device> const& A, axis_set<Axis> ax){
 	typename TensorA::const_closure_type Aclosure = A();
 	return permute_axis_back(Aclosure, ax);
-};
+}
 
 template <std::size_t Dim, class TensorA, class Device, unsigned Axis>
 auto permute_axis_back(tensor_expression<Dim, TensorA, Device>&& A, axis_set<Axis> ax){
 	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
 	return permute_axis_back(A, ax);
-};
+}
 
 ////////////////////////////////////
 //// Tensor-slice
@@ -441,13 +441,38 @@ auto slice(tensor_expression<Dim, TensorA, Device> && A, Args... args){
 	return slice(A, args...);
 }
 
-/*
+
 
 ////////////////////////////////////
 //// Matrix Diagonal
 ////////////////////////////////////
 
-///\brief Returns the diagonal of a constant square matrix as vector.
+template <std::size_t Dim, class TensorA, class Device, unsigned N0, unsigned N1>
+auto diag(tensor_expression<Dim, TensorA, Device>& A, axis_set<N0, N1>, std::ptrdiff_t k = 0){
+	static_assert(N0 < Dim);
+	static_assert(N1 < Dim);
+	static_assert(N0 != N1);
+	//first step: permute axis backwards
+	auto A0 = permute_axis_back(A, axis_set<N0>());
+	//second permute take into account that N0 got moved.
+	auto permuted_A = permute_axis_back(A0, axis_set< (N0 > N1? N1: N1 - 1) >());
+	
+	return detail::tensor_diagonal_optimizer<typename decltype(permuted_A)::closure_type>::create(permuted_A, k);
+}
+
+template <std::size_t Dim, class TensorA, class Device, unsigned N0, unsigned N1>
+auto diag(tensor_expression<Dim, TensorA, Device> const& A, axis_set<N0, N1> ax, std::ptrdiff_t k = 0){
+	typename TensorA::const_closure_type Aclosure = A();
+	return diag(Aclosure, ax, k);
+}
+
+template <std::size_t Dim, class TensorA, class Device, unsigned N0, unsigned N1>
+auto diag(tensor_expression<Dim, TensorA, Device>&& A, axis_set<N0, N1> ax, std::ptrdiff_t k = 0){
+	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
+	return diag(A, ax, k);
+}
+
+///\brief Returns the diagonal of a matrix as vector.
 ///
 /// given a matrix 
 /// A = (1 2 3)
@@ -456,27 +481,24 @@ auto slice(tensor_expression<Dim, TensorA, Device> && A, Args... args){
 ///
 /// the diag operation results in
 /// diag(A) = (1,5,9)
-template<class M, class Device>
-typename detail::matrix_diagonal_optimizer<typename M::closure_type>::type
-diag(matrix_expression<M, Device>& mat){
-	REMORA_SIZE_CHECK(mat().size1() == mat().size2());
-	return detail::matrix_diagonal_optimizer<typename M::closure_type>::create(mat());
+template <std::size_t Dim, class TensorA, class Device>
+auto diag(tensor_expression<Dim, TensorA, Device>& A, std::ptrdiff_t k = 0){
+	return diag(A,axis_set<Dim - 2, Dim - 1>(), k);
 }
 
-template<class M, class Device>
-typename detail::matrix_diagonal_optimizer<typename M::const_closure_type>::type
-diag(matrix_expression<M, Device> const& mat){
-	REMORA_SIZE_CHECK(mat().size1() == mat().size2());
-	return detail::matrix_diagonal_optimizer<typename M::const_closure_type>::create(mat());
+template <std::size_t Dim, class TensorA, class Device>
+auto diag(tensor_expression<Dim, TensorA, Device> const& A, std::ptrdiff_t k = 0){
+	typename TensorA::const_closure_type Aclosure = A();
+	return diag(A,axis_set<Dim - 2, Dim - 1>(), k);
 }
 
-
-template<class M, class Device>
-typename detail::matrix_diagonal_optimizer<typename M::closure_type>::type
-diag(matrix_expression<M, Device> && m){
-	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
-	return diag(m());
+template <std::size_t Dim, class TensorA, class Device>
+auto diag(tensor_expression<Dim, TensorA, Device>&& A, std::ptrdiff_t k = 0){
+	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
+	return diag(A,axis_set<Dim - 2, Dim - 1>(), k);
 }
+
+/*
 ////////////////////////////////////////////////
 //// Matrix to Triangular Matrix
 ////////////////////////////////////////////////

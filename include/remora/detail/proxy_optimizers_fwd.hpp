@@ -47,8 +47,8 @@ struct slice_optimizer;
 template<class TensorA, class Axis>
 struct axis_permute_optimizer;
     
-// template<class M>
-// struct matrix_diagonal_optimizer;
+template<class M>
+struct tensor_diagonal_optimizer;
 
 template<class M, class Tag>
 struct triangular_proxy_optimizer;

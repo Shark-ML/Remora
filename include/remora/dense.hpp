@@ -32,6 +32,8 @@
 #include "detail/traits.hpp"
 #include "detail/proxy_optimizers_fwd.hpp"
 #include "detail/merge_proxy.hpp"
+#include <algorithm> // for std::min
+#include <cmath> // for abs
 namespace remora{
 	
 	
@@ -374,6 +376,66 @@ struct axis_permute_optimizer<dense_tensor_adaptor<T,Axis, TagList, Device>, axi
 
 
 ////////////////////////MATRIX DIAGONAL//////////////////////
+template<class T, class Axis, class TagList, class Device>
+struct tensor_diagonal_optimizer<dense_tensor_adaptor<T,Axis, TagList, Device> >{
+	//we have to remove an axis, we choose the one with the higher index as it has
+	//a larger stride
+	static constexpr std::size_t Dim = Axis::num_dims;
+	static constexpr unsigned ax0 = Axis::template element_v<Dim - 2>;
+	static constexpr unsigned ax1 = Axis::template element_v<Dim - 1>;
+	static constexpr std::size_t ax_delete = ax0 < ax1 ? Dim - 1: Dim - 2;
+	
+	//remove the axis to delete
+	typedef typename  Axis::template slice_t<ax_delete> proxy_axis;
+	
+	//remember the rule for axis i to be  contiguous is:
+	// stride[i] = size[i+1] * shape[i+1]
+	// diag changes this in (TODO: currently) mysterious ways.
+	// we resolve this for now by taking the safe heaven of making
+	// every axis non-contiguous
+	typedef constant_integer_list<bool, false, Dim - 1> proxy_tag_list;
+	
+	typedef dense_tensor_adaptor<T, proxy_axis, proxy_tag_list, Device> type;
+	
+	static type create(dense_tensor_adaptor<T,Axis, TagList, Device> const& E, std::ptrdiff_t k){
+		std::ptrdiff_t zero = 0;
+		std::size_t lower_k = std::max(-k,zero);
+		std::size_t upper_k = std::max(k,zero);
+		//new shape: same in all dimensions except the last two.
+		//in this dimension, take the minimum of both axes (For the diagonal)
+		//take into account that taking an off-diagonal always removes
+		//size according to the id of the off-diagonal.
+		auto shape = E.shape();
+		REMORA_SIZE_CHECK(lower_k < shape[Dim - 1]);
+		REMORA_SIZE_CHECK(upper_k < shape[Dim - 2]);
+		auto new_shape = shape.slice(Dim - 1);
+		new_shape[Dim - 2] = std::min(shape[Dim - 2]  - lower_k, shape[Dim - 1] - upper_k);
+		
+		auto storage = E.raw_storage();
+		//the stride is the sum of strides of the removed axis
+		//otherwise the same.
+		auto strides = storage.strides;
+		std::array<std::size_t, Dim - 1> new_strides;
+		for(unsigned i = 0; i != Dim - 2; ++i){
+			new_strides[i] = strides[i];
+		}
+		new_strides[Dim - 2] = strides[Dim - 1] + strides[Dim - 2];
+		
+		//the valeus are offset by the diagonal. for k > 0 
+		// we get the off-diagonal above the diagonal, which for the 
+		// first element means that it is moved by k * column-stride
+		// for k < 0 we get the lower part, which is -k * row-stride
+		auto new_values = storage.values;
+		new_values += storage.strides[Dim - 1] * upper_k;
+		new_values += storage.strides[Dim - 2] * lower_k;
+		
+		
+		return type({new_values, new_strides}, E.queue(), new_shape);
+	}
+};
+
+
+
 // template<class T, class Orientation, class Device, class Device>
 // struct matrix_diagonal_optimizer<dense_matrix_adaptor<T,Orientation, Device, Device> >{
 	// typedef dense_vector_adaptor<T, dense_tag, Device> type;
