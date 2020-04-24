@@ -50,7 +50,7 @@ public:
 		T values[sizeof...(Seq) + 1];// for insert
 	
 	}; 
-private:
+protected:
 
 	static constexpr T Nth_integer_helper(std::size_t N){
 		T seq[] = {Seq...};

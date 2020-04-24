@@ -163,8 +163,7 @@ BOOST_AUTO_TEST_CASE( Remora_Identity_Matrix ){
 
 
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_1, Axis, result_orientations )
-{
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast, Axis, result_orientations ){
 	matrix<int, Axis> x({Dimension1, Dimension2}); 
 	tensorN<int, 4> result({Dimension1, 10,  Dimension2, 8});
 	
@@ -195,6 +194,40 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_1, Axis, result_ori
 	op.assign_to(op_block_assign);
 	op.plus_assign_to(op_block_plus_assign);
 	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < 10; j++){
+			for(std::size_t k = 0; k != Dimension2; ++k){
+				for(std::size_t l = 0; l != 8; ++l){
+					BOOST_CHECK_EQUAL(result(i, j, k, l), elements(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), op_elem_assign(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), op_perm_elem_assignf(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), op_perm_elem_assignb(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), op_perm_elem_assignd(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l), op_block_assign(i, j, k, l));
+					BOOST_CHECK_EQUAL(result(i, j, k, l) + 1, op_block_plus_assign(i, j, k, l));
+				}
+			}
+		}
+	}
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_split, Axis, result_orientations )
+{
+	matrix<int, Axis> x({Dimension1, Dimension2}); 
+	tensorN<int, 4> result({Dimension1, 10,  Dimension2, 8});
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < 10; j++){
+			for(std::size_t k = 0; k != Dimension2; ++k){
+				x(i,k) = i-3+k;
+				for(std::size_t l = 0; l != 8; ++l){
+					result(i, j, k, l)= x(i,k);
+				}
+			}
+		}
+	}
+	
+	auto op =  broadcast(x, ax::same, 10, ax::same, 8);
 	//split check
 	auto op_split1 = reshape(op, ax::same, ax::same, ax::split<2>(10,5), ax::same); 
 	auto op_split2 = reshape(op, ax::same, ax::same, ax::same, ax::split<2>(2,4)); 
@@ -217,15 +250,266 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_1, Axis, result_ori
 		for (size_t j = 0; j < 10; j++){
 			for(std::size_t k = 0; k != Dimension2; ++k){
 				for(std::size_t l = 0; l != 8; ++l){
-					BOOST_CHECK_EQUAL(result(i, j, k, l), elements(i, j, k, l));
 					BOOST_CHECK_EQUAL(result(i, j, k, l), split1_elem(i, j, k / 5, k % 5, l));
 					BOOST_CHECK_EQUAL(result(i, j, k, l), split2_elem(i, j, k, l / 4, l % 4));
-					BOOST_CHECK_EQUAL(result(i, j, k, l), op_elem_assign(i, j, k, l));
-					BOOST_CHECK_EQUAL(result(i, j, k, l), op_perm_elem_assignf(i, j, k, l));
-					BOOST_CHECK_EQUAL(result(i, j, k, l), op_perm_elem_assignb(i, j, k, l));
-					BOOST_CHECK_EQUAL(result(i, j, k, l), op_perm_elem_assignd(i, j, k, l));
-					BOOST_CHECK_EQUAL(result(i, j, k, l), op_block_assign(i, j, k, l));
-					BOOST_CHECK_EQUAL(result(i, j, k, l) + 1, op_block_plus_assign(i, j, k, l));
+				}
+			}
+		}
+	}
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_slice, Axis, result_orientations )
+{
+	matrix<int, Axis> x({Dimension1, Dimension2}); 
+	tensorN<int, 4> result({Dimension1, 10,  Dimension2, 8});
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < 10; j++){
+			for(std::size_t k = 0; k != Dimension2; ++k){
+				x(i,k) = i-3+k;
+				for(std::size_t l = 0; l != 8; ++l){
+					result(i, j, k, l)= x(i,k);
+				}
+			}
+		}
+	}
+	
+	{
+		auto op =  broadcast(x, ax::same, 10, ax::same, 8);
+		auto op_slice = slice(op, 3, ax::same, ax::same, ax::same); //slice a matrix-dimension 
+		auto slice_elem = op_slice.elements();
+
+		BOOST_REQUIRE_EQUAL(op_slice.shape()[0], 10);
+		BOOST_REQUIRE_EQUAL(op_slice.shape()[1], Dimension2);
+		BOOST_REQUIRE_EQUAL(op_slice.shape()[2], 8);
+		
+		for (size_t j = 0; j < 10; j++){
+			for(std::size_t k = 0; k != Dimension2; ++k){
+				for(std::size_t l = 0; l != 8; ++l){
+					BOOST_CHECK_EQUAL(result(3, j, k, l), slice_elem(j, k, l));
+				}
+			}
+		}
+	}
+	{
+		auto op =  broadcast(x, ax::same, 10, ax::same, 8);
+		auto op_slice = slice(op, ax::same, 3, ax::same, ax::same); //slice a bc-dimension
+		auto slice_elem = op_slice.elements();
+
+		BOOST_REQUIRE_EQUAL(op_slice.shape()[0], Dimension1);
+		BOOST_REQUIRE_EQUAL(op_slice.shape()[1], Dimension2);
+		BOOST_REQUIRE_EQUAL(op_slice.shape()[2], 8);
+		
+		for (size_t i = 0; i < Dimension1; i++){
+			for(std::size_t k = 0; k != Dimension2; ++k){
+				for(std::size_t l = 0; l != 8; ++l){
+					BOOST_CHECK_EQUAL(result(i, 3, k, l), slice_elem(i, k, l));
+				}
+			}
+		}
+	}
+	{
+		auto op =  broadcast(x, ax::same, 10, ax::same, 8);
+		scalar_tensor<int, axis<0,1>, cpu_tag> op_slice = slice(op, 3, ax::same, 5, ax::same); //slice until all matrix dimensions are gone(result should be a scalar tensor)
+		auto slice_elem = op_slice.elements();
+
+		BOOST_REQUIRE_EQUAL(op_slice.shape()[0], 10);
+		BOOST_REQUIRE_EQUAL(op_slice.shape()[1], 8);
+		
+		for (size_t j = 0; j < 10; j++){
+			for(std::size_t l = 0; l != 8; ++l){
+				BOOST_CHECK_EQUAL(result(3, j, 5, l), slice_elem(j, l));
+			}
+		}
+	}
+	{
+		auto op =  broadcast(x, ax::same, 10, ax::same, 8);
+		typename matrix<int, Axis>::const_closure_type op_slice = slice(op, ax::same, 3, ax::same, 5); //slice until all bc dimensions are gone (result should be original matrix)
+		auto slice_elem = op_slice.elements();
+
+		BOOST_REQUIRE_EQUAL(op_slice.shape()[0], Dimension1);
+		BOOST_REQUIRE_EQUAL(op_slice.shape()[1], Dimension2);
+		for (size_t i = 0; i < Dimension1; i++){
+			for(std::size_t k = 0; k != Dimension2; ++k){
+				BOOST_CHECK_EQUAL(result(i, 3, k, 5), slice_elem(i, k));
+			}
+		}
+		
+	}
+}
+
+
+
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_permute, Axis, result_orientations )
+{
+	matrix<int, Axis> x({Dimension1, Dimension2}); 
+	tensorN<int, 4> result({Dimension1, 10,  Dimension2, 8});
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < 10; j++){
+			for(std::size_t k = 0; k != Dimension2; ++k){
+				x(i,k) = i-3+k;
+				for(std::size_t l = 0; l != 8; ++l){
+					result(i, j, k, l)= x(i,k);
+				}
+			}
+		}
+	}
+	{
+		auto op =  broadcast(x, ax::same, 10, ax::same, 8);
+		typedef typename decltype(op)::axis op_axis;
+		tensor_broadcast<
+			typename matrix<int, Axis >::const_closure_type, 
+			typename op_axis::template permute_t<0,3,1,2>,
+			integer_list<bool,0,1,1,0>
+		> op_permute = permute(op, axis<0,3,1,2>()); 
+		auto permute_elem = op_permute.elements();
+		BOOST_REQUIRE_EQUAL(op_permute.shape().size(), 4);
+		BOOST_REQUIRE_EQUAL(op_permute.shape()[0], Dimension1);
+		BOOST_REQUIRE_EQUAL(op_permute.shape()[1], 8);
+		BOOST_REQUIRE_EQUAL(op_permute.shape()[2], 10);
+		BOOST_REQUIRE_EQUAL(op_permute.shape()[3], Dimension2);
+		
+		for (size_t i = 0; i < Dimension1; i++){
+			for (size_t j = 0; j < 10; j++){
+				for(std::size_t k = 0; k != Dimension2; ++k){
+					for(std::size_t l = 0; l != 8; ++l){
+						BOOST_CHECK_EQUAL(result(i, j, k, l), permute_elem(i, l, j, k));
+					}
+				}
+			}
+		}
+	}
+	//also permutes the inner tensor
+	{
+		auto op =  broadcast(x, ax::same, 10, ax::same, 8);
+		typedef typename decltype(op)::axis op_axis;
+		tensor_broadcast<
+			typename matrix<int, typename Axis::template permute_t<1,0> >::const_closure_type, 
+			typename op_axis::template permute_t<2,3,1,0>,
+			integer_list<bool,0,1,1,0>
+		> op_permute = permute(op, axis<2,3,1,0>()); 
+		auto permute_elem = op_permute.elements();
+		BOOST_REQUIRE_EQUAL(op_permute.shape().size(), 4);
+		BOOST_REQUIRE_EQUAL(op_permute.shape()[0], Dimension2);
+		BOOST_REQUIRE_EQUAL(op_permute.shape()[1], 8);
+		BOOST_REQUIRE_EQUAL(op_permute.shape()[2], 10);
+		BOOST_REQUIRE_EQUAL(op_permute.shape()[3], Dimension1);
+		
+		for (size_t i = 0; i < Dimension1; i++){
+			for (size_t j = 0; j < 10; j++){
+				for(std::size_t k = 0; k != Dimension2; ++k){
+					for(std::size_t l = 0; l != 8; ++l){
+						BOOST_CHECK_EQUAL(result(i, j, k, l), permute_elem(k, l, j, i));
+					}
+				}
+			}
+		}
+	}
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_dense_matrix_broadcast_diagonal, Axis, result_orientations )
+{
+	matrix<int, Axis> x({Dimension1, Dimension2}); 
+	
+	for (size_t i = 0; i < Dimension1; i++){
+		for (size_t j = 0; j < 10; j++){
+			for(std::size_t k = 0; k != Dimension2; ++k){
+				x(i,k) = i-3+k;
+			}
+		}
+	}
+	//case 1: both diag dimensions are broadcasted
+	{
+		auto op =  broadcast(x, ax::same, ax::same, 10, 8);
+		tensor_broadcast<
+			typename matrix<int, Axis >::const_closure_type, 
+			axis<Axis::template element_v<0>, Axis::template element_v<1>, 2>,
+			integer_list<bool,0,0,1>
+		> op_diag =  diag(op, 3);
+		auto op_diag2 =  diag(op, axis_set<3,2>(), -3);
+		auto op_elem = op_diag.elements();
+		auto op_elem2 = op_diag2.elements();
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[0], Dimension1);
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[1], Dimension2);
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[2], 5);
+		
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[0], Dimension1);
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[1], Dimension2);
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[2], 5);
+		
+		for (size_t i = 0; i < Dimension1; i++){
+			for (size_t j = 0; j < Dimension2; j++){
+				for(std::size_t k = 0; k != 5; ++k){
+					BOOST_CHECK_EQUAL(x(i, j), op_elem(i, j, k));
+					BOOST_CHECK_EQUAL(x(i, j), op_elem2(i, j, k));
+				}
+			}
+		}
+	}
+	//case 2: both diag dimensions are of a matrix
+	{
+		auto op =  broadcast(x, 10, 8, ax::same, ax::same);
+		auto op_diag =  diag(op, 10);
+		auto op_diag2 =  diag(op, axis_set<3,2>(), -10);
+		auto op_elem = op_diag.elements();
+		auto op_elem2 = op_diag2.elements();
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[0], 10);
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[1], 8);
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[2], 25);
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[0], 10);
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[1], 8);
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[2], 25);
+		for (size_t i = 0; i < 10; i++){
+			for (size_t j = 0; j < 8; j++){
+				for(std::size_t k = 0; k != 20; ++k){
+					BOOST_CHECK_EQUAL(x(k, k + 10), op_elem(i, j, k));
+					BOOST_CHECK_EQUAL(x(k, k + 10), op_elem2(i, j, k));
+				}
+			}
+		}
+	}
+	
+	//case 3: second diag dimension is of a matrix
+	{
+		auto op =  broadcast(x, 10, ax::same, 8, ax::same);
+		auto op_diag =  diag(op, -3);
+		auto op_diag2 =  diag(op, axis_set<3,2>(), 3);
+		auto op_elem = op_diag.elements();
+		auto op_elem2 = op_diag2.elements();
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[0], 10);
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[1], Dimension1);
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[2], 5);
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[0], 10);
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[1], Dimension1);
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[2], 5);
+		for (size_t i = 0; i < 10; i++){
+			for (size_t j = 0; j < Dimension1; j++){
+				for(std::size_t k = 0; k != 5; ++k){
+					BOOST_CHECK_EQUAL(x(j,k), op_elem(i, j, k));
+					BOOST_CHECK_EQUAL(x(j,k), op_elem2(i, j, k));
+				}
+			}
+		}
+	}
+	//case 4: first diag dimension is of a matrix
+	{
+		auto op =  broadcast(x, 10, ax::same, ax::same, 8);
+		auto op_diag =  diag(op, -3);
+		auto op_diag2 =  diag(op, axis_set<3,2>(), 3);
+		auto op_elem = op_diag.elements();
+		auto op_elem2 = op_diag2.elements();
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[0], 10);
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[1], Dimension1);
+		BOOST_REQUIRE_EQUAL(op_diag.shape()[2], 8);
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[0], 10);
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[1], Dimension1);
+		BOOST_REQUIRE_EQUAL(op_diag2.shape()[2], 8);
+		for (size_t i = 0; i < 10; i++){
+			for (size_t j = 0; j < Dimension1; j++){
+				for(std::size_t k = 0; k != 8; ++k){
+					BOOST_CHECK_EQUAL(x(j,k), op_elem(i, j, k));
+					BOOST_CHECK_EQUAL(x(j,k), op_elem2(i, j, k));
 				}
 			}
 		}

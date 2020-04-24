@@ -122,10 +122,11 @@ public:
 		(Seq == axis::template element_v<AxisJ>? axis::template element_v<AxisI>: Seq))
 	...>;
 	
-	/// \brief Adds a new axis to the end of the axis object. the new sequence has value N-1
+	/// \brief Adds a new axis to the axis object. The value of the newly inserted object is N
 	///
 	/// This is value to expand permtuations of axis objects to larger sequences.
-	typedef axis<Seq...,sizeof...(Seq)> expand_t;
+	template<std::size_t Axis>
+	using expand_t = decltype(apply<typename axis_set<Seq...>::template insert_helper<Axis, sizeof...(Seq)> >(std::make_index_sequence<sizeof...(Seq)+1>()));
 	
 	
 	/// \brief Reverses the order of the axis object.

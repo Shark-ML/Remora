@@ -242,28 +242,28 @@ private:
 ///
 /// \tparam E the expression to broadcast
 /// \tparam Axis the axis object of the tensor after broadcasting
-/// \tparam DropList the list of indices that are dropped
-template<class E, class Axis, class DropList>
-class tensor_broadcast:public tensor_expression<Axis::num_dims, tensor_broadcast<E, Axis, DropList>, typename E::device_type >{
+/// \tparam BroadcastList boolean list indicating whether axis i (in Axis) is a broadcasted dimension.
+template<class E, class Axis, class BroadcastList>
+class tensor_broadcast:public tensor_expression<Axis::num_dims, tensor_broadcast<E, Axis, BroadcastList>, typename E::device_type >{
 private:
 	//transform the drop list to a list of indices to keep
 	static constexpr std::size_t num_keep(){
-		auto drop_list = DropList::to_array();
+		auto drop_list = BroadcastList::to_array();
 		std::size_t count = 0;
-		for(std::size_t i = 0; i != DropList::num_dims; ++i){
+		for(std::size_t i = 0; i != BroadcastList::num_dims; ++i){
 			count += !drop_list[i];
 		}
 		return count;
 	}
 	
 	//check invariants
-	static_assert(E::num_dims == num_keep(), "number of zeros in DropList must be equal to dimension of E");
-	static_assert(Axis::num_dims == DropList::num_dims, "DropList must have same length as Axis");
+	static_assert(E::num_dims == num_keep(), "number of zeros in BroadcastList must be equal to dimension of E");
+	static_assert(Axis::num_dims == BroadcastList::num_dims, "BroadcastList must have same length as Axis");
 	
 	struct keep_list_helper{
 		template<class Seq>
 		static constexpr auto apply(Seq){
-			auto drop_list = DropList::to_array();
+			auto drop_list = BroadcastList::to_array();
 			typename Axis::array_type result={0};
 			std::size_t pos = 0;
 			for(std::size_t i = 0; i != Axis::num_dims; ++i){
@@ -337,13 +337,13 @@ public:
 	template<class TensorX>
 	void assign_to(tensor_expression<num_dims, TensorX, device_type>& X)const{
 		auto eval_e = eval_block(m_expression);
-		tensor_broadcast<decltype(eval_e), axis, DropList> broadcast_eval_e(eval_e, m_shape);
+		tensor_broadcast<decltype(eval_e), axis, BroadcastList> broadcast_eval_e(eval_e, m_shape);
 		assign(X, broadcast_eval_e);
 	}
 	template<class TensorX>
 	void plus_assign_to(tensor_expression<num_dims, TensorX, device_type>& X)const{
 		auto eval_e = eval_block(m_expression);
-		tensor_broadcast<decltype(eval_e), axis, DropList> broadcast_eval_e(eval_e, m_shape);
+		tensor_broadcast<decltype(eval_e), axis, BroadcastList> broadcast_eval_e(eval_e, m_shape);
 		plus_assign(X, broadcast_eval_e);
 	}
 

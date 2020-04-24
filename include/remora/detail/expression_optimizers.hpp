@@ -114,17 +114,17 @@ struct axis_permute_optimizer<tensor_binary<TensorA,TensorB, F>, Axis>{
 };
 
 //broadcasting
-template<class Tensor, class OAxis, class DropList, unsigned... Permutation>
-struct axis_permute_optimizer<tensor_broadcast<Tensor, OAxis, DropList >, axis<Permutation...> >{
+template<class Tensor, class OAxis, class BroadcastList, unsigned... Permutation>
+struct axis_permute_optimizer<tensor_broadcast<Tensor, OAxis, BroadcastList >, axis<Permutation...> >{
 	typedef axis<Permutation...> Axis;
 	typedef typename OAxis::template permute_t<Permutation...> permuted_axis;
-	typedef typename DropList::template select_t<Permutation...> permuted_drops;
-	typedef typename detail::filter_slice<Axis, DropList >::type sliced_permutation;
+	typedef typename BroadcastList::template select_t<Permutation...> permuted_drops;
+	typedef typename detail::filter_slice<Axis, BroadcastList >::type sliced_permutation;
 	
 	typedef axis_permute_optimizer<typename Tensor::const_closure_type, sliced_permutation> opt;
 	typedef tensor_broadcast<typename opt::type, permuted_axis, permuted_drops> type;
 	
-	static type create(tensor_broadcast<Tensor, OAxis, DropList > const& E){
+	static type create(tensor_broadcast<Tensor, OAxis, BroadcastList > const& E){
 		auto shape = Axis::to_axis(E.shape());
 		return {opt::create(E.expression()), shape};
 	}
@@ -133,7 +133,7 @@ struct axis_permute_optimizer<tensor_broadcast<Tensor, OAxis, DropList >, axis<P
 //permute(reduce_last(A), p) = reduce_last(permute(A, expand(p) )) 
 template<class Tensor, class F, class Axis>
 struct axis_permute_optimizer<tensor_reduce_last<Tensor, F>, Axis >{
-	typedef axis_permute_optimizer<typename Tensor::const_closure_type, typename Axis::expand_t > opt;
+	typedef axis_permute_optimizer<typename Tensor::const_closure_type, typename Axis::template expand_t<Axis::num_dims - 1> > opt;
 	typedef tensor_reduce_last<typename opt::type, F> type;
 	
 	static type create(tensor_reduce_last<Tensor, F> const& E){
@@ -331,13 +331,13 @@ struct axis_split_optimizer<tensor_binary<TensorA,TensorB, F>, N>{
 };
 
 //split(f(A,B),i)=f(split(A,i),split(B,i))
-template<class Tensor, class Axis, class DropList, std::size_t N>
-struct axis_split_optimizer<tensor_broadcast<Tensor, Axis, DropList >, N>{
+template<class Tensor, class Axis, class BroadcastList, std::size_t N>
+struct axis_split_optimizer<tensor_broadcast<Tensor, Axis, BroadcastList >, N>{
 	//check whether N is in the droplist
-	static constexpr std::size_t droppedN = DropList::template element_v<N>;
+	static constexpr std::size_t droppedN = BroadcastList::template element_v<N>;
 	
 	//insert the new splitted Nth element into droplist and axis
-	typedef typename DropList::template insert_t<N, droppedN> drop_transformed;
+	typedef typename BroadcastList::template insert_t<N, droppedN> drop_transformed;
 	typedef typename Axis::template split_t<N> axis_transformed;
 	
 	
@@ -365,7 +365,7 @@ struct axis_split_optimizer<tensor_broadcast<Tensor, Axis, DropList >, N>{
 		return A;
 	}
 	
-	static type create(tensor_broadcast<Tensor, Axis, DropList > const& E, std::size_t size1, std::size_t size2){
+	static type create(tensor_broadcast<Tensor, Axis, BroadcastList > const& E, std::size_t size1, std::size_t size2){
 		auto new_shape = E.shape().split(N, size1, size2);
 		auto Asplit = split_inner(E.expression(), size1, size2, integer_list<bool,droppedN>());
 		return {Asplit, new_shape};
@@ -493,12 +493,12 @@ struct slice_optimizer<tensor_binary<TensorA,TensorB, F>, N>{
 	}
 };
 
-template<int /*0*/, class Tensor, class AxisTrans, class DropTrans, std::size_t N>
+template<int /*0*/, class Tensor, class AxisTrans, class BroadcastTrans, std::size_t N>
 struct slice_optimizer_broadcast{
 	//case where N is not dropped
 	//count the number of axis dropped before N to get the proper axis to slice
 	static constexpr unsigned num_smaller(){
-		auto arr = DropTrans::to_array();
+		auto arr = BroadcastTrans::to_array();
 		std::size_t count = 0;
 		for(std::size_t i = 0; i != N; ++i){
 			count += arr[i];
@@ -506,7 +506,7 @@ struct slice_optimizer_broadcast{
 		return count;
 	}
 	typedef slice_optimizer<Tensor, N - num_smaller()> slice_opt;
-	typedef tensor_broadcast<typename slice_opt::type, AxisTrans, DropTrans > type;
+	typedef tensor_broadcast<typename slice_opt::type, AxisTrans, BroadcastTrans > type;
 	
 	template<class TensorE>
 	static type create(TensorE const& E, std::size_t i){
@@ -514,10 +514,10 @@ struct slice_optimizer_broadcast{
 	}
 };
 
-template<class Tensor, class AxisTrans, class DropTrans, std::size_t N>
-struct slice_optimizer_broadcast<1,Tensor, AxisTrans, DropTrans, N>{
+template<class Tensor, class AxisTrans, class BroadcastTrans, std::size_t N>
+struct slice_optimizer_broadcast<1,Tensor, AxisTrans, BroadcastTrans, N>{
 	//case where N is dropped
-	typedef tensor_broadcast<Tensor, AxisTrans, DropTrans > type;
+	typedef tensor_broadcast<Tensor, AxisTrans, BroadcastTrans > type;
 	
 	template<class TensorE>
 	static type create(TensorE const& E, std::size_t i){
@@ -540,8 +540,8 @@ struct slice_optimizer_broadcast<1, Tensor, AxisTrans, constant_integer_list<boo
 
 //case where we remove the last axis of Tensor
 //here the result is a scalar_tensor
-template<class Tensor, class AxisTrans, class DropTrans, std::size_t N>
-struct slice_optimizer_broadcast<2,Tensor, AxisTrans, DropTrans, N>{
+template<class Tensor, class AxisTrans, class BroadcastTrans, std::size_t N>
+struct slice_optimizer_broadcast<2,Tensor, AxisTrans, BroadcastTrans, N>{
 	typedef slice_optimizer<Tensor, 0> slice_opt;
 	typedef scalar_tensor<typename Tensor::value_type, AxisTrans, typename Tensor::device_type> type;
 	
@@ -553,22 +553,22 @@ struct slice_optimizer_broadcast<2,Tensor, AxisTrans, DropTrans, N>{
 
 
 //dispatcher for slice implementation of broadcast
-template<class Tensor, class Axis, class DropList, std::size_t N>
-struct slice_optimizer<tensor_broadcast<Tensor, Axis, DropList >, N>{
+template<class Tensor, class Axis, class BroadcastList, std::size_t N>
+struct slice_optimizer<tensor_broadcast<Tensor, Axis, BroadcastList >, N>{
 	//check whether N is in the droplist
-	static constexpr std::size_t droppedN = DropList::template element_v<N>;
+	static constexpr std::size_t droppedN = BroadcastList::template element_v<N>;
 	// check whether we are removing the last axis of the Tensor
 	static constexpr std::size_t lastAxis = (Tensor::num_dims == (1-droppedN));
 	
 	//remove the Nth element from droplist and axis
-	typedef typename DropList::template remove_t<N> drop_transformed;
+	typedef typename BroadcastList::template remove_t<N> drop_transformed;
 	typedef typename Axis::template slice_t<N> axis_transformed;
 	
 	//reference the optimizer implementation for normal/droppedN/lastAxis
 	typedef slice_optimizer_broadcast<droppedN+2*lastAxis, Tensor, axis_transformed, drop_transformed, N> opt;
 	typedef typename opt::type type;
 	
-	static type create(tensor_broadcast<Tensor, Axis, DropList > const& E, std::size_t i){
+	static type create(tensor_broadcast<Tensor, Axis, BroadcastList > const& E, std::size_t i){
 		return opt::create(E, i);
 	}
 };
@@ -827,11 +827,162 @@ struct subrange_optimizer<diagonal_matrix<V> >{
 
 
 ////////////////////////////////////
+//// Matrix-Diagonal
+////////////////////////////////////
+
+//range(alpha * Tensor) = alpha * diag(Tensor)
+template<class Tensor>
+struct tensor_diagonal_optimizer<scalar_multiply<Tensor> >{
+	typedef tensor_diagonal_optimizer<typename Tensor::const_closure_type > opt;
+	typedef scalar_multiply<typename opt::type > type;
+	
+	static type create(scalar_multiply<Tensor> const& E){
+		return type(opt::create(E.expression()), E.scalar());
+	}
+};
+
+//diag(TensorA+TensorB) = diag(TensorA) + diag(TensorB)
+template<class TensorA, class TensorB>
+struct tensor_diagonal_optimizer<tensor_addition<TensorA,TensorB> >{
+	typedef tensor_diagonal_optimizer<typename TensorA::const_closure_type > left_opt;
+	typedef tensor_diagonal_optimizer<typename TensorB::const_closure_type > right_opt;
+	typedef tensor_addition<typename left_opt::type, typename right_opt::type > type;
+	
+	static type create(tensor_addition<TensorA,TensorB> const& E){
+		return type(left_opt::create(E.lhs()),right_opt::create(E.rhs()));
+	}
+};
+
+// diag(f(Tensor)) -> f(diag(Tensor))
+template<class Tensor, class F>
+struct tensor_diagonal_optimizer<tensor_unary<Tensor, F> >{
+	typedef tensor_diagonal_optimizer<typename Tensor::const_closure_type > opt;
+	typedef tensor_unary<typename opt::type, F > type;
+	
+	static type create(tensor_unary<Tensor, F> const& E){
+		return type(opt::create(E.expression()), E.functor());
+	}
+};
+// diag(f(Tensor,TensorB)) -> f(diag(TensorA),diag(TensorB))
+template<class TensorA, class TensorB, class F>
+struct tensor_diagonal_optimizer<tensor_binary<TensorA,TensorB, F> >{
+	typedef tensor_diagonal_optimizer<typename TensorA::const_closure_type > left_opt;
+	typedef tensor_diagonal_optimizer<typename TensorB::const_closure_type > right_opt;
+	typedef tensor_binary<typename left_opt::type, typename right_opt::type, F > type;
+	
+	static type create(tensor_binary<TensorA,TensorB,F> const& E){
+		return type(left_opt::create(E.lhs()),right_opt::create(E.rhs()),E.functor());
+	}
+};
+
+
+//broadcast: if none of the last two axes are broadcasted, just broadcast the diagonal.
+// otherwise remove a broadcasted dimension and do a subrange on the other one.
+template<class TensorA, class Axis, class BroadcastList>
+struct tensor_diagonal_optimizer<tensor_broadcast<TensorA, Axis, BroadcastList > >{
+	//check if any of the last two axes are broadcasted
+	static constexpr std::size_t Dim = Axis::num_dims;
+	static constexpr unsigned bc_first = BroadcastList::template element_v<Dim - 2>;
+	static constexpr unsigned bc_second = BroadcastList::template element_v<Dim - 1>;
+	static constexpr unsigned bc_any = bc_first || bc_second;
+	
+	//update broadcast list. note that the ax does not matter if none is
+	//broadcasted so we handle both cases as if they were case 2.
+	static constexpr std::size_t remove_ax = bc_second? Dim - 1 : Dim - 2;
+	typedef typename BroadcastList::template remove_t<remove_ax> new_bc_list;
+	
+	//case 1: no dimension is broadcasted.
+	//update axis object. by convention the axis with smaller id is kept.
+	static constexpr unsigned ax0 = Axis::template element_v<Dim - 2>;
+	static constexpr unsigned ax1 = Axis::template element_v<Dim - 1>;
+	static constexpr std::size_t ax_delete_diag = ax0 < ax1 ? Dim - 1: Dim - 2;
+	typedef typename Axis::template slice_t<ax_delete_diag> diag_axis;
+
+	typedef tensor_diagonal_optimizer<typename TensorA::const_closure_type> diag_opt;
+	typedef tensor_broadcast<typename diag_opt::type, diag_axis, new_bc_list> diag_type;
+	
+	static diag_type create(
+		tensor_broadcast<TensorA, Axis, BroadcastList > const& E,
+		std::ptrdiff_t k, tensor_shape<Dim -1> const& shape, axis_set<0>
+	){
+		return {diag_opt::create(E.expression(), k), shape};
+	}
+	
+	//case 2: we reduce a broadcast direction
+	typedef typename Axis::template slice_t<remove_ax> bc_axis;
+	typedef tensor_broadcast<TensorA, bc_axis, new_bc_list> bc_type;
+	
+	static bc_type create(
+		tensor_broadcast<TensorA, Axis, BroadcastList > const& E,
+		std::ptrdiff_t k, tensor_shape<Dim -1> const& shape, axis_set<1>
+	){
+		return {E.expression(), shape};
+	}
+	
+	typedef typename std::conditional<
+		bc_any, bc_type, diag_type
+	>::type type;
+	static type create(tensor_broadcast<TensorA, Axis, BroadcastList > const& E, std::ptrdiff_t k){
+		//update the shape
+		std::ptrdiff_t zero = 0;
+		std::size_t lower_k = std::max(-k,zero);
+		std::size_t upper_k = std::max(k,zero);
+		
+		auto shape = E.shape();
+		auto new_shape = shape.slice(ax_delete_diag);
+		new_shape[Dim - 2] = std::min(shape[Dim - 2]  - lower_k, shape[Dim - 1] - upper_k);
+		return create(E, k, new_shape, axis_set<bc_any>());
+	}
+};
+
+
+
+
+
+/*
+//diag(diagonal(v))  -> v
+template<class V>
+struct tensor_diagonal_optimizer<diagonal_matrix<V> >{
+	typedef typename V::const_closure_type type;
+	static type create(diagonal_matrix<V> const& E){
+		return E.expression();
+	}
+};
+
+//diag(constant)  -> constant (vector)
+template<class T, class Device, class Axis>
+struct tensor_diagonal_optimizer<scalar_tensor<T,Device, Axis> >{
+	typedef scalar_tensor<T,Device> type;
+	
+	static type create(scalar_tensor<T,Device, OAxis> const& E){
+		return type(E().size(), E.scalar());
+	}
+};
+
+//diag( u v^T) -> range(u,size) range(v,size)^T, where size=min(u.size,v.size)
+template<class V1, class V2>
+struct tensor_diagonal_optimizer<outer_product<V1,V2> >{
+	typedef vector_range_optimizer<typename V1::const_closure_type > left_opt;
+	typedef vector_range_optimizer<typename V2::const_closure_type> right_opt;
+	typedef typename common_value_type<V1,V2>::type value_type;
+	typedef typename device_traits<typename V1::device_type>:: template multiply<value_type> functor;
+	typedef tensor_binary<typename left_opt::type, typename right_opt::type, functor> type;
+	
+	static type create(outer_product<V1,V2> const& E){
+		auto size = std::min(E.size1(),E.size2());
+		return type( left_opt::create(E.lhs(),0,size), right_opt::create(E.rhs(),0,size), functor());
+	}
+};
+
+*/
+
+
+////////////////////////////////////
 //// Broadcasting
 ////////////////////////////////////
 template<class Tensor, std::size_t N>
 struct broadcast_optimizer{
-	typedef typename Tensor::axis::template split_t<(N == Tensor::axis::num_dims)? N - 1: N> Axis;
+	typedef typename Tensor::axis::template expand_t<N> Axis;
 	typedef typename constant_integer_list<bool, false, Tensor::axis::num_dims>::template insert_t<N, true> drop_list;
 	typedef tensor_broadcast<Tensor, Axis, drop_list > type;
 	
@@ -850,12 +1001,12 @@ struct broadcast_optimizer{
 };
 
 
-template<class Tensor,class OAxis, class DropList, std::size_t N >
-struct broadcast_optimizer<tensor_broadcast<Tensor, OAxis, DropList >, N >{
-	typedef typename OAxis::template split_t<(N == OAxis::num_dims)? N - 1: N> Axis;
-	typedef tensor_broadcast<Tensor, Axis, typename DropList::template insert_t<N, true> > type;
+template<class Tensor,class OAxis, class BroadcastList, std::size_t N >
+struct broadcast_optimizer<tensor_broadcast<Tensor, OAxis, BroadcastList >, N >{
+	typedef typename OAxis::template expand_t<N> Axis;
+	typedef tensor_broadcast<Tensor, Axis, typename BroadcastList::template insert_t<N, true> > type;
 	
-	static type create(tensor_broadcast<Tensor, OAxis, DropList > const& E, std::size_t size){
+	static type create(tensor_broadcast<Tensor, OAxis, BroadcastList > const& E, std::size_t size){
 		auto shape = E.shape();
 		tensor_shape<Axis::num_dims> new_shape;
 		for(std::size_t i = 0; i != N; ++i){
@@ -868,103 +1019,6 @@ struct broadcast_optimizer<tensor_broadcast<Tensor, OAxis, DropList >, N >{
 		return {E.expression(), new_shape};
 	}
 };
-
-
-
-////////////////////////////////////
-//// Matrix-Diagonal
-////////////////////////////////////
-/*
-//range(alpha * Tensor) = alpha * diag(Tensor)
-template<class Tensor>
-struct matrix_diagonal_optimizer<scalar_multiply<Tensor> >{
-	typedef matrix_diagonal_optimizer<typename Tensor::const_closure_type > opt;
-	typedef scalar_multiply<typename opt::type > type;
-	
-	static type create(scalar_multiply<Tensor> const& E){
-		return type(opt::create(E.expression()), E.scalar());
-	}
-};
-
-//diag(TensorA+TensorB) = diag(TensorA) + diag(TensorB)
-template<class TensorA, class TensorB>
-struct matrix_diagonal_optimizer<tensor_addition<TensorA,TensorB> >{
-	typedef matrix_diagonal_optimizer<typename TensorA::const_closure_type > left_opt;
-	typedef matrix_diagonal_optimizer<typename TensorB::const_closure_type > right_opt;
-	typedef tensor_addition<typename left_opt::type, typename right_opt::type > type;
-	
-	static type create(tensor_addition<TensorA,TensorB> const& E){
-		return type(left_opt::create(E.lhs()),right_opt::create(E.rhs()));
-	}
-};
-
-//diag(constant)  -> constant (vector)
-template<class T, class Device, class OAxis>
-struct matrix_diagonal_optimizer<scalar_tensor<T,Device, OAxis> >{
-	typedef scalar_tensor<T,Device> type;
-	
-	static type create(scalar_tensor<T,Device, OAxis> const& E){
-		return type(E().size(), E.scalar());
-	}
-};
-
-//diag(repeat(v,j)) -> range(v,0,min(v.size,j))
-template<class V, class OAxis>
-struct matrix_diagonal_optimizer<vector_repeater<V, OAxis> >{
-	typedef vector_range_optimizer<typename V::const_closure_type > opt;
-	typedef typename opt::type type;
-	
-	static type create(vector_repeater<V, OAxis> const& E){
-		return opt::create(E.expression(),0, std::min(E.size1(),E.size2())); 
-
-	}
-};
-
-// diag(f(Tensor)) -> f(diag(Tensor))
-template<class Tensor, class F>
-struct matrix_diagonal_optimizer<tensor_unary<Tensor, F> >{
-	typedef matrix_diagonal_optimizer<typename Tensor::const_closure_type > opt;
-	typedef tensor_unary<typename opt::type, F > type;
-	
-	static type create(tensor_unary<Tensor, F> const& E){
-		return type(opt::create(E.expression()), E.functor());
-	}
-};
-// diag(f(Tensor,TensorB)) -> f(diag(TensorA),diag(TensorB))
-template<class TensorA, class TensorB, class F>
-struct matrix_diagonal_optimizer<tensor_binary<TensorA,TensorB, F> >{
-	typedef matrix_diagonal_optimizer<typename TensorA::const_closure_type > left_opt;
-	typedef matrix_diagonal_optimizer<typename TensorB::const_closure_type > right_opt;
-	typedef tensor_binary<typename left_opt::type, typename right_opt::type, F > type;
-	
-	static type create(tensor_binary<TensorA,TensorB,F> const& E){
-		return type(left_opt::create(E.lhs()),right_opt::create(E.rhs()),E.functor());
-	}
-};
-
-//diag( u v^T) -> range(u,size) range(v,size)^T, where size=min(u.size,v.size)
-template<class V1, class V2>
-struct matrix_diagonal_optimizer<outer_product<V1,V2> >{
-	typedef vector_range_optimizer<typename V1::const_closure_type > left_opt;
-	typedef vector_range_optimizer<typename V2::const_closure_type> right_opt;
-	typedef typename common_value_type<V1,V2>::type value_type;
-	typedef typename device_traits<typename V1::device_type>:: template multiply<value_type> functor;
-	typedef tensor_binary<typename left_opt::type, typename right_opt::type, functor> type;
-	
-	static type create(outer_product<V1,V2> const& E){
-		auto size = std::min(E.size1(),E.size2());
-		return type( left_opt::create(E.lhs(),0,size), right_opt::create(E.rhs(),0,size), functor());
-	}
-};
-
-//diag(diagonal(v))  -> v
-template<class V>
-struct matrix_diagonal_optimizer<diagonal_matrix<V> >{
-	typedef typename V::const_closure_type type;
-	static type create(diagonal_matrix<V> const& E){
-		return E.expression();
-	}
-};*/
 
 ////////////////////////////////////
 //// Tensor - Scalar Product

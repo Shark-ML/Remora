@@ -49,7 +49,7 @@ void reduce_last(
 	//permute A to standard layout, apply same permutation to E
 	typedef typename TensorA::axis::inverse_t permute_A;
 	auto A_permuted = permute(A, permute_A());
-	auto E_permuted = permute(E, typename permute_A::expand_t());
+	auto E_permuted = permute(E, typename permute_A::template expand_t<NA - 1>());
 	typedef typename TensorA::evaluation_category::tag ACategory;
 	typedef typename TensorE::evaluation_category::tag ECategory;
 	bindings::reduce_last(
