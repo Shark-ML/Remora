@@ -6,6 +6,8 @@
 #include <remora/dense.hpp>
 #include <boost/mpl/list.hpp>
 
+#include <iostream>
+
 using namespace remora;
 typedef boost::mpl::list<axis<0,1,2>, axis<0,2,1>, axis<1,0,2>, axis<1,2,0>, axis<2,0,1>, axis<2,1,0> > axis_3d_types;
 
@@ -156,6 +158,56 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Tensor_Reduce_Sum_2, Axis, axis_3d_types ){
 }
 
 
+BOOST_AUTO_TEST_CASE_TEMPLATE( Tensor_Reduce_Sum_scalar, Axis, axis_3d_types ){
+	
+	std::vector<unsigned> values(23*22*18);
+	for(std::size_t i = 0; i != values.size(); ++i){
+		values[i] = i;
+	}	
+	tensor_shape<3> shape = {23, 22, 18};
+	std::array<std::size_t, 3> strides = {22*18, 18, 1};
+	strides = Axis::to_axis(strides);
+	shape = Axis::to_axis(shape);
+	dense_tensor_adaptor<unsigned, Axis, integer_list<bool, 1,1,1>, cpu_tag> adaptor1({values.data(), strides},no_queue(), shape);
+	auto adaptor2 = slice(adaptor1,ax::same, ax::same, 0);
+	auto adaptor3 = slice(adaptor1, ax::same, 0, 0);
+	auto adaptor4 = slice(adaptor1, 0, ax::same, ax::same);
+	//compute ground truth
+	unsigned result1 = 0;
+	unsigned result2 = 0;
+	unsigned result3 = 0;
+	unsigned result4 = 0;
+	
+	for(std::size_t i = 0; i != shape[0]; ++i){
+		result3 += adaptor1(i,0,0);
+		result4 = 0;
+		for(std::size_t j = 0; j != shape[1]; ++j){
+			result2 += adaptor1(i,j,0);
+			for(std::size_t k = 0; k != shape[2]; ++k){
+				result1	+= adaptor1(i,j,k);
+				result4	+= adaptor1(0,j,k);
+			}
+		}
+	}
+	//evaluate expressions
+	tensorN<unsigned, 0, cpu_tag> op1 = sum(adaptor1);
+	unsigned op2 = sum(adaptor2);
+	unsigned op3 = sum(adaptor3);
+	unsigned op4 = sum(adaptor4);
+	
+	//test for reduction of a scalar
+	scalar<unsigned> x(5);
+	unsigned op5 = sum(x);
+	
+	
+	//check results
+	BOOST_CHECK_EQUAL(result1, op1());
+	BOOST_CHECK_EQUAL(result2, op2);
+	BOOST_CHECK_EQUAL(result3, op3);
+	BOOST_CHECK_EQUAL(result4, op4);
+	BOOST_CHECK_EQUAL(5, op5);
+}
+
 BOOST_AUTO_TEST_CASE_TEMPLATE( Tensor_Reduce_Sum_Proxies, Axis, axis_3d_types ){
 	
 	std::vector<unsigned> values(20*22*18);
@@ -250,8 +302,6 @@ BOOST_AUTO_TEST_CASE( Tensor_Reduce_Sum_Multi_Merge){
 	> expr_type;
 	expr_type op_merge1 = sum(adaptor, axis_set<3,2,1>());//most simple case. all direct merges possible
 	expr_type op_merge2 = sum(adaptor, axis_set<1,2,3>());//should result in 2 permuted-merges
-	expr_type op_merge3 = sum(adaptor, axis_set<1,3,2>());//first no merge possible but the last argument should unwrap
-	expr_type op_merge4 = sum(sum(adaptor, axis_set<1,3>()),axis_set<1>());//by construction must be same as op_merge3
 	
 	//compute result
 	tensorN<unsigned, 1> result({shape[0]},0);
@@ -267,13 +317,9 @@ BOOST_AUTO_TEST_CASE( Tensor_Reduce_Sum_Multi_Merge){
 	
 	tensorN<unsigned, 1> eval1 = op_merge1;
 	tensorN<unsigned, 1> eval2 = op_merge2;
-	tensorN<unsigned, 1> eval3 = op_merge3;
-	tensorN<unsigned, 1> eval4 = op_merge4;
 	for(std::size_t i = 0; i != shape[0]; ++i){
 		BOOST_CHECK_EQUAL(result(i), eval1(i));
 		BOOST_CHECK_EQUAL(result(i), eval2(i));
-		BOOST_CHECK_EQUAL(result(i), eval3(i));
-		BOOST_CHECK_EQUAL(result(i), eval4(i));
 	}
 }
 
@@ -322,101 +368,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_trace, Axis, result_orientations )
 	}
 	BOOST_CHECK_CLOSE(trace(x),result, 1.e-6);
 }
-
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_1, Axis, result_orientations )
-{
-	matrix<double, Axis> x(Dimension1, Dimension1); 
-	vector<double> col_sum(Dimension2);
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension1; j++){
-			x(i,j) = 2*i-3.0-j;
-			col_sum(j) += std::abs(x(i,j));
-		}
-	}
-	double result = max(col_sum);
-	BOOST_CHECK_CLOSE(norm_1(x),result, 1.e-6);
-}
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_inf, Axis, result_orientations )
-{
-	matrix<double, Axis> x(Dimension1, Dimension1); 
-	vector<double> row_sum(Dimension2);
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension1; j++){
-			x(i,j) = 2*i-3.0-j;
-			row_sum(i) += std::abs(x(i,j));
-		}
-	}
-	double result = max(row_sum);
-	BOOST_CHECK_CLOSE(norm_inf(x),result, 1.e-6);
-}
-
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_norm_Frobenius, Axis, result_orientations )
-{
-	matrix<double, Axis> x(Dimension1, Dimension1); 
-	double result = 0;
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension1; j++){
-			x(i,j) = 2*i-3.0-j;
-			result += x(i,j)*x(i,j);
-		}
-	}
-	result = std::sqrt(result);
-	BOOST_CHECK_CLOSE(norm_frobenius(x),result, 1.e-6);
-}
-
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_sum, Axis, result_orientations )
-{
-	matrix<double, Axis> x(Dimension1, Dimension1); 
-	double result = 0;
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension1; j++){
-			x(i,j) = 2*i-3.0-j;
-			result +=x(i,j);
-		}
-	}
-	BOOST_CHECK_CLOSE(sum(x),result, 1.e-6);
-}
-
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_max, Axis, result_orientations )
-{
-	matrix<double, Axis> x(Dimension1, Dimension1); 
-	double result = std::numeric_limits<double>::min();
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension1; j++){
-			x(i,j) = 2*i-3.0-j;
-			result = std::max(x(i,j),result);
-		}
-	}
-	BOOST_CHECK_CLOSE(max(x),result, 1.e-6);
-}
-
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_min, Axis, result_orientations )
-{
-	matrix<double, Axis> x(Dimension1, Dimension1); 
-	double result = std::numeric_limits<double>::max();
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension1; j++){
-			x(i,j) = 2*i-3.0-j;
-			result = std::min(x(i,j),result);
-		}
-	}
-	BOOST_CHECK_CLOSE(min(x),result, 1.e-6);
-}
-
-BOOST_AUTO_TEST_CASE_TEMPLATE( Remora_frobenius_prod, Axis, result_orientations )
-{
-	matrix<double, Axis> x({Dimension1, Dimension2}); 
-	matrix<double> y({Dimension1, Dimension2}); 
-	double result = 0;
-	for (size_t i = 0; i < Dimension1; i++){
-		for (size_t j = 0; j < Dimension1; j++){
-			x(i,j) = 2*i-3.0-j;
-			y(i,j) = i+j+1;
-			result +=x(i,j)*y(i,j);
-		}
-	}
-	BOOST_CHECK_CLOSE(frobenius_prod(x,y),result, 1.e-6);
-	BOOST_CHECK_CLOSE(frobenius_prod(y,x),result, 1.e-6);
-}*/
+*/
 
 BOOST_AUTO_TEST_SUITE_END()

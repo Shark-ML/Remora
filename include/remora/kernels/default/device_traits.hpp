@@ -365,13 +365,9 @@ struct device_traits<cpu_tag>{
 		typedef T result_type;
 		constant(T const& value): m_value(value){}
 		
-		template<class Arg>
-		T operator()(Arg const&) const{
+		template<class... Args>
+		T operator()(Args const&... ) const{
 			return m_value;
-		}
-		template<class Arg1, class Arg2>
-		T operator()(Arg1 const&, Arg2 const&) const{
-			return {m_value};
 		}
 		
 		T m_value;
@@ -436,14 +432,9 @@ struct device_traits<cpu_tag>{
 		typedef typename G::result_type result_type;
 		compose(F const& f, G const& g): m_f(f), m_g(g){ }
 		
-		template<class Arg1>
-		result_type operator()(Arg1 const& x) const{
-			return m_g(m_f(x));
-		}
-		
-		template<class Arg1, class Arg2>
-		result_type operator()(Arg1 const& x, Arg2 const& y) const{
-			return m_g(m_f(x,y));
+		template<class... Args>
+		result_type operator()(Args const&... xs) const{
+			return m_g(m_f(xs...));
 		}
 		
 		F m_f;
@@ -456,13 +447,9 @@ struct device_traits<cpu_tag>{
 		typedef typename G::result_type result_type;
 		compose_binary(F1 const& f1, F2 const& f2, G const& g): m_f1(f1), m_f2(f2), m_g(g){ }
 		
-		template<class Arg1>
-		result_type operator()( Arg1 const& x) const{
-			return m_g(m_f1(x), m_f2(x));
-		}
-		template<class Arg1, class Arg2>
-		result_type operator()( Arg1 const& x, Arg2 const& y) const{
-			return m_g(m_f1(x,y), m_f2(x,y));
+		template<class... Args>
+		result_type operator()( Args const&... xs) const{
+			return m_g(m_f1(xs...), m_f2(xs...));
 		}
 		
 		F1 m_f1;

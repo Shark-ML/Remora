@@ -79,12 +79,23 @@ class tensor;
  */
 template<class T, unsigned N, class Device = cpu_tag>
 using tensorN = tensor<T, default_axis<N>, Device>;
+
+
+/// \brief A scalar of type \c T.
+///
+/// Represents a 0-dimensional tensor with exactly 1 element.
+/// The tag describes on which device the vector is located
+///
+/// \tparam T the type of object stored in the vector (like double, float, complex, etc...)
+/// \tparam Device the device this vector lives on, the default is cpu_tag for a cpu vector
+template<class T, class Device = cpu_tag>
+using scalar = tensor<T, axis<>, Device>;
 	
 /// \brief A dense vector of values of type \c T.
 ///
 /// For a \f$n\f$-dimensional vector \f$v\f$ and \f$0\leq i < n\f$ every element \f$v_i\f$ is mapped
 /// to the \f$i\f$-th element of the container.
-/// The tag descripes on which device the vector is located
+/// The tag describes on which device the vector is located
 ///
 /// \tparam T the type of object stored in the vector (like double, float, complex, etc...)
 /// \tparam Device the device this vector lives on, the default is cpu_tag for a cpu vector
@@ -364,6 +375,17 @@ struct axis_permute_optimizer<dense_tensor_adaptor<T,Axis, TagList, Device>, axi
 		return type({storage.values, permuted_strides}, E.queue(), shape);
 	}
 };
+
+//specialization for scalars
+template<class T, class Device>
+struct axis_permute_optimizer<dense_tensor_adaptor<T, axis<>, integer_list<bool>, Device>, axis<> >{
+	typedef dense_tensor_adaptor<T, axis<>, integer_list<bool>, Device> type;
+	
+	static type create(type const& E){
+		return E;
+	}
+};
+
 
 // template<class T, class Axis, class Triangular, class Device>
 // struct axis_permute_optimizer<dense_triangular_proxy<T, Axis, Triangular, Device> >{

@@ -38,8 +38,7 @@
 #include "detail/traits.hpp"
 #include "detail/check.hpp"
 #include <tuple> //std::make_tuple etc
-#include <array> //std::array
-#include <utility> //std::integer_sequence
+#include <type_traits> //std::is_base_of, std::enable_if
 namespace remora{
 	
 namespace ax{
@@ -283,6 +282,25 @@ auto reshape(
 	return reshape(A, args...);
 }
 
+//specialization for scalar tensors
+template<class TensorA, class Device>
+auto reshape(tensor_expression<0, TensorA, Device>& A){
+	typename TensorA::closure_type Aclosure = A();
+	return Aclosure;
+}
+template<class TensorA, class Device>
+auto reshape(tensor_expression<0, TensorA, Device> const& A){
+	typename TensorA::const_closure_type Aclosure = A();
+	return Aclosure;
+}
+
+template<class TensorA, class Device>
+auto reshape(tensor_expression<0, TensorA, Device> && A){
+	static_assert(!std::is_base_of<tensor_container<0, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
+	return typename TensorA::closure_type(A());
+}
+
+
 
 ////////////////////////////////////
 //// Tensor Axis Permutation
@@ -441,7 +459,23 @@ auto slice(tensor_expression<Dim, TensorA, Device> && A, Args... args){
 	return slice(A, args...);
 }
 
+//specialization for empty slice and scalar tensors
+template<std::size_t Dim, class TensorA, class Device>
+auto slice(tensor_expression<Dim, TensorA, Device>& A){
+	typename TensorA::closure_type Aclosure = A();
+	return Aclosure;
+}
+template<std::size_t Dim, class TensorA, class Device>
+auto slice(tensor_expression<Dim, TensorA, Device> const& A){
+	typename TensorA::const_closure_type Aclosure = A();
+	return Aclosure;
+}
 
+template<std::size_t Dim, class TensorA, class Device>
+auto slice(tensor_expression<Dim, TensorA, Device> && A){
+	static_assert(!std::is_base_of<tensor_container<Dim, TensorA, Device>,TensorA>::value, "It is unsafe to create a proxy from a temporary container");
+	return typename TensorA::closure_type(A());
+}
 
 ////////////////////////////////////
 //// Matrix Diagonal
@@ -520,42 +554,6 @@ typename detail::triangular_proxy_optimizer<typename M::closure_type, Tag>::type
 to_triangular(matrix_expression<M, Device>&& m, Tag){
 	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
 	return detail::triangular_proxy_optimizer<typename M::closure_type, Tag>::create(m());
-}
-
-
-////////////////////////////////////
-//// Matrix to vector set
-////////////////////////////////////
-
-template <class O, class M, class Device>
-vector_set<typename M::const_closure_type, O >
-as_set(matrix_expression<M, Device> const& m, O){
-	return vector_set<typename M::const_closure_type, O >(m());
-}
-
-template <class O, class M, class Device>
-vector_set<typename M::closure_type, O >
-as_set(matrix_expression<M, Device>& m, O){
-	return vector_set<typename M::closure_type, O >(m());
-}
-
-template <class O, class M, class Device>
-vector_set<typename M::closure_type, O > 
-as_set(matrix_expression<M, Device>&& m, O){
-	static_assert(!std::is_base_of<matrix_container<M, Device>,M>::value, "It is unsafe to create a proxy from a temporary container");
-	return vector_set<typename M::closure_type, O >(m());
-}
-
-/// \brief Transforms the matrix m to a set of points where each point is one row of m
-template <class M>
-auto as_rows(M&& m)-> decltype(as_set(std::forward<M>(m), row_major())){
-	return as_set(std::forward<M>(m), row_major());
-}
-
-/// \brief Transforms the matrix m to a set of points where each point is one column of m
-template <class M>
-auto as_columns(M&& m)-> decltype(as_set(std::forward<M>(m), column_major())){
-	return as_set(std::forward<M>(m), column_major());
 }
 */
 }

@@ -722,5 +722,18 @@ BOOST_AUTO_TEST_CASE( Dense_Merge_Proxy_Split){
 		}
 	}
 }
+////////////////////////////////////////////////////
+//// SCALAR SPECIAL CASES
+////////////////////////////////////////////////////
+BOOST_AUTO_TEST_CASE( Scalar_Proxy_Test){
+	scalar<unsigned> x(23);
+	//slice
+	BOOST_CHECK_EQUAL(unsigned(slice(x)),23);
+	BOOST_CHECK_EQUAL(unsigned(reshape(x)),23);
+	BOOST_CHECK_EQUAL(unsigned(permute(x,axis<>())),23);
+}
+	
+	
+
 
 BOOST_AUTO_TEST_SUITE_END();

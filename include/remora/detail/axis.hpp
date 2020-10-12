@@ -190,9 +190,31 @@ public:
 //specialisation for empty axis object
 template<>
 struct axis<>: public axis_set<>{
-	typedef axis<1> expand_t;
+	template<std::size_t MUST_BE_0>
+	using expand_t = axis<MUST_BE_0>;
+	
+	
 	typedef axis<> reverse_axis_t;
 	typedef axis<> inverse_t;
+	template<class... MUST_BE_EMPTY>
+	using permute_t = axis<>;
+	
+	// Indexing conversion to storage element
+	template<class Array1, class Array2>
+	static std::size_t element(Array1 const&, Array2 const&) {
+		return 0;
+	}
+	
+	template<class Array>
+	static Array to_axis(Array const& arr){
+		return arr;
+	}
+	
+	template<class Array>
+	static Array from_axis(Array const& arr){
+		return arr;
+	}
+	
 };
 
 

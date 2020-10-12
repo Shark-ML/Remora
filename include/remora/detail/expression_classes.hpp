@@ -96,6 +96,13 @@ public:
 		typename device_traits<device_type>::template multiply_and_add<value_type> f(m_scalar);
 		kernels::assign(X, eval_e, f);
 	}
+	
+	// conversion operator for scalar case
+	template<std::size_t D = num_dims, typename = typename std::enable_if< D == 0 >::type>
+	operator value_type()const{
+		typename tensor_temporary<scalar_multiply>::type temp = *this;
+		return temp;
+	}
 
 private:
 	expression_closure_type m_expression;
@@ -178,6 +185,13 @@ public:
 		plus_assign(X,m_lhs);
 		plus_assign(X,m_rhs);
 	}
+	
+	// conversion operator for scalar case
+	template<std::size_t D = num_dims, typename = typename std::enable_if< D == 0 >::type>
+	operator value_type()const{
+		typename tensor_temporary<tensor_addition>::type temp = *this;
+		return temp;
+	}
 
 private:
 	lhs_closure_type m_lhs;
@@ -224,6 +238,12 @@ public:
 	// Element Functor
 	typename device_traits<Device>:: template constant<value_type> elements() const{
 		return {m_value};
+	}
+	
+	// conversion operator for scalar case
+	template<std::size_t D = num_dims, typename = typename std::enable_if< D == 0 >::type>
+	operator value_type()const{
+		return m_value;
 	}
 private:
 	tensor_shape<num_dims> m_shape;
@@ -288,6 +308,7 @@ public:
 		template<std::size_t... Ns, class ArgTuple>
 		result_type apply(std::index_sequence<Ns...>, ArgTuple const& args){
 			auto constexpr keep_array = keep_list::to_array();
+			(void) keep_array;//prevent warning for unused array
 			return f(std::get<keep_array[Ns]>(args)...);
 		}
 		template<class... Args>
@@ -419,6 +440,13 @@ public:
 		typename device_traits<device_type>:: template add<value_type> add;
 		kernels::assign(X,eval_rhs, device_traits<device_type>::make_transform_arguments(identity,m_functor,add));
 	}
+	
+	// conversion operator for scalar case
+	template<std::size_t D = num_dims, typename = typename std::enable_if< D == 0 >::type>
+	operator value_type()const{
+		typename tensor_temporary<tensor_unary>::type temp = *this;
+		return temp;
+	}
 
 private:
 	expression_closure_type m_expression;
@@ -495,6 +523,13 @@ public:
 		tensor_binary<decltype(eval_lhs),decltype(eval_rhs),F> e(eval_lhs,eval_rhs, m_functor);
 		plus_assign(X,e);		
 	}
+	
+	// conversion operator for scalar case
+	template<std::size_t D = num_dims, typename = typename std::enable_if< D == 0 >::type>
+	operator value_type()const{
+		typename tensor_temporary<tensor_binary>::type temp = *this;
+		return temp();
+	}
 
 private:
 	lhs_closure_type m_lhs;
@@ -558,6 +593,13 @@ public:
 	// Iterator Access 
 	// typedef no_iterator const_iterator;
 	// typedef no_iterator iterator;
+	
+	// conversion operator for scalar case
+	template<std::size_t D = num_dims, typename = typename std::enable_if< D == 0 >::type>
+	operator value_type()const{
+		typename tensor_temporary<tensor_reduce_last>::type temp = *this;
+		return temp;
+	}
 private:
 	expression_closure_type m_expression;
 	F m_functor;

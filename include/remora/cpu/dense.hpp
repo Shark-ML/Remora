@@ -172,13 +172,19 @@ public:
 		return m_storage.values[elem];
 	}
 	
-	/// \brief Return a reference to the element \f$i\f$
+	/*/// \brief Return a reference to the element \f$i\f$
 	/// \param i index of the element
 	template<class... Indices, class = typename std::enable_if<sizeof...(Indices) == num_dims,void>::type>
 	reference operator()(Indices... idx){
 		static_assert(sizeof...(idx) == axis::num_dims, "Must pass same amount of parameters as dimensions in the tensor");
 		std::size_t elem = axis::element(std::array<std::size_t,axis::num_dims>{size_type(idx)...}, m_storage.strides);
 		return m_storage.values[elem];
+	}*/
+	
+	/// \brief  conversion operator for scalars, i.e. num_dims=0
+	template<std::size_t D = num_dims, typename = typename std::enable_if< D == 0 >::type>
+	operator reference()const{
+		return *(m_storage.values);
 	}
 	
 	
@@ -191,11 +197,6 @@ private:
 	storage_type m_storage;
 	tensor_shape<num_dims> m_shape;
 };
-
-
-	
-
-
 
 template<class T, class Axis>
 class tensor<T, Axis, cpu_tag>: public tensor_expression<Axis::num_dims, tensor<T, Axis, cpu_tag>, cpu_tag > {
@@ -369,6 +370,110 @@ private:
 	array_type m_values;
 	std::array<std::size_t, num_dims> m_strides;
 };
+
+
+
+//specialization for scalars
+template<class T>
+class tensor<T, axis<>, cpu_tag>: public tensor_expression<0, tensor<T, axis<>, cpu_tag>, cpu_tag > {
+public:
+	typedef std::vector<T> array_type;
+	typedef typename array_type::value_type value_type;
+	typedef typename array_type::const_reference const_reference;
+	typedef typename array_type::reference reference;
+	typedef typename array_type::size_type size_type;
+	
+	static constexpr std::size_t num_dims = 0;
+	typedef continuous_tensor_storage<0, T> storage_type;
+	typedef continuous_tensor_storage<0, T const> const_storage_type;
+	typedef dense_tensor_adaptor<T const, remora::axis<>, typename storage_type::dense_axis_tag, cpu_tag> const_closure_type;
+	typedef dense_tensor_adaptor<T, remora::axis<>, typename storage_type::dense_axis_tag, cpu_tag> closure_type;
+	
+	typedef elementwise<dense_tag> evaluation_category;
+	typedef remora::axis<> axis;
+	
+
+	tensor() = default;
+	tensor(tensor&&) = default;
+	tensor(tensor const&) = default;
+	tensor& operator=(tensor const&) = default;
+	tensor& operator=(tensor&&) = default;
+	tensor(value_type const& init): m_value(init){}
+	
+	template<class E>
+	tensor(tensor_expression<0, E, cpu_tag> const& e){
+		 assign(*this, e);
+	}
+
+	template<class E>
+	tensor& operator = (tensor_expression<0, E, cpu_tag> const& e) {
+		tensor temp;
+		assign(temp,e);
+		m_value = temp.value;
+		return *this;
+	}
+	tensor_shape<0> shape() const {
+		return {};
+	}
+	storage_type raw_storage(){
+		return {{&m_value}, {}};
+	}
+	const_storage_type raw_storage() const{
+		return {{&m_value}, {}};
+	}
+	
+	no_queue queue() const{
+		return no_queue();
+	}
+	
+	void swap(tensor& e){
+		std::swap(m_value, e.m_value);
+	}
+	void resize(tensor_shape<0> const&) {}
+	
+	// --------------
+	// Element access
+	// --------------
+	
+	struct tensor_element{
+		typedef value_type result_type;
+		result_type operator()() const{
+			return value;
+		}
+		value_type value;
+	};
+	
+	auto elements() const{
+		return tensor_element{m_value};
+	}
+
+	const_reference operator()() const {
+		return m_value;
+	}
+	reference operator()(){
+		return m_value;
+	}
+	
+	operator reference(){
+		return m_value;
+	}
+	operator const_reference()const{
+		return m_value;
+	}
+	
+	void clear(){
+		m_value = value_type/*zero*/();
+	}
+	
+	// Serialization
+	template<class Archive>
+	void serialize(Archive& ar, const unsigned int /* file_version */) {
+		ar& boost::serialization::make_nvp("values",m_value);
+	}
+private:
+	value_type m_value;
+};
+
 	
 	// template<class E>
 	// matrix(vector_set_expression<E, cpu_tag> const& e)

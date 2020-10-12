@@ -39,6 +39,22 @@ namespace remora{namespace bindings{
 
 template <class TensorE, class TensorA, class F>
 void reduce_last(
+	tensor_expression<1, TensorE, cpu_tag> const& E, 
+	tensor_expression<0, TensorA, cpu_tag>& A,
+	F f,
+	axis<0>, dense_tag, dense_tag
+){
+	auto size = E().shape()[0];
+	auto E_elem = E().elements();
+	typename TensorA::value_type s = E_elem(std::size_t(0));
+	for(std::size_t i = 1; i != size; ++i){
+		s = f(s,E_elem(i));
+	}
+	A()() += s;
+}
+
+template <class TensorE, class TensorA, class F>
+void reduce_last(
 	tensor_expression<2, TensorE, cpu_tag> const& E, 
 	tensor_expression<1, TensorA, cpu_tag>& A,
 	F f,
@@ -47,7 +63,7 @@ void reduce_last(
 	auto shape = E().shape();
 	auto E_elem = E().elements();
 	for(std::size_t i = 0; i != shape[0]; ++i){
-		typename TensorE::value_type s = E_elem(i,std::size_t(0));
+		typename TensorA::value_type s = E_elem(i,std::size_t(0));
 		for(std::size_t j = 1; j != shape[1]; ++j){
 			s = f(s,E_elem(i,j));
 		}

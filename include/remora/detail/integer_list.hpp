@@ -178,7 +178,16 @@ public:
 template<class T>
 struct integer_list<T>{
 public:
-	struct array_type{}; 
+	struct array_type{
+		constexpr T& operator[](std::size_t i){
+			return values[i];
+		}
+		constexpr T operator[](std::size_t i)const{
+			return values[i];
+		}			
+		T values[1];// for insert
+	
+	}; 
 public:
 	/// \brief number of dimensions
 	static constexpr std::size_t num_dims = 0;
@@ -194,6 +203,12 @@ public:
 	
 	template<class F> 
 	using transform_t = integer_list<T>;
+	
+	template<std::size_t MUST_BE_NULL>
+	using select_t = integer_list<T>;
+	
+	template<std::size_t MUST_BE_NULL>
+	using front_t = integer_list<T>;
 	
 	static constexpr array_type to_array(){
 		return array_type{};

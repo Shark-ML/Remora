@@ -110,5 +110,35 @@ public:
 	std::array<std::size_t, Dim> shape_array;
 };
 
+//specialization for scalars, i.e. Dim = 0
+template<>
+class tensor_shape<0>{
+public:
+	std::size_t size()const{
+		return 0;
+	}
+	
+	std::size_t const& operator[](std::size_t i)const{
+		REMORA_SIZE_CHECK(false);
+		return shape_array[0];
+	}
+	
+	std::size_t& operator[](std::size_t i){
+		REMORA_SIZE_CHECK(false);
+		return shape_array[0];
+	}
+	
+	std::size_t num_elements()const{
+		return 1;
+	}
+	bool operator==(tensor_shape<0> const& other)const{
+		return true;
+	}
+	bool operator!=(tensor_shape<0> const& other)const{
+		return false;
+	}
+	std::array<std::size_t, 0> shape_array;
+};
+
 }
 #endif

@@ -50,15 +50,20 @@ struct tensor_expression{
 
 template<std::size_t Dim, class T, class Device>
 struct tensor_container: public tensor_expression<Dim, T, Device>{};
-	
+
+/// \brief Base class for Scalar Expressions
+///
+/// it does not model the Scalar Expression concept but all derived types should.
+/// The class defines a common base type and some common interface for all
+/// statically derived Scalar Expression classes.
+template<class S, class Device>
+using scalar_expression = tensor_expression<0, S, Device>;
 	
 /// \brief Base class for Vector Expression models
 ///
 /// it does not model the Vector Expression concept but all derived types should.
 /// The class defines a common base type and some common interface for all
 /// statically derived Vector Expression classes.
-/// We implement the casts to the statically derived type.
-
 template<class V, class Device>
 using vector_expression = tensor_expression<1, V, Device>;
 
@@ -66,8 +71,7 @@ using vector_expression = tensor_expression<1, V, Device>;
 ///
 /// it does not model the Matrix Expression concept but all derived types should.
 /// The class defines a common base type and some common interface for all
-/// statically derived Matrix Expression classes
-/// We implement the casts to the statically derived type.
+/// statically derived Matrix Expression classes.
 template<class M, class Device>
 using matrix_expression = tensor_expression<2, M, Device>;
 

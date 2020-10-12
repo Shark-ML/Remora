@@ -1,0 +1,6 @@
+List of defects in the current implementation.
+
+- slice for full indexing is a stub and inefficient.
+- merge has no good optimizer for the case of consecutive merges. 
+- scalar operations (E.g. multiplying vector with scalar) do not correctly compute the target type but take vector-type instead
+- scalar operations on gpu still eprform a round-trip ->cpu

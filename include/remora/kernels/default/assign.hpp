@@ -34,6 +34,16 @@
 #include <algorithm>
 #include <vector>
 namespace remora{namespace bindings{
+	
+template<class F, class TensorA>
+void apply(
+	tensor_expression<0, TensorA, cpu_tag>& A,
+	F const& f,
+	axis<>,
+	dense_tag
+){
+	A()() = f(A()());
+}
 
 template<class F, class TensorA>
 void apply(
@@ -85,6 +95,17 @@ void apply(
 //////Matrix Assignment With Functor implementing +=,-=...
 ///////////////////////////////////////////////////////////////////////////////////////////
 
+
+template<class TensorA, class TensorE, class Functor>
+void assign_functor(
+	tensor_expression<0, TensorA, cpu_tag>& A, 
+	tensor_expression<0, TensorE, cpu_tag> const& E,
+	Functor f,
+	axis<>, axis<>, dense_tag, dense_tag
+){
+	auto e_elem = E().elements();
+	A()() = f(A()(), e_elem());
+}
 template<class TensorA, class TensorE, class Functor>
 void assign_functor(
 	tensor_expression<1, TensorA, cpu_tag>& A, 
@@ -94,8 +115,9 @@ void assign_functor(
 ){
 	typedef typename TensorA::size_type size_type;
 	size_type size = A().shape()[0];
+	auto e_elem = E().elements();
 	for(size_type i = 0; i != size; ++i){
-		A()(i) = f(A()(i), E()(i));
+		A()(i) = f(A()(i), e_elem(i));
 	}
 }
 
